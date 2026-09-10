@@ -1,0 +1,8 @@
+--- a/miniprogram/pages/add/index.wxml
++++ b/miniprogram/pages/add/index.wxml
+@@
+-        <text wx:for="{{scores}}" wx:key="*this" class="star {{item &lt;= lajiChongRating ? 'on' : ''}}" data-who="lajiChong" data-score="{{item}}" bindtap="setRating">★</text>
++        <text wx:for="{{scores}}" wx:key="*this" class="star {{lajiChongRating >= item ? 'on' : ''}}" data-who="lajiChong" data-score="{{item}}" bindtap="setRating">★</text>
+@@
+-        <text wx:for="{{scores}}" wx:key="*this" class="star {{item &lt;= xiaoXiaoQiRating ? 'on' : ''}}" data-who="xiaoXiaoQi" data-score="{{item}}" bindtap="setRating">★</text>
++        <text wx:for="{{scores}}" wx:key="*this" class="star {{xiaoXiaoQiRating >= item ? 'on' : ''}}" data-who="xiaoXiaoQi" data-score="{{item}}" bindtap="setRating">★</text>

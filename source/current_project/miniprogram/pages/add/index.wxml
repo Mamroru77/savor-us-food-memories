@@ -1,0 +1,101 @@
+<view class="page">
+  <view class="intro">
+    <view class="eyebrow">把今天好好收起来</view>
+    <view class="title">记一顿 🍜</view>
+    <view class="subtitle">餐厅和日期先记下就算完成，其他内容都可以慢慢补。</view>
+  </view>
+
+  <view class="card">
+    <view class="field required">
+      <view class="label">餐厅名称</view>
+      <input class="input" placeholder="例如：小器食堂" value="{{restaurantName}}" data-field="restaurantName" bindinput="handleInput" maxlength="80" />
+    </view>
+
+    <view class="field-row">
+      <view class="field half">
+        <view class="label">用餐日期</view>
+        <picker mode="date" value="{{date}}" bindchange="handleDateChange">
+          <view class="picker-value">{{date}}</view>
+        </picker>
+      </view>
+      <view class="field half">
+        <view class="label">城市</view>
+        <input class="input" placeholder="苏州 / 上海" value="{{city}}" data-field="city" bindinput="handleInput" maxlength="40" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="label">地址</view>
+      <input class="input" placeholder="先手动填写，下一阶段接地图选点" value="{{address}}" data-field="address" bindinput="handleInput" maxlength="150" />
+    </view>
+
+    <view class="field-row">
+      <view class="field half">
+        <view class="label">菜系</view>
+        <input class="input" placeholder="日料 / 火锅" value="{{cuisine}}" data-field="cuisine" bindinput="handleInput" maxlength="30" />
+      </view>
+      <view class="field half">
+        <view class="label">人均 ¥</view>
+        <input class="input" type="number" placeholder="260" value="{{perCapita}}" data-field="perCapita" bindinput="handleInput" />
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">照片回忆</view>
+    <view class="section-tip">最多 9 张，保存时自动上传到云存储</view>
+
+    <view class="photo-grid">
+      <view class="photo-wrap" wx:for="{{photos}}" wx:key="*this">
+        <image class="photo" src="{{item}}" mode="aspectFill" data-src="{{item}}" bindtap="previewPhoto" />
+        <view class="remove" data-index="{{index}}" catchtap="removePhoto">×</view>
+      </view>
+      <view class="photo-add" wx:if="{{photos.length < 9}}" bindtap="choosePhotos">
+        <view class="photo-plus">＋</view>
+        <view>加照片</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">今天打几分？</view>
+
+    <view class="rating-block">
+      <view class="rating-name">垃圾虫</view>
+      <view class="stars">
+        <text wx:for="{{scores}}" wx:key="*this" class="star {{item &lt;= lajiChongRating ? 'on' : ''}}" data-who="lajiChong" data-score="{{item}}" bindtap="setRating">★</text>
+      </view>
+      <view class="score-text">{{lajiChongRating ? lajiChongRating + '.0' : '未评分'}}</view>
+    </view>
+
+    <view class="rating-block last">
+      <view class="rating-name">小小琪</view>
+      <view class="stars">
+        <text wx:for="{{scores}}" wx:key="*this" class="star {{item &lt;= xiaoXiaoQiRating ? 'on' : ''}}" data-who="xiaoXiaoQi" data-score="{{item}}" bindtap="setRating">★</text>
+      </view>
+      <view class="score-text">{{xiaoXiaoQiRating ? xiaoXiaoQiRating + '.0' : '未评分'}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">我们吃了什么</view>
+    <view class="dish-input-row">
+      <input class="dish-input" placeholder="例如：海胆手卷" value="{{dishInput}}" data-field="dishInput" bindinput="handleInput" bindconfirm="addDish" maxlength="30" />
+      <view class="mini-button" bindtap="addDish">添加</view>
+    </view>
+    <view class="chips" wx:if="{{dishes.length}}">
+      <view class="chip" wx:for="{{dishes}}" wx:key="*this" data-index="{{index}}" bindtap="removeDish">{{item}} <text class="chip-x">×</text></view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">留一句话</view>
+    <textarea class="textarea" placeholder="今天最想记住的是什么？" value="{{note}}" data-field="note" bindinput="handleInput" maxlength="500" />
+    <view class="counter">{{note.length}} / 500</view>
+  </view>
+
+  <view class="save-area">
+    <button class="save-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveRecord">{{saving ? '正在保存…' : '保存这顿饭'}}</button>
+    <view class="save-tip">保存后首页会自动出现这次回忆</view>
+  </view>
+</view>

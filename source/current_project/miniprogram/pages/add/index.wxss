@@ -1,0 +1,280 @@
+page {
+  background: #fff9f3;
+  color: #3f302b;
+}
+
+.page {
+  padding: 34rpx 30rpx 80rpx;
+  box-sizing: border-box;
+}
+
+.intro {
+  padding: 12rpx 6rpx 30rpx;
+}
+
+.eyebrow {
+  color: #b28e7c;
+  font-size: 23rpx;
+  margin-bottom: 8rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin-top: 13rpx;
+  color: #927d73;
+  font-size: 24rpx;
+  line-height: 1.65;
+}
+
+.card {
+  background: #fff;
+  border-radius: 30rpx;
+  padding: 30rpx;
+  margin-bottom: 22rpx;
+  box-shadow: 0 10rpx 34rpx rgba(91, 63, 49, .055);
+}
+
+.field {
+  margin-bottom: 27rpx;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.half {
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  font-size: 24rpx;
+  color: #79665d;
+  margin-bottom: 12rpx;
+}
+
+.required .label::after {
+  content: ' *';
+  color: #ff765f;
+}
+
+.input,
+.picker-value {
+  height: 82rpx;
+  box-sizing: border-box;
+  border-radius: 20rpx;
+  background: #fff8f2;
+  padding: 0 22rpx;
+  font-size: 27rpx;
+  display: flex;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 650;
+}
+
+.section-tip {
+  color: #a18c82;
+  font-size: 22rpx;
+  margin-top: 8rpx;
+}
+
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.photo-wrap,
+.photo-add {
+  width: 188rpx;
+  height: 188rpx;
+  border-radius: 22rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+}
+
+.photo-add {
+  border: 2rpx dashed #e9cabb;
+  color: #b79585;
+  background: #fffaf5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 22rpx;
+}
+
+.photo-plus {
+  color: #ff8069;
+  font-size: 50rpx;
+  line-height: 1;
+  margin-bottom: 8rpx;
+}
+
+.remove {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: rgba(53, 39, 33, .72);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+}
+
+.rating-block {
+  display: flex;
+  align-items: center;
+  min-height: 90rpx;
+  border-bottom: 1rpx solid #f3e8e1;
+}
+
+.rating-block.last {
+  border-bottom: none;
+}
+
+.rating-name {
+  width: 105rpx;
+  font-size: 25rpx;
+}
+
+.stars {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.star {
+  color: #e7ddd7;
+  font-size: 42rpx;
+  margin-right: 8rpx;
+}
+
+.star.on {
+  color: #ff9a55;
+}
+
+.score-text {
+  width: 88rpx;
+  text-align: right;
+  color: #9c887e;
+  font-size: 22rpx;
+}
+
+.dish-input-row {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.dish-input {
+  flex: 1;
+  height: 76rpx;
+  background: #fff8f2;
+  border-radius: 19rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  font-size: 25rpx;
+}
+
+.mini-button {
+  width: 112rpx;
+  height: 76rpx;
+  border-radius: 19rpx;
+  background: #ffe4d7;
+  color: #e96853;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.chip {
+  padding: 10rpx 18rpx;
+  background: #fff0e7;
+  color: #705c53;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+}
+
+.chip-x {
+  color: #d8997f;
+  margin-left: 5rpx;
+}
+
+.textarea {
+  margin-top: 20rpx;
+  width: 100%;
+  height: 210rpx;
+  box-sizing: border-box;
+  border-radius: 20rpx;
+  background: #fff8f2;
+  padding: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.counter {
+  text-align: right;
+  margin-top: 8rpx;
+  color: #b6a49b;
+  font-size: 20rpx;
+}
+
+.save-area {
+  padding: 14rpx 0 20rpx;
+  text-align: center;
+}
+
+.save-button {
+  background: linear-gradient(135deg, #ff9577, #ff705f);
+  color: #fff;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  box-shadow: 0 12rpx 28rpx rgba(255, 112, 95, .22);
+}
+
+.save-button::after {
+  border: 0;
+}
+
+.save-button[disabled] {
+  opacity: .65;
+  color: #fff;
+}
+
+.save-tip {
+  margin-top: 15rpx;
+  color: #ad988e;
+  font-size: 21rpx;
+}

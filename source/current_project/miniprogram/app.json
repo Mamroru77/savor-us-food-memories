@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/add/index",
+    "pages/example/index"
+  ],
+  "window": {
+    "backgroundColor": "#FFF9F3",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFF9F3",
+    "navigationBarTitleText": "垃圾虫和小小琪的觅食记",
+    "navigationBarTextStyle": "black"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

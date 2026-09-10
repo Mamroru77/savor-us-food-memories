@@ -1,0 +1,9 @@
+{
+  "name": "mealRecords",
+  "version": "1.0.0",
+  "description": "Dining record service for 垃圾虫和小小琪的觅食记",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}

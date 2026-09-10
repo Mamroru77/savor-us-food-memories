@@ -1,0 +1,122 @@
+<view class="page">
+  <view class="header">
+    <view>
+      <view class="hello">垃圾虫和小小琪 👋</view>
+      <view class="headline">
+        已经一起吃过
+        <text class="number">{{stats.restaurantCount}}</text>
+        家店啦
+      </view>
+    </view>
+    <view class="avatar">🍱</view>
+  </view>
+
+  <!-- 最近一次 -->
+  <view class="memory-card" wx:if="{{latestRecord}}">
+    <view class="cover">
+      <image wx:if="{{latestRecord.coverUrl}}" class="cover-image" src="{{latestRecord.coverUrl}}" mode="aspectFill" />
+      <text wx:else class="food-icon">🍣</text>
+      <view class="cover-shade"></view>
+      <view class="cover-label">{{latestRecord.date}}{{latestRecord.city ? ' · ' + latestRecord.city : ''}}</view>
+    </view>
+    <view class="memory-info">
+      <view class="memory-title">{{latestRecord.restaurantName}}</view>
+      <view class="memory-meta">
+        <text wx:if="{{latestRecord.cuisine}}">{{latestRecord.cuisine}}</text>
+        <text wx:if="{{latestRecord.perCapita}}">{{latestRecord.cuisine ? ' · ' : ''}}¥{{latestRecord.perCapita}}/人</text>
+      </view>
+      <view class="memory-desc">{{latestRecord.note || '这一顿已经好好收进回忆里。'}}</view>
+    </view>
+  </view>
+
+  <view class="memory-card" wx:else>
+    <view class="cover">
+      <text class="food-icon">🍣</text>
+      <view class="cover-label">第一顿回忆，从这里开始</view>
+    </view>
+    <view class="memory-info">
+      <view class="memory-title">还没有美食记录</view>
+      <view class="memory-desc">下次出去吃饭时，把餐厅、照片和那天的小故事一起留下来。</view>
+    </view>
+  </view>
+
+  <!-- 地图 -->
+  <view class="section-title">
+    <text>我们的美食地图</text>
+    <text class="more" bindtap="comingSoon">去看看 ›</text>
+  </view>
+
+  <view class="map-card" bindtap="comingSoon">
+    <view class="map-road road-a"></view>
+    <view class="map-road road-b"></view>
+    <view class="pin pin-a">♥</view>
+    <view class="pin pin-b">♥</view>
+    <view class="map-text">
+      <view>{{stats.restaurantCount ? '已经留下 ' + stats.restaurantCount + ' 个美食足迹' : '每吃一家店'}}</view>
+      <view>{{stats.restaurantCount ? '下一阶段把它们真正放到地图上' : '就在这里留下一个足迹'}}</view>
+    </view>
+  </view>
+
+  <!-- 统计 -->
+  <view class="stats">
+    <view class="stat">
+      <text class="stat-number">{{stats.restaurantCount}}</text>
+      <text class="stat-label">吃过</text>
+    </view>
+    <view class="stat">
+      <text class="stat-number">{{stats.cityCount}}</text>
+      <text class="stat-label">城市</text>
+    </view>
+    <view class="stat">
+      <text class="stat-number">{{stats.wishlistCount}}</text>
+      <text class="stat-label">想吃</text>
+    </view>
+  </view>
+
+  <view class="section-title">
+    <text>最近的回忆</text>
+  </view>
+
+  <scroll-view wx:if="{{records.length}}" class="memory-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="memory-row">
+      <view class="mini-memory" wx:for="{{records}}" wx:key="_id">
+        <view class="mini-cover">
+          <image wx:if="{{item.coverUrl}}" src="{{item.coverUrl}}" mode="aspectFill" />
+          <view wx:else class="mini-placeholder">🍽️</view>
+        </view>
+        <view class="mini-title">{{item.restaurantName}}</view>
+        <view class="mini-meta">{{item.date}}{{item.city ? ' · ' + item.city : ''}}</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="empty-card" wx:else>
+    <view class="empty-icon">📷</view>
+    <view class="empty-title">这里还空空的</view>
+    <view class="empty-desc">记录垃圾虫和小小琪的第一顿饭吧</view>
+    <button class="main-button" bindtap="addMeal">＋ 记下第一顿</button>
+  </view>
+
+  <view class="bottom-placeholder"></view>
+
+  <!-- 临时底部导航 -->
+  <view class="tabbar">
+    <view class="tab active">
+      <view class="tab-icon">♥</view>
+      <text>回忆</text>
+    </view>
+    <view class="tab" bindtap="comingSoon">
+      <view class="tab-icon">⌖</view>
+      <text>地图</text>
+    </view>
+    <view class="plus" bindtap="addMeal">＋</view>
+    <view class="tab" bindtap="comingSoon">
+      <view class="tab-icon">♡</view>
+      <text>想吃</text>
+    </view>
+    <view class="tab" bindtap="comingSoon">
+      <view class="tab-icon">♧</view>
+      <text>我们</text>
+    </view>
+  </view>
+</view>
