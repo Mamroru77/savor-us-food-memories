@@ -1,0 +1,26 @@
+/* Mirrors .bottom-nav of the web concept: 68px tall glass bar, 52px raised add button with a 7px halo. */
+.tab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; display: flex; align-items: center;
+  height: 170rpx; padding: 0 20rpx; padding-bottom: env(safe-area-inset-bottom); box-sizing: content-box;
+  background: linear-gradient(rgba(249, 248, 246, 0.86), rgba(246, 246, 244, 0.94)); border-top: 1rpx solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(44rpx); -webkit-backdrop-filter: blur(44rpx);
+}
+.tab-bar.theme-dusk { background: linear-gradient(rgba(77, 89, 75, 0.94), rgba(70, 80, 67, 0.97)); border-color: rgba(202, 211, 189, 0.13); }
+.tab-item { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12rpx; padding-top: 8rpx; font-size: 24rpx; line-height: 30rpx; color: #828480; transition: color 0.2s; }
+.tab-item.is-active { color: #171a16; font-weight: 550; }
+.theme-dusk .tab-item { color: #a3af98; }
+.theme-dusk .tab-item.is-active { color: #f0f4e9; }
+.quiet .tab-item { transition: none; }
+.tab-add { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; }
+.tab-add-button {
+  width: 130rpx; height: 130rpx; margin-top: -8rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 3rpx solid rgba(255, 255, 255, 0.95); background: linear-gradient(155deg, rgba(255, 255, 255, 0.97), rgba(217, 217, 215, 0.83));
+  box-shadow: 0 17rpx 27rpx -5rpx rgba(59, 62, 61, 0.21), 0 0 0 17rpx rgba(248, 248, 246, 0.27), inset 0 2rpx 5rpx #ffffff;
+  transition: transform 0.2s;
+}
+.tab-add-button.is-active { box-shadow: 0 17rpx 27rpx -5rpx rgba(59, 62, 61, 0.28), 0 0 0 17rpx rgba(236, 237, 232, 0.5), inset 0 2rpx 5rpx #ffffff; }
+.theme-dusk .tab-add-button { box-shadow: 0 17rpx 27rpx -5rpx rgba(20, 24, 18, 0.4), 0 0 0 17rpx rgba(90, 100, 84, 0.35), inset 0 2rpx 5rpx #ffffff; }
+/* The tab bar is style-isolated, so its hover classes live here. */
+.pressed { opacity: 0.68; }
+.pressed-scale { transform: scale(0.94); opacity: 0.92; }
+.tab-text { letter-spacing: -0.1rpx; }

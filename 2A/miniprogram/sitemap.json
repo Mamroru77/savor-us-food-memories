@@ -1,0 +1,4 @@
+{
+  "desc": "Savor is a personal food diary. Its pages are not indexed.",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

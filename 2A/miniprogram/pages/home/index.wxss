@@ -1,0 +1,18 @@
+.home-body { padding: 0 35rpx; }
+.br { display: block; height: 0; }
+.notification-button { position: relative; margin-right: -8rpx; }
+.notification-dot { position: absolute; top: 12rpx; right: 12rpx; width: 10rpx; height: 10rpx; border-radius: 50%; background: #e36c5b; box-shadow: 0 0 0 2rpx #f6f2ee; }
+.theme-dusk .notification-dot { box-shadow: 0 0 0 2rpx #4a5246; }
+.home-intro { padding: 70rpx 30rpx 0; }
+.home-title { font-family: var(--serif); font-size: 82rpx; line-height: 80rpx; letter-spacing: -1.2rpx; color: var(--ink); }
+.home-lead { margin-top: 30rpx; font-size: 27rpx; line-height: 40rpx; color: var(--muted); letter-spacing: -0.3rpx; }
+.weekly-card { position: relative; height: 352rpx; margin-top: 62rpx; border-radius: 45rpx; padding: 40rpx; box-sizing: border-box; box-shadow: 0 37rpx 62rpx -25rpx rgba(64, 65, 65, 0.3), inset 0 1rpx 0 rgba(255, 255, 255, 0.4); }
+.weekly-heading { position: absolute; left: 40rpx; right: 35rpx; top: 40rpx; display: flex; align-items: center; justify-content: space-between; font-family: var(--serif); font-size: 34rpx; line-height: 40rpx; }
+.weekly-stats { position: absolute; left: 45rpx; top: 137rpx; display: flex; gap: 60rpx; }
+.weekly-stats .stat { gap: 5rpx; }
+.weekly-stats .stat-value { font-size: 85rpx; line-height: 87rpx; }
+.weekly-stats .stat-label { font-size: 27rpx; }
+.weekly-divider { border-left: 1rpx solid rgba(84, 85, 84, 0.06); padding-left: 52rpx; }
+.theme-dusk .weekly-divider { border-color: var(--line); }
+.weekly-photo { position: absolute; right: 32rpx; bottom: 32rpx; width: 215rpx; height: 215rpx; border-radius: 30rpx; box-shadow: 0 12rpx 22rpx -15rpx #34312a; background: rgba(0, 0, 0, 0.04); }
+.recent-title { margin-top: 57rpx; }

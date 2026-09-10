@@ -1,0 +1,22 @@
+.detail-photo { width: 100%; height: 462rpx; border-radius: 35rpx; display: block; background: rgba(0, 0, 0, 0.05); }
+.photo-thumbnails { display: flex; gap: 15rpx; margin-top: 20rpx; }
+.photo-thumbnail { width: 90rpx; height: 90rpx; border-radius: 17rpx; overflow: hidden; border: 4rpx solid transparent; opacity: 0.6; box-sizing: border-box; }
+.photo-thumbnail.is-selected { border-color: #777d64; opacity: 1; }
+.theme-dusk .photo-thumbnail.is-selected { border-color: #c3ccb3; }
+.photo-thumbnail image { width: 100%; height: 100%; display: block; }
+.detail-meta { display: flex; justify-content: space-between; align-items: center; gap: 25rpx; margin-top: 32rpx; font-size: 25rpx; line-height: 35rpx; color: var(--muted); }
+.detail-rating { gap: 5rpx; }
+.detail-location { display: flex; align-items: center; gap: 10rpx; font-size: 25rpx; line-height: 35rpx; margin-top: 20rpx; color: var(--muted); }
+.detail-notes { font-family: var(--serif); font-size: 52rpx; line-height: 65rpx; margin: 35rpx 0; white-space: pre-line; word-break: break-word; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 12rpx 0; color: #777c6c; font-size: 22rpx; line-height: 32rpx; }
+.theme-dusk .detail-tags { color: #bac7ab; }
+.detail-tag { margin-right: 22rpx; white-space: pre; }
+.detail-action-row { display: flex; margin-top: 42rpx; padding: 30rpx 0; border-top: 1rpx solid rgba(138, 144, 117, 0.11); border-bottom: 1rpx solid rgba(138, 144, 117, 0.11); }
+.detail-action { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15rpx; font-size: 22rpx; line-height: 30rpx; color: #878d7d; padding: 8rpx 0; }
+.detail-action-wide { flex: 1.25; }
+.detail-action + .detail-action { border-left: 1rpx solid rgba(138, 144, 117, 0.11); }
+.detail-action.is-active { color: var(--ink); }
+.send-button { margin: 35rpx 0 0; width: 100%; min-height: 85rpx; display: flex; align-items: center; justify-content: center; gap: 17rpx; border-radius: 28rpx; border: 1rpx solid rgba(212, 215, 202, 0.44); background: rgba(229, 231, 221, 0.36); font-size: 25rpx; line-height: 36rpx; color: var(--ink); padding: 0 28rpx; }
+.send-button::after { border: 0; }
+.theme-dusk .send-button { background: rgba(139, 159, 119, 0.14); border-color: rgba(207, 223, 181, 0.16); }
+.quiet-delete { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 35rpx; padding: 10rpx; font-size: 22rpx; line-height: 30rpx; color: #99988e; }

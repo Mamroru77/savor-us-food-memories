@@ -1,0 +1,38 @@
+.us-body { padding: 0 35rpx 37rpx; }
+.br { display: block; height: 0; }
+.together-card { height: 332rpx; border-radius: 42rpx; margin-top: 30rpx; padding: 42rpx 37rpx 25rpx; box-sizing: border-box; background: rgba(255, 254, 252, 0.35); }
+.theme-dusk .together-card { background: var(--glass); }
+.couple-avatars { display: flex; justify-content: center; align-items: center; gap: 35rpx; }
+.couple-avatar { width: 132rpx; height: 132rpx; }
+.couple-heart { width: 72rpx; height: 72rpx; border-radius: 50%; background: rgba(239, 194, 181, 0.23); border: 1rpx solid rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2rpx 7rpx rgba(255, 255, 255, 0.53); transition: background var(--motion), transform var(--motion); }
+.couple-heart.love-sent { background: rgba(242, 200, 186, 0.4); }
+.together-count { display: flex; flex-direction: column; align-items: center; margin-top: 15rpx; }
+.together-label { font-size: 24rpx; line-height: 35rpx; color: var(--muted); }
+.together-days { display: flex; align-items: baseline; gap: 12rpx; }
+.together-number { font-family: var(--serif); font-size: 70rpx; line-height: 72rpx; letter-spacing: -1.7rpx; }
+.together-unit { font-size: 25rpx; }
+.journey-card { position: relative; height: 355rpx; margin-top: 37rpx; border-radius: 42rpx; padding: 35rpx 35rpx 0; box-sizing: border-box; background: rgba(255, 254, 252, 0.43); }
+.theme-dusk .journey-card { background: var(--glass); }
+.journey-title { font-size: 29rpx; line-height: 40rpx; position: absolute; top: 35rpx; left: 35rpx; }
+.journey-stats { position: absolute; display: flex; left: 35rpx; right: 35rpx; top: 100rpx; }
+.journey-stats .stat { flex: 1; font-size: 25rpx; }
+.journey-stats .stat-value { font-size: 65rpx; line-height: 75rpx; }
+.journey-stats .stat-divider { border-color: rgba(66, 68, 62, 0.065); }
+.theme-dusk .journey-stats .stat-divider { border-color: var(--line); }
+.journey-latest { position: absolute; bottom: 0; left: 35rpx; right: 32rpx; height: 120rpx; display: flex; justify-content: space-between; gap: 20rpx; align-items: center; border-top: 1rpx solid rgba(76, 78, 71, 0.07); }
+.theme-dusk .journey-latest { border-color: var(--line); }
+.journey-latest-text { font-size: 23rpx; line-height: 33rpx; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.journey-latest-photo { width: 92rpx; height: 92rpx; flex-shrink: 0; border-radius: 50%; border: 1rpx solid rgba(255, 255, 255, 0.5); }
+.section-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 5rpx; margin-top: 57rpx; }
+.section-heading-title { font-family: var(--serif); font-size: 32rpx; line-height: 40rpx; }
+.see-all { font-size: 26rpx; line-height: 36rpx; color: var(--muted); padding: 6rpx 0; }
+.shared-gallery { margin: 22rpx -35rpx 0 0; width: calc(100% + 35rpx); white-space: nowrap; }
+.shared-track { display: inline-flex; gap: 17rpx; padding: 6rpx 35rpx 22rpx 0; }
+.shared-photo-card { width: 250rpx; height: 342rpx; position: relative; border-radius: 35rpx; overflow: hidden; flex-shrink: 0; border: 1rpx solid rgba(255, 255, 255, 0.85); box-shadow: 0 10rpx 20rpx rgba(79, 82, 67, 0.2); background: #d8d8d4; }
+.shared-photo-open { width: 100%; height: 100%; position: relative; }
+.shared-photo { width: 100%; height: 100%; display: block; }
+.shared-photo-shade { position: absolute; left: 0; right: 0; bottom: 0; top: 30%; background: linear-gradient(transparent, rgba(15, 17, 13, 0.03) 30%, rgba(15, 17, 13, 0.78)); }
+.shared-photo-copy { position: absolute; bottom: 22rpx; left: 20rpx; right: 60rpx; color: #ffffff; text-align: left; white-space: normal; }
+.shared-photo-name { font-size: 24rpx; line-height: 30rpx; font-weight: 450; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shared-photo-date { font-size: 20rpx; line-height: 28rpx; color: rgba(255, 255, 255, 0.94); margin-top: 6rpx; }
+.shared-like { position: absolute; bottom: 17rpx; right: 15rpx; width: 50rpx; height: 50rpx; display: flex; align-items: center; justify-content: center; }

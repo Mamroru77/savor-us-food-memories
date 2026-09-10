@@ -1,0 +1,13 @@
+<view class="tab-bar {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'quiet' : ''}}" aria-role="tablist">
+  <block wx:for="{{list}}" wx:key="pagePath">
+    <view wx:if="{{item.add}}" class="tab-add" data-path="{{item.pagePath}}" data-index="{{index}}" bindtap="switchTab">
+      <view class="tab-add-button {{selected === index ? 'is-active' : ''}}" hover-class="pressed-scale" aria-role="button" aria-label="Add a memory">
+        <s-icon name="plus" size="28" color="{{dusk ? '#111510' : '#111510'}}" stroke="1.6"/>
+      </view>
+    </view>
+    <view wx:else class="tab-item {{selected === index ? 'is-active' : ''}}" hover-class="pressed" data-path="{{item.pagePath}}" data-index="{{index}}" bindtap="switchTab" aria-role="tab" aria-selected="{{selected === index}}" aria-label="Go to {{item.text}}">
+      <s-icon name="{{selected === index ? item.activeIcon : item.icon}}" size="{{item.size}}" color="{{selected === index ? (dusk ? '#f0f4e9' : '#171a16') : (dusk ? '#a3af98' : '#828480')}}" fill="{{selected === index ? 'current' : 'none'}}" alt="{{selected === index ? (dusk ? '#3e463b' : '#f5f4f1') : ''}}" stroke="1.2"/>
+      <view class="tab-text">{{item.text}}</view>
+    </view>
+  </block>
+</view>

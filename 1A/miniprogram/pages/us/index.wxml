@@ -1,0 +1,63 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}}">
+  <page-header title="Us" subtitle="Our space. Our memories." ink="{{ink}}">
+    <view class="icon-button" hover-class="pressed" bindtap="openTogether" aria-role="button" aria-label="Shared space settings">
+      <s-icon name="settings" size="18" color="{{ink}}" stroke="1.35"/>
+    </view>
+  </page-header>
+  <view class="us-body">
+    <view class="together-card glass">
+      <view class="couple-avatars">
+        <image class="avatar couple-avatar" src="{{profile.avatar}}" mode="aspectFill"/>
+        <view class="couple-heart {{loveSent ? 'love-sent' : ''}}" hover-class="pressed" bindtap="toggleLove" aria-role="button" aria-label="{{loveSent ? 'Remove your little love' : 'Add a little love'}}">
+          <s-icon name="heart" size="19" color="{{loveSent ? '#e55d48' : '#f38d77'}}" fill="current" stroke="1.4"/>
+        </view>
+        <image class="avatar couple-avatar" src="{{alexPhoto}}" mode="aspectFill"/>
+      </view>
+      <view class="together-count" hover-class="pressed" bindtap="openTogether" aria-role="button" aria-label="Edit our story">
+        <view class="together-label">Together for</view>
+        <view class="together-days"><text class="together-number">{{stats.days}}</text><text class="together-unit">days</text></view>
+      </view>
+    </view>
+
+    <view class="journey-card glass" hover-class="pressed" bindtap="openJourney" aria-role="button" aria-label="Our journey">
+      <view class="journey-title">Our Journey</view>
+      <view class="journey-stats">
+        <view class="stat"><view class="stat-value">{{stats.journeyMeals}}</view><view class="stat-label">Meals</view></view>
+        <view class="stat stat-divider"><view class="stat-value">{{stats.journeyPlaces}}</view><view class="stat-label">Places</view></view>
+        <view class="stat stat-divider"><view class="stat-value">{{stats.journeyCountries}}</view><view class="stat-label">Countries</view></view>
+      </view>
+      <view class="journey-latest">
+        <text>Latest: {{stats.latest}}</text>
+        <image class="journey-latest-photo" src="{{parisPhoto}}" mode="aspectFill"/>
+      </view>
+    </view>
+
+    <view class="section-heading">
+      <view class="section-heading-title">Shared Moments</view>
+      <view class="section-heading-link" hover-class="pressed" bindtap="seeAll" aria-role="button">See all</view>
+    </view>
+    <scroll-view scroll-x="{{true}}" class="shared-gallery" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="shared-track">
+        <view wx:for="{{shared}}" wx:key="id" class="shared-card" hover-class="pressed" data-id="{{item.id}}" bindtap="openMemory" aria-role="button" aria-label="{{item.restaurant}}">
+          <image class="shared-photo" src="{{item.cover}}" mode="aspectFill"/>
+          <view class="shared-shade"/>
+          <view class="shared-copy">
+            <view class="shared-name">{{item.restaurant}}</view>
+            <view class="shared-date">{{item.dateLabel}}</view>
+          </view>
+          <view class="shared-like" data-id="{{item.id}}" catchtap="toggleLike" aria-role="button" aria-label="{{item.liked ? 'Unlike' : 'Like'}}">
+            <s-icon name="heart" size="14" color="#ffffff" fill="{{item.liked ? 'current' : 'none'}}" stroke="1.3"/>
+          </view>
+        </view>
+        <view wx:if="{{!shared.length}}" class="empty-state shared-empty">Good food is even better together. Share a memory to start your story.</view>
+      </view>
+    </scroll-view>
+    <!-- "Shared" keeps a memory in this diary's Us space; sending forwards a card to a WeChat chat. -->
+    <button class="secondary-button full-width send-story" open-type="share" hover-class="pressed">
+      <s-icon name="send" size="14" color="{{ink}}"/>
+      <text>Send our story to a friend</text>
+    </button>
+    <view class="local-note">Sharing a memory keeps it here in Us. Sending forwards a card in WeChat.</view>
+    <view class="tab-spacer"/>
+  </view>
+</view>

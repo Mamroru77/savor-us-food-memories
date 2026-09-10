@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="500" viewBox="0 0 300 500">
+  <defs>
+    <pattern id="blocks" width="47" height="59" patternUnits="userSpaceOnUse" patternTransform="rotate(-23)">
+      <rect width="47" height="59" fill="#dedfdd"/>
+      <path d="M0 1H47M1 0V59M0 30H47M23 0V30M31 30V59" fill="none" stroke="#f9f9f7" stroke-width="2"/>
+      <path d="M5 6H19V25H5ZM27 5H42V25H27ZM6 35H26V53H6ZM35 35H43V53H35Z" fill="none" stroke="#ecece9" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="300" height="500" fill="url(#blocks)"/>
+  <path d="M-60 60C10 140 109 145 139 222S135 351 349 402" fill="none" stroke="#d0d4d3" stroke-width="27"/>
+  <path d="M-60 60C10 140 109 145 139 222S135 351 349 402" fill="none" stroke="#e7e8e6" stroke-width="21"/>
+  <g fill="none" stroke="#fcfcfa" stroke-width="4">
+    <path d="M-20 405L334 158M72-20L213 526M-30 188L317 314M-40 318L312 62M-20 470L310 398M223-20L-10 277"/>
+    <path d="M-10 56C84 89 173 43 326 90M-20 480C81 386 82 383 135 221S183 42 213-20"/>
+  </g>
+  <g fill="none" stroke="#f7f7f5" stroke-width="2">
+    <path d="M-10 216L300 470M26-10L300 253M-10 364L249-10M42 510L300 347M128 510L300 444M-10 119L188-10"/>
+    <path d="M-10 138L309 381M-10 435L310 209M140-20L269 510"/>
+  </g>
+  <g fill="#e1e3dd" stroke="#f8f8f5" stroke-width="2"><path d="M170 130L205 111L234 152L201 175Z"/><path d="M35 305L80 294L91 330L58 351Z"/></g>
+</svg>

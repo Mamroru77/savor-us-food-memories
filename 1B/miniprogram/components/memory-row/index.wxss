@@ -1,0 +1,5 @@
+.memory-row { display: flex; align-items: center; gap: 26rpx; min-height: 160rpx; padding: 18rpx 0; border-bottom: 1rpx solid var(--line, rgba(52, 53, 52, 0.07)); }
+.memory-row-photo { width: 110rpx; height: 116rpx; border-radius: 24rpx; flex-shrink: 0; }
+.memory-row-copy { flex: 1; min-width: 0; }
+.memory-row-title { font-size: 29rpx; line-height: 38rpx; font-weight: 500; color: var(--ink, #1b1c1a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.memory-row-meta { font-size: 23rpx; line-height: 32rpx; color: var(--muted, #565752); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

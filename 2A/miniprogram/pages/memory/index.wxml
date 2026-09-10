@@ -1,0 +1,45 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <page-header title="{{memory ? memory.restaurant : 'A little memory'}}" subtitle="A moment worth coming back to." back="{{true}}" ink="{{ink}}"/>
+  <view class="sheet-body">
+    <block wx:if="{{memory}}">
+      <image class="detail-photo" src="{{images[photoIndex]}}" mode="aspectFill" bindtap="previewPhoto" binderror="onPhotoError" aria-label="Your memory at {{memory.restaurant}}"/>
+      <view wx:if="{{images.length > 1}}" class="photo-thumbnails">
+        <view wx:for="{{images}}" wx:key="*this" class="photo-thumbnail {{index === photoIndex ? 'is-selected' : ''}}" data-index="{{index}}" bindtap="selectPhoto" aria-role="button" aria-label="View photo {{index + 1}}">
+          <image src="{{item}}" mode="aspectFill"/>
+        </view>
+      </view>
+      <view class="detail-meta">
+        <text>{{dateLabel}}</text>
+        <view class="rating detail-rating" aria-label="Rating: {{memory.rating}} out of 5 stars">
+          <s-icon wx:for="{{stars}}" wx:key="value" name="star" size="12" color="{{item.filled ? ink : '#898a84'}}" fill="{{item.filled ? 'current' : 'none'}}" stroke="1.1"/>
+        </view>
+      </view>
+      <view wx:if="{{showLocations}}" class="detail-location"><s-icon name="map-pin" size="12" color="{{muted}}" stroke="1.4"/><text>{{memory.city}}, {{memory.country}}</text></view>
+      <view class="detail-notes">{{memory.notes || 'Some moments need no words.'}}</view>
+      <view class="detail-tags"><text wx:for="{{tags}}" wx:key="index" class="detail-tag">{{item.index ? '/  ' : ''}}{{item.tag}}</text></view>
+
+      <view class="detail-action-row">
+        <view class="detail-action {{memory.liked ? 'is-active' : ''}}" hover-class="pressed" data-key="liked" bindtap="toggle" aria-role="button" aria-label="{{memory.liked ? 'Unlove' : 'Love'}}">
+          <s-icon name="heart" size="16" color="{{memory.liked ? ink : '#878d7d'}}" fill="{{memory.liked ? 'current' : 'none'}}" stroke="1.4"/><text>{{memory.liked ? 'Loved' : 'Love'}}</text>
+        </view>
+        <view class="detail-action {{memory.saved ? 'is-active' : ''}}" hover-class="pressed" data-key="saved" bindtap="toggle" aria-role="button" aria-label="{{memory.saved ? 'Remove saved place' : 'Save place'}}">
+          <s-icon name="bookmark" size="16" color="{{memory.saved ? ink : '#878d7d'}}" fill="{{memory.saved ? 'current' : 'none'}}" stroke="1.4"/><text>{{memory.saved ? 'Saved' : 'Save place'}}</text>
+        </view>
+        <view class="detail-action detail-action-wide {{memory.shared ? 'is-active' : ''}}" hover-class="pressed" data-key="shared" bindtap="toggle" aria-role="button" aria-label="{{memory.shared ? 'Remove from our space' : 'Share with us'}}">
+          <s-icon name="users-round" size="16" color="{{memory.shared ? ink : '#878d7d'}}" stroke="1.4"/><text>{{memory.shared ? 'In our space' : 'Share with us'}}</text>
+        </view>
+      </view>
+
+      <button class="send-button" open-type="share" hover-class="pressed" plain="{{true}}" aria-label="Send this memory to a friend">
+        <s-icon name="send" size="14" color="{{ink}}" stroke="1.4"/><text>Send to a friend</text>
+      </button>
+      <view class="quiet-delete" hover-class="pressed" bindtap="remove" aria-role="button" aria-label="Remove memory">
+        <s-icon name="trash-2" size="12" color="#99988e" stroke="1.4"/><text>Remove memory</text>
+      </view>
+    </block>
+    <view wx:elif="{{missing}}" class="empty-state">
+      <view>This memory is no longer in your diary.</view>
+      <view class="empty-link" hover-class="pressed" bindtap="goHome">Back to your memories</view>
+    </view>
+  </view>
+</view>

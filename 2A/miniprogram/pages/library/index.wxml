@@ -1,0 +1,27 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <page-header title="{{title}}" subtitle="Small moments. A beautiful collection." back="{{true}}" ink="{{ink}}"/>
+  <view class="sheet-body">
+    <view class="library-tabs" aria-role="tablist" aria-label="Memory collection">
+      <view wx:for="{{tabs}}" wx:key="value" class="library-tab {{filter === item.value ? 'is-active' : ''}}" hover-class="pressed" data-value="{{item.value}}" bindtap="setTab" aria-role="tab" aria-selected="{{filter === item.value}}">{{item.label}}</view>
+    </view>
+    <view class="sheet-search">
+      <s-icon name="search" size="14" color="#7b826e"/>
+      <input class="sheet-search-input" placeholder="Find a little moment..." placeholder-class="placeholder" value="{{query}}" bindinput="onQuery" confirm-type="search" aria-label="Search your memory collection"/>
+    </view>
+    <view class="library-count">{{countLabel}}</view>
+    <view class="library-list">
+      <memory-row wx:for="{{list}}" wx:key="id" memory="{{item}}" ink="{{muted}}" bind:select="openMemory"/>
+      <view wx:if="{{!list.length}}" class="empty-state">Nothing here just yet.<text class="br"/>Try another search or save a favorite.</view>
+    </view>
+    <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+    <view class="backup-actions">
+      <view class="secondary-button backup-export {{exporting ? 'is-disabled' : ''}}" hover-class="pressed" bindtap="exportBackup" aria-role="button" aria-label="Export backup">
+        <s-icon name="arrow-down-to-line" size="14" color="{{ink}}"/><text>Export backup</text>
+      </view>
+      <view class="secondary-button" hover-class="pressed" bindtap="importBackup" aria-role="button" aria-label="Import backup">
+        <s-icon name="arrow-up-from-line" size="14" color="{{ink}}"/><text>Import</text>
+      </view>
+    </view>
+    <view class="local-note"><s-icon name="lock-keyhole" size="10" color="#989b8e"/><text>Kept on this device. Always yours.</text></view>
+  </view>
+</view>

@@ -1,0 +1,10 @@
+<wxs src="../../utils/format.wxs" module="fmt"/>
+<view wx:if="{{memory}}" class="memory-row" hover-class="pressed" bindtap="open" aria-role="button" aria-label="{{memory.restaurant}}, {{fmt.date(memory.date)}}">
+  <image class="memory-row-photo" src="{{failed ? '/images/le-comptoir.jpg' : (memory.placePhoto || memory.photo)}}" mode="aspectFill" lazy-load="{{true}}" binderror="onError"/>
+  <view class="memory-row-copy">
+    <view class="memory-row-title">{{memory.restaurant}}</view>
+    <view class="memory-row-meta">{{fmt.date(memory.date)}}</view>
+    <view class="memory-row-meta">{{memory.neighborhood ? memory.neighborhood + ', ' : ''}}{{memory.city}}</view>
+  </view>
+  <s-icon name="chevron-right" size="14" color="{{ink}}" stroke="1.35"/>
+</view>

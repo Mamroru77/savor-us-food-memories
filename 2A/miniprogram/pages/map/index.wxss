@@ -1,0 +1,58 @@
+/* Layout mirrors .map-screen: heading in the nav row, map filling the rest, overlays positioned from the map edge. */
+.map-page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.map-stage { position: relative; flex: 1; min-height: 0; box-sizing: border-box; }
+.memory-map { width: 100%; height: 100%; }
+.map-fallback { height: 100%; padding: 200rpx 35rpx 0; box-sizing: border-box; }
+.map-fallback-note { font-size: 25rpx; line-height: 37rpx; color: var(--muted); text-align: center; margin-bottom: 30rpx; }
+.map-fallback-space { height: calc(560rpx + env(safe-area-inset-bottom)); }
+.map-fade { position: absolute; left: 0; right: 0; top: 0; height: 180rpx; pointer-events: none; background: linear-gradient(rgba(238, 237, 235, 0.92), rgba(238, 237, 235, 0)); }
+.theme-dusk .map-fade { background: linear-gradient(rgba(72, 81, 65, 0.95), rgba(72, 81, 65, 0)); }
+
+.map-search {
+  position: absolute; top: 25rpx; left: 42rpx; right: 42rpx; height: 95rpx; z-index: 6; border-radius: 38rpx; display: flex; align-items: center; gap: 20rpx;
+  padding: 0 22rpx 0 30rpx; box-sizing: border-box; background: rgba(255, 255, 255, 0.81); border: 1rpx solid var(--glass-border);
+  box-shadow: 0 22rpx 40rpx -25rpx rgba(66, 67, 63, 0.33); backdrop-filter: blur(34rpx); -webkit-backdrop-filter: blur(34rpx);
+}
+.theme-dusk .map-search { background: rgba(70, 82, 63, 0.91); }
+.map-search-input { flex: 1; min-width: 0; height: 100%; font-size: 24rpx; letter-spacing: -0.3rpx; color: var(--ink); }
+.map-placeholder { color: #7b7e78; }
+.theme-dusk .map-placeholder { color: #c9d1c0; }
+.map-icon-button { width: 56rpx; height: 62rpx; }
+.map-clear { width: 40rpx; height: 62rpx; margin: 0 -14rpx 0 -12rpx; }
+.filter-active { background: #d5dccf; }
+.theme-dusk .filter-active { background: rgba(213, 220, 207, 0.3); }
+.recenter { position: absolute; z-index: 5; top: 157rpx; right: 42rpx; width: 88rpx; height: 88rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.89); border: 1rpx solid var(--glass-border); box-shadow: 0 12rpx 22rpx rgba(85, 85, 85, 0.13); }
+.theme-dusk .recenter { background: rgba(72, 83, 64, 0.94); }
+.map-menu { position: absolute; z-index: 8; top: 137rpx; left: 42rpx; right: 42rpx; border-radius: 38rpx; background: rgba(248, 248, 244, 0.96); border: 1rpx solid var(--glass-border); padding: 30rpx; box-shadow: 0 25rpx 60rpx rgba(67, 73, 60, 0.2); }
+.theme-dusk .map-menu { background: rgba(70, 82, 63, 0.97); }
+.map-menu-title { font-size: 22rpx; line-height: 30rpx; color: #75796e; margin-bottom: 15rpx; }
+.theme-dusk .map-menu-title { color: var(--muted); }
+.map-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 22rpx 10rpx; font-size: 27rpx; line-height: 36rpx; border-bottom: 1rpx solid rgba(89, 92, 79, 0.05); }
+.theme-dusk .map-menu-item { border-color: var(--line); }
+.map-menu-item:last-child { border-bottom: 0; }
+.map-count { position: absolute; z-index: 3; top: 145rpx; left: 52rpx; font-size: 22rpx; line-height: 30rpx; padding: 8rpx 15rpx; border-radius: 10rpx; background: rgba(247, 247, 241, 0.74); color: #656d5d; }
+.theme-dusk .map-count { background: rgba(70, 82, 63, 0.85); color: var(--muted); }
+
+/* Photo pins: 43px circle with a 3px white ring, exactly as .map-photo-pin on the web. */
+.pin { width: 44px; height: 44px; border-radius: 22px; background: #fafaf7; padding: 3px; box-sizing: border-box; }
+.pin-selected { background: #ffffff; }
+.pin-photo { width: 38px; height: 38px; border-radius: 19px; }
+
+.place-card {
+  position: absolute; left: 32rpx; right: 32rpx; bottom: calc(245rpx + env(safe-area-inset-bottom)); height: 315rpx; z-index: 5; border-radius: 45rpx;
+  background: rgba(251, 250, 247, 0.86); border: 1rpx solid var(--glass-border); box-shadow: 0 25rpx 60rpx -22rpx rgba(68, 71, 63, 0.35);
+  backdrop-filter: blur(34rpx); -webkit-backdrop-filter: blur(34rpx);
+}
+.theme-dusk .place-card { background: rgba(70, 82, 63, 0.92); }
+.place-open { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; height: 100%; padding: 30rpx 30rpx 30rpx 40rpx; box-sizing: border-box; }
+.place-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.place-name { font-family: var(--serif); font-size: 50rpx; line-height: 60rpx; letter-spacing: -0.8rpx; margin-bottom: 10rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.place-line { font-size: 24rpx; line-height: 40rpx; color: var(--muted); letter-spacing: -0.4rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.place-date { margin-top: 30rpx; font-size: 25rpx; line-height: 36rpx; color: var(--muted); }
+.place-photo { width: 212rpx; height: 245rpx; border-radius: 30rpx; flex-shrink: 0; border: 1rpx solid rgba(255, 255, 255, 0.8); background: rgba(0, 0, 0, 0.04); }
+.bookmark-place { position: absolute; right: 260rpx; bottom: 35rpx; width: 55rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; }
+.map-empty { position: absolute; z-index: 4; left: 50rpx; right: 50rpx; bottom: calc(275rpx + env(safe-area-inset-bottom)); border-radius: 45rpx; padding: 55rpx 37rpx; display: flex; flex-direction: column; align-items: center; text-align: center; background: rgba(248, 247, 241, 0.91); border: 1rpx solid var(--glass-border); }
+.theme-dusk .map-empty { background: rgba(70, 82, 63, 0.96); }
+.map-empty-title { font-family: var(--serif); font-size: 57rpx; line-height: 67rpx; margin-top: 30rpx; }
+.map-empty-text { margin: 15rpx 0 37rpx; font-size: 25rpx; line-height: 36rpx; color: var(--muted); }
+.map-empty-link { font-size: 27rpx; text-decoration: underline; text-underline-offset: 8rpx; }

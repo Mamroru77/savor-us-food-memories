@@ -1,0 +1,30 @@
+.us-body { padding: 0 35rpx; }
+.together-card { margin-top: 44rpx; border-radius: 42rpx; padding: 42rpx 36rpx 28rpx; }
+.couple-avatars { display: flex; align-items: center; justify-content: center; gap: 34rpx; }
+.couple-avatar { width: 132rpx; height: 132rpx; }
+.couple-heart { width: 72rpx; height: 72rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(239, 194, 181, 0.25); border: 1rpx solid rgba(255, 255, 255, 0.5); }
+.couple-heart.love-sent { background: rgba(242, 200, 186, 0.45); }
+.together-count { display: flex; flex-direction: column; align-items: center; margin-top: 18rpx; }
+.together-label { font-size: 24rpx; line-height: 34rpx; color: var(--muted); }
+.together-days { display: flex; align-items: baseline; gap: 12rpx; }
+.together-number { font-family: var(--serif); font-size: 70rpx; line-height: 74rpx; letter-spacing: -2rpx; }
+.together-unit { font-size: 25rpx; }
+.journey-card { margin-top: 36rpx; border-radius: 42rpx; padding: 34rpx 34rpx 0; }
+.journey-title { font-size: 28rpx; line-height: 40rpx; }
+.journey-stats { display: flex; margin-top: 20rpx; }
+.journey-stats .stat { flex: 1; }
+.journey-latest { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; height: 118rpx; margin-top: 22rpx; border-top: 1rpx solid var(--line); font-size: 23rpx; color: var(--muted); }
+.journey-latest-photo { width: 92rpx; height: 92rpx; border-radius: 50%; border: 2rpx solid rgba(255, 255, 255, 0.5); flex-shrink: 0; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin: 56rpx 6rpx 22rpx; }
+.section-heading-title { font-family: var(--serif); font-size: 32rpx; }
+.section-heading-link { font-size: 25rpx; color: var(--muted); }
+.shared-gallery { width: 100%; white-space: nowrap; }
+.shared-track { display: inline-flex; gap: 18rpx; padding: 4rpx 0 20rpx; }
+.shared-card { position: relative; width: 250rpx; height: 342rpx; border-radius: 34rpx; overflow: hidden; flex-shrink: 0; border: 2rpx solid rgba(255, 255, 255, 0.85); box-shadow: 0 8rpx 16rpx rgba(79, 82, 67, 0.2); }
+.shared-photo { width: 100%; height: 100%; }
+.shared-shade { position: absolute; left: 0; right: 0; bottom: 0; height: 70%; background: linear-gradient(rgba(15, 17, 13, 0), rgba(15, 17, 13, 0.78)); }
+.shared-copy { position: absolute; left: 20rpx; right: 60rpx; bottom: 22rpx; color: #ffffff; white-space: normal; }
+.shared-name { font-size: 24rpx; line-height: 30rpx; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shared-date { font-size: 20rpx; line-height: 28rpx; margin-top: 4rpx; opacity: 0.9; }
+.shared-like { position: absolute; right: 12rpx; bottom: 14rpx; width: 52rpx; height: 52rpx; display: flex; align-items: center; justify-content: center; }
+.shared-empty { white-space: normal; width: 640rpx; }

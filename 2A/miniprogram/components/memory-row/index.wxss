@@ -1,0 +1,6 @@
+.memory-row { display: flex; align-items: center; gap: 28rpx; min-height: 160rpx; padding: 18rpx 0; border-bottom: 1rpx solid var(--line, rgba(52, 53, 52, 0.07)); }
+.memory-row:last-child { border-bottom: 0; }
+.memory-row-photo { width: 110rpx; height: 115rpx; border-radius: 25rpx; flex-shrink: 0; background: rgba(0, 0, 0, 0.04); }
+.memory-row-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.memory-row-title { font-size: 29rpx; line-height: 38rpx; font-weight: 500; color: var(--ink, #1b1c1a); margin-bottom: 4rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.memory-row-meta { font-size: 23rpx; line-height: 33rpx; color: var(--muted, #565752); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

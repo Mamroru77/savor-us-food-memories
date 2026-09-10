@@ -1,0 +1,61 @@
+<view class="page map-page {{dusk ? 'theme-dusk' : ''}}">
+  <page-header title="Map First" subtitle="Explore where memories live." ink="{{ink}}"/>
+  <view class="map-stage">
+    <map id="memoryMap" class="memory-map" longitude="{{center.longitude}}" latitude="{{center.latitude}}" scale="{{scale}}" markers="{{markers}}" enable-poi="{{false}}" enable-building="{{false}}" show-compass="{{false}}" bindcallouttap="onPinTap" bindmarkertap="onPinTap" bindtap="onMapTap" binderror="onMapError">
+      <cover-view slot="callout">
+        <block wx:for="{{markers}}" wx:key="id">
+          <cover-view marker-id="{{item.id}}" class="pin {{item.selected ? 'pin-selected' : ''}}">
+            <cover-image class="pin-photo" src="{{item.photo}}"/>
+          </cover-view>
+        </block>
+      </cover-view>
+    </map>
+    <view class="map-fade"/>
+    <view wx:if="{{mapFailed}}" class="map-failed">The map could not load. Your memories are still listed below.</view>
+
+    <view class="map-search glass">
+      <s-icon name="search" size="16" color="{{muted}}" stroke="1.5"/>
+      <input class="map-search-input" placeholder="Search restaurants, places, tags" placeholder-class="map-placeholder" value="{{query}}" bindinput="onQuery" confirm-type="search" aria-label="Search restaurants, places, tags"/>
+      <view wx:if="{{query}}" class="icon-button map-icon-button" hover-class="pressed" bindtap="clearSearch" aria-role="button" aria-label="Clear search">
+        <s-icon name="x" size="13" color="{{ink}}"/>
+      </view>
+      <view class="icon-button map-icon-button {{filter !== 'all' ? 'filter-active' : ''}}" hover-class="pressed" bindtap="toggleFilters" aria-role="button" aria-label="Filter memories">
+        <s-icon name="sliders-horizontal" size="15" color="{{ink}}" stroke="1.4"/>
+      </view>
+    </view>
+
+    <view wx:if="{{showFilters}}" class="map-menu glass" aria-role="group" aria-label="Filter memories">
+      <view class="map-menu-title">Show on the map</view>
+      <view wx:for="{{filters}}" wx:key="value" class="map-menu-item" hover-class="pressed" data-value="{{item.value}}" bindtap="setFilter" aria-role="button" aria-label="{{item.label}}">
+        <text>{{item.label}}</text>
+        <s-icon wx:if="{{filter === item.value}}" name="check" size="14" color="{{ink}}"/>
+      </view>
+    </view>
+
+    <view class="recenter" hover-class="pressed" bindtap="recenter" aria-role="button" aria-label="Recenter on Paris">
+      <s-icon name="navigation" size="16" color="{{ink}}" stroke="1.4"/>
+    </view>
+    <view wx:if="{{query && visible}}" class="map-count">{{visible}} {{visible === 1 ? 'memory' : 'memories'}} found</view>
+
+    <view wx:if="{{selected}}" class="place-card glass">
+      <view class="place-open" hover-class="pressed" bindtap="openPlace" aria-role="button" aria-label="View {{selected.restaurant}}">
+        <view class="place-copy">
+          <view class="place-name">{{selected.restaurant}}</view>
+          <view class="place-line">{{selected.tag}}<text class="text-dot"/>{{selected.kind}}</view>
+          <view class="place-line">{{selected.where}}<text class="text-dot"/>{{selected.city}}, {{selected.country}}</view>
+          <view class="place-date">{{selected.dateLabel}}</view>
+        </view>
+        <image class="place-photo" src="{{selected.cover}}" mode="aspectFill"/>
+      </view>
+      <view class="bookmark-place" hover-class="pressed" bindtap="toggleSaved" aria-role="button" aria-label="{{selected.saved ? 'Remove saved place' : 'Save this place'}}">
+        <s-icon name="bookmark" size="16" color="{{ink}}" fill="{{selected.saved ? 'current' : 'none'}}" stroke="1.3"/>
+      </view>
+    </view>
+    <view wx:else class="map-empty glass">
+      <s-icon name="search" size="24" color="{{muted}}" stroke="1"/>
+      <view class="map-empty-title">No memories here yet.</view>
+      <view class="map-empty-text">Try another place, restaurant, or tag.</view>
+      <view class="map-empty-link" hover-class="pressed" bindtap="recenter" aria-role="button">Show all memories</view>
+    </view>
+  </view>
+</view>

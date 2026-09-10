@@ -1,0 +1,98 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <page-header title="Add a Memory" subtitle="Capture the flavor. Keep the feeling." close="{{true}}" ink="{{ink}}" bind:back="closeDraft"/>
+  <view class="add-body">
+    <view class="photo-editor-row">
+      <view class="main-photo-wrap {{draft.photos.length ? '' : 'no-photo'}}">
+        <image wx:if="{{draft.photos.length}}" class="main-memory-photo" src="{{draft.photos[0]}}" mode="aspectFill" bindtap="previewMain" aria-label="Photo for your new memory"/>
+        <view wx:else class="photo-placeholder" hover-class="pressed" bindtap="replacePhoto" aria-role="button" aria-label="Add a photo">
+          <s-icon name="plus" size="26" color="{{muted}}" stroke="1.2"/>
+          <text>A moment worth keeping</text>
+        </view>
+        <view wx:if="{{draft.photos.length}}" class="edit-photo" hover-class="pressed" bindtap="replacePhoto" aria-role="button" aria-label="Replace photo">
+          <s-icon name="pencil" size="11" color="#33332f" stroke="1.4"/><text>Edit</text>
+        </view>
+        <view wx:if="{{busy}}" class="photo-uploading"><s-icon name="loader-circle" size="22" color="{{ink}}" stroke="1.6"/></view>
+      </view>
+      <view class="more-photos-wrap">
+        <view class="add-photo {{lastPhoto ? 'has-photo' : ''}}" hover-class="pressed" bindtap="addPhotos" aria-role="button" aria-label="Add more photos">
+          <image wx:if="{{lastPhoto}}" class="add-photo-preview" src="{{lastPhoto}}" mode="aspectFill"/>
+          <view class="add-photo-copy">
+            <s-icon name="plus" size="21" color="{{lastPhoto ? '#ffffff' : muted}}" stroke="1.2"/>
+            <text>{{lastPhoto ? draft.photos.length + ' photos' : 'Add more'}}</text>
+          </view>
+        </view>
+        <view wx:if="{{lastPhoto}}" class="remove-extra" hover-class="pressed" bindtap="removeLastPhoto" aria-role="button" aria-label="Remove last added photo">
+          <s-icon name="x" size="12" color="#1b1c1a"/>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-field restaurant-field">
+      <view class="field-label">Restaurant</view>
+      <view class="input-wrap">
+        <input class="field-input" value="{{draft.restaurant}}" data-key="restaurant" bindinput="onField" bindfocus="onRestaurantFocus" bindblur="onRestaurantBlur" placeholder="A place to remember" placeholder-class="placeholder" maxlength="70" aria-label="Restaurant"/>
+        <view wx:if="{{draft.restaurant}}" class="icon-button input-clear" hover-class="pressed" bindtap="clearRestaurant" aria-role="button" aria-label="Clear restaurant">
+          <s-icon name="x" size="13" color="{{ink}}" stroke="1.2"/>
+        </view>
+      </view>
+      <view wx:if="{{placeSuggestions.length}}" class="place-suggestions glass">
+        <view wx:for="{{placeSuggestions}}" wx:key="*this" class="place-suggestion" hover-class="pressed" data-name="{{item}}" bindtap="pickSuggestion">{{item}}</view>
+      </view>
+      <view wx:if="{{!knownPlace && draft.restaurant}}" class="new-place-location">
+        <s-icon name="map-pin" size="11" color="{{muted}}"/>
+        <text>New place in</text>
+        <picker mode="selector" range="{{cities}}" value="{{cityIndex}}" bindchange="onCity" aria-label="City for this new place">
+          <view class="city-select">{{cities[cityIndex]}}<s-icon name="chevron-down" size="11" color="{{muted}}"/></view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="form-field notes-field">
+      <view class="field-label">Notes</view>
+      <textarea class="field-textarea" value="{{draft.notes}}" data-key="notes" bindinput="onField" placeholder="What made it special?" placeholder-class="placeholder" maxlength="1500" auto-height="{{false}}" aria-label="Notes"/>
+    </view>
+
+    <view class="date-rating-row">
+      <view class="form-field">
+        <view class="field-label">Date</view>
+        <picker mode="date" value="{{draft.date}}" end="{{today}}" bindchange="onDate" aria-label="Memory date">
+          <view class="date-input"><text class="date-input-text">{{dateLabel}}</text><s-icon name="calendar-days" size="13" color="{{ink}}" stroke="1.4"/></view>
+        </picker>
+      </view>
+      <view class="form-field">
+        <view class="field-label">Rating</view>
+        <view class="rating-input" aria-role="group" aria-label="Rating: {{draft.rating}} out of 5 stars">
+          <view wx:for="{{stars}}" wx:key="value" class="rating-star" hover-class="pressed" data-value="{{item.value}}" bindtap="setRating" aria-role="button" aria-label="Rate {{item.value}}">
+            <s-icon name="star" size="15" color="{{item.filled ? ink : '#898a84'}}" fill="{{item.filled ? 'current' : 'none'}}" stroke="1.1"/>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-field tags-field">
+      <view class="field-label">Tags</view>
+      <view class="tag-list">
+        <view wx:for="{{draft.tags}}" wx:key="*this" class="tag" hover-class="pressed" data-tag="{{item}}" bindtap="removeTag" aria-role="button" aria-label="Remove {{item}} tag">{{item}}</view>
+        <view wx:if="{{draft.tags.length < 6}}" class="icon-button add-tag" hover-class="pressed" bindtap="toggleTagInput" aria-role="button" aria-label="Add a tag">
+          <s-icon name="plus" size="17" color="{{ink}}" stroke="1.3"/>
+        </view>
+      </view>
+      <view wx:if="{{showTagInput}}" class="tag-popover glass">
+        <view class="tag-input-row">
+          <input class="field-input tag-input" focus="{{true}}" value="{{tag}}" bindinput="onTagInput" bindconfirm="confirmTag" placeholder="Name a feeling..." placeholder-class="placeholder" maxlength="24" confirm-type="done" aria-label="New tag"/>
+          <view class="icon-button" hover-class="pressed" bindtap="confirmTag" aria-role="button" aria-label="Confirm tag"><s-icon name="check" size="16" color="{{ink}}"/></view>
+        </view>
+        <view class="suggested-tags">
+          <text wx:for="{{suggestions}}" wx:key="*this" class="suggested-tag" data-tag="{{item}}" bindtap="addTag">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+    <view class="primary-button save-memory {{busy || saving ? 'is-disabled' : ''}}" hover-class="pressed-scale" bindtap="save" aria-role="button" aria-label="Save memory">
+      <s-icon name="{{busy ? 'loader-circle' : (saving ? 'check' : 'sparkles')}}" size="14" color="{{buttonInk}}" stroke="1.5"/>
+      <text>{{busy ? 'Preparing photo...' : (saving ? 'Memory saved' : 'Save Memory')}}</text>
+    </view>
+    <view class="tab-spacer"/>
+  </view>
+</view>

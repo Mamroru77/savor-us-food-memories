@@ -1,0 +1,13 @@
+<view class="page-header" style="padding-top:{{rowTop}}px;padding-bottom:{{gap}}px">
+  <view class="page-header-row" style="min-height:{{rowHeight}}px;padding-right:{{rightInset}}px">
+    <view wx:if="{{back || close}}" class="page-header-button" hover-class="pressed" bindtap="goBack" aria-role="button" aria-label="{{close ? 'Close' : 'Back'}}">
+      <s-icon name="{{close ? 'x' : 'chevron-left'}}" size="20" color="{{ink}}" stroke="1.6"/>
+    </view>
+    <view class="page-header-copy">
+      <view wx:if="{{title}}" class="page-header-title">{{title}}</view>
+      <view wx:if="{{subtitle}}" class="page-header-subtitle">{{subtitle}}</view>
+      <slot name="copy"/>
+    </view>
+    <view class="page-header-right"><slot/></view>
+  </view>
+</view>

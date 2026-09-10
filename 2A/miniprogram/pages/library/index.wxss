@@ -1,0 +1,15 @@
+.br { display: block; height: 0; }
+.library-tabs { display: flex; gap: 10rpx; padding: 7rpx; border-radius: 28rpx; background: rgba(220, 224, 212, 0.26); }
+.theme-dusk .library-tabs { background: rgba(170, 185, 148, 0.1); }
+.library-tab { flex: 1; text-align: center; font-size: 23rpx; line-height: 33rpx; padding: 17rpx 7rpx; border-radius: 20rpx; color: var(--muted); white-space: nowrap; }
+.library-tab.is-active { background: rgba(255, 255, 255, 0.73); box-shadow: 0 2rpx 12rpx rgba(101, 111, 75, 0.075); color: var(--ink); }
+.theme-dusk .library-tab.is-active { background: rgba(170, 185, 148, 0.13); }
+.sheet-search { height: 83rpx; border: 1rpx solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.38); padding: 0 22rpx; border-radius: 25rpx; display: flex; gap: 17rpx; align-items: center; margin-top: 30rpx; box-sizing: border-box; }
+.theme-dusk .sheet-search { background: rgba(170, 185, 148, 0.13); border-color: rgba(203, 215, 184, 0.2); }
+.sheet-search-input { flex: 1; min-width: 0; height: 100%; font-size: 25rpx; color: var(--ink); }
+.library-count { font-size: 22rpx; line-height: 30rpx; color: #858b7c; margin: 27rpx 2rpx 7rpx; }
+.theme-dusk .library-count { color: #bac7ab; }
+.backup-actions { display: flex; gap: 17rpx; margin-top: 37rpx; }
+.backup-export { flex: 1; }
+.local-note { margin-top: 30rpx; font-size: 21rpx; line-height: 30rpx; color: #989b8e; display: flex; align-items: center; justify-content: center; gap: 12rpx; }
+.theme-dusk .local-note { color: #bac7ab; }

@@ -1,0 +1,111 @@
+/* Savor global styles. Design px from the 300px concept map to rpx at 2.5x. */
+page {
+  background: #e7e6e3;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-size: 28rpx;
+  color: #1b1c1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  --ink: #1b1c1a;
+  --muted: #565752;
+  --glass: rgba(252, 251, 249, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --field: rgba(255, 255, 255, 0.5);
+  --line: rgba(52, 53, 52, 0.07);
+  --serif: Georgia, "Times New Roman", "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  min-height: 100vh;
+  box-sizing: border-box;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 100% 30% at 14% 7%, rgba(255, 255, 255, 0.42), transparent),
+    radial-gradient(ellipse 72% 22% at 76% 50%, rgba(150, 153, 153, 0.23), transparent),
+    linear-gradient(143deg, #f0f0ef 0%, #eeece9 42%, #e7e6e3 100%);
+}
+.page.theme-dusk {
+  --ink: #edece5;
+  --muted: #bfc3b7;
+  --glass: rgba(66, 72, 62, 0.5);
+  --glass-border: rgba(225, 229, 214, 0.2);
+  --field: rgba(222, 228, 210, 0.1);
+  --line: rgba(225, 229, 214, 0.1);
+  background: linear-gradient(145deg, #50564c, #3e463b);
+}
+
+.pressed { opacity: 0.72; }
+.reduce-motion .toggle-track,
+.reduce-motion .toggle-knob,
+.reduce-motion .tab-item,
+.reduce-motion .weekly-photo,
+.reduce-motion .shared-photo { transition: none !important; animation: none !important; }
+.glass {
+  background: var(--glass);
+  border: 1rpx solid var(--glass-border);
+  box-shadow: 0 20rpx 38rpx -22rpx rgba(64, 65, 65, 0.25);
+}
+.icon-button { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
+
+.stat { display: flex; flex-direction: column; align-items: center; font-size: 24rpx; line-height: 34rpx; color: var(--ink); }
+.stat-left { align-items: flex-start; }
+.stat-value { font-family: var(--serif); font-size: 64rpx; line-height: 72rpx; letter-spacing: -2rpx; }
+.stat-label { font-size: 24rpx; }
+.stat-divider { border-left: 1rpx solid var(--line); }
+
+.section-title { font-family: var(--serif); font-size: 32rpx; line-height: 40rpx; margin: 56rpx 28rpx 20rpx; }
+.list-card { border-radius: 42rpx; padding: 0 30rpx; }
+.empty-state { padding: 60rpx 20rpx; text-align: center; font-size: 27rpx; line-height: 44rpx; color: var(--muted); }
+.empty-link { text-decoration: underline; margin-top: 12rpx; }
+
+.primary-button {
+  min-height: 96rpx; display: flex; align-items: center; justify-content: center; gap: 16rpx;
+  border-radius: 60rpx; background: linear-gradient(150deg, #31322f, #181a17); border: 3rpx solid rgba(255, 255, 255, 0.9);
+  color: #ffffff; font-size: 29rpx; padding: 0 30rpx; box-sizing: border-box;
+  box-shadow: 0 8rpx 18rpx -8rpx rgba(17, 17, 17, 0.4);
+}
+.theme-dusk .primary-button { background: linear-gradient(145deg, #e8eadc, #c3ccb3); color: #303a28; border-color: rgba(234, 240, 218, 0.6); }
+.primary-button.is-disabled { opacity: 0.6; }
+.secondary-button {
+  min-height: 84rpx; display: flex; align-items: center; justify-content: center; gap: 14rpx; border-radius: 26rpx;
+  border: 1rpx solid rgba(212, 215, 202, 0.6); background: rgba(229, 231, 221, 0.4); font-size: 25rpx; padding: 0 26rpx; color: var(--ink);
+}
+.theme-dusk .secondary-button { background: rgba(139, 159, 119, 0.18); border-color: rgba(207, 223, 181, 0.2); }
+
+.form-field { display: flex; flex-direction: column; gap: 10rpx; margin-top: 24rpx; }
+.field-label { font-size: 25rpx; line-height: 32rpx; font-weight: 600; }
+.field-input, .field-textarea, .date-input, .select-input {
+  min-height: 82rpx; box-sizing: border-box; width: 100%; border: 1rpx solid rgba(255, 255, 255, 0.75); background: var(--field);
+  border-radius: 26rpx; padding: 0 22rpx; font-size: 27rpx; line-height: 82rpx; color: var(--ink);
+}
+.theme-dusk .field-input, .theme-dusk .field-textarea, .theme-dusk .date-input, .theme-dusk .select-input { border-color: rgba(206, 217, 189, 0.2); }
+.field-textarea { height: 120rpx; padding: 18rpx 22rpx; line-height: 38rpx; }
+.placeholder { color: #93938d; }
+.theme-dusk .placeholder { color: #9aa192; }
+.date-input, .select-input { display: flex; align-items: center; justify-content: space-between; gap: 10rpx; }
+
+.tag {
+  height: 58rpx; padding: 0 24rpx; border-radius: 40rpx; font-size: 25rpx; line-height: 56rpx; color: var(--ink);
+  background: linear-gradient(150deg, rgba(214, 214, 211, 0.85), rgba(204, 204, 201, 0.6)); border: 1rpx solid rgba(236, 235, 232, 0.6);
+}
+.theme-dusk .tag { background: rgba(161, 175, 140, 0.25); border-color: rgba(207, 219, 197, 0.15); }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 30rpx; padding: 32rpx 0; border-bottom: 1rpx solid var(--line); }
+.toggle-title { font-size: 27rpx; line-height: 36rpx; font-weight: 500; }
+.toggle-text { font-size: 23rpx; line-height: 32rpx; color: var(--muted); margin-top: 6rpx; }
+.toggle-track { width: 88rpx; height: 52rpx; border-radius: 40rpx; background: #c5cbbd; padding: 6rpx; box-sizing: border-box; flex-shrink: 0; transition: background 0.2s; }
+.toggle-knob { width: 40rpx; height: 40rpx; border-radius: 50%; background: #ffffff; box-shadow: 0 2rpx 6rpx rgba(62, 78, 37, 0.15); transition: transform 0.2s; }
+.toggle-track.is-on { background: #68765b; }
+.theme-dusk .toggle-track { background: #69765d; }
+.theme-dusk .toggle-track.is-on { background: #a9bd8f; }
+.toggle-track.is-on .toggle-knob { transform: translateX(36rpx); }
+
+.helper-note { font-size: 23rpx; line-height: 36rpx; color: #858979; }
+.theme-dusk .helper-note { color: #bac7ab; }
+.form-error { margin-top: 20rpx; padding: 18rpx 20rpx; border-radius: 18rpx; font-size: 24rpx; line-height: 34rpx; color: #994d3d; background: rgba(245, 218, 208, 0.55); }
+.rating { display: flex; gap: 6rpx; align-items: center; }
+.avatar { border-radius: 50%; border: 4rpx solid rgba(255, 255, 255, 0.9); box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.08); }
+.tab-spacer { height: calc(170rpx + env(safe-area-inset-bottom)); }
+.sheet-body { padding: 10rpx 36rpx 80rpx; }
+.sheet-action { margin-top: 40rpx; }
+.sheet-note { margin-top: 24rpx; }
+.text-dot { display: inline-block; width: 4rpx; height: 4rpx; border-radius: 50%; background: currentColor; vertical-align: middle; margin: 0 10rpx; }

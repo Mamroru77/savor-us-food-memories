@@ -1,0 +1,17 @@
+.me-body { padding: 20rpx 35rpx 0; }
+.profile-heading { display: flex; align-items: center; gap: 34rpx; margin: 20rpx 6rpx 56rpx; }
+.profile-avatar { width: 180rpx; height: 180rpx; flex-shrink: 0; }
+.profile-copy { flex: 1; min-width: 0; }
+.profile-name { font-family: var(--serif); font-size: 60rpx; line-height: 72rpx; letter-spacing: -1rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-bio { font-size: 27rpx; line-height: 36rpx; color: var(--muted); margin-top: 8rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.edit-profile { width: 76rpx; height: 76rpx; background: rgba(255, 255, 255, 0.22); }
+.profile-stats-card { position: relative; height: 336rpx; border-radius: 42rpx; padding: 56rpx 20rpx 0; box-sizing: border-box; }
+.profile-stats { display: flex; }
+.profile-stats .stat { flex: 1; }
+.memory-chart { position: absolute; left: 36rpx; bottom: 30rpx; width: calc(100% - 72rpx); height: 122rpx; }
+.profile-menu { margin-top: 36rpx; padding: 6rpx 28rpx; border-radius: 42rpx; }
+.profile-menu-row { display: flex; align-items: center; gap: 24rpx; height: 130rpx; border-bottom: 1rpx solid var(--line); }
+.profile-menu-row:last-child { border-bottom: 0; }
+.profile-menu-copy { flex: 1; min-width: 0; }
+.profile-menu-title { font-size: 28rpx; line-height: 36rpx; font-weight: 500; }
+.profile-menu-text { font-size: 24rpx; line-height: 32rpx; color: var(--muted); margin-top: 4rpx; }

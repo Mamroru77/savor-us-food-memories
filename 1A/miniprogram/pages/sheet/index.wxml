@@ -1,0 +1,178 @@
+<wxs src="../../utils/format.wxs" module="fmt"/>
+<view class="page {{dusk ? 'theme-dusk' : ''}}">
+  <page-header title="{{title}}" subtitle="{{subtitle}}" back="{{true}}" ink="{{ink}}"/>
+  <view class="sheet-body">
+
+    <block wx:if="{{type === 'profile'}}">
+      <view class="edit-avatar" hover-class="pressed" bindtap="pickAvatar" aria-role="button" aria-label="Change profile photo">
+        <image class="edit-avatar-image" src="{{form.avatar}}" mode="aspectFill"/>
+        <view class="edit-avatar-badge"><s-icon name="camera" size="15" color="#1b1c1a"/></view>
+      </view>
+      <view class="form-field"><view class="field-label">Your name</view><input class="field-input" value="{{form.name}}" data-key="name" bindinput="onForm" maxlength="32" placeholder="Jamie Lin" placeholder-class="placeholder"/></view>
+      <view class="form-field"><view class="field-label">A little about you</view><input class="field-input" value="{{form.bio}}" data-key="bio" bindinput="onForm" maxlength="55" placeholder="Where next?" placeholder-class="placeholder"/></view>
+      <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="saveProfile" aria-role="button"><s-icon name="check" size="15" color="{{buttonInk}}"/><text>Save profile</text></view>
+    </block>
+
+    <block wx:if="{{type === 'together'}}">
+      <view class="sheet-couple">
+        <image class="couple-photo" src="{{profile.avatar}}" mode="aspectFill"/>
+        <s-icon name="heart" size="24" color="#df816b" fill="current" stroke="1.3"/>
+        <image class="couple-photo" src="{{alexPhoto}}" mode="aspectFill"/>
+      </view>
+      <view class="together-message">The best things are better shared.</view>
+      <view class="form-field"><view class="field-label">Your person</view><input class="field-input" value="{{form.partner}}" data-key="partner" bindinput="onForm" maxlength="30" placeholder="Alex" placeholder-class="placeholder"/></view>
+      <view class="form-field">
+        <view class="field-label">Our story began</view>
+        <picker mode="date" value="{{form.togetherSince}}" end="{{today}}" bindchange="onSince">
+          <view class="date-input" hover-class="pressed"><text>{{fmt.date(form.togetherSince)}}</text><s-icon name="calendar-days" size="14" color="{{ink}}"/></view>
+        </picker>
+      </view>
+      <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+      <view class="helper-note sheet-note">Your shared space lives in this local diary. Memories you share appear in Us.</view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="saveTogether" aria-role="button"><s-icon name="heart" size="14" color="{{buttonInk}}"/><text>Save our story</text></view>
+    </block>
+
+    <block wx:if="{{type === 'preferences'}}">
+      <view class="form-field">
+        <view class="field-label">At your table</view>
+        <picker mode="selector" range="{{dietaryOptions}}" value="{{dietaryIndex}}" bindchange="onDietary">
+          <view class="select-input" hover-class="pressed"><text>{{dietaryOptions[dietaryIndex]}}</text><s-icon name="chevron-down" size="14" color="{{ink}}"/></view>
+        </picker>
+      </view>
+      <view class="field-label cuisine-label">Cuisines you love</view>
+      <view class="cuisine-options">
+        <view wx:for="{{cuisines}}" wx:key="name" class="cuisine {{item.selected ? 'is-selected' : ''}}" hover-class="pressed" data-name="{{item.name}}" bindtap="toggleCuisine" aria-role="button" aria-label="{{item.name}}">
+          <text>{{item.name}}</text>
+          <s-icon wx:if="{{item.selected}}" name="check" size="12" color="{{dusk ? '#dae8c7' : '#49553a'}}"/>
+        </view>
+      </view>
+      <view class="preference-tip">
+        <s-icon name="sparkles" size="17" color="#818873" stroke="1.2"/>
+        <text>Make it your own. Add personal tags like Date Night or Sunday Ritual when you save a memory.</text>
+      </view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="savePreferences" aria-role="button"><s-icon name="check" size="15" color="{{buttonInk}}"/><text>Save preferences</text></view>
+    </block>
+
+    <block wx:if="{{type === 'settings'}}">
+      <view class="field-label">Make yourself at home</view>
+      <view class="theme-options">
+        <view wx:for="{{themes}}" wx:key="value" class="theme-option {{settings.theme === item.value ? 'is-selected' : ''}}" hover-class="pressed" data-value="{{item.value}}" bindtap="setTheme" aria-role="button" aria-label="{{item.label}} theme">
+          <view class="theme-preview theme-preview-{{item.value}}"/>
+          <view class="theme-option-row"><text>{{item.label}}</text><s-icon wx:if="{{settings.theme === item.value}}" name="check" size="13" color="{{ink}}"/></view>
+        </view>
+      </view>
+      <view class="toggle-row" hover-class="pressed" data-key="reminders" bindtap="toggleSetting" aria-role="switch" aria-checked="{{settings.reminders}}">
+        <view><view class="toggle-title">In-app reminders</view><view class="toggle-text">A nudge to notice the little moments.</view></view>
+        <view class="toggle-track {{settings.reminders ? 'is-on' : ''}}"><view class="toggle-knob"/></view>
+      </view>
+      <view class="toggle-row" hover-class="pressed" data-key="reduceMotion" bindtap="toggleSetting" aria-role="switch" aria-checked="{{settings.reduceMotion}}">
+        <view><view class="toggle-title">Quiet motion</view><view class="toggle-text">Keep transitions simple and gentle.</view></view>
+        <view class="toggle-track {{settings.reduceMotion ? 'is-on' : ''}}"><view class="toggle-knob"/></view>
+      </view>
+      <view class="app-signature">
+        <view class="app-signature-name">Savor</view>
+        <view class="app-signature-text">For the meals that become memories.</view>
+        <view class="app-signature-small">Version 1.0 / Your personal food diary</view>
+      </view>
+    </block>
+
+    <block wx:if="{{type === 'privacy'}}">
+      <view class="privacy-intro">
+        <s-icon name="lock-keyhole" size="28" color="#81926b" stroke="1"/>
+        <view class="privacy-title">Your moments. Your choice.</view>
+        <view class="privacy-text">This diary is saved on this device, not on a server. There is no account or cloud sync.</view>
+      </view>
+      <view class="toggle-row" hover-class="pressed" data-key="privateByDefault" bindtap="toggleSetting" aria-role="switch" aria-checked="{{settings.privateByDefault}}">
+        <view><view class="toggle-title">Private by default</view><view class="toggle-text">Keep new memories just for you.</view></view>
+        <view class="toggle-track {{settings.privateByDefault ? 'is-on' : ''}}"><view class="toggle-knob"/></view>
+      </view>
+      <view class="toggle-row" hover-class="pressed" data-key="showLocations" bindtap="toggleSetting" aria-role="switch" aria-checked="{{settings.showLocations}}">
+        <view><view class="toggle-title">Location in details</view><view class="toggle-text">Display the city on memory pages.</view></view>
+        <view class="toggle-track {{settings.showLocations ? 'is-on' : ''}}"><view class="toggle-knob"/></view>
+      </view>
+      <view class="helper-note sheet-note">Clearing this mini program's storage removes the diary. Export a backup to keep your memories safe. Sample photos ship inside the package; only the map needs a connection.</view>
+      <view wx:if="{{storageNote}}" class="helper-note sheet-note">{{storageNote}}</view>
+      <view class="secondary-button sheet-action" hover-class="pressed" bindtap="openLibrary" aria-role="button"><s-icon name="archive" size="15" color="{{ink}}"/><text>Manage & back up memories</text></view>
+      <view class="secondary-button sheet-action" hover-class="pressed" bindtap="freeUpSpace" aria-role="button" aria-label="Free up space"><s-icon name="trash-2" size="15" color="{{ink}}"/><text>Free up unused photo files</text></view>
+    </block>
+
+    <block wx:if="{{type === 'weekly'}}">
+      <view class="weekly-sheet-stats">
+        <view class="stat"><view class="stat-value weekly-big">{{stats.weekMeals}}</view><view class="stat-label weekly-muted">Meals remembered</view></view>
+        <view class="stat"><view class="stat-value weekly-big">{{stats.weekPlaces}}</view><view class="stat-label weekly-muted">Places explored</view></view>
+      </view>
+      <view class="weekly-chart" aria-label="Meal memories across the week">
+        <view wx:for="{{bars}}" wx:key="id" class="weekly-bar">
+          <view class="weekly-bar-fill {{item.highlight ? 'is-highlight' : ''}}" style="height:{{item.height}}%"/>
+          <text class="weekly-bar-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="weekly-reflection">A good week is made of little moments.</view>
+      <view class="list-card glass weekly-list">
+        <memory-row wx:for="{{recent}}" wx:key="id" memory="{{item}}" ink="{{muted}}" bind:select="openMemory"/>
+      </view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="goAdd" aria-role="button"><s-icon name="plus" size="17" color="{{buttonInk}}"/><text>Keep another moment</text></view>
+    </block>
+
+    <block wx:if="{{type === 'journey'}}">
+      <view class="journey-opening"><view>Not just the places.</view><view>The way we felt there.</view></view>
+      <view class="journey-timeline">
+        <view wx:for="{{timeline}}" wx:key="title" class="timeline-stop">
+          <view class="timeline-dot {{index === 0 ? 'is-current' : ''}}"/>
+          <view class="timeline-date">{{item.date}}</view>
+          <view class="timeline-title">{{item.title}}</view>
+          <view class="timeline-text">{{item.text}}</view>
+        </view>
+      </view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="goMap" aria-role="button"><s-icon name="map-pin" size="15" color="{{buttonInk}}"/><text>Explore our places</text></view>
+    </block>
+
+    <block wx:if="{{type === 'notifications'}}">
+      <view wx:if="{{settings.notificationsRead}}" class="caught-up">
+        <s-icon name="check" size="32" color="#82916c" stroke="1"/>
+        <view class="caught-up-title">All caught up.</view>
+        <view class="caught-up-text">Go make a memory worth keeping.</view>
+      </view>
+      <block wx:else>
+        <view wx:if="{{noteMemory}}" class="notification-row" hover-class="pressed" bindtap="openNoteMemory" aria-role="button">
+          <image class="notification-photo" src="{{noteMemory.photo}}" mode="aspectFill"/>
+          <view class="notification-copy">
+            <view class="notification-title">A moment with {{profile.partner}}</view>
+            <view class="notification-text">Remember that dinner at {{noteMemory.restaurant}}?</view>
+            <view class="notification-small">A little while ago</view>
+          </view>
+          <s-icon name="chevron-right" size="13" color="{{muted}}"/>
+        </view>
+        <view class="notification-row" hover-class="pressed" bindtap="openWeekly" aria-role="button">
+          <view class="notification-symbol"><s-icon name="sparkles" size="21" color="#7c8b67" stroke="1.2"/></view>
+          <view class="notification-copy">
+            <view class="notification-title">Your week, beautifully kept</view>
+            <view class="notification-text">Take a little look at your latest memories.</view>
+            <view class="notification-small">Your weekly reflection</view>
+          </view>
+          <s-icon name="chevron-right" size="13" color="{{muted}}"/>
+        </view>
+      </block>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="markRead" aria-role="button"><s-icon name="bell" size="14" color="{{buttonInk}}"/><text>{{settings.notificationsRead ? 'Back to the good stuff' : 'Mark all as read'}}</text></view>
+    </block>
+
+    <block wx:if="{{type === 'help'}}">
+      <view class="faq-list">
+        <view wx:for="{{faqs}}" wx:key="question" class="faq-item">
+          <view class="faq-question" hover-class="pressed" data-index="{{index}}" bindtap="toggleFaq" aria-role="button" aria-expanded="{{expanded === index}}">
+            <text>{{item.question}}</text>
+            <s-icon name="{{expanded === index ? 'chevron-up' : 'chevron-down'}}" size="14" color="#909b80"/>
+          </view>
+          <view wx:if="{{expanded === index}}" class="faq-answer">{{item.answer}}</view>
+        </view>
+      </view>
+      <view class="form-field">
+        <view class="field-label">A thought to make Savor better?</view>
+        <textarea class="field-textarea feedback-textarea" value="{{message}}" bindinput="onMessage" placeholder="We would love to hear it..." placeholder-class="placeholder" maxlength="1000"/>
+      </view>
+      <view class="primary-button sheet-action" hover-class="pressed" bindtap="sendFeedback" aria-role="button"><s-icon name="send" size="14" color="{{buttonInk}}"/><text>Save feedback note</text></view>
+      <view class="helper-note sheet-note">Feedback is kept on this device in this concept, not sent to a server.{{feedbackCount ? ' You have saved ' + feedbackCount + (feedbackCount === 1 ? ' note.' : ' notes.') : ''}}</view>
+    </block>
+  </view>
+</view>

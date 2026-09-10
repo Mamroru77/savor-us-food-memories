@@ -1,0 +1,101 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{reduceMotion ? 'reduce-motion' : ''}}">
+  <page-header title="Add a Memory" subtitle="Capture the flavor. Keep the feeling." close="{{true}}" ink="{{ink}}" bind:back="closeDraft"/>
+  <view class="add-body">
+    <view class="photo-row">
+      <view class="main-photo">
+        <image wx:if="{{draft.photos.length}}" class="main-photo-image" src="{{draft.photos[0]}}" mode="aspectFill" bindtap="replacePhoto"/>
+        <view wx:else class="photo-placeholder" hover-class="pressed" bindtap="replacePhoto" aria-role="button" aria-label="Add a photo">
+          <s-icon name="image" size="26" color="{{muted}}" stroke="1.2"/>
+          <text>A moment worth keeping</text>
+        </view>
+        <view wx:if="{{draft.photos.length}}" class="edit-photo" hover-class="pressed" bindtap="replacePhoto" aria-role="button" aria-label="Replace photo">
+          <s-icon name="pencil" size="11" color="#33332f" stroke="1.4"/>
+          <text>Edit</text>
+        </view>
+        <view wx:if="{{busy}}" class="photo-busy"><text>Preparing photo...</text></view>
+      </view>
+      <view class="more-photos">
+        <view class="add-photo {{draft.photos.length > 1 ? 'has-photo' : ''}}" hover-class="pressed" bindtap="addPhotos" aria-role="button" aria-label="Add more photos">
+          <image wx:if="{{draft.photos.length > 1}}" class="add-photo-image" src="{{draft.photos[draft.photos.length - 1]}}" mode="aspectFill"/>
+          <view class="add-photo-copy">
+            <s-icon name="plus" size="21" color="{{draft.photos.length > 1 ? '#ffffff' : muted}}" stroke="1.2"/>
+            <text>{{draft.photos.length > 1 ? draft.photos.length + ' photos' : 'Add more'}}</text>
+          </view>
+        </view>
+        <view wx:if="{{draft.photos.length > 1}}" class="remove-extra" hover-class="pressed" bindtap="removeLastPhoto" aria-role="button" aria-label="Remove last photo">
+          <s-icon name="x" size="12" color="#1b1c1a"/>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-field">
+      <view class="field-label">Restaurant</view>
+      <view class="input-wrap">
+        <input class="field-input" value="{{draft.restaurant}}" data-key="restaurant" bindinput="onField" placeholder="A place to remember" placeholder-class="placeholder" maxlength="70"/>
+        <view wx:if="{{draft.restaurant}}" class="icon-button input-clear" hover-class="pressed" bindtap="clearRestaurant" aria-role="button" aria-label="Clear restaurant">
+          <s-icon name="x" size="13" color="{{ink}}" stroke="1.2"/>
+        </view>
+      </view>
+      <picker wx:if="{{!knownPlace && draft.restaurant}}" mode="selector" range="{{cities}}" value="{{cityIndex}}" bindchange="onCity">
+        <view class="new-place" hover-class="pressed">
+          <s-icon name="map-pin" size="11" color="{{muted}}"/>
+          <text>New place in {{cities[cityIndex]}}</text>
+          <s-icon name="chevron-down" size="11" color="{{muted}}"/>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-field">
+      <view class="field-label">Notes</view>
+      <textarea class="field-textarea" value="{{draft.notes}}" data-key="notes" bindinput="onField" placeholder="What made it special?" placeholder-class="placeholder" maxlength="1500"/>
+    </view>
+
+    <view class="date-rating">
+      <view class="form-field">
+        <view class="field-label">Date</view>
+        <picker mode="date" value="{{draft.date}}" end="{{today}}" bindchange="onDate">
+          <view class="date-input" hover-class="pressed">
+            <text>{{dateLabel}}</text>
+            <s-icon name="calendar-days" size="13" color="{{ink}}" stroke="1.4"/>
+          </view>
+        </picker>
+      </view>
+      <view class="form-field">
+        <view class="field-label">Rating</view>
+        <view class="rating-input" aria-role="group" aria-label="Rating">
+          <view wx:for="{{stars}}" wx:key="value" class="rating-star" hover-class="pressed" data-value="{{item.value}}" bindtap="setRating" aria-role="button" aria-label="Rate {{item.value}}">
+            <s-icon name="star" size="15" color="{{item.filled ? ink : '#898a84'}}" fill="{{item.filled ? 'current' : 'none'}}" stroke="1.1"/>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-field tags-field">
+      <view class="field-label">Tags</view>
+      <view class="tag-list">
+        <view wx:for="{{draft.tags}}" wx:key="*this" class="tag" hover-class="pressed" data-tag="{{item}}" bindtap="removeTag" aria-role="button" aria-label="Remove {{item}}">{{item}}</view>
+        <view wx:if="{{draft.tags.length < 6}}" class="icon-button add-tag" hover-class="pressed" bindtap="toggleTagInput" aria-role="button" aria-label="Add a tag">
+          <s-icon name="plus" size="17" color="{{ink}}" stroke="1.3"/>
+        </view>
+      </view>
+      <view wx:if="{{showTagInput}}" class="tag-popover">
+        <view class="tag-input-row">
+          <input class="field-input tag-input" focus="{{true}}" value="{{tag}}" bindinput="onTagInput" bindconfirm="confirmTag" placeholder="Name a feeling..." placeholder-class="placeholder" maxlength="24" confirm-type="done"/>
+          <view class="icon-button" hover-class="pressed" bindtap="confirmTag" aria-role="button" aria-label="Confirm tag">
+            <s-icon name="check" size="16" color="{{ink}}"/>
+          </view>
+        </view>
+        <view class="suggested-tags">
+          <view wx:for="{{suggestions}}" wx:key="*this" class="suggested-tag" hover-class="pressed" data-tag="{{item}}" bindtap="addTag">{{item}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+    <view class="primary-button save-memory {{busy || saving ? 'is-disabled' : ''}}" hover-class="pressed" bindtap="save" aria-role="button" aria-label="Save memory">
+      <s-icon name="{{saving ? 'check' : 'sparkles'}}" size="14" color="{{buttonInk}}" stroke="1.5"/>
+      <text>{{busy ? 'Preparing photo...' : (saving ? 'Memory saved' : 'Save Memory')}}</text>
+    </view>
+    <view class="tab-spacer"/>
+  </view>
+</view>

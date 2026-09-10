@@ -1,0 +1,17 @@
+var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function date(value) {
+  if (typeof value !== 'string' || !value) return 'A little while ago';
+  var parts = value.split('-');
+  if (parts.length !== 3) return value;
+  var month = parseInt(parts[1], 10);
+  var day = parseInt(parts[2], 10);
+  if (!month || !day || month > 12) return value;
+  return MONTHS[month - 1] + ' ' + day + ', ' + parts[0];
+}
+
+function plural(count, one, many) {
+  return count + ' ' + (count === 1 ? one : many);
+}
+
+module.exports = { date: date, plural: plural };

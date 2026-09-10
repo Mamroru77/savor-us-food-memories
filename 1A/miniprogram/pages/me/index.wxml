@@ -1,0 +1,35 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}}">
+  <page-header ink="{{ink}}"/>
+  <view class="me-body">
+    <view class="profile-heading">
+      <image class="avatar profile-avatar" src="{{profile.avatar}}" mode="aspectFill"/>
+      <view class="profile-copy">
+        <view class="profile-name">{{profile.name}}</view>
+        <view class="profile-bio">{{profile.bio}}</view>
+      </view>
+      <view class="icon-button edit-profile" hover-class="pressed" bindtap="editProfile" aria-role="button" aria-label="Edit profile">
+        <s-icon name="pencil" size="17" color="{{ink}}" stroke="1.3"/>
+      </view>
+    </view>
+    <view class="profile-stats-card glass" hover-class="pressed" bindtap="openLibrary" aria-role="button" aria-label="Explore your memories">
+      <view class="profile-stats">
+        <view class="stat"><view class="stat-value">{{stats.meals}}</view><view class="stat-label">Meals</view></view>
+        <view class="stat stat-divider"><view class="stat-value">{{stats.places}}</view><view class="stat-label">Places</view></view>
+        <view class="stat stat-divider"><view class="stat-value">{{stats.countries}}</view><view class="stat-label">Countries</view></view>
+        <view class="stat stat-divider"><view class="stat-value">{{stats.years}}</view><view class="stat-label">Years</view></view>
+      </view>
+      <image class="memory-chart" src="{{chart}}" mode="scaleToFill" aria-hidden="{{true}}"/>
+    </view>
+    <view class="profile-menu glass">
+      <view wx:for="{{rows}}" wx:key="title" class="profile-menu-row" hover-class="pressed" data-url="{{item.url}}" bindtap="openRow" aria-role="button" aria-label="{{item.title}}">
+        <s-icon name="{{item.icon}}" size="17" color="{{ink}}" stroke="1.4"/>
+        <view class="profile-menu-copy">
+          <view class="profile-menu-title">{{item.title}}</view>
+          <view class="profile-menu-text">{{item.subtitle}}</view>
+        </view>
+        <s-icon name="chevron-right" size="15" color="{{ink}}" stroke="1.2"/>
+      </view>
+    </view>
+    <view class="tab-spacer"/>
+  </view>
+</view>

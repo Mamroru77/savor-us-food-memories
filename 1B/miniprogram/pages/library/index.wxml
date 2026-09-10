@@ -1,0 +1,35 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{reduceMotion ? 'reduce-motion' : ''}}">
+  <page-header title="{{filter === 'shared' ? 'Our memories' : 'Your memories'}}" subtitle="Small moments. A beautiful collection." back="{{true}}" ink="{{ink}}"/>
+  <view class="sheet-body">
+    <view class="library-tabs" aria-role="tablist">
+      <view wx:for="{{tabs}}" wx:key="value" class="library-tab {{filter === item.value ? 'is-active' : ''}}" hover-class="pressed" data-value="{{item.value}}" bindtap="setTab" aria-role="tab" aria-selected="{{filter === item.value}}">{{item.label}}</view>
+    </view>
+    <view class="sheet-search">
+      <s-icon name="search" size="14" color="#7b826e"/>
+      <input class="sheet-search-input" value="{{query}}" bindinput="onQuery" placeholder="Find a little moment..." placeholder-class="placeholder" confirm-type="search" aria-label="Search your memories"/>
+    </view>
+    <view class="library-count">{{count}} {{count === 1 ? 'moment' : 'moments'}} worth keeping</view>
+    <view class="list-card glass">
+      <memory-row wx:for="{{list}}" wx:key="id" memory="{{item}}" ink="{{muted}}" bind:select="openMemory"/>
+      <view wx:if="{{!list.length}}" class="empty-state">
+        <view>Nothing here just yet.</view>
+        <view>Try another search or save a favorite.</view>
+      </view>
+    </view>
+    <view wx:if="{{error}}" class="form-error" aria-role="alert">{{error}}</view>
+    <view class="backup-actions">
+      <view class="secondary-button backup-export" hover-class="pressed" bindtap="exportBackup" aria-role="button" aria-label="Export backup">
+        <s-icon name="arrow-down-to-line" size="14" color="{{ink}}"/>
+        <text>Export backup</text>
+      </view>
+      <view class="secondary-button" hover-class="pressed" bindtap="importBackup" aria-role="button" aria-label="Import backup">
+        <s-icon name="arrow-up-from-line" size="14" color="{{ink}}"/>
+        <text>Import</text>
+      </view>
+    </view>
+    <view class="local-note">
+      <s-icon name="lock-keyhole" size="10" color="#989b8e"/>
+      <text>Kept on this device. Always yours.</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,35 @@
+<view class="page {{dusk ? 'theme-dusk' : ''}} {{reduceMotion ? 'reduce-motion' : ''}}">
+  <page-header ink="{{ink}}">
+    <view class="icon-button notification-button" hover-class="pressed" bindtap="openNotifications" aria-role="button" aria-label="Notifications">
+      <s-icon name="bell" size="20" color="{{ink}}" stroke="1.4"/>
+      <view wx:if="{{showDot}}" class="notification-dot"/>
+    </view>
+  </page-header>
+  <view class="home-body">
+    <view class="home-intro">
+      <view class="home-title">Savor</view>
+      <view class="home-title">the moment.</view>
+      <view class="home-lead">Collect beautiful meals and the memories that come with them.</view>
+    </view>
+    <view class="weekly-card glass" hover-class="pressed" bindtap="openWeekly" aria-role="button" aria-label="View this week">
+      <view class="weekly-heading">
+        <text>This week</text>
+        <s-icon name="notebook-pen" size="14" color="{{ink}}" stroke="1.3"/>
+      </view>
+      <view class="weekly-stats">
+        <view class="stat stat-left"><view class="stat-value">{{stats.weekMeals}}</view><view class="stat-label">Meals</view></view>
+        <view class="stat stat-left weekly-divider"><view class="stat-value">{{stats.weekPlaces}}</view><view class="stat-label">Places</view></view>
+      </view>
+      <image class="weekly-photo" src="{{weeklyPhoto}}" mode="aspectFill"/>
+    </view>
+    <view class="section-title">Recent</view>
+    <view class="list-card glass">
+      <memory-row wx:for="{{recent}}" wx:key="id" memory="{{item}}" ink="{{muted}}" bind:select="openMemory"/>
+      <view wx:if="{{!recent.length}}" class="empty-state" hover-class="pressed" bindtap="goAdd">
+        <view>Your story starts with a meal.</view>
+        <view class="empty-link">Add your first memory</view>
+      </view>
+    </view>
+    <view class="tab-spacer"/>
+  </view>
+</view>

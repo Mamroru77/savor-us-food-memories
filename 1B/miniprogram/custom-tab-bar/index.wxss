@@ -1,0 +1,18 @@
+.tab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; display: flex; align-items: center;
+  height: 136rpx; padding: 0 16rpx; padding-bottom: env(safe-area-inset-bottom); box-sizing: content-box;
+  background: rgba(247, 247, 245, 0.92); border-top: 1rpx solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.tab-bar.theme-dusk { background: rgba(72, 82, 70, 0.95); border-color: rgba(202, 211, 189, 0.15); }
+.tab-item { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10rpx; font-size: 21rpx; line-height: 26rpx; color: #828480; }
+.tab-item.is-active { color: #171a16; font-weight: 600; }
+.theme-dusk .tab-item { color: #a3af98; }
+.theme-dusk .tab-item.is-active { color: #f0f4e9; }
+.tab-add { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; }
+.tab-add-button {
+  width: 108rpx; height: 108rpx; margin-top: -8rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 3rpx solid rgba(255, 255, 255, 0.95); background: linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(217, 217, 215, 0.85));
+  box-shadow: 0 14rpx 22rpx -4rpx rgba(59, 62, 61, 0.22), 0 0 0 14rpx rgba(248, 248, 246, 0.3);
+}
+.theme-dusk .tab-add-button { box-shadow: 0 14rpx 22rpx -4rpx rgba(20, 24, 18, 0.4), 0 0 0 14rpx rgba(90, 100, 84, 0.35); }
