@@ -3,7 +3,7 @@
 > 两个人共同记录的美食生活地图，把一起吃过的每一家店，留在地图、时间和照片里。
 
 <p align="center">
-  <img src="./references/design/垃圾虫和小小琪的觅食记小程序五屏展示.png" alt="垃圾虫和小小琪的觅食记设计预览" width="900" />
+  <img src="./references/design/0.savor-concept.png" alt="垃圾虫和小小琪的觅食记设计预览" width="900" />
 </p>
 
 ## ✨ 关于项目
