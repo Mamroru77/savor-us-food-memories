@@ -1,0 +1,8 @@
+{
+  "component": true,
+  "usingComponents": {
+    "s-icon": "/components/icon/index",
+    "memory-row": "/components/memory-row/index"
+  },
+  "styleIsolation": "apply-shared"
+}

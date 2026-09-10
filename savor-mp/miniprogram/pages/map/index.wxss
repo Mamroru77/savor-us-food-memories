@@ -1,0 +1,221 @@
+/* Map — port of screens.css “Map” (×2.5); Leaflet replaced by native <map>.
+   Header is in normal flow (same padding-top source as the Us screen) and
+   the native map starts below the search bar, so its attribution watermark
+   can never overlap the heading. */
+.map-screen { overflow: hidden; height: 100vh; }
+
+.memory-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.map-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  background: linear-gradient(160deg, #e8e9e4, #dfe0dd);
+  padding: 0 90rpx;
+  box-sizing: border-box;
+}
+.map-fallback-title { font-family: var(--serif); font-size: 46rpx; margin-top: 20rpx; }
+.map-fallback-text { font-size: 25rpx; color: #565752; text-align: center; line-height: 40rpx; }
+.map-fallback-button { margin-top: 20rpx; font-size: 27rpx; text-decoration: underline; text-underline-offset: 8rpx; }
+
+.map-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  padding-left: 35rpx;
+  padding-right: 35rpx;
+}
+.map-top-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 380rpx;
+  pointer-events: none;
+  background: linear-gradient(rgba(238, 237, 235, 0.94) 30%, rgba(238, 237, 235, 0));
+  z-index: 2;
+}
+.dusk .map-top-fade { background: linear-gradient(rgba(72, 81, 65, 0.92), rgba(72, 81, 65, 0)); }
+.map-heading { margin: 0 8rpx; }
+.map-heading .heading-title { display: block; }
+.map-heading .heading-sub { display: block; }
+
+.map-search {
+  position: relative;
+  margin-top: 26rpx;
+  height: 95rpx;
+  border-radius: 37rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 0 22rpx 0 30rpx;
+  background: rgba(255, 255, 255, 0.81);
+  z-index: 6;
+  box-shadow: 0 22rpx 40rpx -25rpx rgba(66, 67, 63, 0.33);
+  box-sizing: border-box;
+}
+.dusk .map-search { background: rgba(70, 82, 63, 0.91); }
+.map-search-input { flex: 1; width: 100%; min-width: 0; font-size: 24rpx; height: 100%; }
+.map-search-placeholder { color: #7b7e78; }
+.map-clear { width: 40rpx; display: flex; justify-content: center; }
+.map-filter-button {
+  width: 56rpx;
+  height: 62rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.filter-active { background: #d5dccf; }
+
+.map-filter-menu {
+  position: absolute;
+  z-index: 8;
+  left: 42rpx;
+  right: 42rpx;
+  border-radius: 37rpx;
+  background: rgba(248, 248, 244, 0.96);
+  padding: 30rpx;
+  box-shadow: 0 25rpx 60rpx rgba(67, 73, 60, 0.2);
+  box-sizing: border-box;
+}
+.dusk .map-filter-menu { background: rgba(70, 82, 63, 0.95); }
+.map-filter-label { display: block; margin-bottom: 15rpx; font-size: 22rpx; color: #75796e; }
+.map-filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 22rpx 10rpx;
+  font-size: 27rpx;
+  border-bottom: 1rpx solid rgba(89, 92, 79, 0.05);
+  box-sizing: border-box;
+}
+.map-filter-option:last-child { border-bottom: 0; }
+
+.recenter-map {
+  position: absolute;
+  z-index: 5;
+  right: 42rpx;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.89);
+  box-shadow: 0 12rpx 22rpx rgba(85, 85, 85, 0.13);
+}
+.dusk .recenter-map { background: rgba(72, 83, 64, 0.94); }
+
+.map-results-count {
+  position: absolute;
+  z-index: 3;
+  left: 52rpx;
+  font-size: 22rpx;
+  padding: 8rpx 15rpx;
+  border-radius: 10rpx;
+  background: rgba(247, 247, 241, 0.74);
+  color: #656d5d;
+}
+
+.place-card {
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: calc(var(--tab-clearance) + 20rpx);
+  height: 315rpx;
+  border-radius: 45rpx;
+  z-index: 5;
+  background: rgba(251, 250, 247, 0.83);
+  box-shadow: 0 25rpx 60rpx -22rpx rgba(68, 71, 63, 0.32);
+}
+.dusk .place-card { background: rgba(70, 82, 63, 0.91); }
+.place-open {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 17rpx;
+  width: 100%;
+  height: 100%;
+  padding: 30rpx 30rpx 30rpx 40rpx;
+  box-sizing: border-box;
+}
+.place-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.place-name {
+  font-family: var(--serif);
+  font-size: 50rpx;
+  line-height: 60rpx;
+  letter-spacing: -0.8rpx;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.place-line {
+  font-size: 24rpx;
+  line-height: 40rpx;
+  color: #565752;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.place-date { margin-top: 30rpx; font-size: 25rpx; }
+.place-photo {
+  width: 212rpx;
+  height: 245rpx;
+  border-radius: 30rpx;
+  flex-shrink: 0;
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.4);
+}
+.bookmark-place {
+  position: absolute;
+  right: 260rpx;
+  bottom: 35rpx;
+  width: 55rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-empty {
+  position: absolute;
+  z-index: 4;
+  left: 50rpx;
+  right: 50rpx;
+  bottom: calc(var(--tab-clearance) + 40rpx);
+  border-radius: 45rpx;
+  padding: 55rpx 38rpx;
+  text-align: center;
+  background: rgba(248, 247, 241, 0.91);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.map-empty-title { font-family: var(--serif); font-size: 58rpx; line-height: 68rpx; margin-top: 30rpx; }
+.map-empty-text { margin: 15rpx 0 38rpx; font-size: 25rpx; color: #565752; }
+.map-empty-button { font-size: 27rpx; text-decoration: underline; text-underline-offset: 10rpx; }

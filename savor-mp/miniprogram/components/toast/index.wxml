@@ -1,0 +1,7 @@
+<view wx:if="{{toast}}" class="savor-toast">
+  <s-icon name="check" size="40" color="#fcfcf7" stroke="1.6" />
+  <text class="savor-toast-text">{{toast.message}}</text>
+  <view class="toast-dismiss" bindtap="dismiss" aria-role="button" aria-label="Dismiss notification">
+    <s-icon name="x" size="38" color="#d6dbc9" stroke="1.5" />
+  </view>
+</view>

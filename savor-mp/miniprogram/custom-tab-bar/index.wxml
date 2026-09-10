@@ -1,0 +1,42 @@
+<view class="tab-bar {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'theme-quiet' : ''}}">
+  <block wx:for="{{list}}" wx:key="pagePath">
+    <!-- central Add button -->
+    <view
+      wx:if="{{item.add}}"
+      class="tab-add"
+      data-path="{{item.pagePath}}"
+      data-index="{{index}}"
+      bindtap="onTabTap"
+      aria-role="button"
+      aria-label="Add a memory"
+    >
+      <view class="tab-add-button" hover-class="add-press" hover-start-time="0" hover-stay-time="120">
+        <s-icon name="plus" size="66" color="#111510" stroke="1.6" />
+      </view>
+    </view>
+    <!-- regular tab -->
+    <view
+      wx:else
+      class="tab-item {{selected === index ? 'is-active' : ''}}"
+      data-path="{{item.pagePath}}"
+      data-index="{{index}}"
+      bindtap="onTabTap"
+      hover-class="tab-press"
+      hover-start-time="0"
+      hover-stay-time="100"
+      aria-role="tab"
+      aria-label="{{item.text}}"
+    >
+      <view class="tab-icon-wrap">
+        <s-icon
+          name="{{selected === index ? item.activeIcon : item.icon}}"
+          size="{{item.size}}"
+          color="{{selected === index ? (dusk ? '#f0f4e9' : '#171a16') : (dusk ? '#a3af98' : '#828480')}}"
+          fill="{{selected === index && (item.activeIcon === 'users-round' || item.activeIcon === 'user-round' || item.activeIcon === 'map-shield') ? (dusk ? '#f0f4e9' : '#171a16') : 'none'}}"
+          stroke="1.2"
+        />
+      </view>
+      <text class="tab-label">{{item.text}}</text>
+    </view>
+  </block>
+</view>

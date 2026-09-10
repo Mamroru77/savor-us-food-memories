@@ -1,0 +1,368 @@
+<view wx:if="{{show}}" class="sheet-modal">
+  <view class="sheet-scrim" bindtap="close" catchtouchmove="noop" aria-role="button" aria-label="Dismiss dialog" />
+  <view class="sheet-panel {{dusk ? 'theme-dusk-panel' : ''}}" catchtouchmove="noop">
+    <view class="sheet-handle" />
+    <view class="sheet-heading">
+      <view class="sheet-heading-copy">
+        <text class="sheet-title">{{title}}</text>
+        <text class="sheet-subtitle">{{subtitle}}</text>
+      </view>
+      <view class="sheet-close" bindtap="close" aria-role="button" aria-label="Close dialog">
+        <s-icon name="x" size="42" color="#1b1c1a" stroke="1.4" />
+      </view>
+    </view>
+
+    <scroll-view class="sheet-content" scroll-y type="list" enhanced show-scrollbar="{{false}}">
+      <!-- ================= MEMORY DETAIL ================= -->
+      <block wx:if="{{type === 'memory'}}">
+        <view wx:if="{{!detail}}" class="empty-state">This memory is no longer in your diary.</view>
+        <view wx:else class="memory-detail">
+          <image class="detail-photo" src="{{detail.images[photoIndex]}}" mode="aspectFill" />
+          <view wx:if="{{detail.images.length > 1}}" class="photo-thumbnails">
+            <view
+              wx:for="{{detail.images}}"
+              wx:key="index"
+              class="photo-thumb {{photoIndex === index ? 'is-selected' : ''}}"
+              data-index="{{index}}"
+              bindtap="onPhotoSelect"
+              aria-role="button"
+              aria-label="View photo {{index + 1}}"
+            >
+              <image class="photo-thumb-img" src="{{item}}" mode="aspectFill" />
+            </view>
+          </view>
+          <view class="detail-meta">
+            <text>{{detail.dateLabel}}</text>
+            <view class="detail-rating">
+              <s-icon wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" name="star"
+                size="30" color="#1b1c1a"
+                fill="{{item <= detail.memory.rating ? '#1b1c1a' : 'none'}}"
+                class="{{item > detail.memory.rating ? 'unfilled-star' : ''}}" />
+            </view>
+          </view>
+          <view wx:if="{{detail.showLocations}}" class="detail-location">
+            <s-icon name="map-pin" size="30" color="#565752" stroke="1.4" />
+            <text>{{detail.location}}</text>
+          </view>
+          <text class="detail-notes">{{detail.notes}}</text>
+          <view class="detail-tags">
+            <text wx:for="{{detail.memory.tags}}" wx:key="*this" class="detail-tag">{{item}}</text>
+          </view>
+          <view class="detail-action-row">
+            <view class="detail-action {{detail.memory.liked ? 'is-active' : ''}}" bindtap="onLove" aria-role="button">
+              <s-icon name="heart" size="40" fill="{{detail.memory.liked ? '#1b1c1a' : 'none'}}" stroke="1.4" />
+              <text>{{detail.memory.liked ? 'Loved' : 'Love'}}</text>
+            </view>
+            <view class="detail-action {{detail.memory.saved ? 'is-active' : ''}}" bindtap="onSave" aria-role="button">
+              <s-icon name="bookmark" size="40" fill="{{detail.memory.saved ? '#1b1c1a' : 'none'}}" stroke="1.4" />
+              <text>{{detail.memory.saved ? 'Saved' : 'Save place'}}</text>
+            </view>
+            <view class="detail-action {{detail.memory.shared ? 'is-active' : ''}}" bindtap="onShare" aria-role="button">
+              <s-icon name="users-round" size="40" fill="{{detail.memory.shared ? '#1b1c1a' : 'none'}}" stroke="1.4" />
+              <text>{{detail.memory.shared ? 'In our space' : 'Share with us'}}</text>
+            </view>
+          </view>
+          <block wx:if="{{confirmDelete}}">
+            <view class="delete-confirmation">
+              <text class="delete-question">Let this memory go? This cannot be undone.</text>
+              <view class="delete-row">
+                <view class="secondary-button" bindtap="onDeleteKeep">Keep it</view>
+                <view class="danger-button" bindtap="onDeleteConfirm">Remove memory</view>
+              </view>
+            </view>
+          </block>
+          <view wx:else class="quiet-delete" bindtap="onDeleteAsk" aria-role="button">
+            <s-icon name="trash-2" size="30" color="#99988e" stroke="1.4" />
+            <text>Remove memory</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= LIBRARY ================= -->
+      <block wx:if="{{type === 'library'}}">
+        <view class="library-sheet">
+          <view class="library-tabs">
+            <view wx:for="{{['all', 'shared', 'favorites']}}" wx:key="*this"
+              class="library-tab {{libraryTab === item ? 'is-active' : ''}}"
+              data-value="{{item}}" bindtap="onLibraryTab">
+              {{item === 'all' ? 'All memories' : item === 'shared' ? 'Shared' : 'Favorites'}}
+            </view>
+          </view>
+          <view class="sheet-search">
+            <s-icon name="search" size="35" color="#7b826e" stroke="1.5" />
+            <input class="sheet-search-input" placeholder="Find a little moment..." value="{{libraryQuery}}" bindinput="onLibraryQuery" />
+          </view>
+          <text class="library-count">{{libraryRows.length}} {{libraryRows.length === 1 ? 'moment' : 'moments'}} worth keeping</text>
+          <view class="library-list">
+            <memory-row wx:for="{{libraryRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onLibraryOpen" />
+            <view wx:if="{{!libraryRows.length}}" class="empty-state">Nothing here just yet.<view>Try another search or save a favorite.</view></view>
+          </view>
+          <view wx:if="{{libraryError}}" class="form-error">{{libraryError}}</view>
+          <view class="backup-actions">
+            <view class="secondary-button backup-primary" bindtap="onExport" aria-role="button">
+              <s-icon name="arrow-down-to-line" size="35" stroke="1.4" />
+              <text>Export backup</text>
+            </view>
+            <view class="secondary-button" bindtap="onImport" aria-role="button">
+              <s-icon name="arrow-up-from-line" size="35" stroke="1.4" />
+              <text>Import</text>
+            </view>
+          </view>
+          <view class="local-note">
+            <s-icon name="lock-keyhole" size="25" color="#989b8e" stroke="1.5" />
+            <text>Kept on this device. Always yours.</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= EDIT PROFILE ================= -->
+      <block wx:if="{{type === 'profile'}}">
+        <view class="settings-form">
+          <view class="edit-avatar" bindtap="onAvatarChange" aria-role="button" aria-label="Change profile photo">
+            <image class="edit-avatar-img" src="{{profileAvatar}}" mode="aspectFill" />
+            <view class="edit-avatar-badge">
+              <s-icon name="camera" size="30" color="#1b1c1a" stroke="1.5" />
+            </view>
+          </view>
+          <view class="form-field">
+            <text class="form-label">Your name</text>
+            <input class="form-input profile-input" value="{{profileName}}" placeholder="Jamie Lin" maxlength="32" bindinput="onProfileName" />
+          </view>
+          <view class="form-field">
+            <text class="form-label">A little about you</text>
+            <input class="form-input profile-input" value="{{profileBio}}" placeholder="Where next?" maxlength="55" bindinput="onProfileBio" />
+          </view>
+          <view class="primary-button {{profileUploading || !profileName ? 'ghosted' : ''}}" bindtap="onProfileSave" aria-role="button">
+            <s-icon name="check" size="35" color="#ffffff" stroke="1.6" />
+            <text>{{profileUploading ? 'Preparing photo...' : 'Save profile'}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= TOGETHER ================= -->
+      <block wx:if="{{type === 'together'}}">
+        <view class="settings-form">
+          <view class="sheet-couple">
+            <image class="sheet-couple-avatar" src="{{state.profile.avatar}}" mode="aspectFill" />
+            <s-icon name="heart" size="55" color="#df816b" fill="#df816b" stroke="1.3" />
+            <image class="sheet-couple-avatar" src="{{state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg'}}" mode="aspectFill" />
+          </view>
+          <text class="together-message">The best things are better shared.</text>
+          <view class="form-field">
+            <text class="form-label">Your person</text>
+            <input class="form-input profile-input" value="{{partner}}" maxlength="30" bindinput="onPartnerInput" />
+          </view>
+          <view class="form-field">
+            <text class="form-label">Our story began</text>
+            <picker mode="date" value="{{since}}" end="{{today}}" bindchange="onSinceChange">
+              <view class="form-input picker-value">{{since}}</view>
+            </picker>
+          </view>
+          <text class="helper-note">Your shared space lives in this local diary. Memories you share appear in Us.</text>
+          <view class="primary-button" bindtap="onTogetherSave" aria-role="button">
+            <s-icon name="heart" size="35" color="#ffffff" fill="#ffffff" stroke="1.4" />
+            <text>Save our story</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= PREFERENCES ================= -->
+      <block wx:if="{{type === 'preferences'}}">
+        <view class="settings-form">
+          <view class="form-field">
+            <text class="form-label">At your table</text>
+            <picker range="{{dietaryOptions}}" value="{{dietaryIndex}}" bindchange="onDietaryChange">
+              <view class="form-input picker-value">{{dietary}}</view>
+            </picker>
+          </view>
+          <view class="cuisine-fieldset">
+            <text class="form-label cuisine-legend">Cuisines you love</text>
+            <view class="cuisine-options">
+              <view wx:for="{{cuisineOptions}}" wx:key="*this"
+                class="cuisine-chip {{cuisines.indexOf(item) >= 0 ? 'is-selected' : ''}}"
+                data-value="{{item}}" bindtap="onCuisineTap" aria-role="button" aria-pressed="{{cuisines.indexOf(item) >= 0}}">
+                <text>{{item}}</text>
+                <s-icon wx:if="{{cuisines.indexOf(item) >= 0}}" name="check" size="28" color="#49553a" stroke="1.6" />
+              </view>
+            </view>
+          </view>
+          <view class="preference-tip">
+            <s-icon name="sparkles" size="42" color="#818873" stroke="1.2" />
+            <text>Make it your own. Add personal tags like Date Night or Sunday Ritual when you save a memory.</text>
+          </view>
+          <view class="primary-button" bindtap="onPreferencesSave" aria-role="button">
+            <s-icon name="check" size="35" color="#ffffff" stroke="1.6" />
+            <text>Save preferences</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= SETTINGS ================= -->
+      <block wx:if="{{type === 'settings'}}">
+        <view class="settings-panel-content">
+          <text class="field-section-title">Make yourself at home</text>
+          <view class="theme-options">
+            <view wx:for="{{['pearl', 'dusk']}}" wx:key="*this"
+              class="theme-option {{theme === item ? 'is-selected' : ''}}"
+              data-value="{{item}}" bindtap="onThemeTap" aria-role="button" aria-pressed="{{theme === item}}">
+              <view class="theme-preview theme-{{item}}" />
+              <text>{{item === 'pearl' ? 'Pearl' : 'Dusk'}}</text>
+              <s-icon wx:if="{{theme === item}}" name="check" size="30" color="#1b1c1a" stroke="1.5" />
+            </view>
+          </view>
+          <view class="toggle-row" bindtap="onRemindersToggle" aria-role="switch" aria-checked="{{reminders}}">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">In-app reminders</text>
+              <text class="toggle-copy-small">A nudge to notice the little moments.</text>
+            </view>
+            <view class="toggle-track {{reminders ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="toggle-row" bindtap="onQuietToggle" aria-role="switch" aria-checked="{{reduceMotion}}">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">Quiet motion</text>
+              <text class="toggle-copy-small">Keep transitions simple and gentle.</text>
+            </view>
+            <view class="toggle-track {{reduceMotion ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="app-signature">
+            <text class="app-signature-name">Savor</text>
+            <text class="app-signature-line">For the meals that become memories.</text>
+            <text class="app-signature-version">Version 1.0 / Your personal food diary</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= PRIVACY ================= -->
+      <block wx:if="{{type === 'privacy'}}">
+        <view class="privacy-content">
+          <view class="privacy-intro">
+            <s-icon name="lock-keyhole" size="68" color="#81926b" stroke="1" />
+            <text class="privacy-title">Your moments. Your choice.</text>
+            <text class="privacy-text">This diary is saved on this device, not on a server. There is no account or cloud sync.</text>
+          </view>
+          <view class="toggle-row" bindtap="onPrivateToggle" aria-role="switch" aria-checked="{{privateByDefault}}">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">Private by default</text>
+              <text class="toggle-copy-small">Keep new memories just for you.</text>
+            </view>
+            <view class="toggle-track {{privateByDefault ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="toggle-row" bindtap="onLocationsToggle" aria-role="switch" aria-checked="{{showLocations}}">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">Location in details</text>
+              <text class="toggle-copy-small">Display the city on memory pages.</text>
+            </view>
+            <view class="toggle-track {{showLocations ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <text class="helper-note privacy-note">Clearing app data will remove this diary. Download a backup to keep your memories safe. Map tiles need an internet connection.</text>
+          <view class="secondary-button full-width" bindtap="onManageMemories" aria-role="button">
+            <s-icon name="archive" size="35" stroke="1.4" />
+            <text>Manage & back up memories</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= WEEKLY ================= -->
+      <block wx:if="{{type === 'weekly'}}">
+        <view class="weekly-sheet">
+          <view class="weekly-sheet-stats">
+            <view class="stat"><text class="stat-strong weekly-big">{{weeklyStats.meals}}</text><text>Meals remembered</text></view>
+            <view class="stat"><text class="stat-strong weekly-big">{{weeklyStats.places}}</text><text>Places explored</text></view>
+          </view>
+          <view class="weekly-chart">
+            <view wx:for="{{weeklyBars}}" wx:key="index" class="weekly-bar">
+              <view class="weekly-bar-fill {{item.highlight ? 'is-highlight' : ''}}" style="height: {{item.height}}%" />
+              <text class="weekly-bar-letter">{{item.letter}}</text>
+            </view>
+          </view>
+          <text class="weekly-reflection">A good week is made of little moments.</text>
+          <view class="weekly-memory-list">
+            <memory-row wx:for="{{weeklyRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onLibraryOpen" />
+          </view>
+          <view class="primary-button" bindtap="onWeeklyAdd" aria-role="button">
+            <s-icon name="plus" size="42" color="#ffffff" stroke="1.4" />
+            <text>Keep another moment</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= JOURNEY ================= -->
+      <block wx:if="{{type === 'journey'}}">
+        <view class="journey-sheet">
+          <text class="journey-opening">Not just the places.<view />The way we felt there.</text>
+          <view class="journey-timeline">
+            <view wx:for="{{journeyStops}}" wx:key="index" class="timeline-stop">
+              <view class="timeline-dot {{item.fresh ? 'is-fresh' : ''}}" />
+              <text class="timeline-date">{{item.date}}</text>
+              <text class="timeline-title">{{item.title}}</text>
+              <text class="timeline-text">{{item.text}}</text>
+            </view>
+          </view>
+          <view class="primary-button" bindtap="onJourneyMap" aria-role="button">
+            <s-icon name="map-pin" size="37" color="#ffffff" stroke="1.5" />
+            <text>Explore our places</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= NOTIFICATIONS ================= -->
+      <block wx:if="{{type === 'notifications'}}">
+        <view class="notifications-sheet">
+          <block wx:if="{{state.settings.notificationsRead}}">
+            <view class="caught-up">
+              <s-icon name="check" size="76" color="#82916c" stroke="1" />
+              <text class="caught-up-title">All caught up.</text>
+              <text class="caught-up-text">Go make a memory worth keeping.</text>
+            </view>
+          </block>
+          <block wx:else>
+            <view wx:for="{{notifRows}}" wx:key="title" class="notification-row" data-kind="{{item.kind}}" data-id="{{item.memoryId}}" bindtap="onNotificationRow" aria-role="button">
+              <image wx:if="{{item.kind === 'memory'}}" class="notification-photo" src="{{item.photoSrc}}" mode="aspectFill" />
+              <view wx:else class="notification-symbol">
+                <s-icon name="sparkles" size="52" color="#7c8b67" stroke="1.2" />
+              </view>
+              <view class="notification-copy">
+                <text class="notification-title">{{item.title}}</text>
+                <text class="notification-text">{{item.text}}</text>
+                <text class="notification-when">{{item.when}}</text>
+              </view>
+              <s-icon name="chevron-right" size="32" color="#565752" stroke="1.3" />
+            </view>
+          </block>
+          <view class="primary-button notifications-cta" bindtap="onMarkRead" aria-role="button">
+            <s-icon name="bell" size="35" color="#ffffff" stroke="1.4" />
+            <text>{{state.settings.notificationsRead ? 'Back to the good stuff' : 'Mark all as read'}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= HELP ================= -->
+      <block wx:if="{{type === 'help'}}">
+        <view class="help-sheet">
+          <view class="faq-list">
+            <view wx:for="{{faqs}}" wx:key="question" class="faq-item">
+              <view class="faq-question" data-index="{{index}}" bindtap="onFaqTap" aria-role="button" aria-expanded="{{faqExpanded === index}}">
+                <text>{{item.question}}</text>
+                <s-icon name="chevron-down" size="35" color="#909b80" stroke="1.5" class="faq-chevron {{faqExpanded === index ? 'is-open' : ''}}" />
+              </view>
+              <view wx:if="{{faqExpanded === index}}" class="faq-answer">
+                <text class="faq-answer-text">{{item.answer}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="feedback-form">
+            <view class="form-field">
+              <text class="form-label">A thought to make Savor better?</text>
+              <textarea class="form-textarea feedback-textarea" value="{{feedbackMessage}}" placeholder="We would love to hear it..." maxlength="1000" bindinput="onFeedbackInput" />
+            </view>
+            <view class="primary-button" bindtap="onFeedbackSave" aria-role="button">
+              <s-icon name="send" size="35" color="#ffffff" stroke="1.5" />
+              <text>Save feedback note</text>
+            </view>
+          </view>
+          <text class="helper-note">Feedback is kept locally in this concept, not sent to a server.{{state.feedback.length > 0 ? ' You have saved ' + state.feedback.length + (state.feedback.length === 1 ? ' note.' : ' notes.') : ''}}</text>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+</view>

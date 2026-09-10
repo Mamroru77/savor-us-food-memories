@@ -1,0 +1,16 @@
+
+/* Font tokens on :host — the single source of truth lives in app.wxss;
+   this fallback keeps type consistent even if variable inheritance is
+   interrupted by the component boundary. */
+:host {
+  --serif: 'SavorSerif', Georgia, 'Times New Roman', 'Songti SC', 'STSong', 'SimSun', serif;
+  --sans: 'DMSans', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  font-family: var(--sans);
+}
+.toast-dismiss {
+  padding: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

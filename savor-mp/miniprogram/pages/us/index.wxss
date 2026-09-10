@@ -1,0 +1,172 @@
+/* Us — port of screens.css “Shared space” (×2.5). */
+.us-screen {
+  padding-left: 35rpx;
+  padding-right: 35rpx;
+  padding-bottom: calc(var(--tab-clearance) + 16rpx);
+}
+.us-heading { margin: 0 8rpx; }
+.us-heading .heading-title { display: block; }
+.us-heading .heading-sub { display: block; }
+.us-settings {
+  width: 66rpx;
+  height: 66rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -2rpx;
+  margin-right: -8rpx;
+}
+
+.together-card {
+  height: 332rpx;
+  border-radius: 42rpx;
+  margin-top: 45rpx;
+  padding: 42rpx 38rpx 25rpx;
+  box-shadow: 0 22rpx 48rpx -30rpx rgba(91, 91, 85, 0.15);
+  background: rgba(255, 254, 252, 0.35);
+  box-sizing: border-box;
+}
+.dusk .together-card { background: var(--glass); }
+.couple-avatars { display: flex; justify-content: center; gap: 35rpx; align-items: center; }
+.avatar {
+  width: 132rpx;
+  height: 132rpx;
+  border: 5rpx solid rgba(255, 255, 255, 0.91);
+  border-radius: 50%;
+  box-shadow: 0 5rpx 8rpx rgba(85, 85, 85, 0.07);
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.4);
+}
+.couple-heart {
+  height: 72rpx;
+  width: 72rpx;
+  border-radius: 50%;
+  background: rgba(239, 194, 181, 0.23);
+  border: 1rpx solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2rpx 8rpx rgba(255, 255, 255, 0.53);
+}
+.couple-heart.love-sent { background: rgba(242, 200, 186, 0.4); }
+.together-count {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 15rpx;
+}
+.together-label { font-size: 24rpx; line-height: 35rpx; color: #565752; }
+.together-days { display: flex; align-items: baseline; gap: 12rpx; }
+.together-days-strong { font-family: var(--serif); font-size: 70rpx; line-height: 84rpx; letter-spacing: -1rpx; }
+.together-days-unit { font-size: 25rpx; }
+
+.journey-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 355rpx;
+  margin-top: 38rpx;
+  border-radius: 42rpx;
+  padding: 35rpx 35rpx 0;
+  background: rgba(255, 254, 252, 0.43);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.dusk .journey-card { background: var(--glass); }
+.journey-title {
+  position: absolute;
+  top: 35rpx;
+  left: 35rpx;
+  font-size: 29rpx;
+  line-height: 40rpx;
+}
+.journey-stats {
+  position: absolute;
+  display: flex;
+  left: 35rpx;
+  right: 35rpx;
+  top: 100rpx;
+}
+.journey-stats .stat { flex: 1; font-size: 25rpx; }
+.journey-stats .stat:nth-child(2), .journey-stats .stat:nth-child(3) { border-left: 1rpx solid rgba(66, 68, 62, 0.065); padding-left: 28rpx; }
+.journey-strong { font-size: 65rpx; line-height: 75rpx; }
+.journey-latest {
+  position: absolute;
+  bottom: 0;
+  left: 35rpx;
+  right: 32rpx;
+  height: 120rpx;
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  align-items: center;
+  border-top: 1rpx solid rgba(76, 78, 71, 0.07);
+}
+.journey-latest-label {
+  font-size: 23rpx;
+  color: #565752;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.journey-latest-photo {
+  height: 92rpx;
+  width: 92rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.shared-section { margin-top: 58rpx; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 5rpx; }
+.section-title { font-family: var(--serif); font-size: 32rpx; line-height: 40rpx; }
+.section-link { font-size: 26rpx; color: #565752; }
+.shared-gallery { width: 100%; margin-top: 22rpx; }
+.shared-gallery-inner { display: flex; gap: 17rpx; padding: 0 8rpx 22rpx 0; }
+.shared-photo-card {
+  width: 250rpx;
+  height: 342rpx;
+  position: relative;
+  border-radius: 35rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1rpx solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10rpx 20rpx rgba(79, 82, 67, 0.2);
+}
+.shared-photo-open { height: 100%; width: 100%; position: relative; }
+.shared-photo-open > image { height: 100%; width: 100%; background: rgba(255,255,255,.4); }
+.shared-photo-shade {
+  position: absolute;
+  top: 30%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(rgba(15, 17, 13, 0.03) 30%, rgba(15, 17, 13, 0.78));
+}
+.shared-photo-copy {
+  position: absolute;
+  bottom: 22rpx;
+  left: 20rpx;
+  right: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  color: #fff;
+}
+.shared-photo-name { font-size: 24rpx; line-height: 30rpx; font-weight: 450; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.shared-photo-date { font-size: 20rpx; line-height: 28rpx; color: rgba(255, 255, 255, 0.94); }
+.shared-like {
+  position: absolute;
+  bottom: 17rpx;
+  right: 15rpx;
+  width: 50rpx;
+  height: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.shared-like.is-liked { background: rgba(255, 255, 255, 0.22); }
+.shared-empty { color: #565752; width: 70%; }

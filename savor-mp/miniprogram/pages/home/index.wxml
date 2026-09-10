@@ -1,0 +1,68 @@
+<view class="screen {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- dynamic ambient light: the “This week” photo, heavily blurred and
+     biased behind the weekly card — the frosted cards melt THIS, so the
+     glass tint follows the featured memory automatically -->
+  <image class="ambient-photo" src="{{weeklyPhoto}}" mode="aspectFill" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="home-screen" style="padding-top: {{headerTop}}px">
+      <!-- notification bell -->
+      <view class="notification-button" bindtap="onNotifications" aria-role="button" aria-label="Notifications">
+        <s-icon name="bell" size="45" stroke="1.4" />
+        <view wx:if="{{hasNotifications}}" class="notification-dot" />
+      </view>
+
+      <!-- hero intro -->
+      <view class="home-intro">
+        <view class="home-intro-title">
+          <text>Savor</text>
+          <text>the moment.</text>
+        </view>
+        <text class="home-intro-sub">Collect beautiful meals and the memories that come with them.</text>
+      </view>
+
+      <!-- this week -->
+      <view class="weekly-card glass" bindtap="onWeekly" aria-role="button" aria-label="View this week's memories">
+        <view class="weekly-heading">
+          <text class="weekly-heading-text">This week</text>
+          <s-icon name="notebook-pen" size="32" stroke="1.3" />
+        </view>
+        <view class="weekly-stats">
+          <view class="stat weekly-stat">
+            <text class="stat-strong weekly-strong">{{weeklyMeals}}</text>
+            <text>Meals</text>
+          </view>
+          <view class="stat weekly-stat weekly-stat-divided">
+            <text class="stat-strong weekly-strong">{{weeklyPlaces}}</text>
+            <text>Places</text>
+          </view>
+        </view>
+        <image class="weekly-photo" src="{{weeklyPhoto}}" mode="aspectFill" />
+      </view>
+
+      <!-- recent -->
+      <view class="recent-section">
+        <text class="recent-title">Recent</text>
+        <view class="recent-list glass">
+          <memory-row wx:for="{{recentRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onMemoryOpen" />
+          <view wx:if="{{!memories.length}}" class="empty-state" bindtap="onEmptyAdd">
+            Your story starts with a meal.
+            <view class="empty-action">Add your first memory</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

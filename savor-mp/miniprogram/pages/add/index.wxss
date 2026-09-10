@@ -1,0 +1,237 @@
+/* Add — port of screens.css “Add a memory” (×2.5). */
+.add-screen {
+  padding-left: 48rpx;
+  padding-right: 48rpx;
+  padding-bottom: calc(var(--tab-clearance) + 16rpx);
+}
+
+.add-heading { display: flex; gap: 17rpx; align-items: flex-start; margin-left: -12rpx; }
+.close-add {
+  width: 58rpx;
+  height: 62rpx;
+  margin-top: 5rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.add-heading-copy { display: flex; flex-direction: column; }
+.add-title {
+  font-family: var(--serif);
+  font-size: 51rpx;
+  line-height: 62rpx;
+  letter-spacing: -0.5rpx;
+}
+.add-subtitle { font-size: 26rpx; margin-top: 2rpx; color: #565752; white-space: nowrap; }
+
+.photo-editor-row {
+  height: 430rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 50rpx 0 38rpx;
+}
+.main-photo-wrap {
+  width: 445rpx;
+  height: 430rpx;
+  flex: 0 0 445rpx;
+  position: relative;
+  border-radius: 42rpx;
+  overflow: hidden;
+}
+.main-memory-photo { width: 100%; height: 100%; }
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30rpx;
+  width: 100%;
+  height: 100%;
+  border: 2rpx dashed rgba(255, 255, 255, 0.9);
+  border-radius: 42rpx;
+  color: #565752;
+  font-size: 25rpx;
+  background: rgba(255, 255, 255, 0.17);
+  box-sizing: border-box;
+}
+.edit-photo {
+  position: absolute;
+  right: 22rpx;
+  top: 22rpx;
+  height: 60rpx;
+  min-width: 112rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  font-size: 23rpx;
+  border-radius: 37rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  background: rgba(249, 248, 245, 0.77);
+  color: #33332f;
+  box-sizing: border-box;
+}
+.photo-uploading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(247, 245, 240, 0.65);
+}
+.more-photos-wrap { position: relative; }
+.add-photo {
+  height: 320rpx;
+  width: 175rpx;
+  border: 3rpx dashed rgba(255, 255, 255, 0.93);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+  box-sizing: border-box;
+}
+.add-photo > image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.6; }
+.add-photo-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 17rpx;
+  align-items: center;
+  font-size: 24rpx;
+  color: #565752;
+  position: relative;
+  z-index: 1;
+}
+.add-photo.has-photo .add-photo-copy { color: #ffffff; text-shadow: 0 2rpx 10rpx #555; }
+.remove-extra {
+  position: absolute;
+  width: 50rpx;
+  height: 50rpx;
+  top: -15rpx;
+  right: -12rpx;
+  border-radius: 50%;
+  background: #f4f2ed;
+  z-index: 2;
+  box-shadow: 0 5rpx 12rpx rgba(0, 0, 0, 0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restaurant-field { margin-top: 8rpx; }
+.input-wrap { position: relative; }
+.input-wrap .form-input { padding-right: 72rpx; }
+.input-clear {
+  position: absolute;
+  top: 8rpx;
+  right: 10rpx;
+  width: 65rpx;
+  height: 65rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.new-place-location { display: flex; align-items: center; gap: 12rpx; margin-top: 8rpx; font-size: 22rpx; color: #565752; }
+.city-picker {
+  height: 58rpx;
+  padding: 5rpx 12rpx;
+  font-size: 22rpx;
+  border-radius: 15rpx;
+  background: var(--field);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  display: flex;
+  align-items: center;
+}
+
+.notes-field { margin-top: 25rpx; }
+.notes-textarea { height: 120rpx; min-height: 120rpx; }
+
+.date-rating-row { display: flex; gap: 32rpx; margin-top: 25rpx; }
+.date-rating-row > .form-field { flex: 1; min-width: 0; }
+.date-input {
+  height: 82rpx;
+  padding: 0 22rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  border-radius: 27rpx;
+  background: var(--field);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+  font-size: 26rpx;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.rating-input {
+  height: 82rpx;
+  padding: 0 15rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.75);
+  border-radius: 27rpx;
+  background: var(--field);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+.rating-star { width: 50rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; }
+
+.tags-field { position: relative; margin-top: 25rpx; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 12rpx; align-items: center; min-height: 60rpx; }
+.tag {
+  height: 60rpx;
+  padding: 0 25rpx;
+  border-radius: 40rpx;
+  background: linear-gradient(150deg, rgba(214, 214, 211, 0.8), rgba(204, 204, 201, 0.55));
+  font-size: 25rpx;
+  line-height: 55rpx;
+  border: 1rpx solid rgba(236, 235, 232, 0.6);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.dusk .tag { background: rgba(161, 175, 140, 0.18); border-color: rgba(207, 219, 197, 0.13); }
+.add-tag {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: rgba(212, 212, 208, 0.5);
+  margin-left: 2rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tag-popover {
+  position: absolute;
+  bottom: 82rpx;
+  left: 0;
+  width: 100%;
+  padding: 25rpx;
+  border-radius: 32rpx;
+  background: rgba(248, 247, 243, 0.97);
+  z-index: 5;
+  box-sizing: border-box;
+}
+.dusk .tag-popover { background: rgba(66, 77, 62, 0.97); }
+.tag-input-row { display: flex; gap: 12rpx; align-items: center; }
+.tag-input { min-height: 72rpx; }
+.tag-confirm {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 212, 208, 0.4);
+}
+.suggested-tags { display: flex; gap: 20rpx; flex-wrap: wrap; margin-top: 22rpx; }
+.suggested-tag { font-size: 25rpx; color: #62665b; text-decoration: underline; text-underline-offset: 8rpx; }
+.dusk .suggested-tag { color: #bfc3b7; }
+
+.save-memory { height: 100rpx; margin-top: 38rpx; }

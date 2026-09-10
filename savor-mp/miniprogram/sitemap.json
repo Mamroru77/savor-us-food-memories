@@ -1,0 +1,4 @@
+{
+  "desc": "Savor food diary",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

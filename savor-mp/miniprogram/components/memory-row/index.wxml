@@ -1,0 +1,9 @@
+<view class="memory-row" bindtap="onTap" aria-role="button" aria-label="{{memory.restaurant}}">
+  <image class="memory-row-photo" src="{{photoSrc}}" mode="aspectFill" binderror="onPhotoError" />
+  <view class="memory-row-copy">
+    <text class="memory-row-title">{{memory.restaurant}}</text>
+    <text class="memory-row-line">{{dateLabel}}</text>
+    <text class="memory-row-line">{{location}}</text>
+  </view>
+  <s-icon name="chevron-right" size="35" color="#565752" stroke="1.35" />
+</view>

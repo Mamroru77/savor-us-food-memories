@@ -1,0 +1,119 @@
+<view class="screen map-screen {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- immersive: the native map fills the whole screen under everything
+       (Leaflet must never enter a mini program) -->
+  <map
+    wx:if="{{!mapError}}"
+    id="savor-map"
+    class="memory-map"
+    latitude="48.8535"
+    longitude="2.3392"
+    scale="13"
+    min-scale="3"
+    max-scale="18"
+    markers="{{markers}}"
+    bindmarkertap="onMarkerTap"
+    binderror="onMapError"
+    show-location="{{false}}"
+    enable-poi="{{true}}"
+    enable-building="{{true}}"
+  />
+  <!-- offline / error fallback: must not depend on any remote resource -->
+  <view wx:else class="map-fallback">
+    <s-icon name="map-shield" size="96" color="#8a9184" stroke="1.1" />
+    <text class="map-fallback-title">Map preview unavailable</text>
+    <text class="map-fallback-text">Your memories are still here — check your connection.</text>
+    <view class="map-fallback-button" bindtap="onMapRetry" aria-role="button">Retry</view>
+  </view>
+
+  <!-- top fade so the heading stays readable over map tiles -->
+  <view class="map-top-fade" />
+
+  <!-- header floats above the map; same headerTop source as the Us screen,
+       so “Map First” always sits at the exact height of “Us” -->
+  <view class="map-head" style="padding-top: {{headerTop}}px">
+    <view class="screen-heading map-heading">
+      <view>
+        <text class="heading-title">Map First</text>
+        <text class="heading-sub">Explore where memories live.</text>
+      </view>
+    </view>
+
+    <!-- search -->
+    <view class="map-search glass">
+      <s-icon name="search" size="37" color="#565752" stroke="1.5" />
+      <input
+        class="map-search-input"
+        placeholder="Search restaurants, places, tags"
+        placeholder-class="map-search-placeholder"
+        value="{{query}}"
+        bindinput="onQuery"
+        confirm-type="search"
+      />
+      <view wx:if="{{query}}" class="map-clear" bindtap="onClearSearch" aria-role="button" aria-label="Clear search">
+        <s-icon name="x" size="30" color="#565752" stroke="1.4" />
+      </view>
+      <view class="map-filter-button {{filter !== 'all' ? 'filter-active' : ''}}" bindtap="onToggleFilters" aria-role="button" aria-label="Filter map memories">
+        <s-icon name="sliders-horizontal" size="35" stroke="1.4" />
+      </view>
+    </view>
+  </view>
+
+  <!-- filter menu -->
+  <view wx:if="{{showFilters}}" class="map-filter-menu glass" style="top: {{overlayTop}}px">
+    <text class="map-filter-label">Show on the map</text>
+    <view class="map-filter-option" data-value="all" bindtap="onFilterPick">
+      <text>All memories</text>
+      <s-icon wx:if="{{filter === 'all'}}" name="check" size="35" stroke="1.5" />
+    </view>
+    <view class="map-filter-option" data-value="favorites" bindtap="onFilterPick">
+      <text>Favorites only</text>
+      <s-icon wx:if="{{filter === 'favorites'}}" name="check" size="35" stroke="1.5" />
+    </view>
+    <view class="map-filter-option" data-value="shared" bindtap="onFilterPick">
+      <text>Our shared memories</text>
+      <s-icon wx:if="{{filter === 'shared'}}" name="check" size="35" stroke="1.5" />
+    </view>
+  </view>
+
+  <!-- recenter -->
+  <view class="recenter-map glass" style="top: {{overlayTop}}px" bindtap="recenter" aria-role="button" aria-label="Recenter on Paris">
+    <s-icon name="navigation" size="40" stroke="1.4" />
+  </view>
+
+  <!-- results count -->
+  <text wx:if="{{query && resultsCount > 0}}" class="map-results-count" style="top: {{overlayTop + 25}}px">{{resultsCount}} {{resultsCount === 1 ? 'memory' : 'memories'}} found</text>
+
+  <!-- place card -->
+  <view wx:if="{{selected}}" class="place-card glass">
+    <view class="place-open" bindtap="onPlaceOpen" aria-role="button" aria-label="View your memory at {{selected.restaurant}}">
+      <view class="place-copy">
+        <text class="place-name">{{selected.restaurant}}</text>
+        <text class="place-line">{{selected.tags[0] || 'A favorite'}} · {{selected.tags[0] === 'Coffee' ? 'Cafe' : 'Bistro'}}</text>
+        <text class="place-line">{{distanceLabel}} · {{selected.city}}, {{selected.country}}</text>
+        <text class="place-date">{{selected.dateLabel}}</text>
+      </view>
+      <image class="place-photo" src="{{selectedPhoto}}" mode="aspectFill" />
+    </view>
+    <view class="bookmark-place" bindtap="onBookmark" aria-role="button" aria-label="{{selectedSaved ? 'Remove from saved places' : 'Save this place'}}">
+      <s-icon name="bookmark" size="37" fill="{{selectedSaved ? '#1b1c1a' : 'none'}}" stroke="1.3" />
+    </view>
+  </view>
+
+  <!-- empty state -->
+  <view wx:if="{{!selected}}" class="map-empty glass">
+    <s-icon name="search" size="60" color="#777b71" stroke="1" />
+    <text class="map-empty-title">No memories here yet.</text>
+    <text class="map-empty-text">Try another place, restaurant, or tag.</text>
+    <view class="map-empty-button" bindtap="recenter">Show all memories</view>
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

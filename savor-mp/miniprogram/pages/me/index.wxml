@@ -1,0 +1,54 @@
+<view class="screen {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <image class="ambient-photo" src="/images/le-comptoir.jpg" mode="aspectFill" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="me-screen" style="padding-top: {{headerTop + 10}}px">
+      <!-- profile heading -->
+      <view class="profile-heading">
+        <image class="profile-avatar" src="{{profile.avatar}}" mode="aspectFill" />
+        <view class="profile-copy">
+          <text class="profile-name">{{profile.name}}</text>
+          <text class="profile-bio">{{profile.bio}}</text>
+        </view>
+        <view class="edit-profile-button" bindtap="onEditProfile" aria-role="button" aria-label="Edit profile">
+          <s-icon name="pencil" size="42" stroke="1.3" />
+        </view>
+      </view>
+
+      <!-- stats card -->
+      <view class="profile-stats-card glass" bindtap="onStatsCard" aria-role="button" aria-label="Explore your food memories">
+        <view class="profile-stats">
+          <view class="stat"><text class="stat-strong me-strong">{{meals}}</text><text>Meals</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">{{places}}</text><text>Places</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">9</text><text>Countries</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">2</text><text>Years</text></view>
+        </view>
+        <image class="memory-chart" src="{{chartUri}}" mode="scaleToFill" />
+      </view>
+
+      <!-- menu -->
+      <view class="profile-menu glass">
+        <view wx:for="{{menuRows}}" wx:key="title" class="profile-menu-row" data-sheet="{{item.sheet}}" bindtap="onMenuRow" aria-role="button">
+          <s-icon name="{{item.icon}}" size="40" stroke="1.4" />
+          <view class="profile-menu-copy">
+            <text class="profile-menu-title">{{item.title}}</text>
+            <text class="profile-menu-sub">{{item.subtitle}}</text>
+          </view>
+          <s-icon name="chevron-right" size="38" stroke="1.2" />
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "s-icon": "/components/icon/index",
+    "s-toast": "/components/toast/index"
+  }
+}

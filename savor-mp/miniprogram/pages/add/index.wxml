@@ -1,0 +1,131 @@
+<view class="screen {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- ambient follows the photo being captured: swaps live as the
+       user picks/removes draft photos (falls back to the house photo) -->
+  <image class="ambient-photo" src="{{draft.photos[0] || '/images/le-comptoir.jpg'}}" mode="aspectFill" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="add-screen" style="padding-top: {{headerTop}}px">
+      <view class="add-heading">
+        <view class="close-add" bindtap="onClose" aria-role="button" aria-label="Close and keep draft">
+          <s-icon name="x" size="45" stroke="1.5" />
+        </view>
+        <view class="add-heading-copy">
+          <text class="add-title">Add a Memory</text>
+          <text class="add-subtitle">Capture the flavor. Keep the feeling.</text>
+        </view>
+      </view>
+
+      <view class="memory-form">
+        <!-- photos -->
+        <view class="photo-editor-row">
+          <view class="main-photo-wrap {{!draft.photos.length ? 'no-photo' : ''}}">
+            <image wx:if="{{draft.photos.length}}" class="main-memory-photo" src="{{draft.photos[0]}}" mode="aspectFill" />
+            <view wx:else class="photo-placeholder" bindtap="onReplacePhoto" aria-role="button" aria-label="Choose a photo">
+              <s-icon name="plus" size="65" stroke="1.2" color="#565752" />
+              <text>A moment worth keeping</text>
+            </view>
+            <view wx:if="{{draft.photos.length}}" class="edit-photo" bindtap="onReplacePhoto" aria-role="button">
+              <s-icon name="pencil" size="27" stroke="1.4" />
+              <text>Edit</text>
+            </view>
+            <view wx:if="{{uploading}}" class="photo-uploading">
+              <s-icon name="loader" size="55" stroke="1.6" class="spin" />
+            </view>
+          </view>
+          <view class="more-photos-wrap">
+            <view class="add-photo {{draft.photos.length > 1 ? 'has-photo' : ''}}" bindtap="onAddMore" aria-role="button" aria-label="Add more photos">
+              <image wx:if="{{draft.photos.length > 1}}" src="{{draft.photos[draft.photos.length - 1]}}" mode="aspectFill" />
+              <view class="add-photo-copy">
+                <s-icon name="plus" size="52" stroke="1.2" color="{{draft.photos.length > 1 ? '#ffffff' : '#565752'}}" />
+                <text>{{draft.photos.length > 1 ? draft.photos.length + ' photos' : 'Add more'}}</text>
+              </view>
+            </view>
+            <view wx:if="{{draft.photos.length > 1}}" class="remove-extra" bindtap="onRemoveExtra" aria-role="button" aria-label="Remove last added photo">
+              <s-icon name="x" size="30" stroke="1.3" />
+            </view>
+          </view>
+        </view>
+
+        <!-- restaurant -->
+        <view class="form-field restaurant-field">
+          <text class="form-label">Restaurant</text>
+          <view class="input-wrap">
+            <input class="form-input" value="{{draft.restaurant}}" placeholder="A place to remember" placeholder-class="form-placeholder" maxlength="70" bindinput="onRestaurant" />
+            <view wx:if="{{draft.restaurant}}" class="input-clear" bindtap="onRestaurantClear" aria-role="button" aria-label="Clear restaurant">
+              <s-icon name="x" size="32" stroke="1.2" />
+            </view>
+          </view>
+          <view wx:if="{{!knownPlace && draft.restaurant}}" class="new-place-location">
+            <s-icon name="map-pin" size="27" stroke="1.4" />
+            <text>New place in</text>
+            <picker range="{{cityNames}}" value="{{cityIndex}}" bindchange="onCity">
+              <view class="city-picker">{{draft.city}}</view>
+            </picker>
+          </view>
+        </view>
+
+        <!-- notes -->
+        <view class="form-field notes-field">
+          <text class="form-label">Notes</text>
+          <textarea class="form-textarea notes-textarea" value="{{draft.notes}}" placeholder="What made it special?" placeholder-class="form-placeholder" maxlength="1500" bindinput="onNotes" />
+        </view>
+
+        <!-- date + rating -->
+        <view class="date-rating-row">
+          <view class="form-field">
+            <text class="form-label">Date</text>
+            <picker mode="date" value="{{draft.date}}" end="{{today}}" bindchange="onDate">
+              <view class="date-input">
+                <text>{{draft.date ? draft.date : 'Choose a date'}}</text>
+                <s-icon name="calendar-days" size="32" stroke="1.4" />
+              </view>
+            </picker>
+          </view>
+          <view class="form-field">
+            <text class="form-label">Rating</text>
+            <view class="rating-input">
+              <view wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" class="rating-star" data-value="{{item}}" bindtap="onRating" aria-role="button" aria-label="Rate {{item}} stars">
+                <s-icon name="star" size="37" stroke="1.1" color="#898a84" fill="{{item <= draft.rating ? '#1b1c1a' : 'none'}}" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- tags -->
+        <view class="form-field tags-field">
+          <text class="form-label">Tags</text>
+          <view class="tag-list">
+            <view wx:for="{{draft.tags}}" wx:key="*this" class="tag" data-value="{{item}}" bindtap="onRemoveTag" aria-role="button" aria-label="Remove {{item}} tag">{{item}}</view>
+            <view wx:if="{{draft.tags.length < 6}}" class="add-tag" bindtap="onToggleTagInput" aria-role="button" aria-label="Add a tag">
+              <s-icon name="plus" size="42" stroke="1.3" />
+            </view>
+          </view>
+          <view wx:if="{{showTagInput}}" class="tag-popover glass">
+            <view class="tag-input-row">
+              <input class="form-input tag-input" value="{{tag}}" placeholder="Name a feeling..." placeholder-class="form-placeholder" maxlength="24" bindinput="onTagInput" bindconfirm="onTagConfirm" focus="{{showTagInput}}" />
+              <view class="tag-confirm" bindtap="onTagConfirm" aria-role="button" aria-label="Confirm tag">
+                <s-icon name="check" size="40" stroke="1.5" />
+              </view>
+            </view>
+            <view class="suggested-tags">
+              <text wx:for="{{suggestedTags}}" wx:key="*this" class="suggested-tag" data-value="{{item}}" bindtap="onSuggestedTag">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <text wx:if="{{error}}" class="form-error">{{error}}</text>
+
+        <view class="primary-button save-memory {{uploading || saving ? 'ghosted' : ''}}" bindtap="onSave" aria-role="button">
+          <s-icon wx:if="{{uploading}}" name="loader" size="35" color="#ffffff" stroke="1.5" class="spin" />
+          <s-icon wx:elif="{{saving}}" name="check" size="35" color="#ffffff" stroke="1.5" />
+          <s-icon wx:else name="sparkles" size="35" color="#ffffff" stroke="1.5" />
+          <text>{{uploading ? 'Preparing photo...' : saving ? 'Memory saved' : 'Save Memory'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-toast />
+</view>

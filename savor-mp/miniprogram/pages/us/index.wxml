@@ -1,0 +1,87 @@
+<view class="screen {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <image class="ambient-photo" src="/images/paris-evening.jpg" mode="aspectFill" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="us-screen" style="padding-top: {{headerTop}}px">
+      <view class="screen-heading us-heading">
+        <view>
+          <text class="heading-title">Us</text>
+          <text class="heading-sub">Our space. Our memories.</text>
+        </view>
+        <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="Shared space settings">
+          <s-icon name="settings" size="42" stroke="1.35" />
+        </view>
+      </view>
+
+      <!-- together card -->
+      <view class="together-card glass">
+        <view class="couple-avatars">
+          <image class="avatar" src="{{avatar}}" mode="aspectFill" />
+          <view class="couple-heart {{loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{loveSent ? 'Remove your little love' : 'Add a little love'}}">
+            <s-icon name="heart" size="47" color="{{loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.4" />
+          </view>
+          <image class="avatar" src="/images/alex.jpg" mode="aspectFill" />
+        </view>
+        <view class="together-count" bindtap="onTogether" aria-role="button">
+          <text class="together-label">Together for</text>
+          <view class="together-days">
+            <text class="together-days-strong">{{days}}</text>
+            <text class="together-days-unit">days</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- journey card -->
+      <view class="journey-card glass" bindtap="onJourney" aria-role="button">
+        <text class="journey-title">Our Journey</text>
+        <view class="journey-stats">
+          <view class="stat"><text class="stat-strong journey-strong">{{meals}}</text><text>Meals</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{places}}</text><text>Places</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">6</text><text>Countries</text></view>
+        </view>
+        <view class="journey-latest">
+          <text class="journey-latest-label">Latest: {{latestLabel}}</text>
+          <image class="journey-latest-photo" src="{{journeyPhoto}}" mode="aspectFill" />
+        </view>
+      </view>
+
+      <!-- shared moments -->
+      <view class="shared-section">
+        <view class="section-heading">
+          <text class="section-title">Shared Moments</text>
+          <text class="section-link" bindtap="onSeeAll">See all</text>
+        </view>
+        <scroll-view class="shared-gallery" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="shared-gallery-inner">
+            <view wx:for="{{sharedRows}}" wx:key="id" class="shared-photo-card">
+              <view class="shared-photo-open" data-id="{{item.memory.id}}" bindtap="onSharedOpen" aria-role="button" aria-label="Open shared memory at {{item.memory.restaurant}}">
+                <image src="{{item.photoSrc}}" mode="aspectFill" />
+                <view class="shared-photo-shade" />
+                <view class="shared-photo-copy">
+                  <text class="shared-photo-name">{{item.memory.restaurant}}</text>
+                  <text class="shared-photo-date">{{item.dateLabel}}</text>
+                </view>
+              </view>
+              <view class="shared-like {{item.memory.liked ? 'is-liked' : ''}}" data-id="{{item.memory.id}}" bindtap="onSharedLike" aria-role="button" aria-label="{{item.memory.liked ? 'Unlike' : 'Like'}} {{item.memory.restaurant}}">
+                <s-icon name="heart" size="35" color="#ffffff" fill="{{item.memory.liked ? '#e55d48' : 'rgba(15,17,13,0.35)'}}" stroke="1.3" />
+              </view>
+            </view>
+            <view wx:if="{{!sharedRows.length}}" class="empty-state shared-empty">Good food is even better together.<view>Share a memory to start your story.</view></view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

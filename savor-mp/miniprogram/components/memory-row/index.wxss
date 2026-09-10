@@ -1,0 +1,54 @@
+
+/* Font tokens on :host — the single source of truth lives in app.wxss;
+   this fallback keeps type consistent even if variable inheritance is
+   interrupted by the component boundary. */
+:host {
+  --serif: 'SavorSerif', Georgia, 'Times New Roman', 'Songti SC', 'STSong', 'SimSun', serif;
+  --sans: 'DMSans', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  font-family: var(--sans);
+}
+/* web: .memory-row (screens.css) — 64px min-height, 11px gap, hairline dividers */
+.memory-row {
+  width: 100%;
+  min-height: 160rpx;
+  display: flex;
+  align-items: center;
+  gap: 27rpx;
+  border-bottom: 1rpx solid rgba(52, 53, 52, 0.07);
+  padding: 17rpx 0;
+  box-sizing: border-box;
+}
+.memory-row:last-child { border-bottom: 0; }
+
+.memory-row-photo {
+  height: 115rpx;
+  width: 110rpx;
+  flex-shrink: 0;
+  border-radius: 25rpx;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.memory-row-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  font-size: 23rpx;
+  line-height: 32rpx;
+  color: #565752;
+}
+.memory-row-title {
+  font-weight: 500;
+  font-size: 29rpx;
+  line-height: 38rpx;
+  margin-bottom: 5rpx;
+  color: #1b1c1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.memory-row-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
