@@ -35,3 +35,4 @@ One uncropped Add -> Me -> Add recording with page top and the full VP1 TabBar v
 - Add -> Me: peer primes completed before `wx.switchTab` with `prepareMs=18`; the real Add/Me SVG glyphs completed in 504/509ms with a 480ms frame budget.
 - Me -> Add: peer primes completed before `wx.switchTab` with `prepareMs=14`; the real glyphs completed in 502/502ms with a 480ms frame budget.
 - Screenshots and exact environment are recorded in `reports/captures/devtools-h1-manifest.json`.
+- Commit `c4e1401` was pushed and its 1,577,583-byte preview package was delivered to the logged-in developer WeChat account. Delivery is not device acceptance.

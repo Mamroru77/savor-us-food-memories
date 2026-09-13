@@ -4,7 +4,7 @@
   "sourceControl": {
     "branch": "fix-9.13",
     "baselineCommit": "861587c9049ea6958653c31b477c7619dd5aa381",
-    "experimentCommit": null,
+    "experimentCommit": "c4e140133d3709499e1b05512b44d2aa9548e3ed",
     "dirtyDuringCapture": true,
     "reason": "H1 was captured before its independent experiment commit."
   },
@@ -42,5 +42,12 @@
     { "path": "reports/captures/devtools-h1-me.png", "sha256": "bd643ccb20d6aacedb3c4aca86fc7bc3305b0c09c76c6f98f56805533ee98bfa" },
     { "path": "reports/captures/devtools-h1-add.png", "sha256": "b31e2f7a74f216417af047c004ded76f4f49b30d53ba99aeb39d3550ffbf6ad6" }
   ],
-  "deviceStatus": "NOT_EXECUTED"
+  "devicePreviewPush": {
+    "recordedAt": "2026-09-14T02:27:27.3909586+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1577583,
+    "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
+  },
+  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
 }
