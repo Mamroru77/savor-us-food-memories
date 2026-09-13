@@ -35,5 +35,12 @@
     { "path": "reports/captures/devtools-g2-me.png", "sha256": "dae0657bc64c235eb2be3bfd692e31e58285717265d1edcf8b31ada775078c61" },
     { "path": "reports/captures/devtools-g2-add-return.png", "sha256": "f3456b6a4ca3756b598b3a5e07387c82ac5807d0c1acdc5a0f4826c002e54fd3" }
   ],
-  "deviceStatus": "NOT_EXECUTED"
+  "devicePreviewPush": {
+    "recordedAt": "2026-09-14T00:11:50.8017030+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1577502,
+    "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
+  },
+  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
 }
