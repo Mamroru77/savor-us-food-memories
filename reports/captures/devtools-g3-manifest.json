@@ -49,5 +49,15 @@
     "packageBytes": 1577956,
     "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
   },
-  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
+  "deviceCapture": {
+    "path": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug15.mp4",
+    "sha256": "61d2b06cf26dde7628eb109fd503c47da54f0162e96f94dec3a07d171e3bf326",
+    "captureCommit": "125dc2f4b9857e705875a0dd5119708b24c6e604",
+    "captureDirty": false,
+    "sequence": "Add -> Me -> Add",
+    "jsonLog": null,
+    "report": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug15-analysis/vbug15-evidence.md",
+    "verdict": "REJECTED: G3 was restored stale with the page and did not reliably carry the current command before the old endpoint flash."
+  },
+  "deviceStatus": "REJECTED_AND_REMOVED"
 }

@@ -5,7 +5,6 @@
       <text wx:if="{{viewCommand.active && renderRevision === viewCommand.revision && painting && frameSrc && frameVisible}}" class="visual-probe-frame">F G{{frameSlots[0].id}}</text>
       <text wx:else class="visual-probe-static">S {{viewCommand.quiet || fallbackOnly || !viewCommand.key || (viewCommand.active && settledEntryKey === viewCommand.key) ? 'T' : 'O'}} {{fallbackOnly ? 'ERR' : ''}}</text>
     </view>
-    <cover-view wx:if="{{nativeTextProbe && viewCommand}}" class="visual-probe-native-text" aria-hidden="true">G3 I{{viewCommand.probeIcon}} K{{viewCommand.key}} R{{viewCommand.revision}} A{{viewCommand.active ? 1 : 0}} F{{probeProgress}}</cover-view>
   <view class="morph-box" style="width:{{size}}rpx;height:{{size}}rpx">
     <image wx:if="{{viewCommand && viewCommand.active && renderRevision === viewCommand.revision && painting && frameSrc}}" wx:for="{{frameSlots}}" wx:key="id" class="morph-svg" binderror="svgError" bindload="svgLoaded" data-generation="{{item.id}}" src="{{frameSrc}}" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx;opacity:{{frameVisible ? 1 : 0}}" />
     <view wx:if="{{!viewCommand || !viewCommand.active || renderRevision !== viewCommand.revision || !painting || !frameVisible}}" class="morph-fallback">

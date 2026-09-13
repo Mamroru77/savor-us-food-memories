@@ -24,17 +24,6 @@ test('parent badge identifies actual publishing instance not guessed owner',()=>
  const bar=read('custom-tab-bar/index.wxml');assert(bar.includes('B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}}'));
  assert(read('custom-tab-bar/index.wxss').includes('pointer-events:none'));
 });
-test('G3 native text receives current identity and progress on the existing SVG frame commit',()=>{
- const bar=read('custom-tab-bar/index.wxml'),logic=read('components/morph-icon/index.js');
- assert.equal((bar.match(/native-text-probe="\{\{index === 2 \|\| index === 4\}\}"/g)||[]).length,2);
- assert(bar.includes('VP1 G3 B{{viewState.probeBar}}'));
- assert(logic.includes('nativeTextProbe:{type:Boolean,value:false}'));
- assert(logic.includes('patch.probeProgress=Math.round(100*this._svgMotion.elapsed/this._svgMotion.duration)'));
- assert.equal((w.match(/<cover-view /g)||[]).length,1);assert.equal((w.match(/<cover-image /g)||[]).length,0);
- assert(w.includes('G3 I{{viewCommand.probeIcon}} K{{viewCommand.key}} R{{viewCommand.revision}} A{{viewCommand.active ? 1 : 0}} F{{probeProgress}}'));
- assert(w.includes('<image wx:if="{{viewCommand && viewCommand.active'));
- const rule=css.match(/\.visual-probe-native-text \{([^}]+)\}/)[1];assert(rule.includes('pointer-events:none'));
-});
 for(const name of ['add','me'])test(name+' page marker counts instance and show visits without sharing business data',()=>{
  const src=read('pages/'+name+'/index.js');const a=src.indexOf('this._visualProbeId=this._visualProbeId||++visualProbeSerial;');
  const b=src.indexOf('\n',src.indexOf('this.setData({visualProbe:',a));const code=src.slice(a,b);

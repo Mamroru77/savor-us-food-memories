@@ -1,6 +1,6 @@
 # G3 — native-text frame probe
 
-Status: all local gates passed; device visual acceptance pending. This is a diagnostic package, not a claimed fix.
+Status: REJECTED on device and removed. This diagnostic did not fix the residual endpoint flash.
 
 ## Hypothesis
 
@@ -36,3 +36,13 @@ One uncropped Add -> Me -> Add recording with the page top, both purple G3 label
 - Add -> Me: the unchanged real Add/Me glyphs completed in 495/497ms with the 480ms frame budget, no fallback. Both purple native labels were visible at current K/R and F100 after settling.
 - Me -> Add: automated samples read F -1/-1 while waiting for first-frame presentation, then F16, F69/74 and F100. The real glyphs completed in 496/500ms with the 480ms frame budget, no fallback.
 - Evidence manifest: `reports/captures/devtools-g3-manifest.json`. Simulator evidence does not establish device compositor behavior.
+
+## Device result — vbug15
+
+- Source package: clean `fix-9.13` at `125dc2f`; recording SHA-256 `61d2b06cf26dde7628eb109fd503c47da54f0162e96f94dec3a07d171e3bf326`.
+- Add -> Me: at PTS 1.305422s the restored Me page/bar was old and both G3 labels were parked old state. At 1.338556s ordinary WXML had reached current K8/R46 while G3 still showed K0/R39 and K0/R35. G3 caught up at 1.345822s and later advanced F0, F7, F27 and F54/F60.
+- Me -> Add: at 3.300433s page, bar and G3 all restored old K0/R45. G3 briefly reached current K9/R51 at 3.366578s, 16.355ms before ordinary WXML, but only after the old endpoint had already been visible.
+- Verdict: failure. Native text can present sequential frame progress after receiving a command, but it does not reliably receive the current command before the restored old picture and therefore cannot prevent the flash. The one-frame lead/lag varies by direction.
+- Full-frame PTS evidence and contact sheet: `E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug15-analysis/vbug15-evidence.md`.
+
+The G3 inputs, property, progress patches, `cover-view`, style, assertion and package marker were removed exactly as specified above. VP1, navigation and the real SVG animation remain.
