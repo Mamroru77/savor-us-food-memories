@@ -1,0 +1,57 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/map/index",
+    "pages/add/index",
+    "pages/us/index",
+    "pages/me/index",
+    "pages/morph-lab/index"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#eeece9",
+    "backgroundColor": "#eeece9",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#828480",
+    "selectedColor": "#171a16",
+    "backgroundColor": "#f6f6f4",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "Home"
+      },
+      {
+        "pagePath": "pages/map/index",
+        "text": "Map"
+      },
+      {
+        "pagePath": "pages/add/index",
+        "text": "Add"
+      },
+      {
+        "pagePath": "pages/us/index",
+        "text": "Us"
+      },
+      {
+        "pagePath": "pages/me/index",
+        "text": "Me"
+      }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于在腾讯地图中选择您吃过的餐馆位置，保存到美食回忆"
+    }
+  },
+  "requiredPrivateInfos": [
+    "chooseLocation"
+  ]
+}

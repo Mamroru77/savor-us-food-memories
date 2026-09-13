@@ -1,0 +1,120 @@
+{
+  "purpose": "手工整理的用户样例与网页探测证据，不是自动解析器输出或已导入记录",
+  "samples": [
+    {
+      "id": "L01",
+      "platform": "大众点评",
+      "shareText": "【牛New寿喜烧(上海万象城店)】\n★★★★☆ 4.7\n¥201/人\n龙柏地区 火锅自助\n吴中路万象城3楼L344(必胜客旁边)牛new寿喜烧\nhttps://m.dianping.com/shopinfo/k9s2UXBQSNeAFMFc?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=34061&cityid=1&isoversea=0",
+      "sourceUrl": "https://m.dianping.com/shopinfo/k9s2UXBQSNeAFMFc?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=34061&cityid=1&isoversea=0",
+      "resolvedUrl": null,
+      "candidateFromUserText": {
+        "name": "牛New寿喜烧(上海万象城店)",
+        "address": "吴中路万象城3楼L344(必胜客旁边)牛new寿喜烧",
+        "areaText": "龙柏地区",
+        "categoryText": "火锅自助",
+        "platformRating": 4.7,
+        "platformAveragePriceCny": 201
+      },
+      "webProbe": {
+        "date": "2026-09-11",
+        "method": "fetch_page",
+        "status": "tool_fetch_failed",
+        "evidence": "Failed to fetch page (HTTP 500)"
+      },
+      "confirmedCoordinates": null,
+      "appDeviceStatus": "not_tested"
+    },
+    {
+      "id": "L02",
+      "platform": "大众点评",
+      "shareText": "【Max OK 西餐厅(后浪店)】\n★★★★☆ 4.7\n¥66/人\n太仓市 西餐\n万金北路88号1栋A213\nhttps://m.dianping.com/shopinfo/H49uXjTdApfW0994?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=116&cityid=420&isoversea=0",
+      "sourceUrl": "https://m.dianping.com/shopinfo/H49uXjTdApfW0994?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=116&cityid=420&isoversea=0",
+      "resolvedUrl": null,
+      "candidateFromUserText": {
+        "name": "Max OK 西餐厅(后浪店)",
+        "address": "万金北路88号1栋A213",
+        "areaText": "太仓市",
+        "categoryText": "西餐",
+        "platformRating": 4.7,
+        "platformAveragePriceCny": 66
+      },
+      "webProbe": {
+        "date": "2026-09-11",
+        "method": "fetch_page",
+        "status": "tool_fetch_failed",
+        "evidence": "Failed to fetch page (HTTP 500)"
+      },
+      "confirmedCoordinates": null,
+      "appDeviceStatus": "not_tested"
+    },
+    {
+      "id": "L03",
+      "platform": "大众点评",
+      "shareText": "【NEED创意韩国料理(西岸梦中心店)】\n★★★☆☆ 3.9\n¥103/人\n龙华/西岸 韩式料理\n龙腾大道2266号西岸梦中心2栋2层209室\nhttps://m.dianping.com/shopinfo/H58Sb57xR2kxnxhN?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=114&cityid=1&isoversea=0",
+      "sourceUrl": "https://m.dianping.com/shopinfo/H58Sb57xR2kxnxhN?msource=Appshare2021&utm_source=shop_share&shoptype=10&shopcategoryid=114&cityid=1&isoversea=0",
+      "resolvedUrl": null,
+      "candidateFromUserText": {
+        "name": "NEED创意韩国料理(西岸梦中心店)",
+        "address": "龙腾大道2266号西岸梦中心2栋2层209室",
+        "areaText": "龙华/西岸",
+        "categoryText": "韩式料理",
+        "platformRating": 3.9,
+        "platformAveragePriceCny": 103
+      },
+      "webProbe": {
+        "date": "2026-09-11",
+        "method": "fetch_page",
+        "status": "tool_fetch_failed",
+        "evidence": "Failed to fetch page (HTTP 500)"
+      },
+      "confirmedCoordinates": null,
+      "appDeviceStatus": "not_tested"
+    },
+    {
+      "id": "L04",
+      "platform": "美团外卖",
+      "shareText": "我最近很喜欢美团外卖的「海底捞·下饭火锅菜（太仓万达广场店）」，分享给你看看，点击链接可以进入店铺查看详情 http://dpurl.cn/g0eelkTz",
+      "sourceUrl": "http://dpurl.cn/g0eelkTz",
+      "resolvedUrl": "https://h5.waimai.meituan.com/waimai/mindex/menu?poi_id_str=N3zRjpgXq9EhH1N7voITfwI&channel=appshare1&utm_fromapp=copy&lch=appshare_a9e8e82a673405a9A5",
+      "candidateFromUserText": {
+        "name": "海底捞·下饭火锅菜（太仓万达广场店）",
+        "address": null,
+        "areaText": null,
+        "categoryText": null,
+        "platformRating": null,
+        "platformAveragePriceCny": null
+      },
+      "webProbe": {
+        "date": "2026-09-11",
+        "method": "fetch_page",
+        "status": "redirected_error_page",
+        "evidence": "出现点问题，请稍后再试~ / F404#2JC8#HYR93A"
+      },
+      "confirmedCoordinates": null,
+      "appDeviceStatus": "not_tested"
+    },
+    {
+      "id": "L05",
+      "platform": "美团外卖",
+      "shareText": "我最近很喜欢美团外卖的「GREE！嘎抛饭（太仓店）」，分享给你看看，点击链接可以进入店铺查看详情 http://dpurl.cn/VjHcUruz",
+      "sourceUrl": "http://dpurl.cn/VjHcUruz",
+      "resolvedUrl": "https://h5.waimai.meituan.com/waimai/mindex/menu?poi_id_str=ppZ2PAH7lb61fLvTqCqaMwI&channel=appshare1&utm_fromapp=copy&lch=appshare_3549b598fe0db793A5",
+      "candidateFromUserText": {
+        "name": "GREE！嘎抛饭（太仓店）",
+        "address": null,
+        "areaText": null,
+        "categoryText": null,
+        "platformRating": null,
+        "platformAveragePriceCny": null
+      },
+      "webProbe": {
+        "date": "2026-09-11",
+        "method": "fetch_page",
+        "status": "redirected_error_page",
+        "evidence": "出现点问题，请稍后再试~ / F404#2JC8#N5YTE8"
+      },
+      "confirmedCoordinates": null,
+      "appDeviceStatus": "not_tested"
+    }
+  ]
+}

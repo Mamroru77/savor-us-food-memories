@@ -1,0 +1,125 @@
+{
+  "baseVersion": "2068cc6",
+  "canonicalIcons": 45,
+  "strokeWidth": 1.75,
+  "stampPixelChecks": [
+    {
+      "asset": "miniprogram/images/markers/landmark-normal-fallback.png",
+      "size": [
+        768,
+        858
+      ],
+      "unchangedOutsideIconRegions": true,
+      "allowedSvgRegions": [
+        [
+          173,
+          171,
+          233,
+          231
+        ],
+        [
+          202,
+          17,
+          236,
+          54
+        ],
+        [
+          69,
+          91,
+          191,
+          184
+        ]
+      ],
+      "brandSha256": "27b090b576d6bd882f8277535160381a3f7d23568ae657b4e3318474ef48d3bc",
+      "pngSha256": "58a11261f02334e841b65b09b815e338c3a302c6a9b8840e8d3ce0aa3727182e",
+      "composition": "design-references/landmark-normal-fallback.svg",
+      "compositionSha256": "110c49e83c7783aa55187edc3bd8b4dbbbde12ef9665b644fd1351da9b086863"
+    },
+    {
+      "asset": "miniprogram/images/markers/landmark-normal-frame.png",
+      "size": [
+        768,
+        858
+      ],
+      "unchangedOutsideIconRegions": true,
+      "allowedSvgRegions": [
+        [
+          173,
+          171,
+          233,
+          231
+        ],
+        [
+          202,
+          17,
+          236,
+          54
+        ]
+      ],
+      "brandSha256": "444c22a3ea44b83e5427bf299686d959e4362dcacd03c79580717a11b7d7b2e7",
+      "pngSha256": "1de1007fbf46440f4e849b9d77438adaa508414947f018b3774802689306cc80",
+      "composition": "design-references/landmark-normal-frame.svg",
+      "compositionSha256": "2fa77c7de5c990cb0c0c32b029262f34583afbe8cf5f6b696a718eab3344a37d"
+    },
+    {
+      "asset": "miniprogram/images/markers/landmark-selected-fallback.png",
+      "size": [
+        768,
+        858
+      ],
+      "unchangedOutsideIconRegions": true,
+      "allowedSvgRegions": [
+        [
+          173,
+          171,
+          233,
+          231
+        ],
+        [
+          202,
+          17,
+          236,
+          54
+        ],
+        [
+          69,
+          91,
+          191,
+          184
+        ]
+      ],
+      "brandSha256": "27b090b576d6bd882f8277535160381a3f7d23568ae657b4e3318474ef48d3bc",
+      "pngSha256": "d1e5f3bfd733efda998114197957e4692c90ea1f4e1917778ab219c4ab3e3d9a",
+      "composition": "design-references/landmark-selected-fallback.svg",
+      "compositionSha256": "9075b0d06293a222881966f38e827b41b555b9eb063a101c4b9111db2f352d62"
+    },
+    {
+      "asset": "miniprogram/images/markers/landmark-selected-frame.png",
+      "size": [
+        768,
+        858
+      ],
+      "unchangedOutsideIconRegions": true,
+      "allowedSvgRegions": [
+        [
+          173,
+          171,
+          233,
+          231
+        ],
+        [
+          202,
+          17,
+          236,
+          54
+        ]
+      ],
+      "brandSha256": "444c22a3ea44b83e5427bf299686d959e4362dcacd03c79580717a11b7d7b2e7",
+      "pngSha256": "e67fbcf89649d63b4d1ef7359b630903652c389048c8b36b7d26a1426d21ad17",
+      "composition": "design-references/landmark-selected-frame.svg",
+      "compositionSha256": "a27489a7eb7b14c3b1be847b9e23a70e2ce81884931ec458cfb7049f48604f51"
+    }
+  ],
+  "nativeVisualAcceptance": "NOT_EXECUTED",
+  "cloudDeployment": "NOT_REQUIRED"
+}

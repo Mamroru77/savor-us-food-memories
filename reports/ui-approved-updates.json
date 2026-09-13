@@ -1,0 +1,126 @@
+{
+  "miniprogram/app.json": {
+    "sha256": "c0e069a25e127902fc1e4f301a92a73bdbecf54486f291c0f9278e592ca71ba4",
+    "reason": "用户要求五Tab统一Lucide轮廓；新增不接触业务数据的Morphicons Canvas原生适配验证页，Tab业务零依赖不变。"
+  },
+  "miniprogram/components/sheet/index.wxml": {
+    "sha256": "267fe47138aa6153da031dcabe2513b2268885162be458d15e7e58b6ef7621ba",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/sheet/index.wxss": {
+    "sha256": "3b8e2885ab0e53445b6e8599787ad25a15883a42b60f65116e4e57a63a9e6aaf",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/us/index.wxml": {
+    "sha256": "19d0654f02033a09fdba46fcd1ccca1adfe6ab798a9cb6af1054eb636834fcb7",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/me/index.wxml": {
+    "sha256": "70d720829427d253fdabd6b206bb6a24f803b7410cdabe0452346cfbab74bda6",
+    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+  },
+  "miniprogram/pages/add/index.wxml": {
+    "sha256": "b19cd9b562aa230153d3838a5ec69a5b73cb704433ddc075da924ac9c3445e8a",
+    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+  },
+  "miniprogram/pages/add/index.wxss": {
+    "sha256": "6ac81ecff9830abc8d96cbbd2eadc2dc559ba1d11d41425ec728376b495c2d61",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/map/index.wxml": {
+    "sha256": "526955f69a56c5c7ef613e4e1782f5176c16362f9c1a7c2bbf388cf31704d461",
+    "reason": "用户批准保留地图原生照片地标堆叠，仅统一底部卡片同款320ms整体缓动、圆角按钮和按压反馈；修复末页收起跳页，保持地标坐标/方向/照片/Tab不变。"
+  },
+  "miniprogram/pages/map/index.wxss": {
+    "sha256": "88c8d8a3abff4e6420141bd8c3d313fcdb3d373ca64ef7086c66009cf9e345e1",
+    "reason": "用户批准保留地图原生照片地标堆叠，仅统一底部卡片同款320ms整体缓动、圆角按钮和按压反馈；修复末页收起跳页，保持地标坐标/方向/照片/Tab不变。"
+  },
+  "miniprogram/pages/us/index.wxss": {
+    "sha256": "dcbd1dc4b177871526e0d2c11260c39470fcbc39c6e71d5f725ad75f9f32b040",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/me/index.wxss": {
+    "sha256": "a695fb3647e432ce3c70875848f5576bb04a9cf2c6d47281c55ca1c660122c13",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/app.wxss": {
+    "sha256": "e2241b39ef9f34124ceddbf522b2c96d240a04144bde5297b525b4612c6daa8f",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/memory-row/index.wxml": {
+    "sha256": "fa51bcdd7883efffde26d52b00e9d91fb6b6ac626ae9c05572aca1f5d8d0c801",
+    "reason": "用户确认Lucide统一方案：仅替换图案与线宽，其他已验收布局保持不变。"
+  },
+  "miniprogram/components/memory-row/index.wxss": {
+    "sha256": "496630458c2b161f0227d5eae9a12b0ad6624884a67109ff3215e122b72b9976",
+    "reason": "用户本轮要求：中文标题字体、统一内容卡片材质、国家指标替换及 Me 紧凑布局；保留此前双语/暗色/定位修复"
+  },
+  "miniprogram/components/toast/index.wxml": {
+    "sha256": "68aabcdee7c9cd906f71b90721c83d53e3883658d6ddcf7a6546097422cbf9e2",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/custom-tab-bar/index.js": {
+    "sha256": "85ad70bf9468ec3deb751a0a03264b4c7aa4b0ca58367727f128f1a9bbd819a0",
+    "reason": "用户判定E1失败并要求定点撤销：删除Add↔Me源页提前提交及专属失败恢复；原生导航仍立即执行，保留VP1、480ms真实时间形变、其他Tab与Map。"
+  },
+  "miniprogram/custom-tab-bar/index.wxml": {
+    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
+    "reason": "G1真机显示Add/Me空白，按预设失败标准定点撤销native-layer与G1包标记；保留VP1、五Tab、即时导航、480ms真实时间形变和Map。"
+  },
+  "miniprogram/custom-tab-bar/index.wxss": {
+    "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",
+    "reason": "vbug12已完成VP2对照；撤销对应紫色cover-view诊断样式，其他TabBar样式、布局、动画和Map不变。"
+  },
+  "miniprogram/pages/home/index.wxml": {
+    "sha256": "2c2e94812a427a2cdf3bec377c6de64aaebf2a3d7a43b2d2d0440d0917be070c",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/home/index.wxss": {
+    "sha256": "dde5f0b6a93dcd1c1037bc670e231a6257ec8e52f5c3040e1a26444a07afe202",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/toast/index.wxss": {
+    "sha256": "81ad659141c4ee6dc75253ebf83a5ad3b3960dce34f91b0c4a8968eecb33dfad",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/morph-icon/index.wxml": {
+    "sha256": "037463e7261d065deb026ce80ec675576e841b6eb81629c40ffa4e262303153b",
+    "reason": "G1真机证伪后恢复所有Tab原有image承载；保留静态端点、连续SVG帧、门控、回调与VP1诊断。"
+  },
+  "miniprogram/custom-tab-bar/index.json": {
+    "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/pages/morph-lab/index.wxml": {
+    "sha256": "510aba2d5081c2067253670e35fd980cf8f8c2a90efc3f01cfd64b4a93f02745",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/images/pin.png": {
+    "removed": true,
+    "replacements": [
+      "miniprogram/images/markers/landmark-normal-fallback.png",
+      "miniprogram/images/markers/landmark-selected-fallback.png"
+    ],
+    "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
+  },
+  "miniprogram/components/morph-icon/index.js": {
+    "sha256": "0142ed0bbb6cf08877bf12bb496cfa9a48daf23aa84cecc133af6370c33a1f8d",
+    "reason": "G1真机证伪后删除专属nativeLayer属性；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
+  },
+  "miniprogram/components/morph-icon/index.wxss": {
+    "sha256": "c06c0a5c9f473ab8e797c4f602151889607196c2fb1e2cea14b18f4a34e0b167",
+    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+  },
+  "miniprogram/pages/morph-lab/index.js": {
+    "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
+    "reason": "用户选择L餐具主题/480ms：Add端点改为官方Utensils/UtensilsCrossed；原480ms首帧计时修复、SVG层、尺寸、路线及地图不变。"
+  },
+  "miniprogram/pages/add/index.js": {
+    "sha256": "fbeceae2c422a6b8ecfaca7f4e5844ed59513b128f969b2d22de5016a7dbd27c",
+    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+  },
+  "miniprogram/pages/me/index.js": {
+    "sha256": "9b771b00afb9c2e39e61b3d161d1c8e1581d69f590e5da10d69e552e359af142",
+    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+  }
+}

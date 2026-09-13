@@ -1,0 +1,425 @@
+<view wx:if="{{sheetMounted}}" class="sheet-modal {{sheetClosing ? 'sheet-leaving' : ''}} {{quiet ? 'quiet' : ''}} {{locale === 'zh-CN' ? 'locale-zh' : ''}}">
+  <view class="sheet-scrim" bindtap="close" catchtouchmove="noop" aria-role="button" aria-label="{{copy.s8a6be275d6}}" />
+  <view style="--sheet-top: {{sheetTop}}px" class="sheet-panel {{dusk ? 'theme-dusk-panel' : ''}}" aria-label="{{title}}">
+    <view class="sheet-handle" />
+    <view class="sheet-heading">
+      <view class="sheet-heading-copy">
+        <text class="sheet-title">{{title}}</text>
+        <text class="sheet-subtitle">{{subtitle}}</text>
+      </view>
+      <view class="sheet-close" bindtap="close" aria-role="button" aria-label="{{copy.s7b29020292}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <s-icon name="x" size="42" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
+      </view>
+    </view>
+
+    <scroll-view class="sheet-content {{sheetScrollHeight > 0 ? 'sheet-content-measured' : ''}}" style="{{sheetScrollHeight > 0 ? 'height: ' + sheetScrollHeight + 'px;' : ''}}" scroll-y enhanced show-scrollbar="{{false}}" scroll-into-view="{{sheetScrollTarget}}">
+      <!-- ================= MEMORY DETAIL ================= -->
+      <block wx:if="{{displayType === 'memory'}}">
+        <view wx:if="{{!detail}}" class="empty-state">{{copy.s5180f8c462}}</view>
+        <view wx:else class="memory-detail">
+          <text wx:if="{{detail.memory.noPhoto}}" class="helper-note">{{copy.s9ecb30ac50}}</text>
+          <image class="detail-photo" bindtap="onDetailPreview" src="{{imageErrors[(detail.images[photoIndex])] ? '/images/le-comptoir.jpg' : (detail.images[photoIndex])}}" mode="aspectFill"  data-source="{{detail.images[photoIndex]}}" binderror="onImageError" />
+          <scroll-view wx:if="{{detail.images.length > 1}}" class="photo-thumbnail-scroll" scroll-x enhanced show-scrollbar="{{false}}" scroll-into-view="photo-thumb-{{photoIndex}}"><view class="photo-thumbnails" style="width:{{detail.images.length * 90 + (detail.images.length - 1) * 15}}rpx">
+            <view
+              wx:for="{{detail.images}}"
+              wx:key="index"
+              id="photo-thumb-{{index}}" class="photo-thumb {{photoIndex === index ? 'is-selected' : ''}}" aria-pressed="{{photoIndex === index}}"
+              data-index="{{index}}"
+              bindtap="onPhotoSelect"
+              aria-role="button"
+              aria-label="{{copy.s7e125c4384}} {{index + 1}}"
+             hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <image class="photo-thumb-img" src="{{imageErrors[(item)] ? '/images/le-comptoir.jpg' : (item)}}" mode="aspectFill"  data-source="{{item}}" binderror="onImageError" />
+            </view>
+          </view></scroll-view>
+          <view class="detail-meta">
+            <text>{{detail.dateLabel}}</text>
+            <text wx:if="{{!detail.memory.rating}}">{{copy.s43f4e5ea65}}</text>
+            <view wx:else class="detail-rating">
+              <s-icon wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" name="star"
+                size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}"
+                fill="{{item <= detail.memory.rating ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}"
+                class="{{item > detail.memory.rating ? 'unfilled-star' : ''}}" />
+            </view>
+          </view>
+          <view wx:if="{{detail.showLocations}}" class="detail-location">
+            <s-icon name="map-pin" size="30" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
+            <text>{{detail.location}}</text>
+          </view>
+          <text class="detail-notes">{{detail.notes}}</text>
+          <view class="detail-tags">
+            <text wx:for="{{detail.memory.tags}}" wx:key="*this" class="detail-tag">{{item}}</text>
+          </view>
+          <view class="detail-business">
+            <text wx:if="{{detail.memory.cuisine}}">{{copy.sacef9c91d8}} · {{detail.memory.cuisine}}</text>
+            <text wx:if="{{detail.memory.perCapita}}">{{copy.s0d0cb110ec}} · {{detail.memory.perCapita}}</text>
+            <text wx:for="{{detail.memory.dishes}}" wx:key="index">{{item}}</text>
+            <view class="secondary-button" bindtap="onEditMemory" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s67cbb906f4}}</view>
+          </view>
+          <view class="detail-action-row">
+            <view class="detail-action {{detail.memory.liked ? 'is-active' : ''}}" bindtap="onLove" aria-role="button" aria-pressed="{{detail.memory.liked}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon class="detail-action-icon" color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="heart" size="40" fill="{{detail.memory.liked ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
+              <text>{{detail.memory.liked ? copy.s6f345fa2ac : copy.s4f61ec4d2d}}</text>
+            </view>
+            <view class="detail-action {{detail.memory.saved ? 'is-active' : ''}}" bindtap="onSave" aria-role="button" aria-pressed="{{detail.memory.saved}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon class="detail-action-icon" color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="bookmark" size="40" fill="{{detail.memory.saved ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
+              <text>{{detail.memory.saved ? copy.sc0ae8f6ea8 : copy.se394ba2e21}}</text>
+            </view>
+            <view class="detail-action {{detail.memory.shared ? 'is-active' : ''}}" bindtap="onShare" aria-role="button" aria-pressed="{{detail.memory.shared}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon class="detail-action-icon" color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="users-round" size="40" fill="{{detail.memory.shared ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
+              <text>{{detail.memory.shared ? copy.sc0cd992be8 : copy.s54355d0d44}}</text>
+            </view>
+          </view>
+          <block wx:if="{{confirmDelete}}">
+            <view class="delete-confirmation">
+              <text class="delete-question">{{detail.memory.cloudId ? copy.sb0401190b4 : copy.s241e40df36}}</text>
+              <view class="delete-row">
+                <view class="secondary-button" aria-role="button" bindtap="onDeleteKeep" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.sd9f3692497}}</view>
+                <view class="danger-button" aria-role="button" bindtap="onDeleteConfirm" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s1c3e441d26}}</view>
+              </view>
+            </view>
+          </block>
+          <view wx:else class="quiet-delete" bindtap="onDeleteAsk" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="trash" size="30" color="{{dusk ? '#d7d1c7' : '#99988e'}}" stroke="1.75" />
+            <text>{{copy.s1c3e441d26}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= LIBRARY ================= -->
+      <block wx:if="{{displayType === 'library'}}">
+        <view class="library-sheet">
+          <view class="library-tabs">
+            <view wx:for="{{['all', 'shared', 'favorites']}}" wx:key="*this"
+              class="library-tab {{libraryTab === item ? 'is-active' : ''}}"
+              data-value="{{item}}" aria-role="button" aria-pressed="{{libraryTab === item}}" bindtap="onLibraryTab" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              {{item === 'all' ? copy.s350cb0f562 : item === 'shared' ? copy.s50d0d8dd11 : copy.s07b3e447db}}
+            </view>
+          </view>
+          <view class="sheet-search">
+            <s-icon name="search" size="35" color="{{dusk ? '#d7d1c7' : '#7b826e'}}" stroke="1.75" />
+            <input class="sheet-search-input {{focusedField === ('onLibraryQuery-') ? 'is-focused' : ''}}" placeholder="{{copy.s380cfa9c0d}}" value="{{libraryQuery}}" bindinput="onLibraryQuery"  aria-label="{{copy.s380cfa9c0d}}" placeholder-class="form-placeholder" data-focus-key="{{'onLibraryQuery-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          </view>
+          <text class="library-count">{{libraryRows.length}} {{libraryRows.length === 1 ? copy.sb56def36af : copy.s4d512399fa}} {{copy.s648b2389ef}}</text>
+          <view class="library-list">
+            <memory-row dusk="{{dusk}}" locale="{{locale}}" wx:for="{{libraryRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onLibraryOpen" />
+            <view wx:if="{{!libraryRows.length}}" class="empty-state">{{copy.sff9f9d78ce}}<view>{{copy.s3d5ded9478}}</view></view>
+          </view>
+          <view wx:if="{{libraryError}}" class="form-error">{{libraryError}}</view>
+          <view class="backup-actions">
+            <view class="secondary-button backup-primary" bindtap="onExport" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="arrow-down-to-line" size="35" stroke="1.75" />
+              <text>{{copy.s6043b4bdf9}}</text>
+            </view>
+            <view class="secondary-button" bindtap="onImport" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="arrow-up-from-line" size="35" stroke="1.75" />
+              <text>{{copy.sd6fbc9d2bd}}</text>
+            </view>
+          </view>
+          <view class="local-note">
+            <s-icon name="lock-keyhole" size="25" color="{{dusk ? '#d7d1c7' : '#989b8e'}}" stroke="1.75" />
+            <text>{{copy.s4ae3797757}}</text>
+          </view>
+        </view>
+      </block>
+
+      <block wx:if="{{displayType === 'sync'}}">
+        <view class="settings-form">
+          <text wx:if="{{!syncRows.length}}" class="helper-note">{{copy.sf59b8de756}}</text>
+          <view wx:for="{{syncRows}}" wx:key="id" class="sync-item">
+            <text>{{item.restaurant}} · {{item.kind}}</text><text class="helper-note">{{item.status}} · {{item.message}}</text>
+            <view wx:if="{{item.conflict}}" data-id="{{item.recordId}}" bindtap="onUseCloud" class="secondary-button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s260490e9e0}}</view>
+          </view>
+          <view class="primary-button" bindtap="onSyncRetry" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s8c553e1fe4}}</view>
+        </view>
+      </block>
+      <!-- Personalization reuses the scrollable Sheet; changes remain a draft until Save. -->
+      <block wx:if="{{displayType === 'personalize'}}">
+        <view class="settings-form">
+          <text class="helper-note">{{copy.se837b8b4a2}}</text>
+          <view wx:for="{{personalizationRows}}" wx:key="id" id="personalize-field-{{index}}" class="personalization-section">
+            <view class="personalization-section-head">
+              <text class="form-label">{{item.label}}</text>
+              <view class="personalization-reset" data-index="{{index}}" bindtap="onPersonalizationReset" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.sc7a42ca5b2}}</view>
+            </view>
+            <view wx:if="{{item.id === 'home'}}" class="form-group">
+              <text class="form-label">{{copy.sdc30bd077b}}</text>
+              <input class="form-input profile-input {{focusedField === ('personalize-' + index + '-brand') ? 'is-focused' : ''}}" value="{{item.brand}}" placeholder="{{item.brandDefault}}" maxlength="20" data-index="{{index}}" data-field="brand" bindinput="onPersonalizationInput"  aria-label="{{copy.sdc30bd077b}}" placeholder-class="form-placeholder" data-focus-key="{{'personalize-' + index + '-brand'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+            </view>
+            <view class="form-group">
+              <text class="form-label">{{item.id === 'me' ? copy.s709a23220f : copy.s015b7398b0}}</text>
+              <input class="form-input {{item.id === 'me' && personalizationNameError ? 'has-error' : ''}} profile-input {{focusedField === ('personalize-' + index + '-title') ? 'is-focused' : ''}}" value="{{item.title}}" placeholder="{{item.titleDefault}}" maxlength="{{item.maxTitle}}" data-index="{{index}}" data-field="title" bindinput="onPersonalizationInput"  aria-label="{{item.id === 'me' ? copy.s709a23220f : copy.s015b7398b0}}" placeholder-class="form-placeholder" data-focus-key="{{'personalize-' + index + '-title'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+              <text wx:if="{{item.id === 'me' && personalizationNameError}}" class="form-error field-error">{{personalizationNameError}}</text>
+            </view>
+            <view class="form-group">
+              <text class="form-label">{{item.id === 'me' ? copy.sb31fc969b4 : copy.s8a04084edb}}</text>
+              <input class="form-input profile-input {{focusedField === ('personalize-' + index + '-subtitle') ? 'is-focused' : ''}}" value="{{item.subtitle}}" placeholder="{{item.subtitleDefault}}" maxlength="55" data-index="{{index}}" data-field="subtitle" bindinput="onPersonalizationInput"  aria-label="{{item.id === 'me' ? copy.sb31fc969b4 : copy.s8a04084edb}}" placeholder-class="form-placeholder" data-focus-key="{{'personalize-' + index + '-subtitle'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+            </view>
+          </view>
+          <view wx:if="{{personalizationError && !personalizationNameError}}" class="form-error">{{personalizationError}}</view>
+          <view class="primary-button" bindtap="onPersonalizationSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s73195a877f}}</view>
+        </view>
+      </block>
+
+      <!-- ================= EDIT PROFILE ================= -->
+      <block wx:if="{{displayType === 'profile'}}">
+        <view class="settings-form">
+          <view class="edit-avatar" bindtap="onAvatarChange" aria-role="button" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <image class="edit-avatar-img" src="{{imageErrors[(profileAvatar)] ? '/images/jamie.jpg' : (profileAvatar)}}" mode="aspectFill"  data-source="{{profileAvatar}}" binderror="onImageError" />
+            <view class="edit-avatar-badge">
+              <s-icon name="camera" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
+            </view>
+          </view>
+          <view class="form-field">
+            <text class="form-label">{{copy.sab42293e29}}</text>
+            <input class="form-input {{profileError ? 'has-error' : ''}} profile-input {{focusedField === ('onProfileName-') ? 'is-focused' : ''}}" id="profile-name-field" value="{{profileName}}" placeholder="Jamie Lin" maxlength="32" bindinput="onProfileName"  aria-label="{{copy.sab42293e29}}" placeholder-class="form-placeholder" data-focus-key="{{'onProfileName-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+            <text wx:if="{{profileError}}" class="form-error field-error">{{profileError}}</text>
+          </view>
+          <view class="form-field">
+            <text class="form-label">{{copy.saee3ef9e7d}}</text>
+            <input class="form-input profile-input {{focusedField === ('onProfileBio-') ? 'is-focused' : ''}}" value="{{profileBio}}" placeholder="{{copy.sb201ed876f}}" maxlength="55" bindinput="onProfileBio"  aria-label="{{copy.saee3ef9e7d}}" placeholder-class="form-placeholder" data-focus-key="{{'onProfileBio-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          </view>
+          <view class="primary-button {{profileUploading || !profileName ? 'ghosted' : ''}}" bindtap="onProfileSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="check" size="35" color="#ffffff" stroke="1.75" />
+            <text>{{profileUploading ? copy.sb89bb7bce2 : copy.sf597c0e820}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= TOGETHER ================= -->
+      <block wx:if="{{displayType === 'together'}}">
+        <view class="settings-form">
+          <view class="sheet-couple">
+            <image class="sheet-couple-avatar" src="{{imageErrors[(state.profile.avatar)] ? '/images/jamie.jpg' : (state.profile.avatar)}}" mode="aspectFill"  data-source="{{state.profile.avatar}}" binderror="onImageError" />
+            <s-icon name="heart" size="55" color="{{dusk ? '#d7d1c7' : '#df816b'}}" fill="#df816b" stroke="1.75" />
+            <image class="sheet-couple-avatar" src="{{imageErrors[(state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg')] ? '/images/jamie.jpg' : (state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg')}}" mode="aspectFill"  data-source="{{state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg'}}" binderror="onImageError" />
+          </view>
+          <text class="together-message">{{copy.s82d4ff5478}}</text>
+          <view class="form-field">
+            <text class="form-label">{{copy.s2f7ee83252}}</text>
+            <input class="form-input profile-input {{focusedField === ('onPartnerInput-') ? 'is-focused' : ''}}" value="{{partner}}" maxlength="30" bindinput="onPartnerInput"  aria-label="{{copy.s2f7ee83252}}" placeholder-class="form-placeholder" data-focus-key="{{'onPartnerInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          </view>
+          <view class="form-field">
+            <text class="form-label">{{copy.s041d9188cd}}</text>
+            <picker mode="date" value="{{since}}" end="{{today}}" bindchange="onSinceChange" aria-label="{{copy.s041d9188cd}}">
+              <view class="form-input picker-value">{{since}}</view>
+            </picker>
+          </view>
+          <text class="helper-note">{{copy.s0b17f5b5cf}}</text>
+          <view class="primary-button" bindtap="onTogetherSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="heart" size="35" color="#ffffff" fill="#ffffff" stroke="1.75" />
+            <text>{{copy.scd5faeb2e8}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= PREFERENCES ================= -->
+      <block wx:if="{{displayType === 'preferences'}}">
+        <view class="settings-form">
+          <view class="form-field">
+            <text class="form-label">{{copy.sb5923d1970}}</text>
+            <picker range="{{dietaryOptions}}" value="{{dietaryIndex}}" bindchange="onDietaryChange" aria-label="{{copy.sb5923d1970}}">
+              <view class="form-input picker-value">{{dietaryLabel}}</view>
+            </picker>
+          </view>
+          <view class="cuisine-fieldset">
+            <text class="form-label cuisine-legend">{{copy.sbf4c117c2e}}</text>
+            <view class="cuisine-options">
+              <view wx:for="{{cuisineOptions}}" wx:key="value"
+                class="cuisine-chip {{cuisines.indexOf(item.value) >= 0 ? 'is-selected' : ''}}"
+                data-value="{{item.value}}" bindtap="onCuisineTap" aria-role="button" aria-pressed="{{cuisines.indexOf(item.value) >= 0}}">
+                <text>{{item.label}}</text>
+                <s-icon wx:if="{{cuisines.indexOf(item.value) >= 0}}" name="check" size="28" color="{{dusk ? '#d7d1c7' : '#49553a'}}" stroke="1.75" />
+              </view>
+            </view>
+          </view>
+          <view class="preference-tip">
+            <s-icon name="lightbulb" size="42" color="{{dusk ? '#d7d1c7' : '#818873'}}" stroke="1.75" />
+            <text>{{copy.scd45dad838}}</text>
+          </view>
+          <view class="primary-button" bindtap="onPreferencesSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="check" size="35" color="#ffffff" stroke="1.75" />
+            <text>{{copy.sd8ab74e175}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= SETTINGS ================= -->
+      <block wx:if="{{displayType === 'settings'}}">
+        <view class="settings-panel-content">
+          <text class="field-section-title">{{copy.sba04b7c44e}}</text>
+          <view class="theme-options">
+            <view wx:for="{{['pearl', 'dusk']}}" wx:key="*this"
+              class="theme-option {{theme === item ? 'is-selected' : ''}}"
+              data-value="{{item}}" bindtap="onThemeTap" aria-role="button" aria-pressed="{{theme === item}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <view class="theme-preview theme-{{item}}" />
+              <text>{{item === 'pearl' ? copy.s7927d99fd8 : copy.s4db13aa08e}}</text>
+              <s-icon class="theme-option-check" wx:if="{{theme === item}}" name="check" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
+            </view>
+          </view>
+          <view class="language-setting">
+            <text class="field-section-title">{{copy.s01e1787a9e}}</text>
+            <picker range="{{languageOptions}}" range-key="label" value="{{languageIndex}}" bindchange="onLanguageChange" aria-label="{{copy.s01e1787a9e}}">
+              <view class="language-picker"><text>{{languageOptions[languageIndex].label}}</text><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="chevron-right" size="30" /></view>
+            </picker>
+            <text class="helper-note">{{copy.sc1930e6962}}</text>
+          </view>
+          <view class="toggle-row" bindtap="onRemindersToggle" aria-role="switch" aria-checked="{{reminders}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">{{copy.se123603d4f}}</text>
+              <text class="toggle-copy-small">{{copy.s7e2f7bf54d}}</text>
+            </view>
+            <view class="toggle-track {{reminders ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="toggle-row" bindtap="onQuietToggle" aria-role="switch" aria-checked="{{reduceMotion}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">{{copy.s9df92aa74d}}</text>
+              <text class="toggle-copy-small">{{copy.s8bff07f6b6}}</text>
+            </view>
+            <view class="toggle-track {{reduceMotion ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="app-signature">
+            <text class="app-signature-name">{{copy.s9e930e57cf}}</text>
+            <text class="app-signature-line">{{copy.sab88fdde13}}</text>
+            <text class="app-signature-version">{{copy.sc40f63ac11}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= PRIVACY ================= -->
+      <block wx:if="{{displayType === 'privacy'}}">
+        <view class="privacy-content">
+          <view class="privacy-intro">
+            <s-icon name="lock-keyhole" size="68" color="{{dusk ? '#d7d1c7' : '#81926b'}}" stroke="1.75" />
+            <text class="privacy-title">{{copy.s8f8a180199}}</text>
+            <text class="privacy-text">{{copy.s14f83379b9}}</text>
+          </view>
+          <view class="toggle-row" bindtap="onPrivateToggle" aria-role="switch" aria-checked="{{privateByDefault}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">{{copy.s282ef67b06}}</text>
+              <text class="toggle-copy-small">{{copy.s53aca41c3d}}</text>
+            </view>
+            <view class="toggle-track {{privateByDefault ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <view class="toggle-row" bindtap="onLocationsToggle" aria-role="switch" aria-checked="{{showLocations}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <view class="toggle-copy">
+              <text class="toggle-copy-strong">{{copy.se31f1ed314}}</text>
+              <text class="toggle-copy-small">{{copy.s9ad623841e}}</text>
+            </view>
+            <view class="toggle-track {{showLocations ? 'on' : ''}}"><view class="toggle-knob" /></view>
+          </view>
+          <text class="helper-note privacy-note">{{copy.s0fd2c9b152}}</text>
+          <view class="secondary-button full-width" bindtap="onManageMemories" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="archive" size="35" stroke="1.75" />
+            <text>{{copy.s5a394f7f22}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= WEEKLY ================= -->
+      <block wx:if="{{displayType === 'weekly'}}">
+        <view class="weekly-sheet">
+          <view class="weekly-sheet-stats">
+            <view class="stat"><text class="stat-strong weekly-big">{{weeklyStats.meals}}</text><text>{{copy.se6a2231651}}</text></view>
+            <view class="stat"><text class="stat-strong weekly-big">{{weeklyStats.places}}</text><text>{{copy.s32995e55b9}}</text></view>
+          </view>
+          <text wx:if="{{!weeklyStats.meals}}" class="helper-note">{{copy.sa132934b8d}}</text>
+          <view class="weekly-chart">
+            <view wx:for="{{weeklyBars}}" wx:key="index" class="weekly-bar" aria-label="{{item.letter}} {{item.count}}">
+              <view class="weekly-bar-fill {{item.highlight ? 'is-highlight' : ''}}" style="height: {{item.height}}%" />
+              <text class="weekly-bar-letter">{{item.letter}}</text>
+            </view>
+          </view>
+          <text class="weekly-reflection">{{copy.s7a5db54fd9}}</text>
+          <view class="weekly-memory-list">
+            <memory-row dusk="{{dusk}}" locale="{{locale}}" wx:for="{{weeklyRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onLibraryOpen" />
+          </view>
+          <view class="primary-button" bindtap="onWeeklyAdd" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="plus" size="42" color="#ffffff" stroke="1.75" />
+            <text>{{copy.sdfe2df96a4}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= JOURNEY ================= -->
+      <block wx:if="{{displayType === 'journey'}}">
+        <view class="journey-sheet">
+          <text class="journey-opening">{{copy.s97c392b68e}}<view />{{copy.se40c3da1e0}}</text>
+          <text wx:if="{{!journeyStops.length}}" class="helper-note">{{copy.s4ac116fc17}}</text>
+          <view class="journey-timeline">
+            <view wx:for="{{journeyStops}}" wx:key="index" class="timeline-stop">
+              <view class="timeline-dot {{item.fresh ? 'is-fresh' : ''}}" />
+              <text class="timeline-date">{{item.date}}</text>
+              <text class="timeline-title">{{item.title}}</text>
+              <text class="timeline-text">{{item.text}}</text>
+            </view>
+          </view>
+          <view class="primary-button" bindtap="onJourneyMap" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="map-pin" size="37" color="#ffffff" stroke="1.75" />
+            <text>{{copy.s3736671dac}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= NOTIFICATIONS ================= -->
+      <block wx:if="{{displayType === 'notifications'}}">
+        <view class="notifications-sheet">
+          <block wx:if="{{state.settings.notificationsRead}}">
+            <view class="caught-up">
+              <s-icon name="check" size="76" color="{{dusk ? '#d7d1c7' : '#82916c'}}" stroke="1.75" />
+              <text class="caught-up-title">{{copy.sb1044946ed}}</text>
+              <text class="caught-up-text">{{copy.s7a97250aa3}}</text>
+            </view>
+          </block>
+          <block wx:else>
+            <view wx:for="{{notifRows}}" wx:key="title" class="notification-row" data-kind="{{item.kind}}" data-id="{{item.memoryId}}" bindtap="onNotificationRow" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <image wx:if="{{item.kind === 'memory'}}" class="notification-photo" src="{{imageErrors[(item.photoSrc)] ? '/images/le-comptoir.jpg' : (item.photoSrc)}}" mode="aspectFill"  data-source="{{item.photoSrc}}" binderror="onImageError" />
+              <view wx:else class="notification-symbol">
+                <s-icon name="bell" size="52" color="{{dusk ? '#d7d1c7' : '#7c8b67'}}" stroke="1.75" />
+              </view>
+              <view class="notification-copy">
+                <text class="notification-title">{{item.title}}</text>
+                <text class="notification-text">{{item.text}}</text>
+                <text class="notification-when">{{item.when}}</text>
+              </view>
+              <s-icon name="chevron-right" size="32" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
+            </view>
+          </block>
+          <view class="primary-button notifications-cta" bindtap="onMarkRead" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="bell" size="35" color="#ffffff" stroke="1.75" />
+            <text>{{state.settings.notificationsRead ? copy.sd4dbec7a7e : copy.s1b83163bfd}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ================= HELP ================= -->
+      <block wx:if="{{displayType === 'help'}}">
+        <view class="help-sheet">
+          <view class="faq-list">
+            <view wx:for="{{faqs}}" wx:key="question" class="faq-item">
+              <view class="faq-question" data-index="{{index}}" bindtap="onFaqTap" aria-role="button" aria-expanded="{{faqExpanded === index}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+                <text>{{item.question}}</text>
+                <s-icon name="chevron-down" size="35" color="{{dusk ? '#d7d1c7' : '#909b80'}}" stroke="1.75" class="faq-chevron {{faqExpanded === index ? 'is-open' : ''}}" />
+              </view>
+              <view class="faq-answer" style="height:{{faqExpanded === index ? (faqHeights[index] || 0) : 0}}px;opacity:{{faqExpanded === index ? 1 : 0}}" aria-hidden="{{faqExpanded !== index}}">
+                <text class="faq-answer-text">{{item.answer}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="feedback-form">
+            <view class="form-field">
+              <text class="form-label">{{copy.s284b2f2489}}</text>
+              <textarea class="form-textarea feedback-textarea {{focusedField === ('onFeedbackInput-') ? 'is-focused' : ''}}" value="{{feedbackMessage}}" placeholder="{{copy.sd07f89f750}}" maxlength="1000" bindinput="onFeedbackInput"  aria-label="{{copy.sd07f89f750}}" placeholder-class="form-placeholder" data-focus-key="{{'onFeedbackInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" cursor-spacing="100" />
+            </view>
+            <view class="primary-button" bindtap="onFeedbackSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon name="send" size="35" color="#ffffff" stroke="1.75" />
+              <text>{{copy.s555a94f395}}</text>
+            </view>
+          </view>
+          <text class="helper-note">{{copy.s5592ff39fd}} {{feedbackCountLabel}}</text>
+        </view>
+      </block>
+      <view class="sheet-end-space" aria-hidden="true" />
+    </scroll-view>
+  </view>
+</view>

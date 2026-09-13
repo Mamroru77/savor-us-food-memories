@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-13",
+  "baseline": "e7d7425",
+  "status": "CODE_REPRODUCTION_FIXED_NATIVE_RETEST_REQUIRED",
+  "userConfirmedSymptom": "page switches, icon stuck or wrong state",
+  "comparison": {
+    "scenario": "Two same-visual revisions before static image load",
+    "old_e7d7425": {
+      "firstPending": true,
+      "pendingAfterDuplicate": false,
+      "commandCommitted": 2,
+      "motionCreated": false,
+      "motionStarted": false,
+      "pendingAfterStart": false
+    },
+    "fixed": {
+      "firstPending": true,
+      "pendingAfterDuplicate": true,
+      "commandCommitted": 2,
+      "motionCreated": true,
+      "motionStarted": true,
+      "pendingAfterStart": false
+    },
+    "scope": "Controlled JS event ordering, not native device proof"
+  },
+  "checks": {
+    "static": 229,
+    "tab": 21,
+    "mock": 233,
+    "handoff": 44,
+    "ui": 42
+  },
+  "runtimeChanged": [
+    "miniprogram/components/morph-icon/index.js"
+  ],
+  "notes": "TAB_PENDING_START_FIX.md"
+}

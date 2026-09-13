@@ -1,0 +1,9 @@
+.morph-box { position:relative;overflow:hidden; }
+.morph-canvas,.morph-svg,.morph-fallback { position:absolute;left:0;top:0;pointer-events:none; }
+
+/* TEMP VP1: preserve clipping of original morph-box; marker is its sibling. */
+.visual-probe-wrap { position:relative;overflow:visible; }
+.visual-probe-icon { position:absolute;bottom:calc(100% + 18rpx);left:50%;transform:translateX(-50%);width:132rpx;pointer-events:none;z-index:99;background:#062a36;color:#8affed;font-size:16rpx;line-height:22rpx;font-family:monospace;text-align:center;white-space:nowrap;border:1rpx solid #8affed; }
+.visual-probe-id,.visual-probe-frame,.visual-probe-static { display:block; }
+.visual-probe-frame { background:#513300;color:#ffe09a; }
+.visual-probe-static { background:#062a36;color:#8affed; }

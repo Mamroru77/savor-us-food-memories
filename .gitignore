@@ -1,0 +1,10 @@
+# Machine-specific WeChat DevTools state
+project.private.config.json
+miniprogram/project.private.config.json
+
+# Generated/local artifacts
+node_modules/
+reports/captures/*.png
+npm-debug.log*
+Thumbs.db
+.DS_Store

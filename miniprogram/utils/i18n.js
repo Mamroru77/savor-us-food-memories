@@ -1,0 +1,52 @@
+// Application copy only. User restaurant names, notes, tags and stored data
+// are never translated. TabBar receives translated labels from pages (zero require).
+const catalog = require('./locales');
+const headings = require('./pageHeadings');
+let preference = 'system';
+const listeners = [];
+function locale() {
+  if (preference === 'zh-CN' || preference === 'en') return preference;
+  try {
+    const info = wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync();
+    return /^zh/i.test(info.language || '') ? 'zh-CN' : 'en';
+  } catch (e) { return 'en'; }
+}
+function setLanguage(value) {
+  preference = ['system', 'zh-CN', 'en'].indexOf(value) >= 0 ? value : 'system';
+  listeners.slice().forEach(fn => fn());
+}
+function t(value, params) {
+  if (typeof value !== 'string') return value;
+  const item = catalog.find(row => row.en === value || row.zh === value);
+  let result = item ? (locale() === 'zh-CN' ? item.zh : item.en) : value;
+  if (params) Object.keys(params).forEach(key => { result = result.split('{' + key + '}').join(String(params[key])); });
+  return result;
+}
+function copy() {
+  const result = {};
+  const chinese = locale() === 'zh-CN';
+  catalog.forEach(row => { result[row.key] = chinese ? row.zh : row.en; });
+  return result;
+}
+function options() {
+  return [ { value: 'system', label: t('Follow system') }, { value: 'zh-CN', label: '简体中文' }, { value: 'en', label: 'English' } ];
+}
+function syncPage(page, state, selected) {
+  const dusk = state.settings.theme === 'dusk';
+  page.setData({ copy: copy(), locale: locale(), pageHeading: headings.resolve(state, ['home','map','add','us','me'][selected], t) });
+  page._tabAppearance = { dusk, quiet: state.settings.reduceMotion,
+    labels: ['Home', 'Map', 'Add', 'Us', 'Me'].map(label => t(label)), addLabel: t('Add a memory') };
+  const tabBar = page.getTabBar && page.getTabBar();
+  if (tabBar) tabBar.updateAppearance(selected, page._tabAppearance);
+  try {
+    if (wx.setNavigationBarColor) wx.setNavigationBarColor({ frontColor: dusk ? '#ffffff' : '#000000', backgroundColor: dusk ? '#121315' : '#eeece9' });
+  } catch (e) { /* app content and TabBar still render */ }
+}
+function subscribe(fn) {
+  listeners.push(fn);
+  return function () { const index = listeners.indexOf(fn); if (index >= 0) listeners.splice(index, 1); };
+}
+function modal(options) {
+  wx.showModal(Object.assign({}, options, { title: t(options.title), content: t(options.content), confirmText: t('OK'), cancelText: t('Cancel') }));
+}
+module.exports = { locale, setLanguage, t, copy, options, syncPage, subscribe, modal };

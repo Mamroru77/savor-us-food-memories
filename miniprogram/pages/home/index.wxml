@@ -1,0 +1,68 @@
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- dynamic ambient light: the “This week” photo, heavily blurred and
+     biased behind the weekly card — the frosted cards melt THIS, so the
+     glass tint follows the featured memory automatically -->
+  <image class="ambient-photo" src="{{imageErrors[(weeklyPhoto)] ? '/images/le-comptoir.jpg' : (weeklyPhoto)}}" mode="aspectFill" aria-hidden="true"  data-source="{{weeklyPhoto}}" binderror="onImageError" />
+
+  <view class="screen-scroll">
+    <view class="home-screen" style="padding-top: {{headerTop}}px">
+      <!-- notification bell -->
+      <view class="notification-button" bindtap="onNotifications" aria-role="button" aria-label="{{copy.s753a22b2eb}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="bell" size="45" stroke="1.75" />
+        <view wx:if="{{hasNotifications}}" class="notification-dot" />
+      </view>
+
+      <!-- hero intro -->
+      <view class="home-intro">
+        <view class="home-intro-title">
+          <text>{{pageHeading.brand}}</text>
+          <text>{{pageHeading.title}}</text>
+        </view>
+        <text class="home-intro-sub">{{pageHeading.subtitle}}</text>
+      </view>
+
+      <!-- this week -->
+      <view class="weekly-card glass content-card" bindtap="onWeekly" aria-role="button" aria-label="{{copy.sd639bdaa12}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <view class="weekly-heading">
+          <text class="weekly-heading-text">{{copy.s7b72883e07}}</text>
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="notebook-pen" size="32" stroke="1.75" />
+        </view>
+        <view class="weekly-stats">
+          <view class="stat weekly-stat">
+            <text class="stat-strong weekly-strong">{{weeklyMeals}}</text>
+            <text>{{copy.sffdd1f1a28}}</text>
+          </view>
+          <view class="stat weekly-stat weekly-stat-divided">
+            <text class="stat-strong weekly-strong">{{weeklyPlaces}}</text>
+            <text>{{copy.s0cd3597453}}</text>
+          </view>
+        </view>
+        <image class="weekly-photo" src="{{imageErrors[(weeklyPhoto)] ? '/images/le-comptoir.jpg' : (weeklyPhoto)}}" mode="aspectFill"  data-source="{{weeklyPhoto}}" binderror="onImageError" />
+      </view>
+
+      <!-- recent -->
+      <view class="recent-section">
+        <text class="recent-title">{{copy.s76eec760c9}}</text>
+        <view class="recent-list glass content-card">
+          <memory-row dusk="{{dusk}}" locale="{{locale}}" wx:for="{{recentRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onMemoryOpen" />
+          <view wx:if="{{!memories.length}}" class="empty-state" bindtap="onEmptyAdd" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            {{copy.s7d20348c69}}
+            <view class="empty-action">{{copy.sc2fcfbad85}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

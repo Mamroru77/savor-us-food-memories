@@ -1,0 +1,87 @@
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="us-screen" style="padding-top: {{headerTop}}px">
+      <view class="screen-heading us-heading">
+        <view>
+          <text class="heading-title">{{pageHeading.title}}</text>
+          <text class="heading-sub">{{pageHeading.subtitle}}</text>
+        </view>
+        <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="{{copy.s23f3b65ad3}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="settings" size="42" stroke="1.75" />
+        </view>
+      </view>
+
+      <!-- together card -->
+      <view class="together-card glass content-card">
+        <view class="couple-avatars">
+          <image class="avatar" src="{{imageErrors[(avatar)] ? '/images/jamie.jpg' : (avatar)}}" mode="aspectFill"  data-source="{{avatar}}" binderror="onImageError" />
+          <view class="couple-heart {{loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{loveSent ? copy.s59000d4666 : copy.sc279e1cef9}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon name="heart" size="47" color="{{loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.75" />
+          </view>
+          <image class="avatar" src="/images/alex.jpg" mode="aspectFill" />
+        </view>
+        <view class="together-count" bindtap="onTogether" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <text class="together-label">{{copy.s5e084bb624}}</text>
+          <view class="together-days">
+            <text class="together-days-strong">{{days}}</text>
+            <text class="together-days-unit">{{copy.s5548ae4f34}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- journey card -->
+      <view class="journey-card glass content-card" bindtap="onJourney" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <text class="journey-title">{{copy.sd8ae704fc5}}</text>
+        <view class="journey-stats">
+          <view class="stat"><text class="stat-strong journey-strong">{{meals}}</text><text>{{copy.sffdd1f1a28}}</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{places}}</text><text>{{copy.s0cd3597453}}</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{savedCount}}</text><text>{{copy.s85b44d2ebb}}</text></view>
+        </view>
+        <view class="journey-latest">
+          <text class="journey-latest-label">{{copy.s6741d5102e}} {{latestLabel}}</text>
+          <image class="journey-latest-photo" src="{{imageErrors[(journeyPhoto)] ? '/images/le-comptoir.jpg' : (journeyPhoto)}}" mode="aspectFill"  data-source="{{journeyPhoto}}" binderror="onImageError" />
+        </view>
+      </view>
+
+      <!-- shared moments -->
+      <view class="shared-section">
+        <view class="section-heading">
+          <text class="section-title">{{copy.sb8ef4a331b}}</text>
+          <text class="section-link" bindtap="onSeeAll" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s2941c5ce61}}</text>
+        </view>
+        <scroll-view class="shared-gallery" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="shared-gallery-inner">
+            <view wx:for="{{sharedRows}}" wx:key="id" class="shared-photo-card">
+              <view class="shared-photo-open" data-id="{{item.memory.id}}" bindtap="onSharedOpen" aria-role="button" aria-label="{{copy.s0201abab39}} {{item.memory.restaurant}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+                <image src="{{imageErrors[(item.photoSrc)] ? '/images/le-comptoir.jpg' : (item.photoSrc)}}" mode="aspectFill"  data-source="{{item.photoSrc}}" binderror="onImageError" />
+                <view class="shared-photo-shade" />
+                <view class="shared-photo-copy">
+                  <text class="shared-photo-name">{{item.memory.restaurant}}</text>
+                  <text class="shared-photo-date">{{item.dateLabel}}</text>
+                </view>
+              </view>
+              <view class="shared-like {{item.memory.liked ? 'is-liked' : ''}}" data-id="{{item.memory.id}}" bindtap="onSharedLike" aria-role="button" aria-pressed="{{item.memory.liked}}" aria-label="{{item.memory.liked ? copy.se4fc409268 : copy.sc7e02c95fe}} {{item.memory.restaurant}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+                <s-icon name="heart" size="35" color="#ffffff" fill="{{item.memory.liked ? '#e55d48' : 'rgba(15,17,13,0.35)'}}" stroke="1.75" />
+              </view>
+            </view>
+            <view wx:if="{{!sharedRows.length}}" class="empty-state shared-empty">{{copy.s8e48d0d900}}<view>{{copy.sc6be73d5be}}</view></view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

@@ -1,0 +1,39 @@
+<view wx:if="{{presentationReady}}" class="tab-bar {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'theme-quiet' : ''}}">
+  <view class="visual-probe-bar" aria-hidden="true">VP1 B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}} SEL{{viewState.selected}} {{entryActive ? 'ACTIVE' : 'PARK'}}</view>
+  <block wx:for="{{list}}" wx:key="pagePath">
+    <!-- central Add button -->
+    <view
+      wx:if="{{item.add}}"
+      class="tab-add"
+      data-path="{{item.pagePath}}"
+      data-index="{{index}}"
+      bindtap="onTabTap"
+      aria-role="tab"
+      aria-selected="{{viewState.selected === index}}"
+      aria-label="{{addLabel}}"
+    >
+      <view class="tab-add-button" hover-class="add-press" hover-start-time="0" hover-stay-time="120">
+        <s-morph renderer="svg" class="tab-morph" data-index="{{index}}" bindreport="onMorphReport" presentation="{{viewState.icons[index]}}" size="66" />
+      </view>
+    </view>
+    <!-- regular tab -->
+    <view
+      wx:else
+      class="tab-item {{viewState.selected === index ? 'is-active' : ''}}"
+      data-path="{{item.pagePath}}"
+      data-index="{{index}}"
+      bindtap="onTabTap"
+      hover-class="tab-press"
+      hover-start-time="0"
+      hover-stay-time="100"
+      aria-role="tab"
+      aria-selected="{{viewState.selected === index}}"
+      aria-label="{{labels[index] || item.text}}"
+    >
+      <view class="tab-icon-wrap">
+        <s-morph renderer="svg" class="tab-morph" data-index="{{index}}" bindreport="onMorphReport" presentation="{{viewState.icons[index]}}" size="{{item.size}}" />
+      </view>
+      <text class="tab-label">{{labels[index] || item.text}}</text>
+    </view>
+  </block>
+</view>

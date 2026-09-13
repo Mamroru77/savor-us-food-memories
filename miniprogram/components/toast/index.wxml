@@ -1,0 +1,6 @@
+<view wx:if="{{toastMounted}}" class="savor-toast {{toastClosing ? 'toast-leaving' : ''}} {{quiet ? 'quiet' : ''}}">
+  <text class="savor-toast-text">{{toast.message}}</text>
+  <view class="toast-dismiss" bindtap="dismiss" aria-role="button" aria-label="{{copy.sdc83cd8031}}">
+    <s-icon name="x" size="38" color="{{dusk ? '#d7d1c7' : '#d6dbc9'}}" stroke="1.75" />
+  </view>
+</view>

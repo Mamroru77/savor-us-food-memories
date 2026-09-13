@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "s-icon": "/components/icon/index",
+    "memory-row": "/components/memory-row/index",
+    "s-sheet": "/components/sheet/index",
+    "s-toast": "/components/toast/index"
+  }
+}

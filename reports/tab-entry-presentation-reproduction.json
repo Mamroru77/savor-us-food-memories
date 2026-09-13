@@ -1,0 +1,36 @@
+{
+  "baseline": "9117569",
+  "method": "Evaluate actual old/new WXML fallback expressions against a cached destination waiting for onShow; source-level reproduction, NOT video/native capture",
+  "rows": [
+    {
+      "outgoing": "house-heart",
+      "target": "house",
+      "beforePendingFallback": "lucide-house",
+      "afterPendingFallback": "lucide-house-heart"
+    },
+    {
+      "outgoing": "map-pinned",
+      "target": "map",
+      "beforePendingFallback": "lucide-map",
+      "afterPendingFallback": "lucide-map-pinned"
+    },
+    {
+      "outgoing": "utensils-crossed",
+      "target": "utensils",
+      "beforePendingFallback": "lucide-utensils",
+      "afterPendingFallback": "lucide-utensils-crossed"
+    },
+    {
+      "outgoing": "users-round",
+      "target": "users",
+      "beforePendingFallback": "lucide-users",
+      "afterPendingFallback": "lucide-users-round"
+    },
+    {
+      "outgoing": "user-round",
+      "target": "user",
+      "beforePendingFallback": "lucide-user",
+      "afterPendingFallback": "lucide-user-round"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-12",
+  "baseline": "282c783",
+  "scope": "Approved minimum UI Audit P0/P1/P2 fixes; no business/API or production Tab motion changes",
+  "source": {
+    "status": "PASS",
+    "static": {
+      "passed": 229,
+      "total": 229
+    },
+    "tab": {
+      "passed": 21,
+      "total": 21
+    },
+    "icons": {
+      "officialSources": 48,
+      "aliases": 28,
+      "templateDeclarations": 73
+    },
+    "mockContracts": {
+      "passed": 206,
+      "total": 206
+    },
+    "uiQuality": {
+      "passed": 42,
+      "total": 42
+    }
+  },
+  "isolatedReleaseCopy": {
+    "status": "PASS",
+    "sameSuites": true
+  },
+  "nativeVisual": "NOT_EXECUTED",
+  "screenReader": "NOT_EXECUTED",
+  "keyboard": "NOT_EXECUTED",
+  "liveCloudBase": "NOT_EXECUTED",
+  "viewportWidths": {
+    "375": "NOT_EXECUTED",
+    "390": "NOT_EXECUTED",
+    "430": "NOT_EXECUTED",
+    "768": "NOT_EXECUTED",
+    "1024": "NOT_EXECUTED",
+    "1280": "NOT_EXECUTED",
+    "1440": "NOT_EXECUTED"
+  },
+  "remaining": [
+    "F02: native stack vertical target enlargement intentionally withheld pending overlap tests; horizontal width is 44px",
+    "F16: native keyboard/reader acceptance still required",
+    "F17: real long-copy/large-text/seven-width acceptance still required",
+    "F18: Memory Row divider unchanged pending native reproduction"
+  ],
+  "notInScope": [
+    "F19 P3 motion redesign",
+    "F20 P3 desktop product redesign"
+  ],
+  "businessAndMotionProtectedFilesChecked": 13,
+  "testsRetained": true,
+  "testAmendments": [
+    "Icon count 75 to 73 for two removed misleading checks",
+    "Nested thumbnail scroll-view: end spacer asserted inside OUTER scroll-view; new balanced-tag validation added",
+    "Only explicitly approved changed UI snapshots updated"
+  ],
+  "details": "UI_QUALITY_FIXES.md"
+}

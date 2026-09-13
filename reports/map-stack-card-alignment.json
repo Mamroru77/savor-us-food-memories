@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-13",
+  "baseline": "1802d97",
+  "scope": "Map stack motion and button alignment only",
+  "sourceChecks": {
+    "static": "229/229",
+    "tab": "21/21",
+    "mock": "233/233",
+    "ui": "42/42"
+  },
+  "nativeMapAcceptance": "NOT_EXECUTED",
+  "nativeTabBounce": "REOPENED_AWAITING_ORIGINAL_MP4",
+  "tabRuntimeChanged": false,
+  "motion": {
+    "durationMs": 320,
+    "curve": "cubic-bezier(1/3,0,2/3,1)",
+    "perRowDelayRemoved": true,
+    "lastPageRetainedDuringCloseAndReverse": true
+  },
+  "buttons": {
+    "mobileVisibleRpx": 56,
+    "mobileGlyphRpx": 28,
+    "radiusRpx": 24,
+    "hitHeightPx": 40,
+    "minimumHitWidthPx": 44,
+    "themes": [
+      "light",
+      "dusk"
+    ],
+    "nativeExportSize": [
+      96,
+      96
+    ]
+  },
+  "details": "MAP_STACK_CARD_ALIGNMENT.md"
+}
