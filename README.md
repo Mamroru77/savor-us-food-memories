@@ -1,4 +1,4 @@
-> **临时 VP1 E1 实验版（非正式修复）**：仅Add↔我的，在离开页仍可见时提交目标静态状态，不等待回调即调用导航；保留VP1标记。需同时验证离开不闪、返回不回跳。见 [TAB_SOURCE_LEAVE_EXPERIMENT.md](TAB_SOURCE_LEAVE_EXPERIMENT.md)。
+> **临时 VP1 诊断版（非正式修复）**：E1 源页提前更新已被真机证据否决并删除；当前保留 VP1 标记、即时导航和 480ms 真实时间形变。见 [TAB_SOURCE_LEAVE_EXPERIMENT.md](TAB_SOURCE_LEAVE_EXPERIMENT.md)。
 
 ## 最新：Add 已采用 L 餐具主题 / 480ms
 
