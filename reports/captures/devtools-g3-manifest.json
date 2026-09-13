@@ -4,6 +4,7 @@
   "sourceControl": {
     "branch": "fix-9.13",
     "baselineCommit": "0c4e323baf00bfce617f240de631ad548794a710",
+    "experimentCommit": "4d0a0151f09363c1aaa469d8291a935c419cc973",
     "dirtyDuringCapture": true,
     "reason": "G3 is captured before its independent experiment commit."
   },
@@ -41,5 +42,12 @@
     { "path": "reports/captures/devtools-g3-me.png", "sha256": "2cd44c33938779e88dac29dd00820234552434b9082f0a422d36326a26124229" },
     { "path": "reports/captures/devtools-g3-add-return.png", "sha256": "afa7c7d1b8be84a275f025ba4c3eb89105861fb6d0865fd2321c0ca5f5663403" }
   ],
-  "deviceStatus": "NOT_EXECUTED"
+  "devicePreviewPush": {
+    "recordedAt": "2026-09-14T01:40:44.5645141+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1577956,
+    "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
+  },
+  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
 }
