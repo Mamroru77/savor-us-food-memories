@@ -1,0 +1,39 @@
+{
+  "schema": "g2-local-simulator-v1",
+  "recordedAt": "2026-09-14T00:05:01.1032551+08:00",
+  "sourceControl": {
+    "branch": "fix-9.13",
+    "baselineCommit": "b5a084ae83bfa1c6750610a999ff6e327da131fa",
+    "dirtyDuringCapture": true,
+    "reason": "G2 is captured before its independent experiment commit."
+  },
+  "environment": {
+    "node": "v24.14.0",
+    "wechatDevTools": "2.02.2608070",
+    "baseLibrary": "3.17.3"
+  },
+  "scope": "Local WeChat DevTools simulator only; not device evidence.",
+  "variable": "One local-PNG cover-image state arrow beside each unchanged Add/Me image glyph.",
+  "forward": {
+    "route": "pages/me/index",
+    "entryKey": 1,
+    "prepareMs": 0,
+    "fromRoute": "pages/home/index",
+    "addIcon": { "durationMs": 507, "firstFrameWaitMs": 47, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "durationMs": 508, "firstFrameWaitMs": 29, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "reverse": {
+    "route": "pages/add/index",
+    "entryKey": 2,
+    "prepareMs": 0,
+    "addIcon": { "durationMs": 498, "firstFrameWaitMs": 61, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "durationMs": 501, "firstFrameWaitMs": 50, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "consoleErrorMatches": [],
+  "screenshots": [
+    { "path": "reports/captures/devtools-g2-add.png", "sha256": "596a97e6b7c17cb1bac041477f1b079a24d4fa726b703258a26da0bf2f5ca71d" },
+    { "path": "reports/captures/devtools-g2-me.png", "sha256": "dae0657bc64c235eb2be3bfd692e31e58285717265d1edcf8b31ada775078c61" },
+    { "path": "reports/captures/devtools-g2-add-return.png", "sha256": "f3456b6a4ca3756b598b3a5e07387c82ac5807d0c1acdc5a0f4826c002e54fd3" }
+  ],
+  "deviceStatus": "NOT_EXECUTED"
+}

@@ -7,3 +7,4 @@
 .visual-probe-id,.visual-probe-frame,.visual-probe-static { display:block; }
 .visual-probe-frame { background:#513300;color:#ffe09a; }
 .visual-probe-static { background:#062a36;color:#8affed; }
+.visual-probe-native-image { position:absolute;right:-14rpx;top:50%;transform:translateY(-50%);width:20rpx;height:20rpx;pointer-events:none;z-index:100; }

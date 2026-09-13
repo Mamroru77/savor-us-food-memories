@@ -7,10 +7,11 @@ vbug8 shows targets at2.281s and origins at2.337s. before/after logs show Me bar
 
 ## Markers
 - Add and Me pages only: cyan VP1 P:add#1 / P:me#1, V=onShow visit count. Route prefix + counter identify a page instance. Page stamp performs one extra setData at show (no timers).
-- Above all TabBars: VP1 identifies the diagnostic build; B=bar instance, K=entry key, R=parent publication revision, SEL=selected index0–4, ACTIVE/PARK.
+- Above all TabBars: VP1 G2 identifies the local-PNG native-layer probe; B=bar instance, K=entry key, R=parent publication revision, SEL=selected index0–4, ACTIVE/PARK.
 - Above each glyph: I=icon instance, K=entry key, R=child command revision. S=logical static layer (cyan); S O=origin, S T=target, ERR=fallback. F G=logical frame layer (amber), generation G.
 - S T in a parked bar is expected: parked from==to. It does not necessarily mean that Tab itself is selected.
 - These are WXML labels driven by the same logical visibility gates, not measurements of actual compositor presentation. A label/glyph mismatch narrows the hypothesis but does not prove one native subsystem is faulty.
+- G2 only: a small unboxed native PNG arrow sits beside Add and Me. Right means the child currently receives ACTIVE; left means PARK. The actual glyph remains on the original image path.
 
 ## Isolation
 Glyph clipping unchanged. Added a same-size positioned wrapper only on presentation-driven icons; badges are absolute siblings outside the clipped glyph box. Badge pointer-events:none, no handlers, aria-hidden. Existing tab dimensions, click handlers, artwork, clock, navigation and Map are unchanged. Page badge is fixed at headerTop and does not change page layout. Native legibility/placement remains to verify. Badges can overlay a narrow strip of page content; use only for diagnosis.
@@ -30,5 +31,5 @@ JSON.stringify(getCurrentPages().slice(-1)[0].getTabBar().getTransitionDebug(), 
 If any marker overlaps a glyph/is clipped/missing, send one screenshot; do not proceed with a long capture.
 
 ## Verification
-The current local working copy requires 229 static /21 Tab /233 mock /74 handoff /44 UI plus 7 visible probe checks and the capture-analyzer self-check. Tests cover marker gates, no touch footprint, unchanged clipping, actual bar identity, page visit counters and pre-attached stable IDs.
+The current local working copy requires 229 static /21 Tab /233 mock /74 handoff /44 UI plus 8 visible probe/G2 checks and the capture-analyzer self-check. Tests cover marker gates, no touch footprint, unchanged clipping, actual bar identity, page visit counters, pre-attached stable IDs and the isolated local-PNG probe.
 Native visual placement, root-cause attribution and final acceptance remain NOT_EXECUTED. UI checks do not approve temporary diagnostic styling as final design.

@@ -4,7 +4,7 @@ let engine=null;
 let diagnosticSerial=0;
 try{engine=require('../../utils/morphEngine');}catch(e){/* Static SVG fallback remains available. */}
 Component({
-  properties:{presentation:{type:Object,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
+  properties:{presentation:{type:Object,value:null},nativeProbe:{type:Boolean,value:false},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
   data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]},
   observers:{presentation:function(command){if(command)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
     if(this._acceptedCommand||this.data.presentation)return;

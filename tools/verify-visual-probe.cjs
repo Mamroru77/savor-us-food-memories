@@ -24,6 +24,17 @@ test('parent badge identifies actual publishing instance not guessed owner',()=>
  const bar=read('custom-tab-bar/index.wxml');assert(bar.includes('B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}}'));
  assert(read('custom-tab-bar/index.wxss').includes('pointer-events:none'));
 });
+test('G2 adds only a local-PNG native probe beside unchanged Add and Me glyphs',()=>{
+ const bar=read('custom-tab-bar/index.wxml'),logic=read('components/morph-icon/index.js');
+ assert.equal((bar.match(/native-probe="\{\{index === 2 \|\| index === 4\}\}"/g)||[]).length,2);
+ assert(bar.includes('VP1 G2 B{{viewState.probeBar}}'));
+ assert(logic.includes('nativeProbe:{type:Boolean,value:false}'));
+ assert.equal((w.match(/<cover-image /g)||[]).length,1);
+ assert(w.includes("viewCommand.active ? '/images/icons/lucide/chevron-right.png' : '/images/icons/lucide/chevron-left.png'"));
+ assert(w.includes('<image wx:if="{{viewCommand && viewCommand.active'));
+ const rule=css.match(/\.visual-probe-native-image \{([^}]+)\}/)[1];
+ assert(rule.includes('pointer-events:none'));assert(!/background|border/.test(rule));
+});
 for(const name of ['add','me'])test(name+' page marker counts instance and show visits without sharing business data',()=>{
  const src=read('pages/'+name+'/index.js');const a=src.indexOf('this._visualProbeId=this._visualProbeId||++visualProbeSerial;');
  const b=src.indexOf('\n',src.indexOf('this.setData({visualProbe:',a));const code=src.slice(a,b);
