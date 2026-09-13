@@ -60,12 +60,12 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/custom-tab-bar/index.js": {
-    "sha256": "85ad70bf9468ec3deb751a0a03264b4c7aa4b0ca58367727f128f1a9bbd819a0",
-    "reason": "用户判定E1失败并要求定点撤销：删除Add↔Me源页提前提交及专属失败恢复；原生导航仍立即执行，保留VP1、480ms真实时间形变、其他Tab与Map。"
+    "sha256": "4a7d214cbaf518fa9ae626acd71eefa32f7b0c6f489da2db3611b3b17623b0d5",
+    "reason": "H1单变量诊断：仅Add↔Me在即时导航前向隐藏TabBar peers发布本次ACTIVE命令；不修改可见源栏、不等待回调、不推断目标owner，保留480ms真实形变、其他Tab与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
-    "reason": "vbug15真机证据判定G3失败后定点删除两处原生文本探针输入与G3包标识；保留VP1、真实图形、即时导航、五Tab、480ms时钟与Map。"
+    "sha256": "2e2391ee832d4bfdfb50a6041205ae4b8fc50aeda5b6c9f308946e0db43d7354",
+    "reason": "H1仅增加VP1 H1诊断包标识；真实图形、即时导航、五Tab、480ms时钟与Map不变。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",

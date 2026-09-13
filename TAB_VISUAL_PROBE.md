@@ -7,7 +7,7 @@ vbug8 shows targets at2.281s and origins at2.337s. before/after logs show Me bar
 
 ## Markers
 - Add and Me pages only: cyan VP1 P:add#1 / P:me#1, V=onShow visit count. Route prefix + counter identify a page instance. Page stamp performs one extra setData at show (no timers).
-- Above all TabBars: B=bar instance, K=entry key, R=parent publication revision, SEL=selected index0–4, ACTIVE/PARK.
+- Above all TabBars: VP1 H1 identifies the cached-peer-prime package; B=bar instance, K=entry key, R=parent publication revision, SEL=selected index0–4, ACTIVE/PARK.
 - Above each glyph: I=icon instance, K=entry key, R=child command revision. S=logical static layer (cyan); S O=origin, S T=target, ERR=fallback. F G=logical frame layer (amber), generation G.
 - S T in a parked bar is expected: parked from==to. It does not necessarily mean that Tab itself is selected.
 - These are WXML labels driven by the same logical visibility gates, not measurements of actual compositor presentation. A label/glyph mismatch narrows the hypothesis but does not prove one native subsystem is faulty.

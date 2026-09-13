@@ -33,11 +33,14 @@ function morph({deferCommand=false,deferFrame=false,deferStatic=false,setup=true
 const command=(revision,key=revision,active=false,name='utensils',fromName='utensils-crossed',quiet=false)=>({revision,key,active,name,fromName,quiet,color:'#111510',duration:480});
 function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');return vm.runInNewContext(w.match(/<image[^>]*data-icon="\{\{([^"\n]+)\}\}"/)[1],c.data);}
 (async()=>{
- await test('all directed tab taps navigate immediately without changing the visible source presentation',()=>{
+ await test('all directed tab taps navigate immediately; H1 primes only hidden Add-Me peers',()=>{
   for(let from=0;from<5;from++)for(let to=0;to<5;to++){
    if(from===to)continue;
-   const h=controller();h.setRoute(from);const b=h.bar(),peer=h.bar();const before=JSON.stringify([b.data,peer.data]);
-   h.tap(b,to);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.equal(JSON.stringify([b.data,peer.data]),before);
+   const h=controller();h.setRoute(from);const b=h.bar(),peer=h.bar(),source=JSON.stringify(b.data),cached=JSON.stringify(peer.data);
+   h.tap(b,to);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.equal(JSON.stringify(b.data),source);
+   if((from===2&&to===4)||(from===4&&to===2)){
+    assert.notEqual(JSON.stringify(peer.data),cached);assert.equal(peer.data.selected,to);assert.equal(peer.data.transitionFrom,from);assert.equal(peer.data.entryActive,true);assert(peer.data.entryKey>0);
+   }else assert.equal(JSON.stringify(peer.data),cached);
   }
  });
  await test('parking preserves unchanged icon commands while updating the two selected endpoints',()=>{
@@ -85,8 +88,8 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   assert.equal(future.data.entryActive,false);assert.equal(future.data.viewState.icons[2].name,'utensils');assert.equal(future.data.viewState.icons[2].fromName,'utensils');
   assert.equal(future.data.viewState.icons[3].name,'users-round');assert.equal(future.data.viewState.icons[3].fromName,'users-round');
  });
- await test('cached park failure cannot abort current show or a later native tap',()=>{
-  const h=controller(),a=h.bar(),b=h.bar();b.setData=()=>{throw Error('cached view unavailable');};a.showSelection(2);h.tap(a,3);assert.equal(h.calls.length,1);assert.equal(a.data.entryActive,true);
+ await test('cached park or H1 prime failure cannot abort current show or native navigation',()=>{
+  const h=controller(),a=h.bar(),b=h.bar();b.setData=()=>{throw Error('cached view unavailable');};a.showSelection(2);h.tap(a,4);assert.equal(h.calls.length,1);assert.equal(a.data.entryActive,true);
  });
  await test('repeated current show does not republish already parked background bars',()=>{
   const h=controller(),a=h.bar(),b=h.bar();a.showSelection(2);const rev=b.data.viewState.revision;a.showSelection(2);assert.equal(b.data.viewState.revision,rev);
@@ -170,7 +173,7 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   const c=morph({deferCommand:true,setup:false});c.receive(command(2,2,true));c.setup();assert(!c._svgMotion);c.flush();assert(c._svgMotion);assert.equal(c._svgMotion.elapsed,0);c.destroy();
  });
  await test('navigation never waits for parent, child or image commits',()=>{
-  const h=controller(),a=h.bar(true),b=h.bar(true),before=clone(a.data);a.children=[{acceptPresentation(){throw Error('must not dispatch');}}];h.tap(a,3);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.deepEqual(clone(a.data),before);
+  const h=controller(),a=h.bar(true),b=h.bar(true),before=clone(a.data);a.children=[{acceptPresentation(){throw Error('must not dispatch');}}];h.tap(a,4);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.deepEqual(clone(a.data),before);assert(b.acks.length>1);
  });
  await test('an image loading failure cannot block navigation',()=>{
   const h=controller(),b=h.bar(),c=morph({deferStatic:true});b.children=[c];h.tap(b,3);assert.equal(h.calls.length,1);assert.equal(c.statics.length,0);c.destroy();
