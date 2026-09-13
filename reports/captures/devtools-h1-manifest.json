@@ -49,5 +49,15 @@
     "packageBytes": 1577583,
     "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
   },
-  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
+  "deviceCapture": {
+    "path": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug16.mp4",
+    "sha256": "d0750b67380fe441211b7ff1971173d7c4277c70bd1d564c4ba0696b5d9dc051",
+    "captureCommit": "924e24e0e0acf90625233a96a2a777d86d8c0304",
+    "captureDirty": false,
+    "sequence": "Add -> Me -> Add",
+    "jsonLog": null,
+    "report": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug16-analysis/vbug16-evidence.md",
+    "verdict": "REJECTED: both directions restored the old endpoint picture before the current primed entry and origin became visible."
+  },
+  "deviceStatus": "REJECTED_AND_REMOVED"
 }

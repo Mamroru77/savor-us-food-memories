@@ -98,14 +98,6 @@ Component({
         try{b.parkPresentation(selected);}catch(e){this.trace('park-error',{cachedBar:b._instanceId});}
       }
     },
-    primeCachedTransition(from,to,key){
-      if(!((from===2&&to===4)||(from===4&&to===2)))return;
-      const patch=Object.assign({},sharedAppearance||{},{selected:to,transitionFrom:from,entryKey:key,entryActive:true,presentationReady:true});
-      for(const b of tabInstances){if(b===this||b._alive===false)continue;
-        try{b.publish(patch);this.trace('peer-prime',{cachedBar:b._instanceId,from,to,key});}
-        catch(e){this.trace('peer-prime-error',{cachedBar:b._instanceId,from,to,key});}
-      }
-    },
     seedTransition(){
       const t=recentTabTransition,route=this.routeSelection();
       if(route<0)return;
@@ -158,7 +150,6 @@ Component({
       if(route===to){this.trace('tap-noop',{reason:'already-on-route',index:to});return;}
       const from=route>=0?route:Number(this.data.selected);
       const t={from,to,at:Date.now(),id:++transitionSerial,pending:true};recentTabTransition=t;
-      this.primeCachedTransition(from,to,t.id);
       this.trace('switch',{from,to,key:t.id,prepareMs:Date.now()-t.at});
       try{
         wx.switchTab({url:item.pagePath,success:()=>{
