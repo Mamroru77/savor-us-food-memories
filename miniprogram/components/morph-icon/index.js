@@ -4,8 +4,8 @@ let engine=null;
 let diagnosticSerial=0;
 try{engine=require('../../utils/morphEngine');}catch(e){/* Static SVG fallback remains available. */}
 Component({
-  properties:{presentation:{type:Object,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
-  data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]},
+  properties:{presentation:{type:Object,value:null},nativeTextProbe:{type:Boolean,value:false},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
+  data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[],probeProgress:-1},
   observers:{presentation:function(command){if(command)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
     if(this._acceptedCommand||this.data.presentation)return;
     const signature=JSON.stringify([this.data.name,this.data.quiet,this.data.color,this.data.fromName,this.data.entryKey]);
@@ -109,7 +109,7 @@ Component({
       const viewCommand=Object.assign({},command,{probeIcon:this._diagnosticId||(this._diagnosticId=++diagnosticSerial),originSrc:iconSvg(command.fromName,{stroke:command.color,strokeWidth:1.75}),targetSrc:iconSvg(command.name,{stroke:command.color,strokeWidth:1.75})});
       const patch={viewCommand,name:command.name,fromName:command.fromName,entryKey:command.key,
         entryActive:command.active,quiet:command.quiet,color:command.color,duration:command.duration};
-      if(!sameVisual)Object.assign(patch,{painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]});
+      if(!sameVisual){const reset={painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]};if(this.data.nativeTextProbe)reset.probeProgress=-1;Object.assign(patch,reset);}
       // Bind the entire logical state and its fallback in ONE child view update.
       // Stale frame commits retain their old renderRevision and cannot cover this command.
       if(sameVisual)patch.renderRevision=command.revision;
@@ -194,7 +194,7 @@ Component({
         if(!valid())return;
         this._current=engine.copy(engine.sample(state.name));this._settledName=state.name;
         this.recordRender('motion-finish');this._displayed=null;this._svgFlight=null;this._svgMotion=null;
-        this.setData({settledEntryKey:m.entryKey,staticName:state.name,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]});
+        const settled={settledEntryKey:m.entryKey,staticName:state.name,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]};if(this.data.nativeTextProbe)settled.probeProgress=100;this.setData(settled);
         this.triggerEvent('report',{mode:'complete',entryKey:m.entryKey,name:state.name,frames:m.frames,durationMs:Date.now()-m.visibleAt,requestedDurationMs:duration,firstFrameWaitMs:m.visibleAt-m.queuedAt,planMs,scheduler:'svg-timer',clock:'first-image-load',timing:'wall-clock',frameBudgetMs:m.elapsed});
       };
       const send=first=>{
@@ -271,6 +271,7 @@ Component({
         if(metrics){const cost=queuedAt-encodedAt;metrics.frames++;metrics.encodeTotalMs+=cost;metrics.encodeMaxMs=Math.max(metrics.encodeMaxMs,cost);}
         if(first)this.recordRender('first-frame-queued');
         const patch={painting:true,frameSrc:src,renderRevision:this.data.viewCommand?this.data.viewCommand.revision:0};
+        if(this.data.nativeTextProbe&&this._svgMotion)patch.probeProgress=Math.round(100*this._svgMotion.elapsed/this._svgMotion.duration);
         if(first)Object.assign(patch,{frameSlots:[{id:generation}],frameVisible:false,loadingSrc:src});
         this.setData(patch,()=>{
           if(this._svgFlight!==flight)return;

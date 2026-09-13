@@ -64,8 +64,8 @@
     "reason": "用户判定E1失败并要求定点撤销：删除Add↔Me源页提前提交及专属失败恢复；原生导航仍立即执行，保留VP1、480ms真实时间形变、其他Tab与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
-    "reason": "G2真机证据显示本地PNG与旧页面层同步恢复，按预设失败标准删除G2标识和两个native-probe输入；保留VP1、原image连续形变、即时导航、五Tab与Map。"
+    "sha256": "860e6955ae9bc95c0d9de5c267ae9248540a8cc35c8d660eb0b49ddbc7d1ba8d",
+    "reason": "G3单变量诊断：仅Add/Me声明原生文本帧探针并增加G3包标识；真实图形、即时导航、五Tab、480ms时钟与Map不变。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",
@@ -84,8 +84,8 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/components/morph-icon/index.wxml": {
-    "sha256": "037463e7261d065deb026ce80ec675576e841b6eb81629c40ffa4e262303153b",
-    "reason": "G2真机部分失败后删除本地PNG cover-image探针；恢复到G2前的VP1结构，真实静态端点和连续SVG帧仍走原image路径。"
+    "sha256": "ea167507ddf41399d598d1b0affc3eda9fbd26be24ca168aad529c73e26e1d40",
+    "reason": "G3只增加显示命令身份与现有帧进度的cover-view文本；真实静态端点和连续SVG帧仍为原image路径。"
   },
   "miniprogram/custom-tab-bar/index.json": {
     "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
@@ -104,12 +104,12 @@
     "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
   },
   "miniprogram/components/morph-icon/index.js": {
-    "sha256": "0142ed0bbb6cf08877bf12bb496cfa9a48daf23aa84cecc133af6370c33a1f8d",
-    "reason": "G2真机部分失败后删除仅供探针使用的nativeProbe属性；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
+    "sha256": "529abede8999a5b883fe607fe69d7f6a4bf47a3e7a20353fc700fc0197ba59ef",
+    "reason": "G3仅把整数进度搭载到现有SVG帧setData，未增加定时器；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
   },
   "miniprogram/components/morph-icon/index.wxss": {
-    "sha256": "c06c0a5c9f473ab8e797c4f602151889607196c2fb1e2cea14b18f4a34e0b167",
-    "reason": "G2真机部分失败后删除本地PNG探针样式；恢复G2前的VP1样式，不改变真实图形裁剪、布局、导航或动画。"
+    "sha256": "d03f4cbf45ae8d2df5cf6d78f73e10876f8bfe4667fbeeb575cb98d232f67cde",
+    "reason": "G3原生文本探针绝对定位且不接收事件；不改变真实图形裁剪、布局、导航或动画。"
   },
   "miniprogram/pages/morph-lab/index.js": {
     "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
