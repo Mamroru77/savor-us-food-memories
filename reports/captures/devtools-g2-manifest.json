@@ -42,5 +42,43 @@
     "packageBytes": 1577502,
     "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
   },
-  "deviceStatus": "PREVIEW_PUSHED_ACCEPTANCE_PENDING"
+  "deviceCapture": {
+    "video": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug14.mp4",
+    "sha256": "298D6223F46A4A43DC7A916952446CE70FE98277A69ACF76F7B9312F0BA1AF38",
+    "containerDurationSeconds": 4.438278,
+    "decodedFrames": 257,
+    "timing": "Decoded presentation timestamps; no frame/fps estimation.",
+    "device": "OPPO PKB110",
+    "os": "Android 36",
+    "wechat": "8.0.76",
+    "baseLibrary": "3.17.3 [1643]",
+    "sequence": "Add -> Me -> Add",
+    "jsonLog": null,
+    "jsonReason": "G2 was a visual carrier test; its predeclared device action did not require Console JSON.",
+    "forward": {
+      "stalePts": 1.254500,
+      "currentPts": 1.312867,
+      "correctionMs": 58.367,
+      "result": "Both bundled PNG arrows were stale-left while restored VP1 said ACTIVE, then changed right with current state."
+    },
+    "reverse": {
+      "stalePts": 2.623778,
+      "currentPts": 2.706156,
+      "correctionMs": 82.378,
+      "result": "Both bundled PNG arrows were stale-left while restored VP1 said ACTIVE, then changed right with current state."
+    }
+  },
+  "deviceStatus": "REJECTED_NATIVE_PNG_STALE_WITH_RESTORED_LAYER",
+  "decision": "Precisely remove G2; retain VP1 and the original continuous SVG morph.",
+  "rollbackValidation": {
+    "verifyAll": "PASS: 229 static, 21 TabBar, assets/icons, 233 cloud mocks, 74 handoff, 44 UI, 7 VP1, 4 capture analyzer",
+    "wechatCompile": "PASS: custom-tab-bar/index.wxml, components/morph-icon/index.wxml and components/morph-icon/index.wxss",
+    "consoleErrorMatches": [],
+    "simulatorScreenshot": {
+      "path": "reports/captures/devtools-g2-rollback.png",
+      "sha256": "c6d1e2961d494fb61c2bb4e2371ea6e63ab17a2c9533981f26f5509903fa44dd",
+      "scope": "Local simulator only; confirms probe removal and retained VP1/glyph visibility."
+    },
+    "runtimeSourceHashesMatchPreG2": true
+  }
 }

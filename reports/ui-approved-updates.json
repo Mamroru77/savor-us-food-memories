@@ -64,8 +64,8 @@
     "reason": "用户判定E1失败并要求定点撤销：删除Add↔Me源页提前提交及专属失败恢复；原生导航仍立即执行，保留VP1、480ms真实时间形变、其他Tab与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "5a2ae1aa3e99a899a0058c02671fe15c035b8cb6c00a553be80f914e05b357f2",
-    "reason": "G2单变量诊断：仅Add/Me声明本地PNG原生层标记并增加G2包标识；真实图形仍走原image，五Tab、即时导航、480ms时钟和Map不变。"
+    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
+    "reason": "G2真机证据显示本地PNG与旧页面层同步恢复，按预设失败标准删除G2标识和两个native-probe输入；保留VP1、原image连续形变、即时导航、五Tab与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",
@@ -84,8 +84,8 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/components/morph-icon/index.wxml": {
-    "sha256": "35fef7987b52e5228a7ee7a0e8734339310e1628073f3ac697d0fe7b3c939fb5",
-    "reason": "G2仅增加无底色无边框的本地PNG cover-image箭头；真实静态端点和连续SVG帧仍为原image路径。"
+    "sha256": "037463e7261d065deb026ce80ec675576e841b6eb81629c40ffa4e262303153b",
+    "reason": "G2真机部分失败后删除本地PNG cover-image探针；恢复到G2前的VP1结构，真实静态端点和连续SVG帧仍走原image路径。"
   },
   "miniprogram/custom-tab-bar/index.json": {
     "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
@@ -104,12 +104,12 @@
     "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
   },
   "miniprogram/components/morph-icon/index.js": {
-    "sha256": "ef3fe1faf6711f0a6dfc2ea2b866541c02051808a6b4569c7a721bbd48019749",
-    "reason": "G2只增加默认关闭的nativeProbe布尔属性；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
+    "sha256": "0142ed0bbb6cf08877bf12bb496cfa9a48daf23aa84cecc133af6370c33a1f8d",
+    "reason": "G2真机部分失败后删除仅供探针使用的nativeProbe属性；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
   },
   "miniprogram/components/morph-icon/index.wxss": {
-    "sha256": "abad7105e445432bdd567049c47bd986838366bbf20523b9772cf3e426f5cd86",
-    "reason": "G2本地PNG箭头为绝对定位、无底色边框且不接收事件；不改变真实图形裁剪、布局、导航或动画。"
+    "sha256": "c06c0a5c9f473ab8e797c4f602151889607196c2fb1e2cea14b18f4a34e0b167",
+    "reason": "G2真机部分失败后删除本地PNG探针样式；恢复G2前的VP1样式，不改变真实图形裁剪、布局、导航或动画。"
   },
   "miniprogram/pages/morph-lab/index.js": {
     "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
