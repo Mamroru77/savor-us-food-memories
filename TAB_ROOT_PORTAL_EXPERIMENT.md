@@ -1,6 +1,6 @@
 # I1 — TabBar root-portal render experiment
 
-Status: DEVICE RESULT PENDING. This is not yet a confirmed fix.
+Status: REJECTED on device and precisely removed. This was not a fix.
 
 ## Hypothesis
 
@@ -24,3 +24,13 @@ The connected device uses base library 3.17.3; the bundled WeChat DevTools compo
 ## Revert
 
 Remove the opening and closing `root-portal`, remove the `I1` provenance token and its focused assertion, and restore the approved WXML hash. No state-machine or animation rollback is required.
+
+## Device result
+
+- Valid source: clean `3a57be3c95ad9242161b5199274d10b3e0681227`, with `VP1 I1` visible before capture; OPPO PKB110, Android 16, WeChat 8.0.76, base library 3.17.3.
+- Add -> Me: the current Add page remained through PTS 2.900000s. From 2.916667s through 2.983333s, the complete page and TabBar were blank. Me first appeared at 3.000000s: an 83.333ms blank interval.
+- Me -> Add: the first Add frames at 8.200000s and 8.216667s restored old `B2 K1 R11 SEL2 ACTIVE` and its prior selected endpoint. Current `B2 K3 R18 SEL2 ACTIVE` appeared at 8.233333s, 33.333ms after the first old frame.
+- Add/Me morphs still completed in 483–486ms with a 480ms frame budget and no SVG fallback. Correct animation timing did not compensate for the blank/old restored frames.
+- Verdict: reject. I1 violates the explicit no-blank constraint and does not eliminate the reverse old endpoint flash.
+
+Full-frame evidence: `E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/adb-tab-loop/vbug-i1-valid/evidence.md`.

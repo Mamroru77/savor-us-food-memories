@@ -24,13 +24,6 @@ test('parent badge identifies actual publishing instance not guessed owner',()=>
  const bar=read('custom-tab-bar/index.wxml');assert(bar.includes('B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}}'));
  assert(read('custom-tab-bar/index.wxss').includes('pointer-events:none'));
 });
-test('I1 moves the unchanged TabBar subtree into one root portal',()=>{
- const bar=read('custom-tab-bar/index.wxml');
- assert.equal((bar.match(/<root-portal enable="\{\{true\}\}">/g)||[]).length,1);
- assert.equal((bar.match(/<\/root-portal>/g)||[]).length,1);
- assert(bar.indexOf('<root-portal')<bar.indexOf('class="tab-bar'));
- assert(bar.includes('VP1 I1 B{{viewState.probeBar}}'));
-});
 for(const name of ['add','me'])test(name+' page marker counts instance and show visits without sharing business data',()=>{
  const src=read('pages/'+name+'/index.js');const a=src.indexOf('this._visualProbeId=this._visualProbeId||++visualProbeSerial;');
  const b=src.indexOf('\n',src.indexOf('this.setData({visualProbe:',a));const code=src.slice(a,b);

@@ -64,8 +64,8 @@
     "reason": "vbug16真机证据判定H1失败后删除隐藏peer的ACTIVE预发布及专属trace；恢复即时导航时不修改源栏或缓存peers，保留VP1、480ms真实形变、其他Tab与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "c58997c2eb17ed349f6319a7bdbec5f0186dbdf41233f3813c95c37e9bf3a196",
-    "reason": "I1单变量真机对照：仅用root-portal承载原有TabBar子树以检验页面旧画面恢复；保留VP1、真实图形、即时导航、五Tab、480ms时钟与Map。"
+    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
+    "reason": "I1真机证据显示root-portal引入83ms整页空白且反向仍恢复旧端点，故定点删除包装及I1标识；保留VP1、真实图形、即时导航、五Tab、480ms时钟与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",

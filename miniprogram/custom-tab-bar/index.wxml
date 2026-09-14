@@ -1,6 +1,5 @@
-<root-portal enable="{{true}}">
 <view wx:if="{{presentationReady}}" class="tab-bar {{dusk ? 'theme-dusk' : ''}} {{quiet ? 'theme-quiet' : ''}}">
-  <view class="visual-probe-bar" aria-hidden="true">VP1 I1 B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}} SEL{{viewState.selected}} {{entryActive ? 'ACTIVE' : 'PARK'}}</view>
+  <view class="visual-probe-bar" aria-hidden="true">VP1 B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}} SEL{{viewState.selected}} {{entryActive ? 'ACTIVE' : 'PARK'}}</view>
   <block wx:for="{{list}}" wx:key="pagePath">
     <!-- central Add button -->
     <view
@@ -38,4 +37,3 @@
     </view>
   </block>
 </view>
-</root-portal>
