@@ -60,12 +60,12 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/custom-tab-bar/index.js": {
-    "sha256": "a187dc943e15b419d8b1d294df767335c6926d9925ebefcc7d3f869558da81fc",
-    "reason": "J1单变量实验：仅在发起切页的源页面真正进入hide后停放至目标静态端点；点击及wx.switchTab前不改可见状态、不等待，保留五Tab、480ms真实形变与Map。"
+    "sha256": "85ad70bf9468ec3deb751a0a03264b4c7aa4b0ca58367727f128f1a9bbd819a0",
+    "reason": "J1真机PTS证据显示hide后停放仍未更新下一次恢复画面，故删除hide发布及专属状态；恢复即时导航且点击前后不修改源栏，保留VP1、480ms真实形变与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "a9370c3717387413ddb9d0e4bf2d39cbafc07447139205e015f062af8d4758ce",
-    "reason": "J1真机包来源标识；仅在既有VP1文字加入J1，不参与布局、导航、动画或业务逻辑。"
+    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
+    "reason": "J1真机证据判定失败后删除专属包标识；保留通用VP1、真实图形、即时导航、五Tab、480ms时钟与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",

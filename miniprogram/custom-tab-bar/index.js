@@ -25,13 +25,7 @@ Component({
   },
 
   lifetimes:{attached(){this._instanceId=++instanceSerial;this._alive=true;tabInstances.add(this);this.seedTransition();},detached(){this._alive=false;tabInstances.delete(this);}},
-  pageLifetimes:{
-    show(){this.seedTransition();},
-    hide(){
-      const t=this._pendingLeave;this._pendingLeave=null;
-      if(t&&recentTabTransition===t)this.parkPresentation(t.to);
-    }
-  },
+  pageLifetimes:{show(){this.seedTransition();}},
   methods:{
     trace(event,detail){
       handoffTrace.push(Object.assign({at:Date.now(),event,bar:this._instanceId||0},detail||{}));
@@ -156,7 +150,6 @@ Component({
       if(route===to){this.trace('tap-noop',{reason:'already-on-route',index:to});return;}
       const from=route>=0?route:Number(this.data.selected);
       const t={from,to,at:Date.now(),id:++transitionSerial,pending:true};recentTabTransition=t;
-      this._pendingLeave=t;
       this.trace('switch',{from,to,key:t.id,prepareMs:Date.now()-t.at});
       try{
         wx.switchTab({url:item.pagePath,success:()=>{
@@ -164,12 +157,10 @@ Component({
           if(recentTabTransition===t)t.pending=false;
         },fail:error=>{
           this.trace('switch-failed',{key:t.id,to,reason:error&&error.errMsg||'native-navigation-failed'});
-          if(this._pendingLeave===t)this._pendingLeave=null;
           if(recentTabTransition===t)recentTabTransition=null;
         }});
       }catch(error){
         this.trace('switch-failed',{key:t.id,to,reason:'synchronous-navigation-error'});
-        if(this._pendingLeave===t)this._pendingLeave=null;
         if(recentTabTransition===t)recentTabTransition=null;
       }
     }

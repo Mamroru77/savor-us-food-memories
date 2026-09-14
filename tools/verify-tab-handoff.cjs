@@ -16,7 +16,7 @@ function controller(options={}){
   const b={...spec.methods,data:clone(spec.data),acks:[],children:[],
    setData(p,cb){Object.assign(this.data,p);if(cb){if(defer)this.acks.push(cb);else cb();}},
    selectAllComponents(){return this.children;}};
-  spec.lifetimes.attached.call(b);b.flush=()=>{while(b.acks.length)b.acks.shift()();};b.hide=()=>spec.pageLifetimes.hide.call(b);return b;
+  spec.lifetimes.attached.call(b);b.flush=()=>{while(b.acks.length)b.acks.shift()();};return b;
  }
  return {spec,bar,calls,timers,setRoute:n=>route=n,tap:(b,n)=>b.onTabTap({currentTarget:{dataset:{index:n,path:'/pages/'+['home','map','add','us','me'][n]+'/index'}}})};
 }
@@ -39,14 +39,6 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
    const h=controller();h.setRoute(from);const b=h.bar(),peer=h.bar();const before=JSON.stringify([b.data,peer.data]);
    h.tap(b,to);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.equal(JSON.stringify([b.data,peer.data]),before);
   }
- });
- await test('source parks at the destination only after its page enters hide',()=>{
-  const h=controller();h.setRoute(2);const b=h.bar();b.showSelection(2);const before=JSON.stringify(b.data);
-  h.tap(b,4);assert.equal(JSON.stringify(b.data),before);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);
-  h.setRoute(4);h.calls[0].success();b.hide();assert.equal(b.data.selected,4);assert.equal(b.data.transitionFrom,4);assert.equal(b.data.entryKey,0);assert.equal(b.data.entryActive,false);
- });
- await test('page hide without a pending tab departure leaves presentation unchanged',()=>{
-  const h=controller(),b=h.bar();b.showSelection(2);const before=JSON.stringify(b.data);b.hide();assert.equal(JSON.stringify(b.data),before);
  });
  await test('parking preserves unchanged icon commands while updating the two selected endpoints',()=>{
   const h=controller(),visible=h.bar(),cached=h.bar();visible.showSelection(2);const prior=cached.data.viewState.icons;
