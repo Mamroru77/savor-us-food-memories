@@ -1,5 +1,4 @@
 <view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
-  <view wx:if="{{visualProbe}}" aria-hidden="true" style="position:fixed;left:8px;top:{{headerTop}}px;z-index:9999;pointer-events:none;background:#062a36;color:#8affed;font-size:10px;line-height:15px;padding:2px 5px;border:1px solid #8affed;font-family:monospace;">VP1 P:{{visualProbe.page}}#{{visualProbe.id}} V{{visualProbe.visit}}</view>
   <!-- ambient follows the photo being captured: swaps live as the
        user picks/removes draft photos (falls back to the house photo) -->
   <image class="ambient-photo" src="{{imageErrors[(draft.photos[0] || '/images/le-comptoir.jpg')] ? '/images/le-comptoir.jpg' : (draft.photos[0] || '/images/le-comptoir.jpg')}}" mode="aspectFill" aria-hidden="true"  data-source="{{draft.photos[0] || '/images/le-comptoir.jpg'}}" binderror="onImageError" />

@@ -1,5 +1,4 @@
 <view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
-  <view wx:if="{{visualProbe}}" aria-hidden="true" style="position:fixed;left:8px;top:{{headerTop}}px;z-index:9999;pointer-events:none;background:#062a36;color:#8affed;font-size:10px;line-height:15px;padding:2px 5px;border:1px solid #8affed;font-family:monospace;">VP1 P:{{visualProbe.page}}#{{visualProbe.id}} V{{visualProbe.visit}}</view>
   <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
 
   <view class="screen-scroll">

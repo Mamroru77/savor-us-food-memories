@@ -32,10 +32,7 @@ Component({
       if(handoffTrace.length>96)handoffTrace.splice(0,handoffTrace.length-96);
     },
     getTransitionTrace(){return handoffTrace.map(row=>Object.assign({},row));},
-    getTransitionDebug(){const routeIndex=this.routeSelection();return {schema:'nav-independent-v1',bar:this._instanceId,route:routeIndex>=0?this.data.list[routeIndex].pagePath.replace(/^\//,''):null,routeIndex,selected:this.data.selected,entryKey:this.data.entryKey,entryActive:this.data.entryActive,diagnosticBuild:'render-handoff-v1',visualProbeBuild:'VP1',visualProbePage:this.getVisualProbePage(),trace:this.getTransitionTrace(),renderInstances:Array.from(tabInstances).map(b=>b.getRenderDiagnostics())};},
-    getVisualProbePage(){
-      try{const pages=getCurrentPages(),page=pages[pages.length-1];return page&&page.data&&page.data.visualProbe?Object.assign({},page.data.visualProbe):null;}catch(e){return null;}
-    },
+    getTransitionDebug(){const routeIndex=this.routeSelection();return {schema:'nav-independent-v1',bar:this._instanceId,route:routeIndex>=0?this.data.list[routeIndex].pagePath.replace(/^\//,''):null,routeIndex,selected:this.data.selected,entryKey:this.data.entryKey,entryActive:this.data.entryActive,diagnosticBuild:'render-handoff-v1',trace:this.getTransitionTrace(),renderInstances:Array.from(tabInstances).map(b=>b.getRenderDiagnostics())};},
     getRenderDiagnostics(){
       const result={bar:this._instanceId,selected:this.data.selected,entryKey:this.data.entryKey,icons:[]};
       // Query only for an explicit user export. Never command/query-gate navigation.
@@ -76,7 +73,7 @@ Component({
         const old=this.data.viewState.icons[index];
         if(old&&['key','active','name','fromName','quiet','duration','color'].every(k=>old[k]===icon[k]))icons[index]=old;
       });}
-      const viewState={revision,selected:next.selected,icons,probeBar:this._instanceId};this._viewRevision=revision;
+      const viewState={revision,selected:next.selected,icons};this._viewRevision=revision;
       this.trace('publish',{revision,selected:next.selected,from:next.transitionFrom,key:next.entryKey,active:next.entryActive});
       // A single declarative input owns each child. Never remap a query result by array position.
       this.setData(Object.assign({},patch,{viewState}),()=>{

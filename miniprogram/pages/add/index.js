@@ -1,5 +1,3 @@
-// TEMP visual handoff probe; remove after native diagnosis.
-let visualProbeSerial=0;
 const localDate = require('../../utils/localDate');
 const i18n = require('../../utils/i18n');
 const uiFeedback = require('../../utils/uiFeedback');
@@ -60,10 +58,6 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
-    this._visualProbeId=this._visualProbeId||++visualProbeSerial;
-    this._visualProbeVisit=(this._visualProbeVisit||0)+1;
-    this.setData({visualProbe:{page:'add',id:this._visualProbeId,visit:this._visualProbeVisit,at:Date.now()}});
-
     this.setData({imageErrors:{},focusedField:''});
     this.setData({ headerTop: metrics.getMetrics(true).headerTop });
     this.setData({today:localDate.today(),cloudPlaceSearchEnabled:importPolicy.enabled()});

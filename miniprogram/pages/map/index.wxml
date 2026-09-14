@@ -129,7 +129,6 @@
 
   <!-- place card -->
   <view wx:if="{{selected}}" class="place-card glass content-card {{cardCollapsed ? 'card-is-collapsed' : ''}}">
-    <view class="place-collapse" catchtap="onTogglePlaceCard" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.se0669384b5}}"><view class="place-collapse-visual glass"><s-icon name="chevron-down" size="28" color="{{dusk ? '#eeeae3' : '#273b31'}}" /></view></view>
     <view class="place-open" bindtap="onPlaceOpen" aria-role="button" aria-label="{{copy.sbbc297130e}} {{selected.restaurant}}">
       <view class="place-copy">
         <text class="place-name">{{selected.restaurant}}</text>
@@ -147,8 +146,9 @@
     </view>
   </view>
 
+  <view wx:if="{{selected}}" class="place-collapse {{cardCollapsed ? 'is-collapsed' : ''}}" catchtap="onTogglePlaceCard" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-expanded="{{!cardCollapsed}}" aria-label="{{cardCollapsed ? copy.s30a6a77f03 : copy.se0669384b5}}"><view class="place-collapse-visual glass"><s-icon name="chevron-down" size="28" color="{{dusk ? '#eeeae3' : '#273b31'}}" /></view></view>
   <view wx:if="{{selected}}" class="place-expand glass {{cardCollapsed ? 'strip-is-visible' : ''}}" bindtap="onTogglePlaceCard" aria-role="button" aria-label="{{copy.s30a6a77f03}}">
-    <text class="place-expand-name">{{selected.restaurant}}</text><view class="expand-chevron"><s-icon name="chevron-down" size="28" color="{{dusk ? '#eeeae3' : '#273b31'}}" /></view>
+    <text class="place-expand-name">{{selected.restaurant}}</text>
   </view>
   <!-- empty state -->
   <view wx:if="{{!selected}}" class="map-empty glass content-card">

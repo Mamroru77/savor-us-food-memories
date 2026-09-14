@@ -223,7 +223,7 @@
 .map-empty-button { font-size: 27rpx; text-decoration: underline; text-underline-offset: 10rpx; }
 
 
-.place-location-actions { display:flex; gap:16rpx; padding:0 0 0 36rpx; width:calc(100% - 390rpx); box-sizing:border-box; height:65rpx; align-items:center; font-size:22rpx; line-height:28rpx; color:var(--muted); }
+.place-location-actions { display:flex; gap:16rpx; padding:0 0 0 100rpx; width:calc(100% - 310rpx); box-sizing:border-box; height:65rpx; align-items:center; font-size:22rpx; line-height:28rpx; color:var(--muted); }
 
 /* Compact pending-location affordance directly beneath the recenter control. */
 .pending-location-controls { margin-top:108rpx; position:absolute; right:42rpx; z-index:7; }
@@ -254,12 +254,11 @@
 /* Native 2D composition surface: off-screen, not display:none. */
 .marker-render-canvas { position:fixed; left:-1000px; top:0; width:256px; height:286px; pointer-events:none; opacity:0; }
 
-/* Map-only card controls and overlap chooser. No changes to Me or TabBar. */
-.place-collapse { position:absolute; right:326rpx; bottom:20rpx; width:56rpx; height:56rpx; border-radius:24rpx; display:flex; align-items:center; justify-content:center; z-index:2; }
-.place-expand { position:absolute; left:32rpx; bottom:calc(var(--tab-clearance) + 20rpx); max-width:calc(100% - 64rpx); padding:22rpx 28rpx; box-sizing:border-box; border-radius:30rpx; z-index:5; display:flex; align-items:center; gap:24rpx; }
-.place-expand-name { font-size:28rpx; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.expand-chevron { transform:rotate(180deg); flex-shrink:0; }
-.dusk .place-collapse, .dusk .place-expand { background:rgba(37,38,42,.96); color:#eeeae3; }
+/* One fixed toggle stays aligned left of the expanded actions and collapsed name. */
+.place-collapse { position:absolute; left:36rpx; bottom:calc(var(--tab-clearance) + 24rpx); width:88rpx; height:88rpx; border-radius:24rpx; display:flex; align-items:center; justify-content:center; z-index:6; }
+.place-expand { position:absolute; left:32rpx; bottom:calc(var(--tab-clearance) + 20rpx); max-width:calc(100% - 64rpx); height:96rpx; padding:0 28rpx 0 100rpx; box-sizing:border-box; border-radius:30rpx; z-index:5; display:flex; align-items:center; }
+.place-expand-name { min-width:0; flex:1; font-size:28rpx; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dusk .place-expand { background:rgba(37,38,42,.96); color:#eeeae3; }
 
 /* One native callout owns every visible pin, including the root; coordinates stay real. */
 .pin-stack { position:relative; width:88px; }
@@ -325,7 +324,7 @@
 .dusk .map-filter-button.filter-active::before { background:#5a4d3d; }
 .map-filter-button s-icon { position:relative; }
 .pending-close { min-width:88rpx; min-height:88rpx; box-sizing:border-box; justify-content:center; }
-.place-collapse { right:310rpx; bottom:4rpx; width:88rpx; height:88rpx; background:transparent; }
-.dusk .place-collapse { background:transparent; }
-.place-collapse-visual { width:56rpx; height:56rpx; box-sizing:border-box; border-radius:24rpx; display:flex; align-items:center; justify-content:center; }
+.place-collapse-visual { width:56rpx; height:56rpx; box-sizing:border-box; border-radius:24rpx; display:flex; align-items:center; justify-content:center; transition:transform 320ms cubic-bezier(.333333,0,.666667,1); }
+.place-collapse.is-collapsed .place-collapse-visual { transform:rotate(180deg); }
 .dusk .place-collapse-visual { background:rgba(37,38,42,.96); color:#eeeae3; }
+.quiet .place-collapse-visual { transition:none; }

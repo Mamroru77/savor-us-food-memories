@@ -1065,13 +1065,17 @@ function nativeTabs(initial=0){
     const meals=[{...sample(),id:'free-a',coordinates:[31,121]},{...sample(),id:'free-b',coordinates:[31,121.0155]}];
     const before=JSON.stringify(meals);assert.equal(mapLayout.group(meals,13,'free-a').length,2);assert.equal(JSON.stringify(meals),before);
   });
-  await test('map square photo and inside collapse control reserve separate footer space', () => {
+  await test('map card uses one fixed toggle beside both expanded actions and collapsed name', () => {
     const css=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8');
+    const wxml=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
     assert.match(css,/\.place-photo\s*\{[^}]*width: 280rpx;[^}]*height: 280rpx/);
-    assert.match(css,/\.place-collapse\s*\{[^}]*right:326rpx; bottom:20rpx/);
+    assert.equal((wxml.match(/class="place-collapse /g)||[]).length,1);
+    assert(wxml.indexOf('class="place-collapse ')<wxml.indexOf('class="place-expand-name"'));
+    assert.match(css,/\.place-collapse\s*\{[^}]*left:36rpx; bottom:calc\(var\(--tab-clearance\) \+ 24rpx\)/);
+    assert.match(css,/\.place-expand\s*\{[^}]*left:32rpx; bottom:calc\(var\(--tab-clearance\) \+ 20rpx\);[^}]*padding:0 28rpx 0 100rpx/);
     assert.match(css,/\.place-name\s*\{[^}]*font-size: 42rpx;[^}]*line-height: 54rpx/);
     assert.match(css,/\.place-date\s*\{[^}]*font-size:24rpx; line-height:34rpx/);
-    assert.match(css,/\.place-location-actions\s*\{[^}]*width:calc\(100% - 390rpx\)/);
+    assert.match(css,/\.place-location-actions\s*\{[^}]*padding:0 0 0 100rpx; width:calc\(100% - 310rpx\)/);
   });
   const cat=require(path.join(mp,'utils/restaurantCategory'));
   const lookup=require(path.join(root,'cloudfunctions/placeLookup/lookup'));

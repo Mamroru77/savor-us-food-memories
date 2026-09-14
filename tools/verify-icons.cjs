@@ -34,7 +34,7 @@ for(const f of listFiles(mp).filter(f=>/\.(wxml|wxss|js)$/.test(f))){
   if(stroke)assert.equal(stroke[1],'1.75',f);
  }
 }
-assert.equal(count,73); // Tab atomic fallback is a direct image; generic morph fallback retained.
+assert.equal(count,72); // Map card states share one fixed toggle; Tab fallback stays a direct image.
 const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8');
 assert.match(sheet,/class="preference-tip">\s*<s-icon name="lightbulb"/);
 assert.match(sheet,/class="notification-symbol">\s*<s-icon name="bell"/);
@@ -65,4 +65,4 @@ for(const item of pixelReport.stampPixelChecks){
 const generated=['miniprogram/utils/icons.js','miniprogram/utils/lucideMorphNodes.js','tools/_gen/icons.json'];const before=generated.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
 const run=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'build-icons.cjs')],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
 generated.forEach((f,i)=>assert.equal(fs.readFileSync(path.join(root,f),'utf8'),before[i],'generator drift: '+f));
-console.log('ICON VERIFICATION PASSED: 48 official SVGs, 28 compatibility aliases, 73 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');
+console.log('ICON VERIFICATION PASSED: 48 official SVGs, 28 compatibility aliases, 72 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');

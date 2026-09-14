@@ -106,7 +106,7 @@ Component({
       const sameEntry=old&&old.key===command.key;
       const sameVisual=sameEntry&&old.name===command.name&&old.fromName===command.fromName&&old.quiet===command.quiet&&old.color===command.color&&old.active===command.active;
       if(!sameVisual){if(sameEntry&&this.data.painting&&this._displayed&&engine)this._current=engine.copy(this._displayed);this.cancel();this.clearSurface();}
-      const viewCommand=Object.assign({},command,{probeIcon:this._diagnosticId||(this._diagnosticId=++diagnosticSerial),originSrc:iconSvg(command.fromName,{stroke:command.color,strokeWidth:1.75}),targetSrc:iconSvg(command.name,{stroke:command.color,strokeWidth:1.75})});
+      const viewCommand=Object.assign({},command,{originSrc:iconSvg(command.fromName,{stroke:command.color,strokeWidth:1.75}),targetSrc:iconSvg(command.name,{stroke:command.color,strokeWidth:1.75})});
       const patch={viewCommand,name:command.name,fromName:command.fromName,entryKey:command.key,
         entryActive:command.active,quiet:command.quiet,color:command.color,duration:command.duration};
       if(!sameVisual)Object.assign(patch,{painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]});

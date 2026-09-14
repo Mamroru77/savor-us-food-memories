@@ -89,6 +89,3 @@
 
 /* Shape change communicates selection; no extra backing or entry-only pop. */
 .tab-item.is-active .tab-icon-wrap { transform:none;animation:none; }
-
-/* TEMP VP1 — outside button layout, never intercept touches. */
-.visual-probe-bar { position:absolute;bottom:calc(100% + 90rpx);left:8rpx;pointer-events:none;z-index:99;background:#062a36;color:#8affed;font-size:18rpx;line-height:26rpx;padding:2rpx 6rpx;border:1rpx solid #8affed;font-family:monospace;white-space:nowrap; }

@@ -16,24 +16,24 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/pages/me/index.wxml": {
-    "sha256": "70d720829427d253fdabd6b206bb6a24f803b7410cdabe0452346cfbab74bda6",
-    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+    "sha256": "2c93dd53583c60c3fac2531c77b5f5864efc6e31be0a45fedee22770f7f7d403",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Me页可见诊断标记，业务内容不变。"
   },
   "miniprogram/pages/add/index.wxml": {
-    "sha256": "b19cd9b562aa230153d3838a5ec69a5b73cb704433ddc075da924ac9c3445e8a",
-    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+    "sha256": "84c918d9b950f257fe54df76dd0257d26268fb682dadc2a4a45892d49ec95d89",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Add页可见诊断标记，业务内容不变。"
   },
   "miniprogram/pages/add/index.wxss": {
     "sha256": "6ac81ecff9830abc8d96cbbd2eadc2dc559ba1d11d41425ec728376b495c2d61",
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/pages/map/index.wxml": {
-    "sha256": "526955f69a56c5c7ef613e4e1782f5176c16362f9c1a7c2bbf388cf31704d461",
-    "reason": "用户批准保留地图原生照片地标堆叠，仅统一底部卡片同款320ms整体缓动、圆角按钮和按压反馈；修复末页收起跳页，保持地标坐标/方向/照片/Tab不变。"
+    "sha256": "4acba0b1f012d3038336fbabda621ed09fd11039c744ad1d33b32175f2980a57",
+    "reason": "用户要求Map底部卡片展开/收缩按钮绝对位置重合；两态改为共用一个固定按钮。"
   },
   "miniprogram/pages/map/index.wxss": {
-    "sha256": "88c8d8a3abff4e6420141bd8c3d313fcdb3d373ca64ef7086c66009cf9e345e1",
-    "reason": "用户批准保留地图原生照片地标堆叠，仅统一底部卡片同款320ms整体缓动、圆角按钮和按压反馈；修复末页收起跳页，保持地标坐标/方向/照片/Tab不变。"
+    "sha256": "2007afb2108ad387ee4c60bda137715c4fd0faf3d01b49bf31c7500a32356543",
+    "reason": "用户要求Map底部卡片展开时按钮位于校正位置左侧、收缩时位于餐厅名前，并保持同一绝对锚点。"
   },
   "miniprogram/pages/us/index.wxss": {
     "sha256": "dcbd1dc4b177871526e0d2c11260c39470fcbc39c6e71d5f725ad75f9f32b040",
@@ -60,16 +60,16 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/custom-tab-bar/index.js": {
-    "sha256": "85ad70bf9468ec3deb751a0a03264b4c7aa4b0ca58367727f128f1a9bbd819a0",
-    "reason": "J1真机PTS证据显示hide后停放仍未更新下一次恢复画面，故删除hide发布及专属状态；恢复即时导航且点击前后不修改源栏，保留VP1、480ms真实形变与Map。"
+    "sha256": "73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "0319ed325461ccd790bc1df12617d501473099d087cc4ac1f95a46c9093e9c25",
-    "reason": "K1仅增加真机包来源标识，用于Add/Me Skyline渲染管线对照；不参与布局、导航、SVG形变、480ms时钟或Map。"
+    "sha256": "413cf4ccc74e52ac83ca555bd53d50d75d044d81108336986e646f7902119d07",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
-    "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",
-    "reason": "vbug12已完成VP2对照；撤销对应紫色cover-view诊断样式，其他TabBar样式、布局、动画和Map不变。"
+    "sha256": "57e506ffa7e14d8d832ac1259c12a72fc2395f2037c94c8f4635b340811adae0",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。"
   },
   "miniprogram/pages/home/index.wxml": {
     "sha256": "2c2e94812a427a2cdf3bec377c6de64aaebf2a3d7a43b2d2d0440d0917be070c",
@@ -84,8 +84,8 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/components/morph-icon/index.wxml": {
-    "sha256": "037463e7261d065deb026ce80ec675576e841b6eb81629c40ffa4e262303153b",
-    "reason": "vbug15证明G3原生文本同样先恢复旧状态，故删除该cover-view实验；真实静态端点、连续SVG帧和VP1通用标记不变。"
+    "sha256": "cc9cfaef93ca8069492ae0ce40e7b0e6fa5f2af58855c55dc80aa7d0ebd1c4c6",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。"
   },
   "miniprogram/custom-tab-bar/index.json": {
     "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
@@ -104,23 +104,23 @@
     "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
   },
   "miniprogram/components/morph-icon/index.js": {
-    "sha256": "0142ed0bbb6cf08877bf12bb496cfa9a48daf23aa84cecc133af6370c33a1f8d",
-    "reason": "vbug15判定G3失败后删除专属属性、进度字段与帧补丁；动画状态机、480ms真实时间推进、回调、VP1与Map保持不变。"
+    "sha256": "ebce76ff577e16daa7e272031c02f698af49b1fedad405a6b11ab06cbbe274b4",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。"
   },
   "miniprogram/components/morph-icon/index.wxss": {
-    "sha256": "c06c0a5c9f473ab8e797c4f602151889607196c2fb1e2cea14b18f4a34e0b167",
-    "reason": "vbug15判定G3失败后删除专属紫色原生文本样式；真实图形裁剪、布局、导航和动画不变。"
+    "sha256": "a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。"
   },
   "miniprogram/pages/morph-lab/index.js": {
     "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
     "reason": "用户选择L餐具主题/480ms：Add端点改为官方Utensils/UtensilsCrossed；原480ms首帧计时修复、SVG层、尺寸、路线及地图不变。"
   },
   "miniprogram/pages/add/index.js": {
-    "sha256": "fbeceae2c422a6b8ecfaca7f4e5844ed59513b128f969b2d22de5016a7dbd27c",
-    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+    "sha256": "85a68e4dd8c833d516b44882258b129f8c8b5cc0f0a756cde725ea5983a569af",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Add页探针计数状态。"
   },
   "miniprogram/pages/me/index.js": {
-    "sha256": "9b771b00afb9c2e39e61b3d161d1c8e1581d69f590e5da10d69e552e359af142",
-    "reason": "临时VP1可视诊断版：页面/栏/图标编号与真实WXML逻辑图层标记，仅Add/Me页面；不改变导航、播放时钟、图标资源及Map。标记不参与布局和命中，非最终UI/性能验收版本。"
+    "sha256": "42b0443a2361c506363d31ff395319905592ee3b4704a58f76750070a97cfa33",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Me页探针计数状态。"
   }
 }

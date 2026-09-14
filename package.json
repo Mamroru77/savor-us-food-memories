@@ -8,13 +8,12 @@
     "verify:tabbar": "node tools/verify-tabbar.cjs",
     "verify:assets": "node tools/verify-assets.cjs",
     "verify:cloud": "node tools/verify-cloud.cjs",
-    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:visual-probe && npm run verify:capture",
+    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture",
     "build:locales": "node tools/build-locales.cjs",
     "build:icons": "node tools/build-icons.cjs",
     "verify:icons": "node tools/verify-icons.cjs",
     "verify:ui": "node tools/verify-ui-quality.cjs",
     "verify:handoff": "node tools/verify-tab-handoff.cjs",
-    "verify:visual-probe": "node tools/verify-visual-probe.cjs",
     "verify:capture": "node tools/analyze-tab-capture.cjs --self-test && node tools/capture-projected-tab-loop.cjs --self-test",
     "capture:projected": "node tools/capture-projected-tab-loop.cjs"
   }
