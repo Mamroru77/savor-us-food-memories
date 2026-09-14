@@ -15,6 +15,7 @@ function run(command,args,{json=false,allowFailure=false}={}){
   return json?JSON.parse(result.stdout):result.stdout;
 }
 function findTrace(value){
+  if(Array.isArray(value?.trace)&&value.trace.some(row=>row&&typeof row.event==='string'&&Number.isFinite(Number(row.at))))return value.trace;
   const found=[];
   (function visit(node,key=''){
     if(!node||typeof node!=='object')return;

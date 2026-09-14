@@ -15,6 +15,7 @@
     "verify:ui": "node tools/verify-ui-quality.cjs",
     "verify:handoff": "node tools/verify-tab-handoff.cjs",
     "verify:visual-probe": "node tools/verify-visual-probe.cjs",
-    "verify:capture": "node tools/analyze-tab-capture.cjs --self-test"
+    "verify:capture": "node tools/analyze-tab-capture.cjs --self-test && node tools/capture-projected-tab-loop.cjs --self-test",
+    "capture:projected": "node tools/capture-projected-tab-loop.cjs"
   }
 }
