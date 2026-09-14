@@ -1,0 +1,290 @@
+[
+  {
+    "name": "archive",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/archive.svg",
+    "sha256": "78c732e34e232db63af06a2330b4448045cfdf49b48b59f2d31922df54c7bb17",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "arrow-down-to-line",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/arrow-down-to-line.svg",
+    "sha256": "d44032ba6c8d27fa6b1589831a4cf5e22acf3b1e7bb7852913c1bf323b1fd7de",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "arrow-up-from-line",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/arrow-up-from-line.svg",
+    "sha256": "4b8f99c4836217108bedc4122c4375abcd8ddb45d0453fbf44775df26656c5c8",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "bell",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/bell.svg",
+    "sha256": "394889e9631fe3a9a63be9a479a95b451b708e432d895978d21d9130b5ee5dbe",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "bookmark",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/bookmark.svg",
+    "sha256": "1d5023760db81f21c3b5a63f012ef540acc01932731c733e4645012a876d39f4",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "bookmark-check",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/bookmark-check.svg",
+    "sha256": "2f60d065675fd43e336c4d99f2f22d19f33bc84b2333025525b51d2d5671c5c4",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "calendar-days",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/calendar-days.svg",
+    "sha256": "9330eb8d7c4989e97b6361314abbf02953243c602874725c9e58ceca00da3bd7",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "camera",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/camera.svg",
+    "sha256": "ebbb3178dd80dfd942770a2237fe7bfc3515c55c7daa9d3666933a656d2790e3",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "check",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/check.svg",
+    "sha256": "7f33acc9a77a61659531044525fc008edebe215bf4dcf1c789c8674ad3277db0",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "chevron-down",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/chevron-down.svg",
+    "sha256": "66ea878e72ed3488bb3b464c39dfdccee8d1f78e560dccea40e5e12da0e87e87",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "chevron-left",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/chevron-left.svg",
+    "sha256": "83b0681aa38bf55e9d52a1e4b4cced624abe1fe7678ecafda133a574f1161d93",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "chevron-right",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/chevron-right.svg",
+    "sha256": "2758143d7b2434e4aa7307dfd34405c87909ff4052f21b5f3f40d45224b4f19b",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "chevron-up",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/chevron-up.svg",
+    "sha256": "d09f13fcbef3c493ead7e4663b5ee91804fec38d5edb5e7cc3acfbd547641cf4",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "circle-check",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/circle-check.svg",
+    "sha256": "9711e045a5999f8a3b0782eb88e09b04e0559bc7b379dcc0a4ae645223e10345",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "circle-question-mark",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/circle-question-mark.svg",
+    "sha256": "975db087da041530dbf59ba1e61a7b99c3519fad43dae6375e42ccc74ba63924",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "heart",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/heart.svg",
+    "sha256": "70af5f30be9fcb500b852556b38dcdf8c04a4ba81fd262534fb0336bd39b3b52",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "house",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/house.svg",
+    "sha256": "28216c479005731ef5e382e7d8627eda2b129b019eb1f3d9de9f5915576d448e",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "house-heart",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/house-heart.svg",
+    "sha256": "cf40d215b5858cf8ea3786df317da7fa3cb8d3999507e3d6d2f86c526277f9e6",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "image",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/image.svg",
+    "sha256": "619c9db58c879dce6250376ba67d9c9102ca6dbb3b1efb9294c9f180e22273a5",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "loader-circle",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/loader-circle.svg",
+    "sha256": "043021bb903919668804bdb6fee0342072e4ffea5f03fbd857774c440179ad3b",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "lock-keyhole",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/lock-keyhole.svg",
+    "sha256": "fc0b8b7590d1d9e9bb0112c5c2e15a78ade0bfeca6d6f8c79fbbe149236d74be",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "map",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/map.svg",
+    "sha256": "41300a8ef2c2a4cf36ec3f8a730bcb4754543889eb23b98e7435de7a0757752d",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "map-pin",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/map-pin.svg",
+    "sha256": "16f1042a62f1bda20ebab8bfc1cb79c0be285c980dea6c2c733a17902631405b",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "map-pin-off",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/map-pin-off.svg",
+    "sha256": "b944af7142485a158fe3153e99704e60cf378cb734983a341d96a002921b630d",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "map-pinned",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/map-pinned.svg",
+    "sha256": "93239b2214c932ecab554ad4ac240664dd14993f850ff754dec29e6c25feec8f",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "minus",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/minus.svg",
+    "sha256": "a0c743ab6dbf545d8a6e19ef3874f48ede686ce68d25e231bd81f540d97b1f19",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "navigation",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/navigation.svg",
+    "sha256": "3c1adf655f06c733013ddf00848c3efe905ed70d7b3eba7a6be5e60e65880503",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "notebook-pen",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/notebook-pen.svg",
+    "sha256": "56705c35e839977bd6f133d7ca4e9c93a6eea563c89e4be125efd0a32e1fa041",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "pencil",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/pencil.svg",
+    "sha256": "7e1ca7a6f5c1eb949671df762f2baadd32f5bd841d43153c3a15279af7d78d0c",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "plus",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/plus.svg",
+    "sha256": "7f6af73bf1ff6c4bca3f18351c8d1bdec6749c0c2530c4de5da85d520c21df17",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "search",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/search.svg",
+    "sha256": "283d371c2e433817bb9c0c8310caa6c77fa4177c0f4f1168d9c83b97af7389dc",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "send",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/send.svg",
+    "sha256": "a489257f447b808ab6b258ae888fa49686885bbc30a7a2774d97a01f11f9cd5e",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "settings",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/settings.svg",
+    "sha256": "0ae27fd0f81999229e3127ac96c5b32edfea448e291d509e76212b917551d66b",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "shield-check",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg",
+    "sha256": "8d4fcdbde5bba4abb1a2f6fe53e37ceb6343a1d5449a9d88f6f97c1971d26c4e",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "sliders-horizontal",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/sliders-horizontal.svg",
+    "sha256": "e43a00e5eb684e6cbb61083bed2528d7a3fa5f265693eb2b5f314cd432aa65f4",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "square-plus",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/square-plus.svg",
+    "sha256": "c0856053827b2796170556f874a3017f7cb8d5b7a53bbb00f95600891fc76cc1",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "star",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/star.svg",
+    "sha256": "c59da86b889569387db28e69ad00a89f96af22863ad9eea9aa12c4876a14338c",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "trash",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/trash.svg",
+    "sha256": "27299f69ad7c6272be64b1b8e2d48cbd6dcf0ef0d4f92827a1affa945c91700e",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "user",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/user.svg",
+    "sha256": "eae3b3b2400031ddd5ec869327d127a96014e5f63aa6e06658dd5d4e90661aa8",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "user-round",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/user-round.svg",
+    "sha256": "84870f26f3faf8da45da84174517519e81b9e8f00319c78954fcbb74f50038a1",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "users",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/users.svg",
+    "sha256": "eeed488a1ec95ba730dd69996536fb65061d6ea273afb2429ae47e65eebf401c",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "users-round",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/users-round.svg",
+    "sha256": "8b41ee3ada1609e25a410d64056aa333952cf27d770f0c379a100065270de7f7",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "utensils",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/utensils.svg",
+    "sha256": "9b5eb803bc342b8503b6a154ff63a0f754ba52a13fa24c2e270d2ab89c70f76a",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "x",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/x.svg",
+    "sha256": "4a9cdab38fbb96162e7dace28e33f4ca0e49d8963a6162abc3d4691b7d675117",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "lightbulb",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/lightbulb.svg",
+    "sha256": "e33bbec15b1e64cca958e086850f951c0dc2201cd5778bb3695fda3cb6ea457d",
+    "note": "Replacement for Sparkles in tips/recommendations; original official SVG."
+  },
+  {
+    "name": "pen",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/pen.svg",
+    "sha256": "7ec5ad9ae2411b072cf58060d4a9c65491efe14090873e44ec26c81e24de1279",
+    "note": "User-approved Add Tab endpoint; exact official SVG from reviewed preview."
+  },
+  {
+    "name": "pen-line",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/pen-line.svg",
+    "sha256": "43c431457784ab409341b549119257111385e5af0a36dee08f37c91259c08799",
+    "note": "User-approved Add Tab endpoint; exact official SVG from reviewed preview."
+  },
+  {
+    "name": "utensils-crossed",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/utensils-crossed.svg",
+    "sha256": "2233649b0ed58bd19ed3d1af077a91c37292cd00f5e6d53e7de672ab1d402e7d",
+    "note": "User selected candidate L: exact reviewed official Add selected endpoint."
+  }
+]

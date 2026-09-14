@@ -1,0 +1,26 @@
+<s-identity-gate wx:if="{{locked}}"/>
+<scroll-view wx:else scroll-y class="space-scroll"><view class="space-page">
+ <text class="title">{{labels.title}}</text><text>{{labels.intro}}</text>
+ <button bindtap="refresh" disabled="{{busy}}">{{busy ? labels.loading : labels.refresh}}</button>
+ <text selectable>{{message}}</text>
+ <view wx:if="{{pending}}" class="card"><text>{{labels.pending}}</text><button bindtap="retry" disabled="{{busy}}">{{labels.retry}}</button></view>
+ <view wx:if="{{mediaPending}}" class="card"><text>{{labels.photoPending}}</text><button bindtap="retryMedia" disabled="{{busy}}">{{labels.retryPhoto}}</button><button bindtap="cancelMedia" disabled="{{busy}}">{{labels.cancelPhoto}}</button></view>
+ <view wx:if="{{!space}}" class="card">
+  <text>{{labels.unbound}}</text><button bindtap="createInvite" disabled="{{busy || pending}}">{{labels.create}}</button>
+  <view wx:if="{{invitation}}"><button bindtap="copyInvite">{{labels.copy}}</button><button bindtap="revokeInvite" disabled="{{busy || pending}}">{{labels.revoke}}</button></view>
+  <input value="{{inviteText}}" bindinput="onInvite" placeholder="{{labels.placeholder}}" maxlength="100"/>
+  <button bindtap="acceptInvite" disabled="{{busy || pending}}">{{labels.join}}</button>
+ </view>
+ <view wx:else>
+  <button bindtap="leave" disabled="{{busy || pending}}">{{labels.leave}}</button>
+  <view class="card"><text class="heading">{{labels.wishlist}}</text><input value="{{wishTitle}}" bindinput="onTitle" placeholder="{{labels.wishTitle}}" maxlength="80"/><textarea value="{{wishNote}}" bindinput="onNote" placeholder="{{labels.wishNote}}" maxlength="500"/><button bindtap="addWish" disabled="{{busy || pending}}">{{labels.add}}</button></view>
+  <view wx:for="{{wishes}}" wx:key="_id" class="card">
+   <text class="heading">{{item.title}}</text><text>{{item.note}}</text><text>{{item.status}} · {{item.preferenceLabel}}</text>
+   <view class="actions"><button size="mini" data-id="{{item._id}}" data-value="want" bindtap="preference">{{labels.want}}</button><button size="mini" data-id="{{item._id}}" data-value="maybe" bindtap="preference">{{labels.maybe}}</button><button size="mini" data-id="{{item._id}}" data-value="no" bindtap="preference">{{labels.no}}</button></view>
+   <view class="actions"><button size="mini" data-id="{{item._id}}" data-value="{{item.status === 'eaten' ? 'open' : 'eaten'}}" bindtap="wishStatus">{{item.status === 'eaten' ? labels.reopen : labels.eaten}}</button><button size="mini" data-id="{{item._id}}" bindtap="toDraft">{{labels.draft}}</button><button wx:if="{{item.creatorUserId === userId}}" size="mini" data-id="{{item._id}}" data-value="deleted" bindtap="wishStatus">{{labels.remove}}</button></view>
+  </view>
+  <view class="card"><text class="heading">{{labels.meals}}</text><text>{{labels.privacy}}</text><button bindtap="publishMeal" disabled="{{busy || pending}}">{{labels.publish}}</button></view>
+  <view wx:for="{{publishCandidates}}" wx:key="id" class="card"><button data-id="{{item.cloudId}}" bindtap="publishCandidate">{{item.restaurant}} · {{item.date}}</button></view>
+  <view wx:for="{{meals}}" wx:key="_id" class="card"><text class="heading">{{item.payload.restaurantName}}</text><text>{{item.payload.date}} · {{item.payload.city}}</text><text>{{item.payload.note}}</text><text>{{item.ratingLabel}}</text><view class="actions"><button size="mini" data-id="{{item._id}}" bindtap="viewMedia" disabled="{{busy}}">{{labels.viewPhotos}}</button><button wx:if="{{item.ownerUserId === userId}}" size="mini" data-id="{{item._id}}" bindtap="addMedia" disabled="{{busy || mediaPending}}">{{labels.addPhoto}}</button></view><view wx:for="{{item.sharedImages}}" wx:for-item="photo" wx:key="id"><image wx:if="{{!photo.failed}}" class="shared-media-photo" src="{{photo.src}}" mode="aspectFit" binderror="onSharedImageError" data-id="{{photo.id}}"/><text wx:else>{{labels.photoUnavailable}}</text><button wx:if="{{item.ownerUserId === userId}}" size="mini" data-id="{{photo.id}}" bindtap="withdrawMedia" disabled="{{busy}}">{{labels.removePhoto}}</button></view><view class="actions"><button size="mini" data-id="{{item._id}}" bindtap="rateMeal">{{labels.rate}}</button><button size="mini" data-id="{{item._id}}" data-value="0" bindtap="unrateMeal">{{labels.unrate}}</button><button wx:if="{{item.ownerUserId === userId}}" size="mini" data-id="{{item._id}}" bindtap="retractMeal">{{labels.retract}}</button></view></view>
+ </view>
+</view></scroll-view>

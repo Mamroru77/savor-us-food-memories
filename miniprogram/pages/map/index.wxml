@@ -1,0 +1,172 @@
+<s-identity-gate wx:if="{{!identityReady}}"/>
+<view wx:if="{{identityReady}}" class="screen map-screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- immersive: the native map fills the whole screen under everything
+       (Leaflet must never enter a mini program) -->
+  <map
+    wx:if="{{!mapError}}"
+    id="savor-map"
+    class="memory-map"
+    latitude="{{latitude}}"
+    longitude="{{longitude}}"
+    scale="{{mapScale}}"
+    bindregionchange="onMapRegionChange"
+    min-scale="3"
+    max-scale="18"
+    markers="{{markers}}"
+    bindmarkertap="onMarkerTap"
+    binderror="onMapError"
+    show-location="{{false}}"
+    enable-poi="{{true}}"
+    enable-building="{{true}}"
+    enable-rotate="{{false}}"
+    enable-overlooking="{{false}}"
+  >
+    <cover-view slot="callout">
+      <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.height}}px">
+        <cover-image class="native-stack-toggle" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.buttonBox.top}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? (drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
+        <cover-view wx:if="{{drawer.open && drawer.pages > 1}}" class="native-stack-pages" style="height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}}">
+          <cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-left.png" /><cover-view class="native-stack-page-number">{{drawer.page+1}}/{{drawer.pages}}</cover-view><cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-right.png" />
+        </cover-view>
+        <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row" style="top:{{pin.top}}px;opacity:{{pin.opacity}};z-index:{{pin.layer}}">
+          <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
+        </cover-view>
+        <cover-view class="native-stack-root" style="top:{{drawer.rootTop}}px">
+          <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
+        </cover-view>
+      </cover-view>
+    </cover-view>
+  </map>
+  <!-- Transparent ordinary-view hit regions only; native map owns all visible ink. -->
+  <view class="map-stack-overlay" wx:if="{{stackPositionsReady && !mapError}}">
+    <view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" class="pin-stack" style="left:{{drawer.screenX}}px;top:{{drawer.screenY-drawer.height}}px;height:{{drawer.height}}px">
+      <view class="pin-stack-toggle" style="left:{{drawer.buttonBox.hitLeft}}px;width:{{drawer.buttonBox.hitWidth}}px;top:{{drawer.buttonBox.hitTop}}px;height:{{drawer.buttonBox.hitHeight}}px" data-root-id="{{drawer.rootId}}" bindtouchstart="onStackPress" bindtouchend="onStackRelease" bindtouchcancel="onStackRelease" catchtap="onDrawerToggle" data-index="{{drawer.markerId}}" aria-role="button" aria-expanded="{{drawer.targetOpen}}" aria-label="{{drawer.targetOpen ? copy.sd22536b714 : copy.sddcd11b118}}" />
+      <view wx:if="{{drawer.open && drawer.pages > 1}}" class="pin-stack-pages" style="height:{{30 * drawer.progress}}px;pointer-events:{{drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'}}">
+        <view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.s8e21e3af14}}" catchtap="onDrawerPage" data-step="-1" /><view class="pin-stack-page-number" /><view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.sb9cb5c2ebd}}" catchtap="onDrawerPage" data-step="1" />
+      </view>
+      <view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="pin-stack-row" style="top:{{pin.top}}px;z-index:{{pin.layer}};pointer-events:{{pin.opacity > 0.2 ? 'auto' : 'none'}}" catchtap="onClusterPick" data-id="{{pin.id}}" />
+      <view class="pin-stack-root" style="top:{{drawer.rootTop}}px" catchtap="onStackRoot" data-id="{{drawer.rootId}}" />
+    </view>
+  </view>
+
+  <!-- offline / error fallback: must not depend on any remote resource -->
+  <view wx:if="{{mapError}}" class="map-fallback">
+    <s-icon name="map-pin-off" size="96" color="{{dusk ? '#d7d1c7' : '#8a9184'}}" stroke="1.75" />
+    <text class="map-fallback-title">{{copy.sf4314cbcf0}}</text>
+    <text class="map-fallback-text">{{copy.s63acb3873c}}</text>
+    <view class="map-fallback-button" bindtap="onMapRetry" aria-role="button">{{copy.s9f5cd8a2e8}}</view>
+  </view>
+
+  <view wx:if="{{dusk}}" class="map-night-veil" />
+
+  <!-- top fade so the heading stays readable over map tiles -->
+  <view class="map-top-fade" />
+
+  <!-- header floats above the map; same headerTop source as the Us screen,
+       so “Map First” always sits at the exact height of “Us” -->
+  <view class="map-head" style="padding-top: {{headerTop}}px">
+    <view class="screen-heading map-heading">
+      <view>
+        <text class="heading-title">{{pageHeading.title}}</text>
+        <text class="heading-sub">{{pageHeading.subtitle}}</text>
+      </view>
+    </view>
+
+    <!-- search -->
+    <view class="map-search glass">
+      <s-icon name="search" size="37" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
+      <input
+        class="map-search-input {{focusedField === ('onQuery-') ? 'is-focused' : ''}}"
+        placeholder="{{copy.scf3490d051}}"
+        placeholder-class="map-search-placeholder"
+        value="{{query}}"
+        bindinput="onQuery"
+        confirm-type="search"
+       aria-label="{{copy.scf3490d051}}" data-focus-key="{{'onQuery-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+      <view wx:if="{{query}}" class="map-clear" bindtap="onClearSearch" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.s67300d0fed}}">
+        <s-icon name="x" size="30" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
+      </view>
+      <view class="map-filter-button {{filter !== 'all' || showFilters ? 'filter-active' : ''}}" bindtap="onToggleFilters" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.see7b6cb405}}">
+        <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="sliders-horizontal" size="35" stroke="1.75" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{pendingCount}}" class="pending-location-controls" style="top: {{overlayTop}}px">
+    <view class="pending-bubble glass" bindtap="onTogglePending" aria-role="button" aria-label="{{copy.s71c1a94908}}" aria-expanded="{{pendingExpanded}}">
+      <s-icon name="map-pin" size="26" color="{{dusk ? '#eeeae3' : '#29332d'}}" /><text>{{pendingCount}}</text>
+    </view>
+    <view class="pending-popover glass motion-popover {{pendingExpanded ? 'motion-visible' : ''}}" aria-hidden="{{!pendingExpanded}}">
+      <view class="pending-popover-heading"><text>{{pendingCount}} {{copy.sc79128938a}}</text><view class="pending-close" bindtap="onCollapsePending" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.s9cf188d3a6}}"><s-icon name="x" size="32" color="{{dusk ? '#eeeae3' : '#34483c'}}" stroke="1.75" /></view></view>
+      <text class="pending-explainer">{{copy.s915036beb6}}</text>
+      <view class="pending-action" bindtap="onFillLocation" aria-role="button">{{copy.sb18e4e5188}}</view>
+    </view>
+  </view>
+  <text wx:if="{{demoMode}}" class="map-demo-note" style="top: {{overlayTop + 65}}px">{{copy.s013e54d652}}</text>
+  <!-- filter menu -->
+  <view class="map-filter-menu glass motion-popover {{showFilters ? 'motion-visible' : ''}}" aria-hidden="{{!showFilters}}" style="top: {{overlayTop}}px">
+    <text class="map-filter-label">{{copy.sa9d55cf1a8}}</text>
+    <view class="map-filter-option" data-value="all" bindtap="onFilterPick">
+      <text>{{copy.s350cb0f562}}</text>
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" class="filter-check {{filter === 'all' ? 'check-visible' : ''}}" name="check" size="35" stroke="1.75" />
+    </view>
+    <view class="map-filter-option" data-value="favorites" bindtap="onFilterPick">
+      <text>{{copy.sb9c17d3839}}</text>
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" class="filter-check {{filter === 'favorites' ? 'check-visible' : ''}}" name="check" size="35" stroke="1.75" />
+    </view>
+    <view class="map-filter-option" data-value="shared" bindtap="onFilterPick">
+      <text>{{copy.s3000cbb2ab}}</text>
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" class="filter-check {{filter === 'shared' ? 'check-visible' : ''}}" name="check" size="35" stroke="1.75" />
+    </view>
+  </view>
+
+  <!-- recenter -->
+  <view class="recenter-map glass" style="top: {{overlayTop}}px" bindtap="recenter" aria-role="button" aria-label="{{copy.s392420f827}}">
+    <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="navigation" size="40" stroke="1.75" />
+  </view>
+
+
+  <!-- results count -->
+  <text wx:if="{{query && resultsCount > 0}}" class="map-results-count" style="top: {{overlayTop + 25}}px">{{resultsCount}} {{resultsCount === 1 ? copy.s81c5d49be9 : copy.s2421476536}} {{copy.s2739bb260c}}</text>
+
+  <!-- place card -->
+  <view wx:if="{{selected}}" class="place-card glass content-card {{cardCollapsed ? 'card-is-collapsed' : ''}}">
+    <view class="place-open" bindtap="onPlaceOpen" aria-role="button" aria-label="{{copy.sbbc297130e}} {{selected.restaurant}}">
+      <view class="place-copy">
+        <text class="place-name">{{selected.restaurant}}</text>
+        <text class="place-line">{{selected.categoryLabel}}</text>
+        <text class="place-line">{{distanceLabel}}</text>
+        <text class="place-date">{{selected.dateLabel}}</text>
+      </view>
+    </view>
+    <image class="place-photo" src="{{selectedPhoto}}" mode="aspectFill" bindtap="onPlaceOpen" />
+    <view class="place-location-actions">
+      <text bindtap="onCorrectLocation" aria-role="button" aria-label="{{copy.sddc6088f76}}">{{copy.s48e09e45c5}}</text><text bindtap="onNavigate" aria-role="button" aria-label="{{copy.s5da3945bd1}}">{{copy.se56f29da2a}}</text>
+    </view>
+    <view class="bookmark-place" bindtap="onBookmark" aria-role="button" aria-label="{{selectedSaved ? copy.s98678978a3 : copy.s39cf30fa7c}}">
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="bookmark" size="37" fill="{{selectedSaved ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
+    </view>
+  </view>
+
+  <view wx:if="{{selected}}" class="place-collapse {{cardCollapsed ? 'is-collapsed' : ''}}" catchtap="onTogglePlaceCard" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-expanded="{{!cardCollapsed}}" aria-label="{{cardCollapsed ? copy.s30a6a77f03 : copy.se0669384b5}}"><view class="place-collapse-visual glass"><s-icon name="chevron-down" size="28" color="{{dusk ? '#eeeae3' : '#273b31'}}" /></view></view>
+  <view wx:if="{{selected}}" class="place-expand glass {{cardCollapsed ? 'strip-is-visible' : ''}}" bindtap="onTogglePlaceCard" aria-role="button" aria-label="{{copy.s30a6a77f03}}">
+    <text class="place-expand-name">{{selected.restaurant}}</text>
+  </view>
+  <!-- empty state -->
+  <view wx:if="{{!selected}}" class="map-empty glass content-card">
+    <s-icon name="search" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
+    <text class="map-empty-title">{{pendingCount ? copy.s9f4f238913 : copy.s676b7e8f6b}}</text>
+    <text class="map-empty-text">{{pendingCount ? copy.sead04f3057 : copy.sc35c07caee}}</text>
+    <view class="map-empty-button" bindtap="onEmptyMapAction">{{pendingCount ? copy.s2dd35d32eb : copy.s2b3566361e}}</view>
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <canvas type="2d" id="marker-render-canvas" class="marker-render-canvas" aria-hidden="true" />
+  <s-toast />
+</view>

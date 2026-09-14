@@ -1,0 +1,1 @@
+.account{padding:48rpx;display:flex;flex-direction:column;gap:28rpx;color:#343a32;font-size:28rpx;line-height:1.8}.title{font-size:42rpx;font-weight:600}button{width:100%;font-size:26rpx}

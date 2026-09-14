@@ -1,0 +1,50 @@
+{
+  "schema": "tab-capture-v1",
+  "capturedAt": "2026-09-13T15:41:54.0231721+08:00",
+  "source": "WeChat DevTools simulator",
+  "acceptance": "SIMULATOR_ONLY_NOT_DEVICE_ACCEPTANCE",
+  "git": {
+    "commit": "not-a-git-worktree",
+    "branch": "unavailable",
+    "dirty": "unknown"
+  },
+  "runtime": {
+    "devToolsVersion": "Stable 2.02.2608070",
+    "brand": "devtools",
+    "model": "iPhone 12/13 Pro",
+    "platform": "devtools",
+    "screen": "390x844",
+    "wechatVersion": "8.0.5",
+    "baseLibrary": "3.17.3"
+  },
+  "testOrder": [
+    "pages/home/index",
+    "pages/add/index",
+    "pages/me/index",
+    "pages/add/index"
+  ],
+  "artifacts": [
+    {
+      "path": "devtools-e1-rollback-home.png",
+      "sha256": "6a809c873368c84bff8bbc70a5f97181a20721af569d40c28072cff8cb482328"
+    },
+    {
+      "path": "devtools-e1-rollback-me.png",
+      "sha256": "102ab5135399267c3e5c1f46fb4250faa991159e4bb9a69c120e68472e359066"
+    },
+    {
+      "path": "devtools-e1-rollback-add.png",
+      "sha256": "693b06789cd2b55a2ef4a8e75f940b1bc43f626b528a1e84a7f56439c3dea442"
+    }
+  ],
+  "console": {
+    "filter": "error|exception|uncaught|fail",
+    "matches": 0,
+    "persistedLog": null
+  },
+  "notes": [
+    "The Add/Me transitions were invoked through the production onTabTap handler.",
+    "This does not exercise pointer hit-testing, a physical device, or the native device compositor.",
+    "No account details, business payloads, secrets, or image data URIs are recorded."
+  ]
+}

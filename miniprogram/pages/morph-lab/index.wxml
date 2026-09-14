@@ -1,0 +1,16 @@
+<view class="lab {{dark ? 'dark' : ''}}">
+  <text class="title">Lucide / 连续路径变形</text>
+  <text class="note">开发验证页，不操作餐厅数据。Tab 已接入确认的双态图案；此页可逐组检查 Canvas 2D。曲线由 Morphicons 1.7.1 计算，不是淡入淡出。</text>
+  <view class="stage">
+    <s-morph name="{{name}}" size="160" color="{{dark ? '#dec8a7' : '#34483c'}}" quiet="{{quiet}}" bind:report="onReport" />
+    <text>{{name}}</text>
+  </view>
+  <view class="actions"><button bindtap="onToggle">正向 / 反向</button><button bindtap="onReverse">120ms 中途反向</button></view>
+  <view class="actions"><button bindtap="onQuiet">Quiet：{{quiet ? '开' : '关'}}</button><button bindtap="onDark">亮 / 暗色</button></view>
+  <text class="note">前五组与正式 Tab 状态配对相同，不改变按钮功能。喜欢与完成图形也不触发业务状态。</text>
+  <view class="pairs"><view wx:for="{{pairs}}" wx:key="label" class="pair {{index === itemIndex ? 'selected' : ''}}" wx:for-index="itemIndex" data-index="{{itemIndex}}" bindtap="onPick"><s-icon name="{{'lucide-'+item.a}}" size="36" color="{{dark ? '#dec8a7' : '#34483c'}}" stroke="1.75" /><text>{{item.label}}</text><s-icon name="{{'lucide-'+item.b}}" size="36" color="{{dark ? '#dec8a7' : '#34483c'}}" stroke="1.75" /></view></view>
+  <text class="status" selectable>{{status}}</text>
+  <button bindtap="onExport">生成脱敏验证记录</button>
+  <text wx:if="{{exportText}}" class="export" selectable>{{exportText}}</text>
+  <text class="note">frames / p95IntervalMs 是实际执行时的采样；静态 fallback 不算通过。此页不验证地图原生 cover-image 的逐帧更新能力。</text>
+</view>

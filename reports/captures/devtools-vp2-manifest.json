@@ -1,0 +1,46 @@
+{
+  "schema": "tab-capture-v1",
+  "capturedAt": "2026-09-13T20:32:46.2331006+08:00",
+  "source": "WeChat DevTools simulator",
+  "acceptance": "SIMULATOR_ONLY_NOT_DEVICE_ACCEPTANCE",
+  "git": {
+    "commit": "not-a-git-worktree",
+    "branch": "unavailable",
+    "dirty": "unknown"
+  },
+  "runtime": {
+    "devToolsVersion": "Stable 2.02.2608070",
+    "model": "iPhone 12/13 Pro",
+    "platform": "devtools",
+    "baseLibrary": "3.17.3"
+  },
+  "testOrder": [
+    "pages/home/index -> pages/add/index",
+    "pages/add/index -> pages/me/index"
+  ],
+  "artifacts": [
+    {
+      "path": "devtools-vp2-add.png",
+      "sha256": "4b797b56f83392c16cff7195c51c8ae766c8e64ec838230a71e79bc95e8f785d",
+      "visibleState": "VP2 B2 K1 R7 SEL2 ACTIVE matches VP1"
+    },
+    {
+      "path": "devtools-vp2-me.png",
+      "sha256": "3e2337dcdd646d9857eb94c839eeb9d46c3cd98d3719cb5af8db930481cedf3e",
+      "visibleState": "VP2 B3 K2 R11 SEL4 ACTIVE matches VP1"
+    }
+  ],
+  "sourceStateBeforeSwitch": {
+    "before": "selected=2 key=1 revision=7",
+    "afterOnTapReturn": "selected=2 key=1 revision=7",
+    "switch": "from=2 to=4 key=2 prepareMs=0"
+  },
+  "console": {
+    "filter": "error|exception|uncaught|fail",
+    "matches": 0
+  },
+  "notes": [
+    "VP2 is a temporary cover-view compositor-layer diagnostic, not a production fix.",
+    "No account data, business payloads, secrets, or image data URIs are recorded."
+  ]
+}

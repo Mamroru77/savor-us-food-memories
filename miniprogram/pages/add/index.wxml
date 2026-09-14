@@ -1,0 +1,212 @@
+<s-identity-gate wx:if="{{!identityReady}}"/>
+<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <!-- ambient follows the photo being captured: swaps live as the
+       user picks/removes draft photos (falls back to the house photo) -->
+  <image class="ambient-photo" src="{{imageErrors[(draft.photos[0] || '/images/le-comptoir.jpg')] ? '/images/le-comptoir.jpg' : (draft.photos[0] || '/images/le-comptoir.jpg')}}" mode="aspectFill" aria-hidden="true"  data-source="{{draft.photos[0] || '/images/le-comptoir.jpg'}}" binderror="onImageError" />
+
+  <view class="screen-scroll">
+    <view class="add-screen" style="padding-top: {{headerTop}}px">
+      <view class="add-heading">
+        <view class="close-add" bindtap="onClose" aria-role="button" aria-label="{{copy.s9f6b959ed5}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="45" stroke="1.75" />
+        </view>
+        <view class="add-heading-copy">
+          <text class="add-title">{{pageHeading.title}}</text>
+          <text class="add-subtitle">{{pageHeading.subtitle}}</text>
+        </view>
+      </view>
+
+      <view class="import-entry glass" bindtap="onUniversalImport" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <text>{{copy.s0c7ba28c99}}</text><text class="import-entry-note">{{copy.s8a4ddcb0b5}}</text>
+      </view>
+      <view wx:if="{{importOpen}}" class="import-panel glass">
+        <text class="form-label">{{copy.s9a247d4df8}}</text>
+        <picker disabled="{{saving || uploading}}" range="{{[copy.s003ff3645d, copy.sd572da5430, copy.sc9c62cffcf]}}" value="{{importSourceIndex}}" bindchange="onImportSource" aria-label="{{copy.s9a247d4df8}}">
+          <view class="location-entry"><text>{{importSourceIndex === 0 ? copy.s003ff3645d : importSourceIndex === 1 ? copy.sd572da5430 : copy.sc9c62cffcf}}</text><s-icon name="chevron-down" size="28" color="{{dusk ? '#d7d1c7' : '#818873'}}" stroke="1.75" /></view>
+        </picker>
+        <view class="merchant-page-status">
+          <text class="form-label">{{copy.sdeba81c482}}</text>
+          <text class="location-address">{{copy.sd78b5f0de8}}</text>
+          <text class="helper-note">{{copy.s5971d850d9}}</text>
+        </view>
+        <textarea disabled="{{saving || uploading}}" class="form-textarea import-text {{focusedField === ('onImportText-') ? 'is-focused' : ''}}" value="{{importText}}" maxlength="6000" bindinput="onImportText" placeholder="{{copy.s4d89ad859c}}" placeholder-class="form-placeholder"  aria-label="{{copy.s4d89ad859c}}" data-focus-key="{{'onImportText-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" cursor-spacing="100" />
+        <text wx:if="{{error && errorContext === 'import'}}" class="form-error">{{error}}</text>
+        <button class="import-action" bindtap="onImportParse">{{copy.sb7eaef5af8}}</button>
+        <view wx:if="{{importCandidate}}" class="import-candidate">
+          <text class="helper-note">{{copy.s9132ac9d29}}</text>
+          <input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onImportName-') ? 'is-focused' : ''}}" value="{{importCandidate.name}}" maxlength="70" bindinput="onImportName" placeholder="{{copy.s9469649d37}}"  aria-label="{{copy.s9469649d37}}" placeholder-class="form-placeholder" data-focus-key="{{'onImportName-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          <text class="helper-note">{{importCandidate.categorySource === 'share-text' ? copy.s69e6700113 : importCandidate.categorySource === 'tencent-poi' ? copy.s0867e3f1ac : importCandidate.categorySource === 'user-confirmed' ? copy.s455819069c : copy.s774fca8ed2}}</text>
+          <text wx:if="{{importCandidate.sourceCategory}}" class="helper-note">{{copy.s330f47e97a}}: {{importCandidate.sourceCategory}}</text>
+          <input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onImportCuisine-') ? 'is-focused' : ''}}" value="{{importCandidate.cuisine}}" maxlength="30" bindinput="onImportCuisine" placeholder="{{copy.sacef9c91d8}}"  aria-label="{{copy.sacef9c91d8}}" placeholder-class="form-placeholder" data-focus-key="{{'onImportCuisine-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          <text class="helper-note">{{copy.se88a5129d5}}</text>
+          <view class="category-type-list"><view wx:for="{{importTypes}}" wx:key="name" class="category-type {{item.selected ? 'is-selected' : ''}}" aria-role="button" aria-pressed="{{item.selected}}" bindtap="onImportType" data-value="{{item.name}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item.label}}</view></view>
+          <view wx:if="{{importCandidate.categorySuggestionText}}"><text class="helper-note">{{copy.sb518785564}}: {{importCandidate.categorySuggestionText}}</text><button class="import-action" bindtap="onAcceptCategorySuggestion">{{copy.s96f9556041}}</button></view>
+          <view class="location-search-section">
+          <text class="form-label">{{copy.s79b1b33c97}}</text>
+          <view class="import-search-preference"><text>{{copy.sc750272a95}}</text><switch disabled="{{saving || uploading}}" checked="{{cloudPlaceSearchEnabled}}" bindchange="onCloudSearchToggle" color="#81926b"  aria-label="{{copy.sc750272a95}}" /></view>
+          <text class="helper-note" wx:if="{{cloudPlaceSearchEnabled}}">{{copy.seebf63ffd4}}</text>
+          <text class="helper-note" wx:else>{{copy.sb4f06c7371}}</text>
+          <text wx:if="{{cloudPlaceSearchEnabled}}" class="helper-note">{{copy.s4e40d3d975}}</text>
+          <input disabled="{{saving || uploading}}" wx:if="{{cloudPlaceSearchEnabled}}" class="form-input {{focusedField === ('onImportCity-') ? 'is-focused' : ''}}" value="{{importCity}}" maxlength="40" bindinput="onImportCity" placeholder="{{copy.scd9afbdb5a}}"  aria-label="{{copy.scd9afbdb5a}}" placeholder-class="form-placeholder" data-focus-key="{{'onImportCity-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+          <button wx:if="{{cloudPlaceSearchEnabled}}" class="import-action" bindtap="onImportSearch" disabled="{{importSearching}}" loading="{{importSearching}}">{{importSearching ? copy.s5b36b89761 : copy.s9859a93acf}}</button>
+          <text wx:if="{{importLookupError}}" class="form-error">{{importLookupError}}</text>
+          <text wx:if="{{importSearchDone && !importMatches.length}}" class="helper-note">{{copy.s693db2d791}}</text>
+          <view wx:if="{{importMatches.length}}"><text class="helper-note">{{copy.sda6ae8f342}}</text><scroll-view scroll-y class="import-match-list"><view wx:for="{{importMatches}}" wx:key="id" class="import-match" data-index="{{index}}" bindtap="onImportMatch" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><text>{{item.name}}</text><text class="location-address">{{item.address}}</text><text class="helper-note">{{item.categoryText}}</text></view></scroll-view></view>
+          <button class="import-action" bindtap="onImportNativePick">{{copy.s397ac991c6}}</button>
+          </view>
+          <view wx:if="{{importCandidate.confirmedLocation}}"><text class="helper-note">{{copy.s18e2a2bdfc}}</text><text class="location-address">{{importCandidate.confirmedLocation.locationName}} · {{importCandidate.confirmedLocation.address}}</text></view>
+          <text wx:if="{{importCandidate.address}}" class="location-address">{{copy.s560391a618}}: {{importCandidate.address}}</text>
+          <text wx:if="{{importCandidate.platformRating !== null}}" class="location-address">{{copy.s324f4f483c}}: {{importCandidate.platformRating}}</text>
+          <text wx:if="{{importCandidate.platformAveragePriceCny !== null}}" class="location-address">{{copy.sc87f094dce}}: ¥{{importCandidate.platformAveragePriceCny}}</text>
+          <text class="helper-note">{{copy.safee51405b}}</text>
+          <button class="import-action" bindtap="onImportApply">{{copy.sa8f78cd2b0}}</button>
+        </view>
+        <button class="import-action import-cancel" bindtap="onImportCancel">{{copy.sa4b5358b5d}}</button>
+      </view>
+      <view class="memory-form">
+        <view wx:if="{{draft.sourcePlatform}}" class="helper-note">
+          {{copy.s9d14bf0709}}: {{draft.diningMode === 'dine-in' ? copy.s003ff3645d : draft.sourcePlatform === 'meituan' ? copy.sd572da5430 : copy.sc9c62cffcf}}
+          <text class="form-label">{{copy.s7c3835c40f}}</text>
+          <text wx:if="{{draft.importAddressHint}}" class="location-address">{{copy.s560391a618}}: {{draft.importAddressHint}}</text>
+          <text wx:if="{{draft.importAreaText}}" class="location-address">{{copy.s314812a136}}: {{draft.importAreaText}}</text>
+          <text wx:if="{{draft.sourceCategory}}" class="location-address">{{copy.s330f47e97a}}: {{draft.sourceCategory}}</text>
+          <text class="location-address">{{draft.categorySource === 'share-text' ? copy.s69e6700113 : draft.categorySource === 'tencent-poi' ? copy.s0867e3f1ac : draft.categorySource === 'user-confirmed' ? copy.s455819069c : copy.s774fca8ed2}}</text>
+          <text wx:if="{{draft.platformRating != null}}" class="location-address">{{copy.s324f4f483c}}: {{draft.platformRating}}</text>
+          <text wx:if="{{draft.platformAveragePriceCny != null}}" class="location-address">{{copy.sc87f094dce}}: ¥{{draft.platformAveragePriceCny}}</text>
+          <text wx:if="{{draft.sourceUrl}}" class="location-address" selectable>{{copy.s2d6209ba34}}: {{draft.sourceUrl}}</text>
+          <text class="location-address">{{copy.s233296fd35}}</text>
+        </view>
+        <!-- photos -->
+        <view class="photo-editor-row">
+          <view class="main-photo-wrap {{!draft.photos.length ? 'no-photo' : ''}}">
+            <image wx:if="{{draft.photos.length}}" class="main-memory-photo" bindtap="onPreviewPhoto" data-index="0" src="{{imageErrors[(draft.photos[0])] ? '/images/le-comptoir.jpg' : (draft.photos[0])}}" mode="aspectFill"  data-source="{{draft.photos[0]}}" binderror="onImageError" />
+            <view wx:else class="photo-placeholder" bindtap="onReplacePhoto" aria-role="button" aria-label="{{copy.s90bd281078}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon name="plus" size="65" stroke="1.75" color="{{dusk ? '#d7d1c7' : '#565752'}}" />
+              <text>{{copy.sd2550c6d35}}</text>
+            </view>
+            <view wx:if="{{draft.photos.length}}" class="edit-photo" bindtap="onReplacePhoto" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="pencil" size="27" stroke="1.75" />
+              <text>{{copy.s5301648dcf}}</text>
+            </view>
+            <view wx:if="{{uploading}}" class="photo-uploading">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="loader-circle" size="55" stroke="1.75" class="spin" />
+            </view>
+          </view>
+          <view class="more-photos-wrap">
+            <view class="add-photo {{draft.photos.length > 1 ? 'has-photo' : ''}}" bindtap="onAddMore" aria-role="button" aria-label="{{copy.sc063aa0dbb}}">
+              <image wx:if="{{draft.photos.length > 1}}" src="{{imageErrors[(draft.photos[draft.photos.length - 1])] ? '/images/le-comptoir.jpg' : (draft.photos[draft.photos.length - 1])}}" mode="aspectFill"  data-source="{{draft.photos[draft.photos.length - 1]}}" binderror="onImageError" />
+              <view class="add-photo-copy">
+                <s-icon name="plus" size="52" stroke="1.75" color="{{draft.photos.length > 1 ? '#ffffff' : '#565752'}}" />
+                <text>{{draft.photos.length > 1 ? draft.photos.length + ' ' + copy.s2e58e0c1ea : copy.s15e4e30633}}</text>
+              </view>
+            </view>
+            <view wx:if="{{draft.photos.length > 1}}" class="remove-extra" bindtap="onRemoveExtra" aria-role="button" aria-label="{{copy.s86447b96f4}}">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="30" stroke="1.75" />
+            </view>
+          </view>
+        </view>
+
+        <scroll-view wx:if="{{draft.photos.length}}" class="photo-strip" scroll-x>
+          <view class="photo-strip-inner">
+            <view wx:for="{{draft.photos}}" wx:key="index" class="photo-strip-item">
+              <image src="{{imageErrors[(item)] ? '/images/le-comptoir.jpg' : (item)}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewPhoto"  data-source="{{item}}" binderror="onImageError" />
+              <view class="photo-strip-remove" data-index="{{index}}" bindtap="onRemovePhoto" aria-role="button" aria-label="{{copy.s86447b96f4}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon class="photo-remove-glyph" name="x" size="28" color="#ffffff" stroke="1.75" /></view>
+            </view>
+          </view>
+        </scroll-view>
+        <!-- restaurant -->
+        <view id="field-restaurant" class="form-field restaurant-field">
+          <text class="form-label">{{copy.s3585d7553d}}</text>
+          <view class="input-wrap">
+            <input disabled="{{saving || uploading}}" class="form-input {{fieldErrors.restaurant ? 'has-error' : ''}} {{focusedField === ('onRestaurant-') ? 'is-focused' : ''}}" value="{{draft.restaurant}}" placeholder="{{copy.s9469649d37}}" placeholder-class="form-placeholder" maxlength="70" bindinput="onRestaurant"  aria-label="{{copy.s3585d7553d}}" data-focus-key="{{'onRestaurant-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+            <view wx:if="{{draft.restaurant}}" class="input-clear" bindtap="onRestaurantClear" aria-role="button" aria-label="{{copy.s4bf158216b}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="32" stroke="1.75" />
+            </view>
+          </view>
+
+          <text wx:if="{{fieldErrors.restaurant}}" class="form-error field-error">{{fieldErrors.restaurant}}</text>
+        </view>
+
+        <view id="field-location" class="location-entry {{fieldErrors.location ? 'has-error' : ''}}" bindtap="onChooseRestaurantLocation" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pin" size="32" stroke="1.75" />
+          <view><text>{{draft.location ? (draft.location.locationName || copy.sa7f59ecd4b) : copy.s95fb7999ad}}</text>
+          <text class="location-address">{{draft.location ? draft.location.address : copy.s4461516590}}</text></view>
+        </view>
+        <text wx:if="{{fieldErrors.location}}" class="form-error field-error">{{fieldErrors.location}}</text>
+        <view id="field-geography" wx:if="{{draft.location}}" class="geo-fields">
+          <text wx:if="{{fieldErrors.geography}}" class="form-error field-error">{{fieldErrors.geography}}</text>
+          <text class="helper-note">{{copy.sd37fcb52e3}}</text>
+          <view class="form-field"><text class="form-label">{{copy.s4271627f4f}}</text><input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onGeoField-city') ? 'is-focused' : ''}}" value="{{draft.location.city}}" data-field="city" bindinput="onGeoField" maxlength="80"  aria-label="{{copy.s4271627f4f}}" placeholder-class="form-placeholder" data-focus-key="{{'onGeoField-city'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+          <view class="form-field"><text class="form-label">{{copy.sdfdeaebf93}}</text><input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onGeoField-country') ? 'is-focused' : ''}}" value="{{draft.location.country}}" data-field="country" bindinput="onGeoField" maxlength="80"  aria-label="{{copy.sdfdeaebf93}}" placeholder-class="form-placeholder" data-focus-key="{{'onGeoField-country'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+        </view>
+        <view class="form-field"><text class="form-label">{{copy.s072d63b568}}</text><input disabled="{{saving || uploading}}" class="form-input {{fieldErrors.perCapita ? 'has-error' : ''}} {{focusedField === ('onBusinessField-perCapita') ? 'is-focused' : ''}}" type="digit" value="{{draft.perCapita}}" data-field="perCapita" bindinput="onBusinessField" maxlength="10"  aria-label="{{copy.s072d63b568}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-perCapita'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur"  id="field-perCapita" /><text wx:if="{{fieldErrors.perCapita}}" class="form-error field-error">{{fieldErrors.perCapita}}</text></view>
+        <view class="form-field"><text class="form-label">{{copy.sacef9c91d8}}</text><input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onBusinessField-cuisine') ? 'is-focused' : ''}}" value="{{draft.cuisine}}" data-field="cuisine" bindinput="onBusinessField" maxlength="30"  aria-label="{{copy.sacef9c91d8}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-cuisine'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+        <view class="form-field"><text class="form-label">{{copy.s9ec0dc5473}}</text><input disabled="{{saving || uploading}}" class="form-input {{focusedField === ('onBusinessField-dishes') ? 'is-focused' : ''}}" value="{{draft.dishes}}" data-field="dishes" bindinput="onBusinessField" maxlength="600"  aria-label="{{copy.s9ec0dc5473}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-dishes'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+        <text class="form-label">{{copy.se88a5129d5}}</text>
+        <view class="category-type-list"><view wx:for="{{formTypes}}" wx:key="name" class="category-type {{item.selected ? 'is-selected' : ''}}" aria-role="button" aria-pressed="{{item.selected}}" bindtap="onDraftDiningType" data-value="{{item.name}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item.label}}</view></view>
+        <!-- notes -->
+        <view class="form-field notes-field">
+          <text class="form-label">{{copy.s70440046a3}}</text>
+          <textarea disabled="{{saving || uploading}}" class="form-textarea notes-textarea {{focusedField === ('onNotes-') ? 'is-focused' : ''}}" value="{{draft.notes}}" placeholder="{{copy.sb4b51ed22f}}" placeholder-class="form-placeholder" maxlength="1500" bindinput="onNotes"  aria-label="{{copy.s70440046a3}}" data-focus-key="{{'onNotes-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" cursor-spacing="100" />
+        </view>
+
+        <!-- date + rating -->
+        <view class="date-rating-row">
+          <view class="form-field">
+            <text class="form-label">{{copy.seb9a4bc1c0}}</text>
+            <picker disabled="{{saving || uploading}}" id="field-date" mode="date" value="{{draft.date}}" end="{{today}}" bindchange="onDate" aria-label="{{copy.seb9a4bc1c0}}">
+              <view class="date-input {{fieldErrors.date ? 'has-error' : ''}}">
+                <text>{{draft.date ? draft.date : copy.sa8f6c41758}}</text>
+                <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="calendar-days" size="32" stroke="1.75" />
+              </view>
+            </picker>
+            <text wx:if="{{fieldErrors.date}}" class="form-error field-error">{{fieldErrors.date}}</text>
+          </view>
+          <view class="form-field">
+            <text class="form-label">{{copy.s83cd624d2e}}</text>
+            <text class="helper-note rating-clear" aria-role="button" data-value="0" bindtap="onRating" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s43f4e5ea65}}</text>
+            <view class="rating-input">
+              <view wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" class="rating-star" data-value="{{item}}" bindtap="onRating" aria-pressed="{{item <= draft.rating}}" aria-role="button" aria-label="{{copy.s3a9c736b31}} {{item}} {{copy.s76147eddeb}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+                <s-icon name="star" size="37" stroke="1.75" color="{{dusk ? '#d7d1c7' : '#898a84'}}" fill="{{item <= draft.rating ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- tags -->
+        <view class="form-field tags-field">
+          <text class="form-label">{{copy.s848eed0fbd}}</text>
+          <view class="tag-list">
+            <view wx:for="{{draft.tags}}" wx:key="*this" class="tag" data-value="{{item}}" bindtap="onRemoveTag" aria-role="button" aria-label="{{copy.se963907dac}} {{item}} {{copy.s5e9b60f691}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item}}</view>
+            <view wx:if="{{draft.tags.length < 6}}" class="add-tag" bindtap="onToggleTagInput" aria-role="button" aria-label="{{copy.sa8212f9bf6}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="42" stroke="1.75" />
+            </view>
+          </view>
+          <view class="tag-popover glass motion-popover {{showTagInput ? 'motion-visible' : ''}}" aria-hidden="{{!showTagInput}}">
+            <view class="tag-input-row">
+              <input disabled="{{saving || uploading}}" class="form-input tag-input {{focusedField === ('onTagInput-') ? 'is-focused' : ''}}" value="{{tag}}" placeholder="{{copy.sefa3a19c6a}}" placeholder-class="form-placeholder" maxlength="24" bindinput="onTagInput" bindconfirm="onTagConfirm" focus="{{showTagInput}}"  aria-label="{{copy.sefa3a19c6a}}" data-focus-key="{{'onTagInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+              <view class="tag-confirm" bindtap="onTagConfirm" aria-role="button" aria-label="{{copy.sfdfa41a2cf}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+                <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="check" size="40" stroke="1.75" />
+              </view>
+            </view>
+            <view class="suggested-tags">
+              <text wx:for="{{suggestedTags}}" wx:key="*this" class="suggested-tag" data-value="{{item}}" bindtap="onSuggestedTag" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <text wx:if="{{error && errorContext !== 'import' && !errorField}}" class="form-error">{{error}}</text>
+
+        <view class="primary-button save-memory {{uploading || saving ? 'ghosted' : ''}}" bindtap="onSave" aria-role="button" aria-disabled="{{uploading || saving}}" aria-busy="{{uploading || saving}}">
+          <s-icon wx:if="{{uploading || saving}}" name="loader-circle" size="35" color="#ffffff" stroke="1.75" class="spin" />
+          <s-icon wx:else name="notebook-pen" size="35" color="#ffffff" stroke="1.75" />
+          <text>{{uploading ? copy.sb89bb7bce2 : saving ? copy.s29251fb4a8 : copy.s8a4f0b248a}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-toast />
+</view>

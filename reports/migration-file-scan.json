@@ -1,0 +1,1015 @@
+{
+  "scope": "All files in source/current_project, baseline savor-mp, and current miniprogram/cloudfunctions; content review focused on executable business paths, not README promises.",
+  "source": {
+    "ref": "origin/integrated-with-cloud",
+    "commit": "1a6a09c5cd67dc524102762ccc327d29b3811f27",
+    "files": [
+      {
+        "path": "source/current_project/README.md",
+        "bytes": 583,
+        "sha256": "fca0c00c2bf8a6eba34b751ff1d55dd0f0aad2ad8cc9b1aee4afa1d0a6442484"
+      },
+      {
+        "path": "source/current_project/STAGE2_SETUP.md",
+        "bytes": 920,
+        "sha256": "c85d82e190f899fe8b67fbb520fdd2f9c8fbc02c98ca18fd41ded29ad083fd30"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/mealRecords/config.json",
+        "bytes": 45,
+        "sha256": "ca3664cc370f406d81b3d260e643ac226b52d2322ca8df6346b6476796bf6fc8"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/mealRecords/index.js",
+        "bytes": 2836,
+        "sha256": "a97e24d7e8160b144a939502e5660ca0a28f618ed8d28ec6722309f489a79dbe"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/mealRecords/package.json",
+        "bytes": 207,
+        "sha256": "9e4f72d996ee007913610a2a9e3327aa19b72249839d1c95ef5ff6cf410b57ab"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/quickstartFunctions/config.json",
+        "bytes": 69,
+        "sha256": "7494c7c57eb6e5c1fc6174f415b01a6a732bc95cf3beee137b1de62bcb162511"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/quickstartFunctions/index.js",
+        "bytes": 4286,
+        "sha256": "5b3994c3191adbcb04ed7a0f8e0a357cd623dafb94563365a19e8dde79fbb35a"
+      },
+      {
+        "path": "source/current_project/cloudfunctions/quickstartFunctions/package.json",
+        "bytes": 270,
+        "sha256": "4e4a0e78a35da94d308f2804721bd12af081521f0de0b1927384fccdf2279542"
+      },
+      {
+        "path": "source/current_project/miniprogram/app.js",
+        "bytes": 610,
+        "sha256": "c6277b999ae35ec6c9782cfa44d47ef390dd5b6e2cf8a7f3bca48622948107a4"
+      },
+      {
+        "path": "source/current_project/miniprogram/app.json",
+        "bytes": 432,
+        "sha256": "277cb0bb76ec392a743c74c1bf28e92f79d7c3eb3e1c43ac9c23d1eebf0dfd8c"
+      },
+      {
+        "path": "source/current_project/miniprogram/app.wxss",
+        "bytes": 330,
+        "sha256": "92b4fa897653f9d02e715d36b26e90f336965b17c0e0e327df6b8e6e3782fdfb"
+      },
+      {
+        "path": "source/current_project/miniprogram/components/cloudTipModal/index.js",
+        "bytes": 412,
+        "sha256": "623605ae23962281e19d7dc93861edf99ac44aa014c7eb133850b8e3eba8b4b3"
+      },
+      {
+        "path": "source/current_project/miniprogram/components/cloudTipModal/index.json",
+        "bytes": 49,
+        "sha256": "f48c8e400ab8eb7aa599888cada25f002b3ab59fd0a490a648d577256b250be4"
+      },
+      {
+        "path": "source/current_project/miniprogram/components/cloudTipModal/index.wxml",
+        "bytes": 446,
+        "sha256": "03320c07a3f936d776d4c34deea0e81aa1022f6c582476cdc766af2fd6b64fd2"
+      },
+      {
+        "path": "source/current_project/miniprogram/components/cloudTipModal/index.wxss",
+        "bytes": 1062,
+        "sha256": "3156d81aa71e59663d159485b5feee568f27cab37751620c75739465196c1f99"
+      },
+      {
+        "path": "source/current_project/miniprogram/envList.js",
+        "bytes": 82,
+        "sha256": "40292fbe7a1c85da70000e292717d77302e3cca4c8a80c34c1fdef0df7523cc6"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/ai_example1.png",
+        "bytes": 218669,
+        "sha256": "4272505d4de4a2a6cb2e91c225ee94e50774f8326352d327e6ae60b7ea9508d6"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/ai_example2.png",
+        "bytes": 64081,
+        "sha256": "55a2936a6600c8d6fe8e983f13318697ad9d3eb8c5758aeee106e680f4b13a3d"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/arrow.svg",
+        "bytes": 906,
+        "sha256": "906b73ad122765f9e8b3e93870710e31af9803014c6c9925f39c61bfacf680a4"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/avatar.png",
+        "bytes": 5026,
+        "sha256": "21ccebd0db291719fe1af4a8ffd884ed9c904f693902f163c40f9a7b8aabb039"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/cloud_dev.png",
+        "bytes": 17223,
+        "sha256": "5ee693ae38140899fe3e5cf4ae36507856ab39b57077fd07a72b702989aa8247"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/copy.svg",
+        "bytes": 197,
+        "sha256": "92899d203b8329b1a35de067220b577724509cd1c072189fbd758efeda222d3b"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/create_cbr.png",
+        "bytes": 312363,
+        "sha256": "a219e73c84840f70a07729656e0a2d82bd478ccf7dc0fe809ac75cd8117bf2a5"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/create_cbrf.png",
+        "bytes": 197664,
+        "sha256": "be805b8b7f9d6663f2ea615a50a83723b354b687c200b5815ee0f409f2064f46"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/create_env.png",
+        "bytes": 55633,
+        "sha256": "07cf1fbf5bab7388df174544c5ec3ec19bd018ddb56484c101a13ffd36d14a09"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/database.png",
+        "bytes": 56992,
+        "sha256": "284b60b18eb2d3d0adb1322d3db135cece2f84309bdafbd63decded6c1f7037b"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/database_add.png",
+        "bytes": 33236,
+        "sha256": "ac32cc88088f6612bf8249771796707eacf5915261bb865e7a3e59b9e31134d1"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/default-goods-image.png",
+        "bytes": 61610,
+        "sha256": "bf64687473156a5dd522e9fb1f5af4b185b286f5c34583d61e4dc30f4d112847"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/env-select.png",
+        "bytes": 64208,
+        "sha256": "389b87283c43976d838f7f2df31f8c0d91fa172d28b2bed03927178ab663444d"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/function_deploy.png",
+        "bytes": 41578,
+        "sha256": "dde693d3d7977b7dc81e1558e05f239daddbea48d7da68a5293326f88a797e9c"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/avatar.png",
+        "bytes": 31196,
+        "sha256": "0f62ddcf18042b612262fa25ad60a08ffbc8711e6b28ff7a060fee389b7a11f6"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/business-active.png",
+        "bytes": 875,
+        "sha256": "a9995739ef0f094c20b03ac0a816e15dbd5d7ca174e4885061f61a9546a9f060"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/business.png",
+        "bytes": 888,
+        "sha256": "5e93b2c3850d24d8087cc1569d2f4a6c695743fa7e8990b66be7f05e8a22b94f"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/close.png",
+        "bytes": 578,
+        "sha256": "826f6fba339c5c679d4b349d7c77791cbd5f67a874b3845e87197740b7ad524d"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/copy.png",
+        "bytes": 666,
+        "sha256": "981011aa8fccf1c7f5548d4a3d1b92a7117d7d8ef5ff4b8404b5821c64ff348f"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/customer-service.svg",
+        "bytes": 376,
+        "sha256": "1b856120d7f1fff02a61956207b0d9eeb2105421320860e1307f41678af5c37e"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/examples-active.png",
+        "bytes": 779,
+        "sha256": "472e85cc1ad44529ec48984bd4de8e2dbd2005ccabcbfca3ef0f6fe963efbbe7"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/examples.png",
+        "bytes": 789,
+        "sha256": "ad40fd589b526486e58da35be6a80c96fe3b6fcf3865c981092b4dfee154af0e"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/goods-active.png",
+        "bytes": 917,
+        "sha256": "5e0e5c6644c095ba6e4bbcf5d8ac98c103f38569fc1f33e19a5104be9397a0ac"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/goods.png",
+        "bytes": 888,
+        "sha256": "9220a9208ee43c40022660c86dc585d6570d36d692c573060fa04ae16d9e18c2"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/home-active.png",
+        "bytes": 873,
+        "sha256": "cb24b98068b816229f79bd51d9a319168ada66eabc6bb5b1c32f5e0b8e126e3b"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/home.png",
+        "bytes": 879,
+        "sha256": "be4012b5a17e53cc68d7ece49d0bdd285b1732610c129f2a7b3bca8360295a61"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/question.svg",
+        "bytes": 1191,
+        "sha256": "219b5980fd99ea067a26fc70fcccc97cb15661bcf2c536c012ba54f5960434f6"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/setting.svg",
+        "bytes": 711,
+        "sha256": "2a51c6cf1d0b2b478bae284571813d65fc9d9a9d749dc44b64b8d5be87dc492c"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/share.svg",
+        "bytes": 620,
+        "sha256": "12a3e375498282f01f24a8f95bceced10425456dcd2344ada908aac858e647a6"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/usercenter-active.png",
+        "bytes": 1151,
+        "sha256": "9e916c0f7e57cb735e5dbf59f81eb79e0a21d89427c73c2cba88f3804309db43"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/icons/usercenter.png",
+        "bytes": 1182,
+        "sha256": "e0b84555631657cb0c5e214aa6b14e5b24c21890a8d72183a5eb7098531a7f75"
+      },
+      {
+        "path": "source/current_project/miniprogram/images/scf-enter.png",
+        "bytes": 25026,
+        "sha256": "719af1b7b50e2e3eb0cb3d456921624d348338ef75dd0bdb7f39b580d23c3bfb"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/add/index.js",
+        "bytes": 4775,
+        "sha256": "3fc03c204c6511d466c5aeb03c9ae067d5aabe28f95092a79cdd667ec65ea54b"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/add/index.json",
+        "bytes": 158,
+        "sha256": "c49e3432cfcccf1b7ae0c0b79dfad72c70fb3bea6c38efad2c3d7c422bccaea8"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/add/index.wxml",
+        "bytes": 4552,
+        "sha256": "e191e85f0b5e7f4adf86c480a4275def2155aafa27e833c0b576177ddec989fb"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/add/index.wxss",
+        "bytes": 3885,
+        "sha256": "f731d408994fd9af78a0c4052ac41d1df18933e4ba4639755dfdca3475f71203"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/example/index.js",
+        "bytes": 15206,
+        "sha256": "6a1f2ef9f8a76fa141bc5cb802dc2b18cd6d0e33ad681b2458bd3117ab727ee0"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/example/index.json",
+        "bytes": 87,
+        "sha256": "8bf55cf4cb53b2d5b6fd4c7e8ec066531004826584ba99396bf6f0c574708358"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/example/index.wxml",
+        "bytes": 15596,
+        "sha256": "31fb75ac1a92d428dcf8e4c3923d29db07912b84793d3d13ebcc2cc916569270"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/example/index.wxss",
+        "bytes": 6789,
+        "sha256": "d76a698290e1a22baa0ec1546e69d8546decae93e16968965a1693da9f2f6ff1"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/index/index.js",
+        "bytes": 2141,
+        "sha256": "2e09d4ccad1f4e630f781bbffce388469dd07424febec7628b98f4259f13bed9"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/index/index.json",
+        "bytes": 125,
+        "sha256": "9b4adeb0a84d2ef0ae763ac98adf6061b1bd3284013ebb24e261debd333c83aa"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/index/index.wxml",
+        "bytes": 4470,
+        "sha256": "4a38a49821623525b12eae23744d1aee742ea9c2ef13731c452932a19ec4abf3"
+      },
+      {
+        "path": "source/current_project/miniprogram/pages/index/index.wxss",
+        "bytes": 5167,
+        "sha256": "3c6e28f585bd89bfb329758550d7eacb6b6a2424375cc1687eaad794a69322a3"
+      },
+      {
+        "path": "source/current_project/miniprogram/sitemap.json",
+        "bytes": 195,
+        "sha256": "9b6f9ce8a1cd47042022491f1a8cd55862a73466f3615a52014b4d350859fbd1"
+      },
+      {
+        "path": "source/current_project/project.config.json",
+        "bytes": 1987,
+        "sha256": "a373530373ded673599f65f5617b2c691e710db80fb9bc4ee2fa2e57e1cb7881"
+      },
+      {
+        "path": "source/current_project/project.private.config.json",
+        "bytes": 970,
+        "sha256": "8449c58c90de554292093cee62a935e10621e25a92f791ed670cdd7c8cd76b6f"
+      },
+      {
+        "path": "source/current_project/uploadCloudFunction.sh",
+        "bytes": 103,
+        "sha256": "2e0c3f370abff6bd3d0ea89b9483395e8cb1f0ee1ca4cf38ebfbd39a6d98a6d7"
+      }
+    ]
+  },
+  "uiBaseline": {
+    "ref": "origin/best-ui",
+    "commit": "74ef52dce4f5dbfb7dc1869fe57006f364d0d59c",
+    "files": [
+      {
+        "path": "savor-mp/README.md",
+        "bytes": 3660,
+        "sha256": "4d7e83cb86c6d5db6648c5b049fd64dead3be28c78f3c3c16a8af47c5fdb2153"
+      },
+      {
+        "path": "savor-mp/miniprogram/app.js",
+        "bytes": 748,
+        "sha256": "b6e3612832b95bdded4627036f1a1289b75171b93630dbc3e64cd582067fa133"
+      },
+      {
+        "path": "savor-mp/miniprogram/app.json",
+        "bytes": 1000,
+        "sha256": "d8e22f4eb56de791e4fd9ff2376e58c7a81fe8a5ab9ec6da44426f1bc6fc267f"
+      },
+      {
+        "path": "savor-mp/miniprogram/app.wxss",
+        "bytes": 267637,
+        "sha256": "db14416762be0d4f29c085431ab4fd1807d0ed0a9eac1fb2faa863601fbbbf30"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.js",
+        "bytes": 986,
+        "sha256": "ffe0623b7d1134aa2365ef1dc687b10fb0073fa2f92ba92ceebe1b17eab86c72"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.json",
+        "bytes": 49,
+        "sha256": "035503c1a56d8b4b9227ce8bb9145fbd1ef8ec7dce59e55f9d5d55fb5eb7d566"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.wxml",
+        "bytes": 88,
+        "sha256": "ab5b9eb4f8f7187db715f8023634e03b7e5c2e8d47d20f784cbd289f462694b3"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.wxss",
+        "bytes": 48,
+        "sha256": "aa3ea8c28ff3c2805483328a7291a20c846eb7c1a5a9e0cd5a5a75fe6c026da9"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.js",
+        "bytes": 844,
+        "sha256": "c6f61913a344e0c93f4a2a41b7d3c171509d1ebfda0769bc5a8235a7391681dc"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.json",
+        "bytes": 91,
+        "sha256": "189f569b3248e4fa891b5c40ebc2f1f4b612e82f466f6620f86daa843a6de9e4"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.wxml",
+        "bytes": 493,
+        "sha256": "3a7efd1dd79702cb7f0abf144ae129c31b675f0e47af27f85e10c99bac0cf042"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.wxss",
+        "bytes": 1335,
+        "sha256": "1aa79ea23c97dd178deeb4496b15299c4119774598bb288b9ce78dc57b0120f5"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.js",
+        "bytes": 19772,
+        "sha256": "46a770ce51d3a89e92ec2424eca109fc986fb2782dbf63bac813ef084245b054"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.json",
+        "bytes": 176,
+        "sha256": "84bb06e7a9ee3b603c5be5ad7e42802a195e600867e53e92310a021c9b878680"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.wxml",
+        "bytes": 20466,
+        "sha256": "f4515795a567149f3be747b6eb68e68c924e0bc966df431fef0e47c0b6f3457a"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.wxss",
+        "bytes": 14445,
+        "sha256": "03dcd41099e198159e29991a4a228431fb979d451e233016a2bd4a3e50624677"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.js",
+        "bytes": 474,
+        "sha256": "ec8286ae78558d22bd57e13febc40bdf80e4f1b727aecc7499d4d4a1e3435a90"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.json",
+        "bytes": 126,
+        "sha256": "dd4df2e1828959ae02b62c4a4e523848c269b687855353f6b8ea596f6ab99c2c"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.wxml",
+        "bytes": 351,
+        "sha256": "3e8b620927c7d7bd975c9c22411065305984067da3692d5369d5e15e0df1b251"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.wxss",
+        "bytes": 542,
+        "sha256": "cacf8d0c0c01bbdf854db4abdc8990087cd134438597387c03964d448e83ccb2"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.js",
+        "bytes": 1549,
+        "sha256": "4f15c8495f2718d9e4bbff153a36f47a87d47ef0e3925f3c737bea3ec5ae0da5"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.json",
+        "bytes": 91,
+        "sha256": "189f569b3248e4fa891b5c40ebc2f1f4b612e82f466f6620f86daa843a6de9e4"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.wxml",
+        "bytes": 1504,
+        "sha256": "b0982ec15aac0fa503a038fab1851a676f660acf7b0b0ec00a5d726769e169f1"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.wxss",
+        "bytes": 3766,
+        "sha256": "1b27637269ec7a77274f5d61342af73a48835b439c4cee3c5c63eefc794b4782"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/alex.jpg",
+        "bytes": 69366,
+        "sha256": "073dfaade93225dafb166580f995ed54294a84e5495e986bf88af605d51d9d70"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/cafe.jpg",
+        "bytes": 54509,
+        "sha256": "ad5e27e99c9ff2894ebc2ec0856bb5b43e3648bd89ed656d62f1e6c7e3023f43"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/coffee.jpg",
+        "bytes": 37926,
+        "sha256": "2dd45328c8c0fb6a49907abfe5cd21766464d8cb6558ab1805a14bae49fc2406"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/jamie.jpg",
+        "bytes": 72500,
+        "sha256": "162ed48e80f3ddab9d83d5dc5af37510a3bd2e9842cc175f43029bb8eb15b757"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/japanese.jpg",
+        "bytes": 68876,
+        "sha256": "ecdf02271e47f0e5d0a2a5f9c5725530a458702975e9b398aed64f2de9e9189c"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/le-comptoir.jpg",
+        "bytes": 73830,
+        "sha256": "30cc6b701213ebd9c793fa73aa7d1b287dd1e3e381e9d88bb4f3560aeb1afa83"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/paris-evening.jpg",
+        "bytes": 61090,
+        "sha256": "7d86f8c762ae054c2727d83b89730958927c2280d45425a84d073638f968e7df"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/pin.png",
+        "bytes": 1511,
+        "sha256": "319864ce38612c9714a615710107be14292ec384f1fad2b12304eadc0c7686df"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.js",
+        "bytes": 7692,
+        "sha256": "f26d63fcc6da3105d564cb4d83b4e061dd37e107bc94339681d2a05519f80273"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.json",
+        "bytes": 111,
+        "sha256": "3ed84bb36264190470330dff44eaf4487c7dceb236253159d3dbd5dd81e0ca94"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.wxml",
+        "bytes": 7100,
+        "sha256": "facf2ee30da9732545fe1dc9567885ccc816088e102cae63b2afb9fb75b8a909"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.wxss",
+        "bytes": 6053,
+        "sha256": "a511fee8f356f721b7a324d34e6f5da5f5b9fbee09ea1ed1aff0a3b17dfe3a5a"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.js",
+        "bytes": 2863,
+        "sha256": "b3ad489f79782bd0b62489bea53335f117f2330d0069a46b4e9fad530b5eaf55"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.json",
+        "bytes": 203,
+        "sha256": "2994d1336f236bb32204a84798a7e76fb97694f40bb18c21b2a5650a0ffdff40"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.wxml",
+        "bytes": 2661,
+        "sha256": "2a4875a25ecb53b30ee3507868aca9271ec7f5ea63f42493e19bdfc2e495c7b5"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.wxss",
+        "bytes": 2384,
+        "sha256": "f362ae72d760c6b9176747421cbacb1575e394e004dd191337a49176b67d2400"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.js",
+        "bytes": 7143,
+        "sha256": "f5a74d76c349c0db9626012c26704dc969bf7ae7ecaba2e6bbc59b0019275498"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.wxml",
+        "bytes": 5197,
+        "sha256": "8d5d82fcec8e4a462ad2ff4803fd498cd9ed80bb4a7cb65aa30a7706e519400e"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.wxss",
+        "bytes": 5580,
+        "sha256": "90459b2c5d690084a5a7b53816eee90a68b2034b86a45178512f28efd158d5f3"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.js",
+        "bytes": 3418,
+        "sha256": "3c15dfb702e9048ec644fea5762b626445019c9402c8db15c19260e1a8049b56"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.wxml",
+        "bytes": 2382,
+        "sha256": "9ebae528392be5c8aef64f9add29c62ba2a91d0f323b5e670fad586b0c0d7d16"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.wxss",
+        "bytes": 2660,
+        "sha256": "28c8e8509b2e7d14dfca64ce6a27801d1779090fe6b5ae17a85bcbe53a5dac62"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.js",
+        "bytes": 3988,
+        "sha256": "f27b8772003969f5ee17cdf71333fbbefefe4961fcbf6b4aafd412a41d7934f3"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.wxml",
+        "bytes": 4365,
+        "sha256": "fa94f6e5278bc786d573e9e8bdf3e1be78f75ac6c8ad9ee24eeb12bd9150d484"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.wxss",
+        "bytes": 4856,
+        "sha256": "0f1be8360842917a045306f6727c8993d6fda31a4fac0b729825ccf41f7cb5f6"
+      },
+      {
+        "path": "savor-mp/miniprogram/project.config.json",
+        "bytes": 1228,
+        "sha256": "318bd5eae61d035f2db3e11732891ef24247cf231b1aa04b981f34c8d9ca558f"
+      },
+      {
+        "path": "savor-mp/miniprogram/project.private.config.json",
+        "bytes": 568,
+        "sha256": "ac4e6e425c82bc3a66960bc9d56ca85a4a5892e1cd692456333e28807bf11ab9"
+      },
+      {
+        "path": "savor-mp/miniprogram/sitemap.json",
+        "bytes": 82,
+        "sha256": "222a789541c453ae40c8f0daf4ada4984fdd17e21adeef592add7c8ed4578f20"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/data.js",
+        "bytes": 7165,
+        "sha256": "d3661bccfcf72916697797d33238e3e264ee3fb5af294c6dc20d970cd350baed"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/fonts.js",
+        "bytes": 260268,
+        "sha256": "f8861c9e545bba5fb30b44525c77ed922141cbdfcfe5e52b6af3a725918a5a03"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/icons.js",
+        "bytes": 6246,
+        "sha256": "7ffa998ef2b01b02b7afee83b032de5114036f73fd56d9491f59e8d4ea8813f5"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/metrics.js",
+        "bytes": 1059,
+        "sha256": "7550f88ebf1cb0e8ade740f73ee4514f4d0a1a8a7a6c14517d1e3c885c75b130"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/photos.js",
+        "bytes": 3978,
+        "sha256": "18bb7dbd2ff5e35253a612bc327219726b79983a9fbf3e25f6b7d76c7068979c"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/store.js",
+        "bytes": 9950,
+        "sha256": "609711f571fddcfdbff37d15486fc13b3fcfe537b9c068e94638a9c82346663b"
+      },
+      {
+        "path": "savor-mp/package.json",
+        "bytes": 346,
+        "sha256": "1488c30b83e87e9dfbb84c2f2d56a05b80912720f32bb2c9c87752a2302980f9"
+      },
+      {
+        "path": "savor-mp/tools/_gen/icons.json",
+        "bytes": 5646,
+        "sha256": "72b7079916105affc18969613f8c33deaf9cf3f6b2f3ce63adf3592cf39e1722"
+      },
+      {
+        "path": "savor-mp/tools/lib/checks.cjs",
+        "bytes": 6796,
+        "sha256": "17dc8a292f443e2818aa930660557b04d12d63c0bc35f4d2baaa0e9bd6c10e43"
+      },
+      {
+        "path": "savor-mp/tools/verify-assets.cjs",
+        "bytes": 3578,
+        "sha256": "7b7a1f180fa42dc3b72cdd8aabc7dcfa3bbab2bc8f0b50d970b827f0ee99d724"
+      },
+      {
+        "path": "savor-mp/tools/verify-miniprogram.cjs",
+        "bytes": 19219,
+        "sha256": "ce16fad761787da292cee3e57671ec882b5305195ad8947ff6947b8d0613cff7"
+      },
+      {
+        "path": "savor-mp/tools/verify-tabbar.cjs",
+        "bytes": 5530,
+        "sha256": "b7850e60317e52f7dd39e5f1a21bcb7996bd3697b7b1101db5b303020ae069be"
+      }
+    ]
+  },
+  "current": {
+    "parentCommit": "ca65c018f01f94368488286f6715a9aa8918e74c",
+    "files": [
+      {
+        "path": "savor-mp/miniprogram/app.js",
+        "bytes": 982,
+        "sha256": "b3751e5e1f4d9478a209b5df4600c832112778ae5b4180c4bf8553e5521984b4"
+      },
+      {
+        "path": "savor-mp/miniprogram/app.json",
+        "bytes": 1207,
+        "sha256": "ae8d6cb695ebd6d794b9f369828238318318bf02a1bdd487996bc67dfba498a0"
+      },
+      {
+        "path": "savor-mp/miniprogram/app.wxss",
+        "bytes": 268941,
+        "sha256": "5192693c98cf155bff524433413ed9700e4e07310c30f12a30e12956831387db"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.js",
+        "bytes": 986,
+        "sha256": "ffe0623b7d1134aa2365ef1dc687b10fb0073fa2f92ba92ceebe1b17eab86c72"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.json",
+        "bytes": 49,
+        "sha256": "035503c1a56d8b4b9227ce8bb9145fbd1ef8ec7dce59e55f9d5d55fb5eb7d566"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.wxml",
+        "bytes": 88,
+        "sha256": "ab5b9eb4f8f7187db715f8023634e03b7e5c2e8d47d20f784cbd289f462694b3"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/icon/index.wxss",
+        "bytes": 48,
+        "sha256": "aa3ea8c28ff3c2805483328a7291a20c846eb7c1a5a9e0cd5a5a75fe6c026da9"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.js",
+        "bytes": 940,
+        "sha256": "e7590da5b72b41d1663d564cc272f0aee736a7748ceae1483aa57f0a6d2f2834"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.json",
+        "bytes": 91,
+        "sha256": "189f569b3248e4fa891b5c40ebc2f1f4b612e82f466f6620f86daa843a6de9e4"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.wxml",
+        "bytes": 518,
+        "sha256": "4a29d35b3930793995b98df2b7a83fbba7bf3a947dee9f944648461dc041add2"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/memory-row/index.wxss",
+        "bytes": 1361,
+        "sha256": "a66bb10401a9dd77117ffc4ffada7d13103c025b4280661643481957a69a291e"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.js",
+        "bytes": 21217,
+        "sha256": "cc8ad9e613c2c9578f4b82d287551688854e68d2fad37f4dd3a5cdcd9749ad75"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.json",
+        "bytes": 176,
+        "sha256": "84bb06e7a9ee3b603c5be5ad7e42802a195e600867e53e92310a021c9b878680"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.wxml",
+        "bytes": 21360,
+        "sha256": "73318c028b9590eb1ff4c2f7ff2296c9c54e81c95081c50b08881a3c65538c62"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/sheet/index.wxss",
+        "bytes": 16225,
+        "sha256": "6a2dbc2eb75e8dd02be75f7194e9b42be74e2005fb9ee0992aa6751303ea0961"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.js",
+        "bytes": 751,
+        "sha256": "a7b6d47a807311847f01b3d606a6ab0ce76e10ada722567ff391415227e45a79"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.json",
+        "bytes": 126,
+        "sha256": "dd4df2e1828959ae02b62c4a4e523848c269b687855353f6b8ea596f6ab99c2c"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.wxml",
+        "bytes": 401,
+        "sha256": "ba5fcc1cada0204921b6f0ad6f3edde90740f1fee11e17ddaa001f9db9780b66"
+      },
+      {
+        "path": "savor-mp/miniprogram/components/toast/index.wxss",
+        "bytes": 542,
+        "sha256": "cacf8d0c0c01bbdf854db4abdc8990087cd134438597387c03964d448e83ccb2"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.js",
+        "bytes": 1623,
+        "sha256": "eabee2ad117d3a6be6a8244d54fba21281aff475d7a4ea635d6ed2eeca821602"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.json",
+        "bytes": 91,
+        "sha256": "189f569b3248e4fa891b5c40ebc2f1f4b612e82f466f6620f86daa843a6de9e4"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.wxml",
+        "bytes": 1563,
+        "sha256": "bbcde1119d4b1ce2b26f5ee1ebb5d2d8b9b5544aa0b1a860851c08b98fcf5a69"
+      },
+      {
+        "path": "savor-mp/miniprogram/custom-tab-bar/index.wxss",
+        "bytes": 4085,
+        "sha256": "6f85100cceaaf1c12fe3e5e96bfef4929c5997face31af47089cbea6c02d827f"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/alex.jpg",
+        "bytes": 69366,
+        "sha256": "073dfaade93225dafb166580f995ed54294a84e5495e986bf88af605d51d9d70"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/cafe.jpg",
+        "bytes": 54509,
+        "sha256": "ad5e27e99c9ff2894ebc2ec0856bb5b43e3648bd89ed656d62f1e6c7e3023f43"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/coffee.jpg",
+        "bytes": 37926,
+        "sha256": "2dd45328c8c0fb6a49907abfe5cd21766464d8cb6558ab1805a14bae49fc2406"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/jamie.jpg",
+        "bytes": 72500,
+        "sha256": "162ed48e80f3ddab9d83d5dc5af37510a3bd2e9842cc175f43029bb8eb15b757"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/japanese.jpg",
+        "bytes": 68876,
+        "sha256": "ecdf02271e47f0e5d0a2a5f9c5725530a458702975e9b398aed64f2de9e9189c"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/le-comptoir.jpg",
+        "bytes": 73830,
+        "sha256": "30cc6b701213ebd9c793fa73aa7d1b287dd1e3e381e9d88bb4f3560aeb1afa83"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/paris-evening.jpg",
+        "bytes": 61090,
+        "sha256": "7d86f8c762ae054c2727d83b89730958927c2280d45425a84d073638f968e7df"
+      },
+      {
+        "path": "savor-mp/miniprogram/images/pin.png",
+        "bytes": 1511,
+        "sha256": "319864ce38612c9714a615710107be14292ec384f1fad2b12304eadc0c7686df"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.js",
+        "bytes": 11489,
+        "sha256": "60a81045ab3a793fe2db67ef213d9647a185d40c817e5a3aad2aee9abda198d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.json",
+        "bytes": 111,
+        "sha256": "3ed84bb36264190470330dff44eaf4487c7dceb236253159d3dbd5dd81e0ca94"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.wxml",
+        "bytes": 8391,
+        "sha256": "5f7fb7b7403d01210ed613851569f875d5ec3e4e92894d7f42f6a21272a85332"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/add/index.wxss",
+        "bytes": 6994,
+        "sha256": "4cba923a5c16a06be2d4a7dc11456da9f7cd57c1cf6e4bb9e112c7af3aab205c"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.js",
+        "bytes": 3135,
+        "sha256": "9b10e2668ba55752e48f0372eadeb80b2beca09a340d7870205007c582a58a10"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.json",
+        "bytes": 203,
+        "sha256": "2994d1336f236bb32204a84798a7e76fb97694f40bb18c21b2a5650a0ffdff40"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.wxml",
+        "bytes": 2807,
+        "sha256": "d62ac479de3c1e9d42f0d59f8275220dd057d316024e136c2b9b7c1d3ed9928e"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/home/index.wxss",
+        "bytes": 2398,
+        "sha256": "e1694999fb6f2f9cd005adbd333b15c14a8e2eeed19c37f3464ea7f5ab2c258d"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.js",
+        "bytes": 8771,
+        "sha256": "e712d0d5654d437e2c9b5bd2d425310bc6219c32f22e82b5b1c953da87967284"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.wxml",
+        "bytes": 6871,
+        "sha256": "fbc33394945d78b648e5b7dd9f4165962e325397e74c422e9f79e5890a4f1e9c"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/map/index.wxss",
+        "bytes": 7868,
+        "sha256": "9870e27b5f95613ef55412f797eca57c40421cc059d1bd8a3dd681b53364300d"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.js",
+        "bytes": 3896,
+        "sha256": "854acac356767fd254ba42aac563b660c0a8895a01f21c60ec1bc6e69b3851d8"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.wxml",
+        "bytes": 2582,
+        "sha256": "b3fa752f1523ff9c059fe001d8019fd8e7ad431c21f13557fbd2c516b976de7a"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/me/index.wxss",
+        "bytes": 2812,
+        "sha256": "2e5783eff98ff37b56bf95bc7018a56b0a50dee6d536f5ea22b1389a9c21a255"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.js",
+        "bytes": 4421,
+        "sha256": "3b5a55564fa7aa292f6310a421f2436a4d950960529c83a92e9eac415d2e2b8b"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.json",
+        "bytes": 153,
+        "sha256": "1e2d7f5749dd4d3a92404290a5e5537319e1ef562076b9ec07924f6c86eea6d1"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.wxml",
+        "bytes": 4518,
+        "sha256": "027e248c354e6a2f00f5f67d81bb24978a55135148b04497834cc03d076045ff"
+      },
+      {
+        "path": "savor-mp/miniprogram/pages/us/index.wxss",
+        "bytes": 5036,
+        "sha256": "2e997dacbc9b45f98681f4a23850766f9738ba7241d04ef162d44af64ba45df6"
+      },
+      {
+        "path": "savor-mp/miniprogram/project.config.json",
+        "bytes": 1277,
+        "sha256": "076be7abc4a4913e8f93ddd7ede0b979c8fb11466321e07b7e1c824680052986"
+      },
+      {
+        "path": "savor-mp/miniprogram/project.private.config.json",
+        "bytes": 568,
+        "sha256": "ac4e6e425c82bc3a66960bc9d56ca85a4a5892e1cd692456333e28807bf11ab9"
+      },
+      {
+        "path": "savor-mp/miniprogram/sitemap.json",
+        "bytes": 82,
+        "sha256": "222a789541c453ae40c8f0daf4ada4984fdd17e21adeef592add7c8ed4578f20"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/cloudRecords.js",
+        "bytes": 7963,
+        "sha256": "34f8570d6d919febb60607144d22f181ae7987a7ce79f41b3bc0fc9e0d492a2c"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/data.js",
+        "bytes": 7753,
+        "sha256": "3be6643718c04c0ea24c0b8044ce66f6612a2b87ab2c5c68c05cadecb0be0d5c"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/fonts.js",
+        "bytes": 260268,
+        "sha256": "f8861c9e545bba5fb30b44525c77ed922141cbdfcfe5e52b6af3a725918a5a03"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/i18n.js",
+        "bytes": 2397,
+        "sha256": "3cd9148490f54e8bf3c44c7d8f68bdaadcb7a563fd0c32165d26535e7ae6fcb5"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/icons.js",
+        "bytes": 6246,
+        "sha256": "7ffa998ef2b01b02b7afee83b032de5114036f73fd56d9491f59e8d4ea8813f5"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/locales.js",
+        "bytes": 38918,
+        "sha256": "b64a23e80b64092051c398a96f501716e75670e8bbde9591692f2718858d8c0c"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/locations.js",
+        "bytes": 1620,
+        "sha256": "fb60045edd133c9c4b12d1fd7651ee38c47bd4ee6a3a6f607952c12469a6fdf1"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/metrics.js",
+        "bytes": 1059,
+        "sha256": "7550f88ebf1cb0e8ade740f73ee4514f4d0a1a8a7a6c14517d1e3c885c75b130"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/photos.js",
+        "bytes": 4209,
+        "sha256": "cd9e0cde20214599e1831a30aca6a206e391b5d1730ad8444cdb73de0bb23071"
+      },
+      {
+        "path": "savor-mp/miniprogram/utils/store.js",
+        "bytes": 13314,
+        "sha256": "8f68a2ed9c99fee659529281a6aee04b1ff69e45e672f10be31ddd8da2457f6e"
+      },
+      {
+        "path": "savor-mp/cloudfunctions/mealRecords/config.json",
+        "bytes": 45,
+        "sha256": "ca3664cc370f406d81b3d260e643ac226b52d2322ca8df6346b6476796bf6fc8"
+      },
+      {
+        "path": "savor-mp/cloudfunctions/mealRecords/index.js",
+        "bytes": 3947,
+        "sha256": "01792e2667dc66009eff4b3e2abeefface8f00f4be6293d5bb817c1701e63059"
+      },
+      {
+        "path": "savor-mp/cloudfunctions/mealRecords/package.json",
+        "bytes": 207,
+        "sha256": "9e4f72d996ee007913610a2a9e3327aa19b72249839d1c95ef5ff6cf410b57ab"
+      },
+      {
+        "path": "savor-mp/cloudfunctions/mealRecords/schema.js",
+        "bytes": 3454,
+        "sha256": "16be51a49ff4d99f6c919a24b16d8bc6d8a7c9b013e675154fc9d9d5bdf69a8e"
+      }
+    ]
+  }
+}

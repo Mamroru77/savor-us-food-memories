@@ -1,0 +1,120 @@
+{
+  "scope": "miniprogram JS/WXML/WXSS; user data not scanned",
+  "replaced": [
+    "Add photo remove ×",
+    "Map pending close ×",
+    "Map native previous ‹",
+    "Map native next ›"
+  ],
+  "remainingMatches": [
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1370,
+      "kind": "prose-translation",
+      "text": "    \"en\": \"Planned: paste a public link → server parsing → confirm the restaurant and map location → save. No parsing service is connected yet; no restaurant information will be fabricated.\","
+    },
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1371,
+      "kind": "prose-translation",
+      "text": "    \"zh\": \"规划流程：粘贴公开链接 → 服务端解析 → 确认餐馆与腾讯地图位置 → 保存。当前尚未接入解析服务，不会自动抓取或生成餐馆信息。\""
+    },
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1375,
+      "kind": "prose-translation",
+      "text": "    \"en\": \"Planned: choose a screenshot → extract restaurant, date, cost and dishes → review → confirm map location → save. OCR is not connected yet; your screenshots will not be uploaded.\","
+    },
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1376,
+      "kind": "prose-translation",
+      "text": "    \"zh\": \"规划流程：选择截图 → OCR 提取店名、日期、金额与菜品 → 编辑确认 → 腾讯地图选点 → 保存。当前尚未接入 OCR，不会上传您的截图。\""
+    },
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1851,
+      "kind": "prose-translation",
+      "text": "    \"zh\": \"修改已保存在本机。请在「我的 → 同步状态」重试或处理冲突。\""
+    },
+    {
+      "file": "miniprogram/utils/locales.js",
+      "line": 1926,
+      "kind": "prose-translation",
+      "text": "    \"zh\": \"新增餐食及云端餐食的修改会私密同步。离线编辑、收藏和删除会保留在本机队列，请在「我的 → 同步状态」查看。演示数据和仅本机导入的数据不会自动上传。删除后云图片文件暂时保留。\""
+    },
+    {
+      "file": "miniprogram/utils/photos.js",
+      "line": 1,
+      "kind": "comment",
+      "text": "// Photo pipeline: pick → compress → persist under USER_DATA_PATH."
+    },
+    {
+      "file": "miniprogram/utils/shareImport.js",
+      "line": 31,
+      "kind": "import-parser-pattern",
+      "text": "  const ratingLine = lines.find(s => /^[★☆]+\\s*\\d(?:\\.\\d+)?$/.test(s));"
+    },
+    {
+      "file": "miniprogram/utils/shareImport.js",
+      "line": 37,
+      "kind": "import-parser-pattern",
+      "text": "  const address = addressLine && !/https?:\\/\\/|[【】「」★☆]/.test(addressLine) ? addressLine : '';"
+    },
+    {
+      "file": "miniprogram/utils/store.js",
+      "line": 84,
+      "kind": "comment",
+      "text": "    return defaults(); // corrupt storage → clean fallback"
+    },
+    {
+      "file": "miniprogram/pages/add/index.js",
+      "line": 4,
+      "kind": "comment",
+      "text": "// photos go through wx.chooseMedia → compress → USER_DATA_PATH before"
+    },
+    {
+      "file": "miniprogram/pages/add/index.wxss",
+      "line": 1,
+      "kind": "comment",
+      "text": "/* Add — port of screens.css “Add a memory” (×2.5). */"
+    },
+    {
+      "file": "miniprogram/pages/home/index.js",
+      "line": 93,
+      "kind": "comment",
+      "text": "    // child sheets can re-target (library → memory detail, etc.)"
+    },
+    {
+      "file": "miniprogram/pages/home/index.wxss",
+      "line": 1,
+      "kind": "comment",
+      "text": "/* Home — port of screens.css “Home” (×2.5). */"
+    },
+    {
+      "file": "miniprogram/pages/map/index.wxss",
+      "line": 1,
+      "kind": "comment",
+      "text": "/* Map — port of screens.css “Map” (×2.5); Leaflet replaced by native <map>."
+    },
+    {
+      "file": "miniprogram/pages/me/index.wxss",
+      "line": 1,
+      "kind": "comment",
+      "text": "/* Me — port of screens.css “Profile” (×2.5). */"
+    },
+    {
+      "file": "miniprogram/pages/us/index.wxss",
+      "line": 1,
+      "kind": "comment",
+      "text": "/* Us — port of screens.css “Shared space” (×2.5). */"
+    },
+    {
+      "file": "miniprogram/components/sheet/index.wxss",
+      "line": 10,
+      "kind": "comment",
+      "text": "/* Sheet shell — port of sheets.css (web 300px canvas × 2.5). */"
+    }
+  ],
+  "note": "Remaining matches are prose translations, comments and import-parser data patterns, not UI button artwork. Existing SVG icons are retained."
+}

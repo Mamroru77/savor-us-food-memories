@@ -1,0 +1,1 @@
+<view class="gate"><text class="title">{{labels.verify}}</text><text>{{labels.gate}}</text><button class="gate-button" bindtap="retry" loading="{{busy}}" disabled="{{busy}}">{{busy ? labels.busy : labels.retry}}</button><text>{{message}}</text></view>

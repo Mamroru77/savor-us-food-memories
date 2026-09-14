@@ -1,0 +1,22 @@
+{
+  "baseline": "d4e9310",
+  "date": "2026-09-13",
+  "status": "SOURCE_PASS_NATIVE_RETEST_REQUIRED",
+  "productionChanged": [
+    "miniprogram/custom-tab-bar/index.wxss"
+  ],
+  "oldPressTransforms": {
+    "ordinary": "scale(0.88)",
+    "add": "scale(0.9) translateY(-4rpx)"
+  },
+  "newPressFeedback": "opacity only; no geometry/shadow changes",
+  "checks": {
+    "static": 229,
+    "tab": 21,
+    "mock": 233,
+    "handoff": 44,
+    "ui": 44
+  },
+  "negativeControl": "old CSS fails new no-geometric-press regression",
+  "notes": "TAB_PRESS_GEOMETRY_FIX.md"
+}

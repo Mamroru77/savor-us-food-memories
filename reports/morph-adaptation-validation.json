@@ -1,0 +1,94 @@
+{
+  "environment": "Node shape checks, NOT native rendering acceptance",
+  "node": "v20.20.2",
+  "core": "morphicons@1.7.1",
+  "samplesPerSubpath": 64,
+  "pairs": [
+    {
+      "from": "house",
+      "to": "house-heart",
+      "planMs": 10.386,
+      "finite": true
+    },
+    {
+      "from": "map",
+      "to": "map-pinned",
+      "planMs": 2.179,
+      "finite": true
+    },
+    {
+      "from": "utensils",
+      "to": "utensils-crossed",
+      "planMs": 2.271,
+      "finite": true
+    },
+    {
+      "from": "users",
+      "to": "users-round",
+      "planMs": 1.5,
+      "finite": true
+    },
+    {
+      "from": "user",
+      "to": "user-round",
+      "planMs": 1.025,
+      "finite": true
+    },
+    {
+      "from": "plus",
+      "to": "x",
+      "planMs": 0.635,
+      "finite": true
+    },
+    {
+      "from": "chevron-left",
+      "to": "chevron-right",
+      "planMs": 0.311,
+      "finite": true
+    },
+    {
+      "from": "chevron-up",
+      "to": "chevron-down",
+      "planMs": 0.327,
+      "finite": true
+    },
+    {
+      "from": "sliders-horizontal",
+      "to": "x",
+      "planMs": 1.157,
+      "finite": true
+    },
+    {
+      "from": "check",
+      "to": "circle-check",
+      "planMs": 0.643,
+      "finite": true
+    },
+    {
+      "from": "bookmark",
+      "to": "bookmark-check",
+      "planMs": 1.097,
+      "finite": true
+    },
+    {
+      "from": "heart",
+      "to": "star",
+      "planMs": 2.108,
+      "finite": true
+    },
+    {
+      "from": "plus",
+      "to": "minus",
+      "planMs": 0.136,
+      "finite": true
+    },
+    {
+      "from": "loader-circle",
+      "to": "circle-check",
+      "planMs": 0.845,
+      "finite": true
+    }
+  ],
+  "nativeTabAnimationAcceptance": "NOT_EXECUTED",
+  "nativeCoverImageMorph": "NOT_CHANGED"
+}

@@ -1,0 +1,126 @@
+{
+  "miniprogram/app.json": {
+    "sha256": "fcad4880b2a89165f8e78255856cffd38f7b4cf70dc8109892fb6fde50fb7403",
+    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+  },
+  "miniprogram/components/sheet/index.wxml": {
+    "sha256": "bfde455511768ab145f2675929893c31f229a17fb9f808c9ccdcba3226dadfcd",
+    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+  },
+  "miniprogram/components/sheet/index.wxss": {
+    "sha256": "3b8e2885ab0e53445b6e8599787ad25a15883a42b60f65116e4e57a63a9e6aaf",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/us/index.wxml": {
+    "sha256": "072c0dccc6aecd8ef8a3d77a2c6fbb0813e55f597d5678ff1b4b7daaba419b0c",
+    "reason": "S1身份隔离基础上增加用户确认的S2双人空间/Wishlist独立页面入口；不恢复K1，不改Map样式。原生UI统一待验收。"
+  },
+  "miniprogram/pages/me/index.wxml": {
+    "sha256": "e609d14fa625d101ac3f939a43894536195110f5691798e72f733ee7e3558a2e",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+  },
+  "miniprogram/pages/add/index.wxml": {
+    "sha256": "23800572ff853494fd604c8c854a13a2a7e3cc315d3bbd6e042b1718badf8e7f",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+  },
+  "miniprogram/pages/add/index.wxss": {
+    "sha256": "6ac81ecff9830abc8d96cbbd2eadc2dc559ba1d11d41425ec728376b495c2d61",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/map/index.wxml": {
+    "sha256": "283fc88c79e1bc1a138ce5d621356f33ddbd3d57a593757d25fbef0159ab4ee5",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+  },
+  "miniprogram/pages/map/index.wxss": {
+    "sha256": "2007afb2108ad387ee4c60bda137715c4fd0faf3d01b49bf31c7500a32356543",
+    "reason": "用户要求Map底部卡片展开时按钮位于校正位置左侧、收缩时位于餐厅名前，并保持同一绝对锚点。"
+  },
+  "miniprogram/pages/us/index.wxss": {
+    "sha256": "dcbd1dc4b177871526e0d2c11260c39470fcbc39c6e71d5f725ad75f9f32b040",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/pages/me/index.wxss": {
+    "sha256": "a695fb3647e432ce3c70875848f5576bb04a9cf2c6d47281c55ca1c660122c13",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/app.wxss": {
+    "sha256": "e2241b39ef9f34124ceddbf522b2c96d240a04144bde5297b525b4612c6daa8f",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/memory-row/index.wxml": {
+    "sha256": "fa51bcdd7883efffde26d52b00e9d91fb6b6ac626ae9c05572aca1f5d8d0c801",
+    "reason": "用户确认Lucide统一方案：仅替换图案与线宽，其他已验收布局保持不变。"
+  },
+  "miniprogram/components/memory-row/index.wxss": {
+    "sha256": "496630458c2b161f0227d5eae9a12b0ad6624884a67109ff3215e122b72b9976",
+    "reason": "用户本轮要求：中文标题字体、统一内容卡片材质、国家指标替换及 Me 紧凑布局；保留此前双语/暗色/定位修复"
+  },
+  "miniprogram/components/toast/index.wxml": {
+    "sha256": "68aabcdee7c9cd906f71b90721c83d53e3883658d6ddcf7a6546097422cbf9e2",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/custom-tab-bar/index.js": {
+    "sha256": "73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。"
+  },
+  "miniprogram/custom-tab-bar/index.wxml": {
+    "sha256": "413cf4ccc74e52ac83ca555bd53d50d75d044d81108336986e646f7902119d07",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。"
+  },
+  "miniprogram/custom-tab-bar/index.wxss": {
+    "sha256": "57e506ffa7e14d8d832ac1259c12a72fc2395f2037c94c8f4635b340811adae0",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。"
+  },
+  "miniprogram/pages/home/index.wxml": {
+    "sha256": "3e5a737dadc62f0a51c25101fa24d93a6d4bb888cd98d63b94cfc37aa813c511",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+  },
+  "miniprogram/pages/home/index.wxss": {
+    "sha256": "dde5f0b6a93dcd1c1037bc670e231a6257ec8e52f5c3040e1a26444a07afe202",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/toast/index.wxss": {
+    "sha256": "81ad659141c4ee6dc75253ebf83a5ad3b3960dce34f91b0c4a8968eecb33dfad",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/morph-icon/index.wxml": {
+    "sha256": "cc9cfaef93ca8069492ae0ce40e7b0e6fa5f2af58855c55dc80aa7d0ebd1c4c6",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。"
+  },
+  "miniprogram/custom-tab-bar/index.json": {
+    "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/pages/morph-lab/index.wxml": {
+    "sha256": "510aba2d5081c2067253670e35fd980cf8f8c2a90efc3f01cfd64b4a93f02745",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/images/pin.png": {
+    "removed": true,
+    "replacements": [
+      "miniprogram/images/markers/landmark-normal-fallback.png",
+      "miniprogram/images/markers/landmark-selected-fallback.png"
+    ],
+    "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
+  },
+  "miniprogram/components/morph-icon/index.js": {
+    "sha256": "ebce76ff577e16daa7e272031c02f698af49b1fedad405a6b11ab06cbbe274b4",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。"
+  },
+  "miniprogram/components/morph-icon/index.wxss": {
+    "sha256": "a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。"
+  },
+  "miniprogram/pages/morph-lab/index.js": {
+    "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
+    "reason": "用户选择L餐具主题/480ms：Add端点改为官方Utensils/UtensilsCrossed；原480ms首帧计时修复、SVG层、尺寸、路线及地图不变。"
+  },
+  "miniprogram/pages/add/index.js": {
+    "sha256": "85a68e4dd8c833d516b44882258b129f8c8b5cc0f0a756cde725ea5983a569af",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Add页探针计数状态。"
+  },
+  "miniprogram/pages/me/index.js": {
+    "sha256": "899d7486a1b7b089e715660ad6b81d24060381cf657c4784eb3d32e34ba6103e",
+    "reason": "S1身份隔离基础上增加用户确认的S2双人空间/Wishlist独立页面入口；不恢复K1，不改Map样式。原生UI统一待验收。"
+  }
+}

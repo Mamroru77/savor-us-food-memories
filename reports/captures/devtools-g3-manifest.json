@@ -1,0 +1,63 @@
+{
+  "schema": "g3-local-simulator-v1",
+  "recordedAt": "2026-09-14T01:38:52.0370978+08:00",
+  "sourceControl": {
+    "branch": "fix-9.13",
+    "baselineCommit": "0c4e323baf00bfce617f240de631ad548794a710",
+    "experimentCommit": "4d0a0151f09363c1aaa469d8291a935c419cc973",
+    "dirtyDuringCapture": true,
+    "reason": "G3 is captured before its independent experiment commit."
+  },
+  "environment": {
+    "node": "v24.14.0",
+    "wechatDevTools": "2.02.2608070",
+    "simulator": "iPhone 12/13 Pro",
+    "platform": "devtools",
+    "baseLibrary": "3.17.3"
+  },
+  "scope": "Local WeChat DevTools simulator only; not device evidence.",
+  "variable": "One native cover-view text label on Add/Me, with integer progress added to the existing SVG frame setData patch.",
+  "forward": {
+    "route": "pages/me/index",
+    "entryKey": 1,
+    "addIcon": { "durationMs": 495, "firstFrameWaitMs": 45, "frameBudgetMs": 480, "frames": 15, "fallbackOnly": false },
+    "meIcon": { "durationMs": 497, "firstFrameWaitMs": 35, "frameBudgetMs": 480, "frames": 16, "fallbackOnly": false }
+  },
+  "reverse": {
+    "route": "pages/add/index",
+    "entryKey": 2,
+    "samples": [
+      { "afterTapMs": 80, "addProgress": -1, "meProgress": -1 },
+      { "afterTapMs": 240, "addProgress": -1, "meProgress": -1 },
+      { "afterTapMs": 430, "addProgress": 16, "meProgress": 16 },
+      { "afterTapMs": 700, "addProgress": 74, "meProgress": 69 },
+      { "afterTapMs": "settled", "addProgress": 100, "meProgress": 100 }
+    ],
+    "addIcon": { "durationMs": 496, "firstFrameWaitMs": 73, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "durationMs": 500, "firstFrameWaitMs": 65, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "consoleErrorMatches": [],
+  "screenshots": [
+    { "path": "reports/captures/devtools-g3-add.png", "sha256": "6204932a2b1e78e0bd14a6c24f7f8fb86a24e7b5a7d5055e13fd9a88ea9ad796" },
+    { "path": "reports/captures/devtools-g3-me.png", "sha256": "2cd44c33938779e88dac29dd00820234552434b9082f0a422d36326a26124229" },
+    { "path": "reports/captures/devtools-g3-add-return.png", "sha256": "afa7c7d1b8be84a275f025ba4c3eb89105861fb6d0865fd2321c0ca5f5663403" }
+  ],
+  "devicePreviewPush": {
+    "recordedAt": "2026-09-14T01:40:44.5645141+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1577956,
+    "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
+  },
+  "deviceCapture": {
+    "path": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug15.mp4",
+    "sha256": "61d2b06cf26dde7628eb109fd503c47da54f0162e96f94dec3a07d171e3bf326",
+    "captureCommit": "125dc2f4b9857e705875a0dd5119708b24c6e604",
+    "captureDirty": false,
+    "sequence": "Add -> Me -> Add",
+    "jsonLog": null,
+    "report": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug15-analysis/vbug15-evidence.md",
+    "verdict": "REJECTED: G3 was restored stale with the page and did not reliably carry the current command before the old endpoint flash."
+  },
+  "deviceStatus": "REJECTED_AND_REMOVED"
+}

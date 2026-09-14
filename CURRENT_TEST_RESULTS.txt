@@ -1,0 +1,956 @@
+
+> savor-miniprogram@1.0.0 verify:all
+> npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:workspace
+
+
+> savor-miniprogram@1.0.0 verify
+> node tools/verify-miniprogram.cjs
+
+
+--- A. JS syntax ---
+  ✓ [A] app.js parses
+  ✓ [A] components/icon/index.js parses
+  ✓ [A] components/identity-gate/index.js parses
+  ✓ [A] components/memory-row/index.js parses
+  ✓ [A] components/morph-icon/index.js parses
+  ✓ [A] components/sheet/index.js parses
+  ✓ [A] components/toast/index.js parses
+  ✓ [A] custom-tab-bar/index.js parses
+  ✓ [A] pages/account/index.js parses
+  ✓ [A] pages/add/index.js parses
+  ✓ [A] pages/home/index.js parses
+  ✓ [A] pages/map/index.js parses
+  ✓ [A] pages/me/index.js parses
+  ✓ [A] pages/morph-lab/index.js parses
+  ✓ [A] pages/reports/index.js parses
+  ✓ [A] pages/space/index.js parses
+  ✓ [A] pages/us/index.js parses
+  ✓ [A] pages/workspace/index.js parses
+  ✓ [A] utils/annualReport.js parses
+  ✓ [A] utils/cloudRecords.js parses
+  ✓ [A] utils/data.js parses
+  ✓ [A] utils/fonts.js parses
+  ✓ [A] utils/i18n.js parses
+  ✓ [A] utils/icons.js parses
+  ✓ [A] utils/identity.js parses
+  ✓ [A] utils/identityCopy.js parses
+  ✓ [A] utils/identityPartitions.js parses
+  ✓ [A] utils/importPolicy.js parses
+  ✓ [A] utils/legacyRecovery.js parses
+  ✓ [A] utils/localDate.js parses
+  ✓ [A] utils/locales.js parses
+  ✓ [A] utils/locations.js parses
+  ✓ [A] utils/lucideMorphNodes.js parses
+  ✓ [A] utils/mapLayout.js parses
+  ✓ [A] utils/mapMarkers.js parses
+  ✓ [A] utils/mapProjection.js parses
+  ✓ [A] utils/mapStack.js parses
+  ✓ [A] utils/memoryStats.js parses
+  ✓ [A] utils/metrics.js parses
+  ✓ [A] utils/morphEngine.js parses
+  ✓ [A] utils/morphSvg.js parses
+  ✓ [A] utils/motionPresence.js parses
+  ✓ [A] utils/pageHeadings.js parses
+  ✓ [A] utils/photos.js parses
+  ✓ [A] utils/restaurantCategory.js parses
+  ✓ [A] utils/shareImport.js parses
+  ✓ [A] utils/sharedMedia.js parses
+  ✓ [A] utils/spaceCopy.js parses
+  ✓ [A] utils/spaces.js parses
+  ✓ [A] utils/store.js parses
+  ✓ [A] utils/uiFeedback.js parses
+  ✓ [A] utils/workspace.js parses
+  ✓ [A] utils/workspaceCopy.js parses
+  ✓ [A] vendor/morphicons-core.js parses
+
+--- B. JSON validity ---
+  ✓ [B] app.json parses
+  ✓ [B] components/icon/index.json parses
+  ✓ [B] components/identity-gate/index.json parses
+  ✓ [B] components/memory-row/index.json parses
+  ✓ [B] components/morph-icon/index.json parses
+  ✓ [B] components/sheet/index.json parses
+  ✓ [B] components/toast/index.json parses
+  ✓ [B] custom-tab-bar/index.json parses
+  ✓ [B] images/icons/lucide/SOURCES.json parses
+  ✓ [B] pages/account/index.json parses
+  ✓ [B] pages/add/index.json parses
+  ✓ [B] pages/home/index.json parses
+  ✓ [B] pages/map/index.json parses
+  ✓ [B] pages/me/index.json parses
+  ✓ [B] pages/morph-lab/index.json parses
+  ✓ [B] pages/reports/index.json parses
+  ✓ [B] pages/space/index.json parses
+  ✓ [B] pages/us/index.json parses
+  ✓ [B] pages/workspace/index.json parses
+  ✓ [B] project.config.json parses
+  ✓ [B] sitemap.json parses
+
+--- C. WXML structure ---
+  ✓ [C] components/icon/index.wxml tags balanced
+  ✓ [C] components/identity-gate/index.wxml tags balanced
+  ✓ [C] components/memory-row/index.wxml tags balanced
+  ✓ [C] components/morph-icon/index.wxml tags balanced
+  ✓ [C] components/sheet/index.wxml tags balanced
+  ✓ [C] components/toast/index.wxml tags balanced
+  ✓ [C] custom-tab-bar/index.wxml tags balanced
+  ✓ [C] pages/account/index.wxml tags balanced
+  ✓ [C] pages/add/index.wxml tags balanced
+  ✓ [C] pages/home/index.wxml tags balanced
+  ✓ [C] pages/map/index.wxml tags balanced
+  ✓ [C] pages/me/index.wxml tags balanced
+  ✓ [C] pages/morph-lab/index.wxml tags balanced
+  ✓ [C] pages/reports/index.wxml tags balanced
+  ✓ [C] pages/space/index.wxml tags balanced
+  ✓ [C] pages/us/index.wxml tags balanced
+  ✓ [C] pages/workspace/index.wxml tags balanced
+
+--- D. WXSS ---
+  ✓ [D] app.wxss braces balanced
+  ✓ [D] app.wxss no local-path url()
+  ✓ [D] app.wxss no double semicolons
+  ✓ [D] app.wxss parens balanced
+  ✓ [D] app.wxss no trailing commas in declarations
+  ✓ [D] components/icon/index.wxss braces balanced
+  ✓ [D] components/icon/index.wxss no local-path url()
+  ✓ [D] components/icon/index.wxss no double semicolons
+  ✓ [D] components/icon/index.wxss parens balanced
+  ✓ [D] components/icon/index.wxss no trailing commas in declarations
+  ✓ [D] components/icon/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] components/identity-gate/index.wxss braces balanced
+  ✓ [D] components/identity-gate/index.wxss no local-path url()
+  ✓ [D] components/identity-gate/index.wxss no double semicolons
+  ✓ [D] components/identity-gate/index.wxss parens balanced
+  ✓ [D] components/identity-gate/index.wxss no trailing commas in declarations
+  ✓ [D] components/identity-gate/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] components/memory-row/index.wxss braces balanced
+  ✓ [D] components/memory-row/index.wxss no local-path url()
+  ✓ [D] components/memory-row/index.wxss no double semicolons
+  ✓ [D] components/memory-row/index.wxss parens balanced
+  ✓ [D] components/memory-row/index.wxss no trailing commas in declarations
+  ✓ [D] components/memory-row/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] components/morph-icon/index.wxss braces balanced
+  ✓ [D] components/morph-icon/index.wxss no local-path url()
+  ✓ [D] components/morph-icon/index.wxss no double semicolons
+  ✓ [D] components/morph-icon/index.wxss parens balanced
+  ✓ [D] components/morph-icon/index.wxss no trailing commas in declarations
+  ✓ [D] components/morph-icon/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] components/sheet/index.wxss braces balanced
+  ✓ [D] components/sheet/index.wxss no local-path url()
+  ✓ [D] components/sheet/index.wxss no double semicolons
+  ✓ [D] components/sheet/index.wxss parens balanced
+  ✓ [D] components/sheet/index.wxss no trailing commas in declarations
+  ✓ [D] components/sheet/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] components/toast/index.wxss braces balanced
+  ✓ [D] components/toast/index.wxss no local-path url()
+  ✓ [D] components/toast/index.wxss no double semicolons
+  ✓ [D] components/toast/index.wxss parens balanced
+  ✓ [D] components/toast/index.wxss no trailing commas in declarations
+  ✓ [D] components/toast/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] custom-tab-bar/index.wxss braces balanced
+  ✓ [D] custom-tab-bar/index.wxss no local-path url()
+  ✓ [D] custom-tab-bar/index.wxss no double semicolons
+  ✓ [D] custom-tab-bar/index.wxss parens balanced
+  ✓ [D] custom-tab-bar/index.wxss no trailing commas in declarations
+  ✓ [D] custom-tab-bar/index.wxss no tag-name selectors (component wxss rule)
+  ✓ [D] pages/account/index.wxss braces balanced
+  ✓ [D] pages/account/index.wxss no local-path url()
+  ✓ [D] pages/account/index.wxss no double semicolons
+  ✓ [D] pages/account/index.wxss parens balanced
+  ✓ [D] pages/account/index.wxss no trailing commas in declarations
+  ✓ [D] pages/add/index.wxss braces balanced
+  ✓ [D] pages/add/index.wxss no local-path url()
+  ✓ [D] pages/add/index.wxss no double semicolons
+  ✓ [D] pages/add/index.wxss parens balanced
+  ✓ [D] pages/add/index.wxss no trailing commas in declarations
+  ✓ [D] pages/home/index.wxss braces balanced
+  ✓ [D] pages/home/index.wxss no local-path url()
+  ✓ [D] pages/home/index.wxss no double semicolons
+  ✓ [D] pages/home/index.wxss parens balanced
+  ✓ [D] pages/home/index.wxss no trailing commas in declarations
+  ✓ [D] pages/map/index.wxss braces balanced
+  ✓ [D] pages/map/index.wxss no local-path url()
+  ✓ [D] pages/map/index.wxss no double semicolons
+  ✓ [D] pages/map/index.wxss parens balanced
+  ✓ [D] pages/map/index.wxss no trailing commas in declarations
+  ✓ [D] pages/me/index.wxss braces balanced
+  ✓ [D] pages/me/index.wxss no local-path url()
+  ✓ [D] pages/me/index.wxss no double semicolons
+  ✓ [D] pages/me/index.wxss parens balanced
+  ✓ [D] pages/me/index.wxss no trailing commas in declarations
+  ✓ [D] pages/morph-lab/index.wxss braces balanced
+  ✓ [D] pages/morph-lab/index.wxss no local-path url()
+  ✓ [D] pages/morph-lab/index.wxss no double semicolons
+  ✓ [D] pages/morph-lab/index.wxss parens balanced
+  ✓ [D] pages/morph-lab/index.wxss no trailing commas in declarations
+  ✓ [D] pages/reports/index.wxss braces balanced
+  ✓ [D] pages/reports/index.wxss no local-path url()
+  ✓ [D] pages/reports/index.wxss no double semicolons
+  ✓ [D] pages/reports/index.wxss parens balanced
+  ✓ [D] pages/reports/index.wxss no trailing commas in declarations
+  ✓ [D] pages/space/index.wxss braces balanced
+  ✓ [D] pages/space/index.wxss no local-path url()
+  ✓ [D] pages/space/index.wxss no double semicolons
+  ✓ [D] pages/space/index.wxss parens balanced
+  ✓ [D] pages/space/index.wxss no trailing commas in declarations
+  ✓ [D] pages/us/index.wxss braces balanced
+  ✓ [D] pages/us/index.wxss no local-path url()
+  ✓ [D] pages/us/index.wxss no double semicolons
+  ✓ [D] pages/us/index.wxss parens balanced
+  ✓ [D] pages/us/index.wxss no trailing commas in declarations
+  ✓ [D] pages/workspace/index.wxss braces balanced
+  ✓ [D] pages/workspace/index.wxss no local-path url()
+  ✓ [D] pages/workspace/index.wxss no double semicolons
+  ✓ [D] pages/workspace/index.wxss parens balanced
+  ✓ [D] pages/workspace/index.wxss no trailing commas in declarations
+
+--- E. Pages ---
+  ✓ [E] app.json parsed
+  ✓ [E] pages/home/index complete
+  ✓ [E] pages/map/index complete
+  ✓ [E] pages/add/index complete
+  ✓ [E] pages/us/index complete
+  ✓ [E] pages/me/index complete
+  ✓ [E] pages/morph-lab/index complete
+  ✓ [E] pages/account/index complete
+  ✓ [E] pages/space/index complete
+  ✓ [E] pages/workspace/index complete
+  ✓ [E] pages/reports/index complete
+
+--- F. tabBar config ---
+  ✓ [F] tabBar present, custom=true
+  ✓ [F] five tabs, all real pages
+  ✓ [F] tab order Home Map Add Us Me
+
+--- G. Custom TabBar ---
+  ✓ [G] custom-tab-bar complete (js/json/wxml/wxss)
+  ✓ [G] custom-tab-bar has zero require() calls (comment-aware scan)
+
+--- H. usingComponents resolve ---
+  ✓ [H] components/memory-row/index.json: s-icon -> /components/icon/index
+  ✓ [H] components/morph-icon/index.json: s-icon -> /components/icon/index
+  ✓ [H] components/sheet/index.json: s-icon -> /components/icon/index
+  ✓ [H] components/sheet/index.json: memory-row -> /components/memory-row/index
+  ✓ [H] components/toast/index.json: s-icon -> /components/icon/index
+  ✓ [H] custom-tab-bar/index.json: s-icon -> /components/icon/index
+  ✓ [H] custom-tab-bar/index.json: s-morph -> /components/morph-icon/index
+  ✓ [H] pages/account/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/add/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/add/index.json: s-toast -> /components/toast/index
+  ✓ [H] pages/add/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/home/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/home/index.json: memory-row -> /components/memory-row/index
+  ✓ [H] pages/home/index.json: s-sheet -> /components/sheet/index
+  ✓ [H] pages/home/index.json: s-toast -> /components/toast/index
+  ✓ [H] pages/home/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/map/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/map/index.json: s-sheet -> /components/sheet/index
+  ✓ [H] pages/map/index.json: s-toast -> /components/toast/index
+  ✓ [H] pages/map/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/me/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/me/index.json: s-sheet -> /components/sheet/index
+  ✓ [H] pages/me/index.json: s-toast -> /components/toast/index
+  ✓ [H] pages/me/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/morph-lab/index.json: s-morph -> /components/morph-icon/index
+  ✓ [H] pages/morph-lab/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/reports/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/space/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/us/index.json: s-icon -> /components/icon/index
+  ✓ [H] pages/us/index.json: s-sheet -> /components/sheet/index
+  ✓ [H] pages/us/index.json: s-toast -> /components/toast/index
+  ✓ [H] pages/us/index.json: s-identity-gate -> /components/identity-gate/index
+  ✓ [H] pages/workspace/index.json: s-identity-gate -> /components/identity-gate/index
+
+--- I/R. require dependency graph ---
+  ✓ [I] all requires resolve (162 edges)
+  ✓ [R] no dependency escapes miniprogram root
+
+--- J/K. local assets ---
+  ✓ [J] asset manifest (all referenced /images exist)
+  ✓ [K] image files have valid headers and sane sizes
+
+--- L. icon names ---
+  ✓ [L] all 42 referenced icon names exist in utils/icons.js
+
+--- M. WXML handlers ---
+  ✓ [M] components/sheet/index.wxml: onLibraryOpen() exists
+  ✓ [M] pages/home/index.wxml: onMemoryOpen() exists
+  ✓ [M] pages/home/index.wxml: onSheetChange() exists
+  ✓ [M] pages/home/index.wxml: onSheetClose() exists
+  ✓ [M] pages/map/index.wxml: onSheetChange() exists
+  ✓ [M] pages/map/index.wxml: onSheetClose() exists
+  ✓ [M] pages/me/index.wxml: onSheetChange() exists
+  ✓ [M] pages/me/index.wxml: onSheetClose() exists
+  ✓ [M] pages/morph-lab/index.wxml: onReport() exists
+  ✓ [M] pages/us/index.wxml: onSheetChange() exists
+  ✓ [M] pages/us/index.wxml: onSheetClose() exists
+
+--- N. wx:for keys ---
+  ✓ [N] components/icon/index.wxml: every wx:for has wx:key (0)
+  ✓ [N] components/identity-gate/index.wxml: every wx:for has wx:key (0)
+  ✓ [N] components/memory-row/index.wxml: every wx:for has wx:key (0)
+  ✓ [N] components/morph-icon/index.wxml: every wx:for has wx:key (3)
+  ✓ [N] components/sheet/index.wxml: every wx:for has wx:key (15)
+  ✓ [N] components/toast/index.wxml: every wx:for has wx:key (0)
+  ✓ [N] custom-tab-bar/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/account/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/add/index.wxml: every wx:for has wx:key (7)
+  ✓ [N] pages/home/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/map/index.wxml: every wx:for has wx:key (4)
+  ✓ [N] pages/me/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/morph-lab/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/reports/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/space/index.wxml: every wx:for has wx:key (4)
+  ✓ [N] pages/us/index.wxml: every wx:for has wx:key (1)
+  ✓ [N] pages/workspace/index.wxml: every wx:for has wx:key (3)
+
+--- O. routes ---
+  ✓ [O] all 6 wx.*Tab routes valid
+
+--- P. tab selected mapping ---
+  ✓ [P] pages/home/index onShow syncs selected=0
+  ✓ [P] pages/map/index onShow syncs selected=1
+  ✓ [P] pages/add/index onShow syncs selected=2
+  ✓ [P] pages/us/index onShow syncs selected=3
+  ✓ [P] pages/me/index onShow syncs selected=4
+
+--- Q. browser-only APIs ---
+  ✓ [Q] all 54 JS files free of browser-only APIs
+
+--- S. store smoke test ---
+  ✓ [S] verified empty partition has no seeded private records
+  ✓ [S] addMemory prepends
+  ✓ [S] updateMemory toggles liked/saved
+  ✓ [S] shared flag persists
+  ✓ [S] corrupt storage fails closed without reset
+  ✓ [S] import adds both new memories
+  ✓ [S] import dedupes by id
+  ✓ [S] deleteMemory removes
+  ✓ [S] draft round-trips
+  ✓ [S] feedback saved
+  ✓ [S] settings update (theme/reduceMotion)
+
+--- T. import / export smoke test ---
+  ✓ [T] export payload shape {version, exportedAt, memories}
+  ✓ [T] every exported memory passes isMemory
+  ✓ [T] invalid import rejected by isMemory
+  ✓ [T] restore into fresh diary adds 7
+  ✓ [T] re-import is a no-op (dedupe)
+
+--- Package size ---
+  ✓ [SIZE] package size 1.71 MB (main package limit 2 MB)
+
+--- Dedicated verifiers ---
+  ✓ [SUB] verify-tabbar.cjs
+  ✓ [SUB] verify-assets.cjs
+
+==================================================
+TOTAL: 297/297 checks passed
+Static verification passed.
+FINAL STATIC VALIDATION: PASS
+
+> savor-miniprogram@1.0.0 verify:tabbar
+> node tools/verify-tabbar.cjs
+
+
+=== TabBar verification — /home/user/savor-repo/miniprogram ===
+  ✓ 1. app.json.tabBar exists
+  ✓ 2. tabBar.custom === true
+  ✓ 3. exactly five tabs
+  ✓ 4. every tab pagePath is in pages
+  ✓ 5. every tab page exists on disk
+  ✓ 3b. tab order is Home Map Add Us Me
+  ✓ 6. custom-tab-bar/index.js exists
+  ✓ 7. custom-tab-bar/index.json component:true
+  ✓ 8. custom-tab-bar/index.wxml exists
+  ✓ 9. custom-tab-bar/index.wxss exists
+  ✓ 10. custom-tab-bar require graph resolves inside root
+  ✓ 11. custom-tab-bar usingComponents resolve
+  ✓ 12. s-icon component resolves globally
+  ✓ 13. switchTab urls match app.json pagePaths
+  ✓ 14. pages/home/index syncs selected=0 in onShow
+  ✓ 14. pages/map/index syncs selected=1 in onShow
+  ✓ 14. pages/add/index syncs selected=2 in onShow
+  ✓ 14. pages/us/index syncs selected=3 in onShow
+  ✓ 14. pages/me/index syncs selected=4 in onShow
+  ✓ 15. Add tab maps to selected=2
+  ✓ 16. no require escapes the miniprogram root (whole project)
+
+21/21 checks passed
+TABBAR VERIFICATION PASSED
+
+> savor-miniprogram@1.0.0 verify:assets
+> node tools/verify-assets.cjs
+
+
+=== Asset verification — /home/user/savor-repo/miniprogram ===
+  referenced local assets : 14
+    /images/le-comptoir.jpg
+    /images/jamie.jpg
+    /images/alex.jpg
+    /images/markers/stack-anchor.png
+    /images/markers/stack-button-down-dusk.png
+    /images/markers/stack-button-up-dusk.png
+    /images/markers/stack-button-down.png
+    /images/markers/stack-button-up.png
+    /images/icons/lucide/chevron-left.png
+    /images/icons/lucide/chevron-right.png
+    /images/paris-evening.jpg
+    /images/coffee.jpg
+    /images/japanese.jpg
+    /images/cafe.jpg
+  bundled image files     : 18 (634 KB total)
+    images/alex.jpg  67.7 KB
+    images/cafe.jpg  53.2 KB
+    images/coffee.jpg  37.0 KB
+    images/icons/lucide/chevron-left.png  0.5 KB
+    images/icons/lucide/chevron-right.png  0.5 KB
+    images/jamie.jpg  70.8 KB
+    images/japanese.jpg  67.3 KB
+    images/le-comptoir.jpg  72.1 KB
+    images/markers/landmark-normal-fallback.png  50.1 KB
+    images/markers/landmark-normal-frame.png  43.9 KB
+    images/markers/landmark-selected-fallback.png  52.1 KB
+    images/markers/landmark-selected-frame.png  46.6 KB
+    images/markers/stack-anchor.png  0.1 KB
+    images/markers/stack-button-down-dusk.png  3.5 KB
+    images/markers/stack-button-down.png  2.7 KB
+    images/markers/stack-button-up-dusk.png  3.4 KB
+    images/markers/stack-button-up.png  2.6 KB
+    images/paris-evening.jpg  59.7 KB
+
+ASSET VERIFICATION PASSED
+
+> savor-miniprogram@1.0.0 verify:icons
+> node tools/verify-icons.cjs
+
+ICON VERIFICATION PASSED: 48 official SVGs, 28 compatibility aliases, 72 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.
+
+> savor-miniprogram@1.0.0 verify:cloud
+> node tools/verify-cloud.cjs
+
+PASS best-ui visual files match baseline or explicit user-requested UI amendments
+PASS memory row resolves cloud photos transiently and skips duplicate locale/attach work
+PASS memory row rejects stale and detached cloud-photo completions
+PASS memory row keeps fallback on denied/unresolved photos and bounds expiry retry
+PASS memory row local and unsafe images never request cloud URLs; sheet uses class selector
+PASS Cloud init preserves env and shell survives unavailable CloudBase
+PASS sample boot and local Import never upload
+PASS image validator accepts cloud file IDs but rejects malformed schemes and traversal
+PASS photo picker uses a single options object and persists result
+PASS Case 1: no-photo Add save, cloud row, store and draft reset
+PASS Case 2: one local photo uploaded and fileID persisted
+PASS Case 3: multiple photos plus placePhoto preserve slots without path collisions
+PASS Case 4: function undeployed keeps Draft, restores Save state, explicit error
+PASS Case 5: partial upload failure creates no record; retry reuses completed files
+PASS Case 6: repeated Save click creates one row
+PASS lost add reply and retry keep the same cloud primary key
+PASS Case 7: Home enters three times without duplicates
+PASS Case 8: module restart restores cloud cache, fresh cache can restore cloud data
+PASS Case 9: failed list leaves cache unchanged
+PASS Case 10: sync does not upload seven bundled samples
+PASS legacy integrated row maps without inventing two votes or a map location
+PASS adapter preserves single rating, tags, geo, flags and integrated extras
+PASS local favorites and local deletion survive cloud refresh and storage reload
+PASS server rejects fake owner and membership; list is owner isolated
+PASS server validates dates, ratings, photo count, scheme and coordinate ranges
+PASS server concurrent retries are idempotent
+PASS pagination reads more than 50 records, legacy list stays date-descending
+PASS Map / Us / Me / Library / detail accept cloud Memory
+PASS temp URLs are transient; exported Memory still contains cloud IDs
+PASS photo selection cancellation keeps inputs and does not upload
+PASS leaving Add during save does not force navigation or lose committed data
+PASS storage failure aborts before uploads and preserves in-memory form
+PASS concurrent Home refreshes share a single flight
+PASS legacy display placeholders never become persisted single votes or coordinates
+PASS Tencent picker returns confirmed GCJ-02 coordinates and Add persists them
+PASS new Add refuses city-centre placeholder and retains draft
+PASS cloud location update is owner-authorized and survives list
+PASS Map shows only confirmed real locations and reports records needing correction
+PASS Us and Me ambient images react to store changes
+PASS Sheet scroll has a definite height and no panel touchmove interception
+PASS map pending notice starts collapsed, expands and collapses without cloud writes
+PASS restaurant glass is more transparent and actions fit inside the card
+PASS locale catalog covers every bound UI key in both languages
+PASS language switches immediately without translating personal memory or Draft content
+PASS follow-system resolves zh and en while manual selection overrides system
+PASS TabBar gets locale/theme labels without business imports or selected-tab hijacking
+PASS Settings language picker stores the requested option and renders localized titles
+PASS dark palette text contrast remains readable and map veil does not intercept gestures
+PASS language preference survives reloading the store module
+PASS saved-memory metric excludes samples, deduplicates records and respects shared scope
+PASS Me and Us bookmark counts react to store changes, without counting likes as bookmarks
+PASS countries are removed from summary UI but remain in the data model and cloud adapter
+PASS eight content cards share one transparent material and blur with no per-page overrides
+PASS Me is compact with three metrics and readable unchanged small copy
+PASS Chinese display fonts use sans fallbacks while Latin/numeral serif and small copy are preserved
+PASS personalized page copy is bounded, defaults localize, and user words are never translated
+PASS personalization persists atomically, refreshes headings, and preserves photos and records
+PASS personalization Sheet keeps drafts during refresh, cancels safely, resets per page, and handles save failures
+PASS personalization reloads from existing diary key without a new storage or cloud schema
+PASS only Map card height is reduced and Me exposes the scrollable personalization Sheet
+PASS Sheet uses measured remaining height, leaves bottom padding, and ignores detached callbacks
+PASS Sheet panel clears custom TabBar and its last action can scroll past an end spacer
+PASS dark mode has layered charcoal surfaces and desaturated ambient depth without changing photos
+PASS Nocturne accents remain limited to interaction and dark fields are inset below the modal
+PASS calendar dates cover UTC+8 midnight, leap days, Monday weeks and DST calendar days
+PASS Tencent metadata parses the first prefecture city, never retains stale Paris, and allows explicit confirmation
+PASS real statistics exclude samples, deduplicate IDs and venues, scope shared meals and calculate this week only
+PASS unrated records and nine photos roundtrip without inventing a vote or losing business fields
+PASS photo preview opens the selected image and arbitrary thumbnail removal preserves other photos
+PASS mutation server enforces owner, field allowlist, revisions and idempotent operation replay
+PASS competing mutations cannot silently overwrite each other and legacy revisionless records can migrate
+PASS offline flags persist through restart, sequential local mutations rebase only after their own acknowledgment
+PASS lost mutation reply retries its durable operation ID without applying a second version
+PASS storage failure never optimistically deletes a cloud record or loses its retry intent
+PASS offline editing retains draft and uploads, retries without new records and preserves independent scores
+PASS conflicting edits stay visible as conflicts until explicit cloud resolution
+PASS cloud deletion is an idempotent tombstone, survives fresh sync and retains shared photo files
+PASS geographic correction replaces stale metadata and respects the mutation revision
+PASS unknown legacy flags are not automatically claimed or sent
+PASS editing a legacy dual-score memory without touching rating never creates a single score
+PASS post-ack edit draft replay clears the draft without writing again
+PASS pending mutation snapshots keep local photos referenced during delete and retry
+PASS negative and invalid costs fail server validation rather than becoming silent zero values
+PASS Add form persists selected city, independent cuisine, per-person cost, dishes and nine photos end-to-end
+PASS a delayed list cannot overwrite a newer locally acknowledged mutation
+PASS replaying an old Add request after deletion reports deletion instead of resurrecting the meal
+PASS repairing a local legacy memory without a rating does not invent a three-star vote
+PASS S0 lost reply plus another-device edit must not silently rebase a queued full edit
+PASS S0 receipt distinguishes its applied revision from the latest record revision
+PASS S0 queued full-edit projection preserves acknowledged flags and revision
+PASS S0 legacy missing receipts fail closed instead of assuming safe revision advancement
+PASS S0 wrong record or operation identity in a response cannot acknowledge a different record
+PASS S0 finishing an older edit cannot clear a replacement draft
+PASS S0 an in-progress Add upload blocks replacing its retry draft with another edit
+PASS share import real text fixture L01
+PASS share import real text fixture L02
+PASS share import real text fixture L03
+PASS share import real text fixture L04
+PASS share import real text fixture L05
+PASS share Markdown and HTML entities normalize without tracking in source URL
+PASS share empty, oversized, multi-shop and source mismatch fail explicitly
+PASS bare link leaves name blank; other delivery is text-only and never guesses an address
+PASS unsafe source URLs cannot masquerade as a supported public shop URL
+PASS candidate projection preserves personal inputs, clears stale geography/date, and keeps platform references separate from personal scores
+PASS Add candidate confirmation, cancellation and stale-modal guards do not create cloud records
+PASS Add import fails closed on storage failure; save-in-flight blocks import
+PASS import provenance survives owner-scoped cloud add/update and edit roundtrip; unknown metadata is stripped
+PASS missing edit queue entry is not treated as acknowledged; absent receipt retains draft
+PASS missing edit queue entry completes only with an owner-scoped remote receipt
+PASS receipt read failure retains draft, and receipt identity mismatch fails closed
+PASS map marker focus centers the selected restaurant and never fits all points
+PASS map passive updates preserve pan; explicit overview alone fits all points
+PASS landmark selected and normal assets use correct anchor, layer and distinct checked state
+PASS no-photo records use a real placeholder, never the sample meal; placePhoto remains eligible
+PASS photo marker composites the actual source, caches by source/state, and only deletes derived exports
+PASS failed photo or PNG export falls back without blocking marker taps or throwing
+PASS private marker photo download stays at the cloud boundary and temporary copy is cleaned
+PASS late marker photo cannot overwrite a newly selected marker or update an unloaded map
+PASS map photo work prioritizes selection and is bounded to 48 records per refresh
+PASS late canvas export after leaving map is deleted and never reused
+PASS marker cache bounds queued compositions and restaurant callouts remain tappable
+PASS overlapping photo pins group at screen scale, split when zoomed, and never move real coordinates
+PASS same-coordinate records remain individually selectable, including more than six entries
+PASS zoom changes regroup without recentering; stale native scale replies are ignored
+PASS collapse and expand keep the selection, bookmark and map camera unchanged
+PASS marker size easing is bounded and reduced-motion skips animation
+PASS selected pin grows and previous pin shrinks over 200ms; hiding cancels future frames
+PASS D removes standalone shop names from selected and normal map pins in both themes
+PASS D preserves original names in detail and collapsed strip, and group badges are numbers only
+PASS D releases old name-plate collision space without changing point coordinates
+PASS map card uses one fixed toggle beside both expanded actions and collapsed name
+PASS free-first client default makes zero cloud calls and routes search to native selection
+PASS free-first backend with existing credentials rejects lookup before provider request
+PASS share categories distinguish cuisine from hotpot/buffet without guessing Chinese food
+PASS name-only guesses stay suggestions until explicit user adoption, preserving explicit dining types
+PASS branch comparison treats same brand different branch as review, never auto-confirmation
+PASS lookup denies missing identity, configuration and non-allowlisted callers without network calls
+PASS lookup uses only fixed Tencent endpoint and city-bound encoded query; it never exports provider images
+PASS lookup invalid queries, provider errors, result bounds and instance cooldown are explicit
+PASS client lookup uses the central cloud boundary and retains configuration error codes
+PASS confirmed Tencent result goes to draft without creating a meal, and map category only fills missing source
+PASS matching requires confirmation; cancel and stale confirmation do not attach a location
+PASS late search results cannot attach to changed city/name or cancelled import
+PASS search failure keeps candidate; native map remains available without the lookup service
+PASS classification and Tencent POI identity survive cloud edit roundtrip and existing source stays compatible
+PASS map category line uses real classification, never arbitrary tags or a default bistro
+PASS new classification fields are bounded and not authorization fields
+PASS lookup transport rejects redirects and oversized responses without following external URLs
+PASS optional lookup deadline is 1800ms and destroys stalled transport
+PASS search preference requires consent, survives reload, and enabling never calls cloud
+PASS search preference storage failure and stale consent fail closed
+PASS turning search off invalidates inflight candidates and branch confirmation
+PASS full candidate survives draft confirmation and local reload without inventing personal fields
+PASS reference metadata survives cloud add, update and beginEdit without becoming personal rating
+PASS Add save forwards reference fields alongside independent actual meal fields
+PASS same-name input preserves candidate; changing restaurant clears stale references; server bounds references
+PASS old ambiguous merchant-search consent does not enable the relabeled Tencent preference
+PASS invalid Tencent queries are rejected locally before any cloud invocation
+PASS merchant page status is noninteractive and separate from optional Tencent location errors
+PASS DevTools camera skips unsupported moveToLocation and falls back to one real point
+PASS native camera handles callback and thrown failures without moving to stale selections
+PASS upward drawer keeps first real pin anchored, pages every member, and writes no meal data
+PASS drawer closes when filtering or zoom splits a group and ignores old row taps
+PASS drawer photo completion after close cannot update a new marker or expose a raw cloud ID
+PASS reference hybrid stack places top chevron before bare pins without count buttons
+PASS native marker bridge receives only complete finite numeric dimensions during animation and photo refresh
+PASS reference stack uses transparent equal-size stamps, synchronized upward motion and Quiet bypass
+PASS stack interpolates both opening and closing and cancels on exit
+PASS single restaurant has no misleading expansion arrow; Quiet groups expand immediately
+PASS stack layout keeps the root baseline fixed and equal spacing at rest
+PASS reversing a partially opened stack preserves position and frames cause no extra image requests
+PASS native visuals and transparent hit regions are separated but share frame data
+PASS arrow, root, child and close handlers retain their intended operations
+PASS real viewport projection preserves coordinate input and handles wrapped longitude
+PASS Map card and strip stay mounted with reversible reduced-motion-aware transitions
+PASS map fallback depends on mapError only, never gesture overlay visibility
+PASS native arrows are bundled high-resolution exports of rounded SVG geometry
+PASS hybrid gestures keep native frame, disable hits, and perform no repeated viewport polling
+PASS late viewport response cannot reactivate hit targets during a new gesture
+PASS card and strip opacity finish with the 320ms stack transition
+PASS Lucide replacements remove remaining direct character button glyphs
+PASS presence retains exit content, cancels stale unmount on reopen, and disposes timers
+PASS Sheet retains last display type when the parent clears a closed request
+PASS menu, toast and FAQ transitions preserve layout and honor Quiet
+PASS TabBar uses five consistent Lucide outlines without business dependencies
+PASS Morphicons adapter creates distinct finite intermediate path geometry for all lab pairs
+PASS WeChat Canvas adapter draws changing paths, reverses, respects Quiet and detaches safely
+PASS unsupported Canvas reports static fallback and never removes production navigation
+PASS approved tab endpoints exactly use official Lucide shape nodes
+PASS native tab re-creation receives origin and self-activates without predecessor onShow
+PASS all five pages publish complete UI metadata and cached visits retain distinct keys
+PASS cached morph icon replays a new visit and ignores duplicate state notifications
+PASS silent native rAF falls back to a bounded timer and reaches the target SVG
+PASS all five Tabs exclude native Canvas and use the approved Utensils/UtensilsCrossed Add endpoints
+PASS SVG frames encode finite changing geometry, escape colors and preserve exact static endpoints
+PASS cached SVG Tab replay completes, clears frame data and replays the next actual visit
+PASS SVG frame backpressure, reverse and stale callbacks never queue an image backlog
+PASS SVG Quiet, frame error and detach retain official fallback with no live animation work
+PASS native lab Canvas pixels are erased at rest and on hide rather than merely hidden
+PASS approved Add utensils pair reverses on SVG layer, repeats cached entry and honors Quiet
+PASS all five production Tabs use 480ms while the isolated Canvas lab remains 380ms
+PASS delayed SVG first-image load consumes none of the 480ms visual frame budget
+PASS late SVG frame commits skip overdue samples without a backlog or accumulated duration
+PASS missing or stale first-image callbacks cannot start old motions or leave live timers
+PASS Tab destination first patch includes selection origin active entry and localized labels
+PASS house-heart outgoing SVG morph cannot be restarted by page replay or duplicate observers
+PASS map-pinned outgoing SVG morph cannot be restarted by page replay or duplicate observers
+PASS utensils-crossed outgoing SVG morph cannot be restarted by page replay or duplicate observers
+PASS users-round outgoing SVG morph cannot be restarted by page replay or duplicate observers
+PASS user-round outgoing SVG morph cannot be restarted by page replay or duplicate observers
+PASS duplicate replay while the first SVG commit is delayed preserves the same image flight
+PASS cached SVG show waits for committed new entry instead of animating stale selected props
+PASS programmatic navigation cannot be overwritten by a fresh handoff for another route
+PASS expired Tab handoff resumes static icons without replaying an old transition
+PASS static SVG endpoint is held through prop change and becomes exact target only on completion
+PASS house cached fallback shows current visit origin rather than the cached target before activation
+PASS map cached fallback shows current visit origin rather than the cached target before activation
+PASS utensils cached fallback shows current visit origin rather than the cached target before activation
+PASS users cached fallback shows current visit origin rather than the cached target before activation
+PASS user cached fallback shows current visit origin rather than the cached target before activation
+PASS incoming cached Us origin is unselected until activation, not its old selected endpoint
+PASS parked outgoing Add completes once and only then exposes its target static endpoint
+PASS Quiet and permanent SVG fallback cannot get stuck showing the origin of a new entry
+PASS nonexperimental navigation does not mutate source or cached peers and failure retains the source state
+PASS fresh TabBar does not mount default icons before route/transition metadata is ready
+PASS unresolved cold route stays unmounted until explicit page selection, not default Home
+PASS stack easing matches bottom-card cubic-bezier and is applied once for all rows
+PASS closing or reversing on the last stack page retains its members and height
+PASS stack button matches mobile bottom-card material/glyph sizes and keeps its anchor
+PASS native stack pressed feedback clears on release, gesture and hide
+PASS paging material remains mounted through close and shrinks without overlapping the first stamp
+PASS create-collection permission errors are not silently swallowed
+PASS no OPENID is denied before any database operation
+
+233/233 mock contract scenarios passed. Not verified in WeChat DevTools or live CloudBase.
+
+> savor-miniprogram@1.0.0 verify:handoff
+> node tools/verify-tab-handoff.cjs
+
+PASS all directed tab taps navigate immediately without changing the visible source presentation
+PASS parking preserves unchanged icon commands while updating the two selected endpoints
+PASS parked ready renderer does not arm a timeout while background image callbacks are suspended
+PASS wall-clock scheduling with 20ms frame commits avoids cumulative latency
+PASS wall-clock scheduling with 45ms frame commits avoids cumulative latency
+PASS vbug5 cached Us endpoints are parked to Add before the next Us command
+PASS all five forward and cached reverse destinations have parked endpoints matching their next origins
+PASS new precreated bar after confirmed page inherits current endpoints without replaying old origin
+PASS cached park failure cannot abort current show or a later native tap
+PASS repeated current show does not republish already parked background bars
+PASS parked icons do not create SVG motion and keep artwork present
+PASS render diagnostics distinguish requested static endpoint from first-frame layer without issuing updates
+PASS diagnostics preserve old and next command identities for endpoint handoff analysis
+PASS render export is bounded, detached from internal rows and contains no SVG payload
+PASS load diagnostics identify rejected endpoint without accepting it
+PASS explicit debug query maps child dataset index rather than positional ownership and cannot block navigation
+PASS lifecycle diagnostics distinguish setup from actual component page show and hide
+PASS house -> house-heart pre-ready wait cannot expose target before origin morph
+PASS house-heart -> house pre-ready wait cannot expose target before origin morph
+PASS map -> map-pinned pre-ready wait cannot expose target before origin morph
+PASS map-pinned -> map pre-ready wait cannot expose target before origin morph
+PASS utensils -> utensils-crossed pre-ready wait cannot expose target before origin morph
+PASS utensils-crossed -> utensils pre-ready wait cannot expose target before origin morph
+PASS users -> users-round pre-ready wait cannot expose target before origin morph
+PASS users-round -> users pre-ready wait cannot expose target before origin morph
+PASS user -> user-round pre-ready wait cannot expose target before origin morph
+PASS user-round -> user pre-ready wait cannot expose target before origin morph
+PASS actual static error before ready remains terminal through late setup and new commands
+PASS genuine ready-time timeout cannot restart an origin morph through repeated setup
+PASS detached pre-ready instance has no pending static watchdog
+PASS atomic Tab fallback uses a direct official image instead of a cached nested s-icon target
+PASS duplicate command acknowledgment waits for real child commit, not synchronously assigned VM data
+PASS ready cannot start a first SVG flight ahead of the atomic command commit
+PASS navigation never waits for parent, child or image commits
+PASS an image loading failure cannot block navigation
+PASS late static image load from an older revision cannot acknowledge the new endpoint
+PASS same-URI late load may acknowledge a newer identical endpoint without waiting for a nonexistent reload
+PASS late static load after hide cannot reactivate old motion; explicit newer visit can resume
+PASS late active parent commit after programmatic route change cannot dispatch to hidden children
+PASS static-image error releases the handoff acknowledgment and reports a terminal SVG fallback
+PASS missing static load/error callbacks cannot leave a live icon waiting indefinitely
+PASS source is not prepublished as destination and fresh destination starts active
+PASS video sequence Add -> Us -> Me rejects late Us selection and late Us theme callbacks
+PASS neither old nor new parent callbacks imperatively dispatch to queried children
+PASS stale property delivery and stale first-frame callbacks cannot overwrite the latest accepted command
+PASS house atomic outgoing entry retains its origin until one complete 480ms geometric morph
+PASS map atomic outgoing entry retains its origin until one complete 480ms geometric morph
+PASS utensils atomic outgoing entry retains its origin until one complete 480ms geometric morph
+PASS users atomic outgoing entry retains its origin until one complete 480ms geometric morph
+PASS user atomic outgoing entry retains its origin until one complete 480ms geometric morph
+PASS Quiet and permanent SVG failure show exact current target, never an old visit origin
+PASS source remains unchanged on failure and late failure cannot roll back a later request
+PASS there is no preparation timer and delayed view callbacks cannot repeat navigation
+PASS programmatic Save -> Home uses route metadata without replaying a prior tap entry
+PASS appearance refresh cannot inject selection or entry fields and traces remain bounded UI-only data
+PASS a wrong inferred owner cannot swallow a valid native tab tap
+PASS stale visual selected value cannot veto navigation to a different actual route
+PASS an unfinished previous request cannot lock subsequent tab taps
+PASS incomplete or reordered component queries cannot assign a Home command to Add
+PASS invalid index and actual same-route tap have explicit reasons, not unexplained silence
+PASS debug output identifies the queried instance rather than assuming the last global trace row is visible
+PASS precreated bar after explicit show inherits language and current static endpoint
+PASS view publication failure cannot prevent a valid click from calling native navigation
+PASS synchronous native failure is logged and does not leave a lock on the next click
+PASS house repeated same-visual publications before static load retain one pending start
+PASS map repeated same-visual publications before static load retain one pending start
+PASS utensils repeated same-visual publications before static load retain one pending start
+PASS users repeated same-visual publications before static load retain one pending start
+PASS user repeated same-visual publications before static load retain one pending start
+PASS static load before renderer ready retains the request until setup, then consumes it once
+PASS delayed child commit plus same-visual publication cannot discard the requested start
+PASS Quiet consumes a queued request without scheduling a geometric animation
+PASS detached component cannot start a retained request after a late static load
+PASS tab template has one atomic command input, revision-gated frames, and no independent endpoint props
+74/74 delayed Tab handoff checks passed. Native compositor/device acceptance NOT_EXECUTED.
+
+> savor-miniprogram@1.0.0 verify:ui
+> node tools/verify-ui-quality.cjs
+
+PASS Library retains all 0 synthetic records
+PASS Library retains all 1 synthetic records
+PASS Library retains all 5 synthetic records
+PASS Library retains all 20 synthetic records
+PASS Library retains all 100 synthetic records
+PASS Library filters and no-result search remain functional
+PASS Library has no inner overflow clipping or height cap
+PASS Detail photos scroll horizontally with nonshrinking 90rpx squares
+PASS pages/home/index.wxml has balanced tags and no duplicate attributes
+PASS pages/map/index.wxml has balanced tags and no duplicate attributes
+PASS pages/add/index.wxml has balanced tags and no duplicate attributes
+PASS pages/us/index.wxml has balanced tags and no duplicate attributes
+PASS pages/me/index.wxml has balanced tags and no duplicate attributes
+PASS components/sheet/index.wxml has balanced tags and no duplicate attributes
+PASS components/toast/index.wxml has balanced tags and no duplicate attributes
+PASS All 27 native form controls are explicitly named; text inputs have focus and placeholder contracts
+PASS Stale blur cannot erase a newer field focus
+PASS Add restaurant validation reports field and scrolls without saving
+PASS Add date validation reports field and scrolls without saving
+PASS Add perCapita validation reports field and scrolls without saving
+PASS Add location validation reports field and scrolls without saving
+PASS Add geography validation reports field and scrolls without saving
+PASS Quiet field errors do not animate page scrolling
+PASS Save busy/lock guard preserves draft and rejects repeated taps
+PASS Add import error remains distinct from save/field error
+PASS Profile empty-name failure is visible and scroll-targeted
+PASS Save uses loader for both busy branches, idle NotebookPen, and disabled semantics
+PASS Message-only Toast has no misleading success icon and store contract stays message-only
+PASS Only page spacer reserves full Tab clearance on Home/Us/Me
+PASS Us copy excludes complete like hit column plus 12rpx gap
+PASS Danger button retains semantic color and uses border-box / common outer minimum
+PASS Light helper/placeholder share the readable secondary color
+PASS Image fallback is view-only, immutable, and terminal on repeated errors
+PASS All dynamic content photos either handle load errors or are the generated chart
+PASS Metrics preserve cached default and refresh explicitly on window change
+PASS All metrics callers refresh on show/resize and Sheet detaches resize listener
+PASS Map paging hit slop remains horizontally nonoverlapping after approved button restyling
+PASS Approved production Tab timing/endpoints remain intact
+PASS Add thumbnail preview and delete have separate non-overlapping vertical targets
+PASS Native horizontal detail scroller has explicit width and height without max-content dependency
+PASS Existing theme/cuisine checks are retained rather than duplicated
+PASS Memory Row style is held unchanged pending native divider reproduction
+PASS Tab press feedback cannot scale, lift, pop or resize the SVG icon before morphing
+PASS Tab press still responds and Quiet suppresses transitions without changing touch geometry
+
+44/44 UI quality regression checks passed. Native/device/keyboard/screen-reader acceptance NOT_EXECUTED.
+
+> savor-miniprogram@1.0.0 verify:capture
+> node tools/analyze-tab-capture.cjs --self-test && node tools/capture-projected-tab-loop.cjs --self-test
+
+4/4 capture analyzer self-checks passed.
+2/2 projected capture self-checks passed.
+
+> savor-miniprogram@1.0.0 verify:identity
+> node tools/verify-identity.cjs && node tools/verify-identity-runtime.cjs
+
+PASS S1 foundation: server identity, concurrent bootstrap, spoofed identity ignored, A/B isolation, stale leases, cold-start lock, legacy preservation, quota/corruption fail-closed. Foundation tests only; real runtime tests are in verify-identity-runtime.cjs. Device acceptance NOT_EXECUTED.
+PASS cold start hides unverified legacy records and cannot send outbox
+PASS bootstrap opens empty A partition; original keys and quarantined operations preserved
+PASS A private data, draft and device theme persist; offline-known session accepts local drafts
+PASS lost Add reply remains durable, same identity retry is idempotent
+PASS offline outbox actor is A; B never inherits or sends it
+PASS A restored with unsent draft and queue, B data retained separately
+PASS server rejects missing, spoofed and cross-account expected identity
+PASS late list from A cannot merge into B or erase B local state
+PASS identity change during upload cannot submit or clear A draft
+PASS unowned legacy new requests remain unresolved and are never replayed
+PASS explicit import creates private local copies, strips remote authority/media and deduplicates
+PASS quota failure cannot activate a new account or overwrite legacy backup
+PASS offline re-verification locks sensitive content without deleting partitions
+PASS old mealRecords server cannot activate a session or receive a new mutation
+PASS native chooser may resume only after verifying the same owner
+PASS owner-scoped new-request result confirms A but not B
+PASS active partition quota failure leaves profile and memories unchanged
+PASS unsupported envelope remains intact and session stays locked
+PASS invalidated pending A verification does not block B verification or replace B on arrival
+PASS old verification finalizer cannot clear a newer in-flight verification
+PASS device preferences reject private or malformed fields on both read and write
+PASS malformed quarantine shape is preserved but cannot activate a session
+22/22 S1 runtime checks passed. Mock transport only; native/CloudBase deployment NOT_EXECUTED.
+
+> savor-miniprogram@1.0.0 verify:spaces
+> node tools/verify-spaces.cjs
+
+PASS forged product identity is rejected without writes
+PASS invite creation is opaque, expiring and idempotent
+PASS preview does not bind accounts or disclose the inviter profile
+PASS self accept, missing consent and foreign revocation cannot bind
+PASS two concurrent acceptors produce exactly one two-member space
+PASS accept retry restores result and bound owner cannot make another invite
+PASS stale space version and third-party reads fail closed
+PASS joint wishlist create is idempotent and actor preference is server-owned
+PASS partners can only change their own preference with conflict checking
+PASS shared wish status can become eaten but only creator may delete
+PASS old shared flag does not auto-publish anything
+PASS publication requires owner and explicit consent
+PASS publication copies allowed text but neither old votes nor private photo identifiers
+PASS each account votes independently; supplied foreign votes are ignored
+PASS withdrawing a vote removes only the actual caller and validates score bounds
+PASS only publisher can retract; retries do not resurrect shared content
+PASS owner can explicitly republish retracted text with a fresh revision, never by an old request
+PASS either member may leave atomically; both lose shared access but private data survives
+PASS old accepted invitation cannot create a new space after leaving
+PASS revoked and expired invitations never bind
+PASS new partner space does not inherit previous shared items or votes
+PASS client persists uncertain operation and module restart retry does not duplicate wish
+PASS pending A operation never becomes B replay
+PASS shared response arriving after identity change is not accepted
+PASS shared authorization lease is measured from request start, not late response receipt
+PASS wish to private draft copies text only and never overwrites existing draft
+26/26 shared-space domain/client scenarios passed. Real CloudBase transactions and native UI NOT_EXECUTED.
+
+> savor-miniprogram@1.0.0 verify:media
+> node tools/verify-media.cjs
+
+PASS JPEG/PNG are checked and metadata stripped from shared copy
+PASS SVG, corrupt base64, bad CRC and oversized payloads are rejected
+PASS preparation requires actual identity, ownership and explicit consent
+PASS prepare is idempotent and reserves exactly one slot
+PASS finalize cannot claim an arbitrary client fileID before a registered upload
+PASS server uploads sanitized bytes and never returns a private file identifier
+PASS upload retry cannot replace the immutable registered content
+PASS finalize retry is idempotent and partner lists descriptors only
+PASS only active members with current version can read registered bytes
+PASS storage content tampering fails integrity verification
+PASS membership is rechecked after the asynchronous storage read
+PASS partner cannot withdraw; owner withdrawal blocks subsequent access and frees slot
+PASS meal retraction withdraws media and text republication does not regrant photos
+PASS cancel-before-prepare creates a durable tombstone, not a later active slot
+PASS expired preparations cannot upload or finalize but remain cancellable
+PASS late upload after cancellation retains orphan provenance without granting access
+PASS cleanup requires real allowlisted admin and separately configured retention
+PASS dry run and disabled purge do not delete any object
+PASS approved purge deletes registered withdrawn content only and is retry-safe
+PASS active referenced photo cannot be purged even with administrator configuration
+PASS upload completion after a purge is registered for cleanup, never resurrected
+PASS purge finalizer cannot conceal a concurrent late file registration
+PASS paginated cleanup candidate scan remains admin-only and does not delete
+PASS concurrent preparations reserve no more than nine meal slots
+PASS cold transient sweep never deletes a private photo or unmanaged file
+PASS client refuses foreign-account and oversized local photo paths before upload
+PASS lost upload reply survives module reload and finalizes without re-reading a missing source
+PASS unknown prepare outcome remains A-only and can be canceled durably
+PASS authorized images render only in dedicated temporary files and expire
+PASS old-account media response cannot clear a newer-account image cache
+30/30 shared-media backend/client scenarios passed. Cloud storage, policy and device acceptance NOT_EXECUTED.
+
+> savor-miniprogram@1.0.0 verify:workspace
+> node tools/verify-workspace.cjs && node tools/verify-workspace-adapter.cjs
+
+PASS isolated cloud package keeps canonical schema and sanitizer byte-identical
+PASS actual OPENID and APPID, expected user and protocol guard all workspace actions
+PASS archive count, consent, chunk shape and request size are bounded
+PASS backup remains immutable preview-only until manifest-specific consent
+PASS chunk retries reject altered bytes and foreign reads do not reveal archive
+PASS private imports strip photo grants, old members and sharing but preserve explicit votes
+PASS invalid geography, dates and scalar ratings fail chunk validation without partial upload
+PASS transaction failure rolls back created rows and cursor together
+PASS concurrent duplicate steps and lost replies create each row exactly once
+PASS repeated import of identical source deduplicates without overwriting originals
+PASS an existing deleted target is not resurrected by restoring its old archive
+PASS cancellation after partial import preserves committed rows and blocks the remainder
+PASS cross-owner cloud IDs import private copies without adopting or revealing foreign photos
+PASS 500-record archive completes 100 bounded chunks and is recoverable by cursor
+PASS archive and delivery lists are owner-scoped and paginated
+PASS profile sync whitelists preferences and sanitizes avatar without adopting file IDs
+PASS profile revision conflicts and changed request retries cannot overwrite cloud state
+PASS partner profile defaults private and grant returns only current-space name/bio projection
+PASS revocation stops partner projection and uploading a new cloud profile never regrants
+PASS old profile grant cannot transfer to a changed membership or closed relationship
+PASS corrupted stored chunk bytes fail integrity before creating any private diary row
+PASS feedback has a durable idempotent receipt, private contact and truthful queued status
+PASS missing channel configuration preserves a cloud ticket without claiming delivery
+PASS event OPENID/admin/Timer fields do not authorize worker; short/mismatched secrets fail
+PASS authorized worker sends queued feedback once and records positive acknowledgement
+PASS reminders require template-specific acceptance, valid future date and actual recipient
+PASS cancel before dispatch blocks sending; forged foreign cancellations fail
+PASS network ambiguity stays uncertain and a one-shot reminder is never blindly retried
+PASS definitive provider rejection is failed, not sent or silently rescheduled
+PASS uncertain feedback requires an explicitly verified idempotent channel for retry
+PASS concurrent workers claim a send once and cancellation cannot pretend to recall it
+PASS stale sending lease recovers as uncertain; operator resolution requires real authority and evidence
+PASS protected no-OPENID worker secret is accepted without spoofed timer metadata
+PASS client archive survives lost create reply and retries the same owner operation
+PASS lost feedback acknowledgement resumes by receipt without duplicate delivery jobs
+PASS A pending archive is hidden on B and is not replayed on identity verification
+PASS late A response cannot clear B pending intent or apply A profile to B
+PASS feedback/reminder drafts survive reload in their own partition and stay hidden on another account
+PASS read-only cloud refresh makes no mutation or outbox replay calls
+PASS applying cloud profile creates before-image and preserves device and relationship fields
+PASS annual report excludes samples, duplicates, deletes, future records and legacy-average votes
+PASS report defaults reveal no restaurant, name, notes or images; opt-in HTML escapes user content
+PASS empty, leap-year and cross-year milestone reports use real calendar dates only
+PASS report generator is pure and canvas poster contains no opted-in restaurant details
+PASS raw import source is preserved before cloud normalization; partition outboxes never imported
+PASS client pending request is persisted before network; quota failure sends nothing
+PASS five tabs stay unchanged; tools and reports are non-tab routes
+PASS subscription reject never creates a cloud reminder; acceptance queues exactly once
+
+48/48 workspace / report checks passed (mock transport; no real delivery).
+PASS production subscription adapter uses stored actual recipient, template and approved data keys
+PASS positive platform rejection is definitive but timeout remains ambiguous
+PASS feedback wire format uses configured HTTPS endpoint, bearer and stable idempotency key
+PASS HTTP 200 alone, missing receipt ID, redirect and negative ack never claim delivery
+PASS timer Message routes only worker action and never manufactures OPENID authority
+
+5/5 production adapter checks passed (no network).

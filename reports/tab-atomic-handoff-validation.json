@@ -1,0 +1,59 @@
+{
+  "source": "https://github.com/Mamroru77/savor-us-food-memories/blob/integrated-with-cloud/bug-tab-switch.mp4",
+  "bytes": 4435500,
+  "sha256": "a54a520451d08983514109ffa328119b2d26faeb867ace1a76405e6e770e7332",
+  "width": 1080,
+  "height": 2374,
+  "durationSeconds": 6.413067,
+  "decodedFrames": 334,
+  "evidence": [
+    {
+      "frameZeroBased": 152,
+      "ptsSeconds": 2.976211111111111,
+      "observation": "Before Add -> Us"
+    },
+    {
+      "frameZeroBased": 153,
+      "ptsSeconds": 2.9842666666666666,
+      "observation": "Us selected; Add already at target"
+    },
+    {
+      "frameZeroBased": 154,
+      "ptsSeconds": 3.091477777777778,
+      "observation": "Add returns to old selected shape"
+    },
+    {
+      "frameZeroBased": 191,
+      "ptsSeconds": 3.759322222222222,
+      "observation": "Add reaches unselected endpoint again"
+    },
+    {
+      "frameZeroBased": 195,
+      "ptsSeconds": 4.2625222222222225,
+      "observation": "Me selected"
+    },
+    {
+      "frameZeroBased": 197,
+      "ptsSeconds": 4.327644444444444,
+      "observation": "Old combination: Us selected + Add crossed"
+    },
+    {
+      "frameZeroBased": 201,
+      "ptsSeconds": 4.360433333333333,
+      "observation": "Me selected again"
+    }
+  ],
+  "scope": "Original video decoded and selected native TabBar frames visually inspected; no new runtime patch or device execution in this step",
+  "baseline": "bb2cb52",
+  "status": "SOURCE_AND_MODELS_PASS_NATIVE_RETEST_REQUIRED",
+  "validation": {
+    "static": 229,
+    "tab": 21,
+    "mock": 233,
+    "handoff": 26,
+    "ui": 42
+  },
+  "nativeDeviceRun": "NOT_EXECUTED",
+  "recordingBuildCommit": "UNKNOWN",
+  "details": "TAB_ATOMIC_HANDOFF_FIX.md"
+}

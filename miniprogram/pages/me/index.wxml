@@ -1,0 +1,54 @@
+<s-identity-gate wx:if="{{!identityReady}}"/>
+<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+  <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
+
+  <view class="screen-scroll">
+    <view class="me-screen" style="padding-top: {{headerTop + 10}}px">
+      <!-- profile heading -->
+      <view class="profile-heading">
+        <image class="profile-avatar" src="{{imageErrors[(profile.avatar)] ? '/images/jamie.jpg' : (profile.avatar)}}" mode="aspectFill"  data-source="{{profile.avatar}}" binderror="onImageError" />
+        <view class="profile-copy">
+          <text class="profile-name">{{profile.name}}</text>
+          <text class="profile-bio">{{profile.bio}}</text>
+        </view>
+        <view class="edit-profile-button" bindtap="onEditProfile" aria-role="button" aria-label="{{copy.s15141eab3a}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="pencil" size="42" stroke="1.75" />
+        </view>
+      </view>
+
+      <!-- stats card -->
+      <view class="profile-stats-card glass content-card" bindtap="onStatsCard" aria-role="button" aria-label="{{copy.sc722b55e27}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+        <view class="profile-stats">
+          <view class="stat"><text class="stat-strong me-strong">{{meals}}</text><text>{{copy.sffdd1f1a28}}</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">{{places}}</text><text>{{copy.s0cd3597453}}</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">{{savedCount}}</text><text>{{copy.s85b44d2ebb}}</text></view>
+        </view>
+        <image class="memory-chart" aria-hidden="true" src="{{chartUri}}" mode="scaleToFill" />
+      </view>
+
+      <!-- menu -->
+      <view class="profile-menu glass content-card">
+        <view wx:for="{{menuRows}}" wx:key="title" class="profile-menu-row" data-sheet="{{item.sheet}}" bindtap="onMenuRow" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="{{item.icon}}" size="40" stroke="1.75" />
+          <view class="profile-menu-copy">
+            <text class="profile-menu-title">{{item.title}}</text>
+            <text class="profile-menu-sub">{{item.subtitle}}</text>
+          </view>
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="chevron-right" size="38" stroke="1.75" />
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-spacer" />
+  </view>
+
+  <s-sheet
+    show="{{sheetShow}}"
+    type="{{sheetType}}"
+    memory-id="{{sheetMemoryId}}"
+    filter="{{sheetFilter}}"
+    bind:sheetchange="onSheetChange"
+    bind:close="onSheetClose"
+  />
+  <s-toast />
+</view>

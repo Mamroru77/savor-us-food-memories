@@ -1,0 +1,1612 @@
+diff --git a/README.md b/README.md
+index 4d08ca7..f5831b8 100644
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,11 @@
++> **2026-09-14 · S4 最新状态**：已在同一批补齐云端备份/导入恢复、云档案/偏好与最小伙伴投影、年报/里程碑/分享、一次性提醒/反馈生产适配器。9类业务都有候选代码，新增53项自动检查与全量回归通过；**未部署、未真实投递、未原生/真机验收**。以 [总进度](PROJECT_PROGRESS.md)、[S4实现](S4_IMPLEMENTATION.md)、[统一最终清单](UNIFIED_ACCEPTANCE.md) 为准。下方旧批次状态仅供历史参考。
++
++> **S3共享媒体更新（2026-09-14）**：共享照片登记、授权读取、撤回/取消、受控回收候选已接入。回收默认关闭，真实权限/存储/真机统一待最终验收。当前状态以 PROJECT_PROGRESS.md、S3_MEDIA_IMPLEMENTATION.md 为准，下方“照片尚未授权”是之前批次记录。继续完成剩余业务，不要求用户现在测试。
++
++> **S2开发更新（2026-09-14）**：按用户“开发优先、最后统一验收”的决定，已继续实现双人空间、主动文字共享/独立评分和共同Wishlist候选。共享照片尚未授权，未部署/未真机验收。当前总进度见 PROJECT_PROGRESS.md；新增代码与限制见 S2_IMPLEMENTATION_PROGRESS.md。不要按旧S1提示词先阻断后续开发。
++
++> **当前接手状态（2026-09-14）**：已整合用户 `4daeb2e` 正式 UI/Map 更新；Tab 微抽动暂缓，K1/VP1 已从当前代码移除。S1 身份与缓存分区候选代码已接入，尚未部署或真机验收。先读 [S1_IMPLEMENTATION_PROGRESS.md](S1_IMPLEMENTATION_PROGRESS.md)、[S1_DEPLOYMENT_AND_ROLLBACK.md](S1_DEPLOYMENT_AND_ROLLBACK.md) 和 [CODEX_S1_TEST_PROMPT.md](CODEX_S1_TEST_PROMPT.md)。下方 Tab“最新”条目是历史记录，不代表当前源码或发布结论。
++
+ > **临时 VP1 诊断版（非正式修复）**：E1 源页提前更新已被真机证据否决并删除；当前保留 VP1 标记、即时导航和 480ms 真实时间形变。见 [TAB_SOURCE_LEAVE_EXPERIMENT.md](TAB_SOURCE_LEAVE_EXPERIMENT.md)。
+ 
+ ## 最新：Add 已采用 L 餐具主题 / 480ms
+diff --git a/S1_IDENTITY_CACHE_CONTRACT.md b/S1_IDENTITY_CACHE_CONTRACT.md
+index ff4e6f8..e8a8f71 100644
+--- a/S1_IDENTITY_CACHE_CONTRACT.md
++++ b/S1_IDENTITY_CACHE_CONTRACT.md
+@@ -1,3 +1,5 @@
++> **2026-09-14 实施更新**：本文主体保留为原始设计契约。当前候选已实现并接入身份/私人分区基础和恢复入口；并未部署。第10节“本轮不做”描述的是历史准备阶段，不代表本次代码范围。以 [S1_IMPLEMENTATION_PROGRESS.md](S1_IMPLEMENTATION_PROGRESS.md) 和 [S1_DEPLOYMENT_AND_ROLLBACK.md](S1_DEPLOYMENT_AND_ROLLBACK.md) 为当前实施/验收状态。共享空间、完整云资料同步及媒体共享授权仍未实现。
++
+ # S1 准备稿：身份、缓存与媒体授权契约
+ 
+ **状态：设计准备完成，尚未实现/部署以下新接口。** 本稿承接“独立账号 + 主动共享”的已确认方向，不代表可以开放跨账号访问。
+diff --git a/STAGE2_SETUP.md b/STAGE2_SETUP.md
+index cf6299f..94201bd 100644
+--- a/STAGE2_SETUP.md
++++ b/STAGE2_SETUP.md
+@@ -1,3 +1,5 @@
++> **S1 部署更新**：当前候选新增 account / savor_accounts，并要求 mealRecords 身份协议；下文旧版“无需手动建集合”“旧客户端直接调用”等说明不适用于该候选。部署前必须先读 [S1_DEPLOYMENT_AND_ROLLBACK.md](S1_DEPLOYMENT_AND_ROLLBACK.md)，获得用户授权，协调服务端与客户端版本。
++
+ # Stage 2 + best-ui：最短部署步骤
+ 
+ > **最新业务更新**：当前以 [BUSINESS_1_TO_5_UPDATE.md](BUSINESS_1_TO_5_UPDATE.md) 为准。本轮新增云端编辑、删除与状态同步，必须重新部署 mealRecords，并同步升级前端。
+diff --git a/cloudfunctions/mealRecords/index.js b/cloudfunctions/mealRecords/index.js
+index 0123138..62503b8 100644
+--- a/cloudfunctions/mealRecords/index.js
++++ b/cloudfunctions/mealRecords/index.js
+@@ -104,7 +104,20 @@ exports.main = async (event = {}) => {
+   const openid = cloud.getWXContext().OPENID;
+   if (!openid) return { success: false, code: 'UNAUTHENTICATED' };
+   try {
++    if(event.identityProtocol!==1 || !/^u_[a-f0-9]{48}$/.test(event.expectedUserId||'')) return {success:false,code:'IDENTITY_REQUIRED'};
++    const context=cloud.getWXContext();
++    if(!context.APPID) return {success:false,code:'IDENTITY_UNAVAILABLE'};
++    const accountKey=crypto.createHash('sha256').update(JSON.stringify([context.APPID,openid])).digest('hex');
++    const accounts=await db.collection('savor_accounts').where({_id:accountKey}).limit(1).get();
++    if(!accounts.data[0] || accounts.data[0].userId!==event.expectedUserId) return {success:false,code:'IDENTITY_MISMATCH'};
++    if(event.action==='identityHandshake')return {success:true,identityProtocol:1,userId:accounts.data[0].userId};
+     await ensureCollection();
++    if(event.action==='requestResult') {
++      if(typeof event.requestId!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(event.requestId))return {success:false,code:'INVALID_REQUEST_ID'};
++      const id=crypto.createHash('sha256').update(openid+':'+event.requestId).digest('hex').slice(0,32);
++      const record=await findById(id,openid);
++      return record?{success:true,record}:{success:false,code:'NOT_FOUND'};
++    }
+     if (['update','flags','delete'].includes(event.action)) return await mutate(event,openid);
+     if (event.action==='get') { const record=typeof event.id==='string' ? await findById(event.id,openid) : null; return record ? {success:true,record} : {success:false,code:'NOT_FOUND'}; }
+     if (event.action === 'setLocation') {
+@@ -122,7 +135,7 @@ exports.main = async (event = {}) => {
+     if (!event.action || event.action === 'list') return await listRecords(event, openid);
+     return { success: false, code: 'UNKNOWN_ACTION' };
+   } catch (err) {
+-    console.error('[mealRecords]', event.action, err);
++    console.error('[mealRecords]', event.action, 'request failed');
+     const code = /^(INVALID_|RESTAURANT_REQUIRED)/.test(err.message || '') ? err.message : 'SERVER_ERROR';
+     return { success: false, code, message: code === 'SERVER_ERROR' ? '云端暂时不可用，请重试' : '请检查记录内容' };
+   }
+diff --git a/miniprogram/app.js b/miniprogram/app.js
+index e1465c3..7f893d4 100644
+--- a/miniprogram/app.js
++++ b/miniprogram/app.js
+@@ -16,12 +16,12 @@ App({
+       const store = require('./utils/store');
+       store.get();
+     } catch (error) {
+-      // Pages re-attempt loading on their own and fall back to sample data.
++      // Pages retain an empty locked shell until a verified partition is available.
+     }
+     try { require('./utils/cloudRecords').initCloud(); } catch (error) { /* offline shell still works */ }
+   },
+   onShow() {
+-    try {require('./utils/store').syncCloud().catch(()=>{});} catch(error) { /* cache and navigation remain usable offline */ }
++    try {require('./utils/identity').verify().then(()=>require('./utils/store').syncCloud()).catch(()=>{});} catch(error) { /* cache and navigation remain usable offline */ }
+   },
+   globalData: { env: 'cloud1-d9gqm52id66c0bcda' },
+ });
+diff --git a/miniprogram/app.json b/miniprogram/app.json
+index 6f29392..de47072 100644
+--- a/miniprogram/app.json
++++ b/miniprogram/app.json
+@@ -5,7 +5,11 @@
+     "pages/add/index",
+     "pages/us/index",
+     "pages/me/index",
+-    "pages/morph-lab/index"
++    "pages/morph-lab/index",
++    "pages/account/index",
++    "pages/space/index",
++    "pages/workspace/index",
++    "pages/reports/index"
+   ],
+   "window": {
+     "navigationStyle": "custom",
+diff --git a/miniprogram/components/sheet/index.js b/miniprogram/components/sheet/index.js
+index a3ba7b2..5fdd312 100644
+--- a/miniprogram/components/sheet/index.js
++++ b/miniprogram/components/sheet/index.js
+@@ -1,3 +1,4 @@
++const identity = require('../../utils/identity');
+ const motionPresence = require('../../utils/motionPresence');
+ const localDate = require('../../utils/localDate');
+ const i18n = require('../../utils/i18n');
+@@ -128,11 +129,18 @@ Component({
+       this.setData({ sheetTop: metrics.getMetrics().headerTop + 8 });
+       this._onResize = () => { if(this._detached)return; this.setData({ sheetTop: metrics.getMetrics(true).headerTop + 8, sheetScrollHeight: 0 }, () => this.measureScroll()); };
+       if (wx.onWindowResize) wx.onWindowResize(this._onResize);
+-      this.unsubscribe = store.subscribe(function () {
++      this.unsubscribe = store.subscribe(function (state) {
++        if(state.identity && this._identityGeneration!==state.identity.generation){
++          this._identityGeneration=state.identity.generation;
++          this._personalizing=false;
++          this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
++          this.triggerEvent('close');return;
++        }
+         if (this.data.show) this.refresh();
+       }.bind(this));
+       try {
+         const state = store.get();
++        this._identityGeneration=state.identity&&state.identity.generation;
+         this.setData({ dusk: state.settings.theme === 'dusk', today: localDate.today() });
+       } catch (error) { /* fall back to light theme */ }
+     },
+@@ -258,7 +266,8 @@ Component({
+     },
+     onEditMemory() {
+       const memory=this.data.detail && this.data.detail.memory; if(!memory) return;
+-      const start=()=>{try{store.beginEdit(memory);this.close();wx.switchTab({url:'/pages/add/index'});}catch(e){store.notify(i18n.t(e.message));}};
++      const token=identity.lease();
++      const start=()=>{try{identity.assertLease(token);store.beginEdit(memory);this.close();wx.switchTab({url:'/pages/add/index'});}catch(e){store.notify(i18n.t(e.message));}};
+       const draft=store.loadDraft();
+       if(draft.restaurant || draft.photos.length) i18n.modal({title:'Edit memory',content:'Replace the existing Add draft?',success:r=>{if(r.confirm) start();}}); else start();
+     },
+@@ -341,9 +350,10 @@ Component({
+       this.triggerEvent('sheetchange', { type: 'memory', memoryId: id, filter: '' });
+     },
+     onExport() {
++      const token=identity.lease();
+       const state = store.get();
+       const payload = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), memories: state.memories }, null, 2);
+-      const path = wx.env.USER_DATA_PATH + '/savor-memories-' + localDate.today() + '.json';
++      const path = wx.env.USER_DATA_PATH + '/savor-memories-' + token.userId + '-' + Date.now() + '.json';
+       try {
+         wx.getFileSystemManager().writeFileSync(path, payload, 'utf8');
+       } catch (error) {
+@@ -356,6 +366,7 @@ Component({
+           filePath: path,
+           success: function () { /* sheet stays open */ },
+           fail: function () {
++            if(!identity.isCurrent(token))return;
+             wx.setClipboardData({ data: payload });
+             store.notify(i18n.t('Sharing unavailable — backup JSON copied to clipboard instead.'));
+           },
+@@ -366,12 +377,14 @@ Component({
+       }
+     },
+     onImport() {
++      let token=identity.lease();
+       const that = this;
+       wx.chooseMessageFile({
+         count: 1,
+         type: 'file',
+         extension: ['json'],
+-        success: function (result) {
++        success: async function (result) {
++          try{token=await identity.resumeNative(token);}catch(e){return;}
+           const file = result.tempFiles && result.tempFiles[0];
+           if (!file) return;
+           if (file.size > 10 * 1024 * 1024) {
+@@ -382,6 +395,7 @@ Component({
+             filePath: file.path,
+             encoding: 'utf8',
+             success: function (read) {
++              if(!identity.isCurrent(token))return;
+               that.applyImport(String(read.data));
+             },
+             fail: function () {
+@@ -421,8 +435,10 @@ Component({
+     onProfileName(event) { this.setData({ profileName: event.detail.value, profileError:'' }); },
+     onProfileBio(event) { this.setData({ profileBio: event.detail.value }); },
+     onAvatarChange() {
++      let token=identity.lease();
+       const that = this;
+-      photos.choosePhotos(1).then(function (paths) {
++      photos.choosePhotos(1).then(async function (paths) {
++        token=await identity.resumeNative(token);
+         if (paths.length) that.setData({ profileAvatar: paths[0], profileUploading: false });
+       }).catch(function () { /* cancelled */ });
+     },
+@@ -581,6 +597,7 @@ Component({
+         this.setData({faqHeights:(rects||[]).map(r=>r.height),faqExpanded:next});
+       }).exec();
+     },
++    onCloudFeedback(){this.close();wx.navigateTo({url:'/pages/workspace/index'});},
+     onFeedbackInput(event) { this.setData({ feedbackMessage: event.detail.value }); },
+     onFeedbackSave() {
+       const message = this.data.feedbackMessage.trim();
+diff --git a/miniprogram/components/sheet/index.wxml b/miniprogram/components/sheet/index.wxml
+index 566750e..44dd473 100644
+--- a/miniprogram/components/sheet/index.wxml
++++ b/miniprogram/components/sheet/index.wxml
+@@ -416,6 +416,7 @@
+               <text>{{copy.s555a94f395}}</text>
+             </view>
+           </view>
++          <view class="primary-button" bindtap="onCloudFeedback" aria-role="button">云端反馈 / Cloud feedback</view>
+           <text class="helper-note">{{copy.s5592ff39fd}} {{feedbackCountLabel}}</text>
+         </view>
+       </block>
+diff --git a/miniprogram/pages/add/index.js b/miniprogram/pages/add/index.js
+index aca0038..9f649fc 100644
+--- a/miniprogram/pages/add/index.js
++++ b/miniprogram/pages/add/index.js
+@@ -1,3 +1,4 @@
++const identity = require('../../utils/identity');
+ const localDate = require('../../utils/localDate');
+ const i18n = require('../../utils/i18n');
+ const uiFeedback = require('../../utils/uiFeedback');
+@@ -137,9 +138,11 @@ Page({
+     this.changeDraft('photos', draft.photos.slice(0, -1));
+   },
+   pickPhotos(count, replace) {
++    let token=identity.lease();
+     const that = this;
+     this.setData({ uploading: true, error: '', errorContext:'save',errorField:'',fieldErrors:{} });
+-    photos.choosePhotos(count).then(function (paths) {
++    photos.choosePhotos(count).then(async function (paths) {
++      token=await identity.resumeNative(token);
+       const draft = that.data.draft;
+       let next;
+       if (replace) {
+@@ -156,6 +159,7 @@ Page({
+       that.setData({ uploading: false });
+       that.changeDraft('photos', next);
+     }).catch(function (error) {
++      if(!identity.isCurrent(token))return;
+       if (that.disposed) return;
+       const cancelled = /cancel/i.test(String(error && (error.errMsg || error.message)));
+       that.setData({ uploading: false, error: cancelled ? '' : i18n.t('Could not prepare the photo. Please select it again.') });
+@@ -214,12 +218,13 @@ Page({
+ 
+   // ---------- save ----------
+   onSave() {
++    const token=identity.lease();
+     if (this.saveLock || this.data.uploading) return;
+     this.setData({error:'',errorContext:'save',errorField:'',fieldErrors:{}});
+     const draft = this.data.draft;
+     if(draft.editOperationId) {
+       this.saveLock=true;this.setData({saving:true});
+-      return store.createCloudMemory(draft.editBase,draft).then(()=>{if(!this.disposed)this.setData({draft:store.freshDraft(),error:''});if(this.active&&!this.disposed) wx.switchTab({url:'/pages/home/index'});}).catch(e=>{if(!this.disposed)this.setData({error:i18n.t(e.message)});}).finally(()=>{this.saveLock=false;if(!this.disposed)this.setData({saving:false});});
++      return store.createCloudMemory(draft.editBase,draft).then(()=>{if(!identity.isCurrent(token))return;if(!this.disposed)this.setData({draft:store.freshDraft(),error:''});if(this.active&&!this.disposed) wx.switchTab({url:'/pages/home/index'});}).catch(e=>{if(!identity.isCurrent(token))return;if(!this.disposed)this.setData({error:i18n.t(e.message)});}).finally(()=>{if(!identity.isCurrent(token))return;this.saveLock=false;if(!this.disposed)this.setData({saving:false});});
+     }
+     if (!draft.restaurant.trim()) {
+       this.showFieldError('restaurant', i18n.t('Give this memory a restaurant or place name.'));
+@@ -275,29 +280,35 @@ Page({
+       saved: false,
+     };
+     return store.createCloudMemory(memory, draft).then(() => {
++      if(!identity.isCurrent(token))return;
+       if (!this.disposed) this.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '' });
+       store.notify(i18n.t('A little moment, kept forever. Memory saved.'));
+       if (this.active && !this.disposed) wx.switchTab({ url: '/pages/home/index' });
+     }).catch(error => {
++      if(!identity.isCurrent(token))return;
+       if (!this.disposed) this.setData({ error: i18n.t(error.message) || i18n.t('Save failed. Your draft is kept.'), draft: draft });
+       store.notify(error.message || i18n.t('Save failed. Your draft is kept.'));
+     }).finally(() => {
++      if(!identity.isCurrent(token))return;
+       this.saveLock = false;
+       if (!this.disposed) this.setData({ saving: false });
+     });
+   },
+ 
+   onChooseRestaurantLocation() {
++    let token=identity.lease();
+     if (this.saveLock || this.locating) return;
+     if (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) {
+       store.notify(i18n.t('请先点击 Save 确认上一次保存结果。')); return;
+     }
+     this.locating = true;
+-    return locations.choose(this.data.draft.location).then(pick => {
++    return locations.choose(this.data.draft.location).then(async pick => {
++      token=await identity.resumeNative(token);
+       if (this.disposed) return;
+       this.changeDraft('location', pick);
+       this.setData({ error: '' });
+     }).catch(error => {
++      if (!identity.isCurrent(token))return;
+       if (!error.cancelled && !this.disposed) this.setData({ error: i18n.t(error.message) });
+     }).finally(() => { this.locating = false; });
+   },
+diff --git a/miniprogram/pages/add/index.json b/miniprogram/pages/add/index.json
+index cce3fc8..47a4b56 100644
+--- a/miniprogram/pages/add/index.json
++++ b/miniprogram/pages/add/index.json
+@@ -1,6 +1,7 @@
+ {
+   "usingComponents": {
+     "s-icon": "/components/icon/index",
+-    "s-toast": "/components/toast/index"
++    "s-toast": "/components/toast/index",
++    "s-identity-gate": "/components/identity-gate/index"
+   }
+ }
+diff --git a/miniprogram/pages/add/index.wxml b/miniprogram/pages/add/index.wxml
+index f473245..3e3bc75 100644
+--- a/miniprogram/pages/add/index.wxml
++++ b/miniprogram/pages/add/index.wxml
+@@ -1,4 +1,5 @@
+-<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
++<s-identity-gate wx:if="{{!identityReady}}"/>
++<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+   <!-- ambient follows the photo being captured: swaps live as the
+        user picks/removes draft photos (falls back to the house photo) -->
+   <image class="ambient-photo" src="{{imageErrors[(draft.photos[0] || '/images/le-comptoir.jpg')] ? '/images/le-comptoir.jpg' : (draft.photos[0] || '/images/le-comptoir.jpg')}}" mode="aspectFill" aria-hidden="true"  data-source="{{draft.photos[0] || '/images/le-comptoir.jpg'}}" binderror="onImageError" />
+diff --git a/miniprogram/pages/home/index.json b/miniprogram/pages/home/index.json
+index e71e5db..c4086a1 100644
+--- a/miniprogram/pages/home/index.json
++++ b/miniprogram/pages/home/index.json
+@@ -3,6 +3,7 @@
+     "s-icon": "/components/icon/index",
+     "memory-row": "/components/memory-row/index",
+     "s-sheet": "/components/sheet/index",
+-    "s-toast": "/components/toast/index"
++    "s-toast": "/components/toast/index",
++    "s-identity-gate": "/components/identity-gate/index"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/miniprogram/pages/home/index.wxml b/miniprogram/pages/home/index.wxml
+index 13a8f9d..d123f17 100644
+--- a/miniprogram/pages/home/index.wxml
++++ b/miniprogram/pages/home/index.wxml
+@@ -1,4 +1,5 @@
+-<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
++<s-identity-gate wx:if="{{!identityReady}}"/>
++<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+   <!-- dynamic ambient light: the “This week” photo, heavily blurred and
+      biased behind the weekly card — the frosted cards melt THIS, so the
+      glass tint follows the featured memory automatically -->
+diff --git a/miniprogram/pages/map/index.js b/miniprogram/pages/map/index.js
+index 71312b8..e208a16 100644
+--- a/miniprogram/pages/map/index.js
++++ b/miniprogram/pages/map/index.js
+@@ -1,3 +1,4 @@
++const identity = require('../../utils/identity');
+ const i18n = require('../../utils/i18n');
+ const uiFeedback = require('../../utils/uiFeedback');
+ // Map — native <map> replaces the web's Leaflet. Photo pins become bundled
+@@ -419,16 +420,18 @@ Page({
+     if (this.locationBusy || !this.pendingLocations.length) return;
+     this.setData({ pendingExpanded: false });
+     const batch = this.pendingLocations.slice(0, 6);
++    const token=identity.lease();
+     wx.showActionSheet({ itemList: batch.map(m => (m.restaurant + ' · ' + m.date).slice(0, 48)),
+-      success: result => this.pickLocationFor(batch[result.tapIndex]) });
++      success: result => {if(identity.isCurrent(token))this.pickLocationFor(batch[result.tapIndex]);} });
+   },
+   onCorrectLocation() { if (this.data.selected) return this.pickLocationFor(this.data.selected); },
+   pickLocationFor(memory) {
+     if (!memory || this.locationBusy) return;
+     this.locationBusy = true;
+-    return locations.choose(memory).then(location => store.setMemoryLocation(memory, location))
+-      .then(() => store.notify(i18n.t('餐馆位置已保存。')))
+-      .catch(error => { if (!error.cancelled) store.notify(error.message || i18n.t('位置保存失败，请重试。')); })
++    let token=identity.lease();
++    return locations.choose(memory).then(async location => {token=await identity.resumeNative(token);return store.setMemoryLocation(memory, location);})
++      .then(() => {if(identity.isCurrent(token))store.notify(i18n.t('餐馆位置已保存。'));})
++      .catch(error => { if (identity.isCurrent(token)&&!error.cancelled) store.notify(error.message || i18n.t('位置保存失败，请重试。')); })
+       .finally(() => { this.locationBusy = false; });
+   },
+   onNavigate() {
+diff --git a/miniprogram/pages/map/index.json b/miniprogram/pages/map/index.json
+index fe51171..c83e266 100644
+--- a/miniprogram/pages/map/index.json
++++ b/miniprogram/pages/map/index.json
+@@ -2,6 +2,7 @@
+   "usingComponents": {
+     "s-icon": "/components/icon/index",
+     "s-sheet": "/components/sheet/index",
+-    "s-toast": "/components/toast/index"
++    "s-toast": "/components/toast/index",
++    "s-identity-gate": "/components/identity-gate/index"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/miniprogram/pages/map/index.wxml b/miniprogram/pages/map/index.wxml
+index 87c1918..61d7760 100644
+--- a/miniprogram/pages/map/index.wxml
++++ b/miniprogram/pages/map/index.wxml
+@@ -1,4 +1,5 @@
+-<view class="screen map-screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
++<s-identity-gate wx:if="{{!identityReady}}"/>
++<view wx:if="{{identityReady}}" class="screen map-screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+   <!-- immersive: the native map fills the whole screen under everything
+        (Leaflet must never enter a mini program) -->
+   <map
+diff --git a/miniprogram/pages/me/index.js b/miniprogram/pages/me/index.js
+index 1ff44a9..a437e5a 100644
+--- a/miniprogram/pages/me/index.js
++++ b/miniprogram/pages/me/index.js
+@@ -8,6 +8,10 @@ const metrics = require('../../utils/metrics');
+ const memoryStats = require('../../utils/memoryStats');
+ 
+ const MENU_ROWS = [
++  { title:'云端工具 / Cloud tools',subtitle:'备份、偏好、提醒与反馈 / Private cloud tasks',icon:'archive',sheet:'workspace' },
++  { title:'年度报告 / Annual reports',subtitle:'真实日记、里程碑与主动分享 / Your real memories',icon:'archive',sheet:'reports' },
++  { title:'Shared space & wishlist',subtitle:'Invite, consent and share explicitly',icon:'users',sheet:'space' },
++  { title:'Account & legacy data',subtitle:'Identity partitions, backups and recovery',icon:'shield-check',sheet:'account' },
+   { title: 'Sync status', subtitle: 'Pending changes and conflicts', icon: 'arrow-up-from-line', sheet: 'sync' },
+   { title: 'Personalize', subtitle: 'Page titles and your profile', icon: 'pencil', sheet: 'personalize' },
+   { title: 'Preferences', subtitle: 'Dietary, cuisines, tags', icon: 'utensils', sheet: 'preferences' },
+@@ -82,7 +86,7 @@ Page({
+ 
+   onStatsCard() { this.openSheet('library'); },
+   onEditProfile() { this.openSheet('profile'); },
+-  onMenuRow(event) { this.openSheet(event.currentTarget.dataset.sheet); },
++  onMenuRow(event) { if(['workspace','reports'].includes(event.currentTarget.dataset.sheet)){wx.navigateTo({url:event.currentTarget.dataset.sheet==='workspace'?'/pages/workspace/index':'/pages/reports/index'});return;} if(event.currentTarget.dataset.sheet==='space'){wx.navigateTo({url:'/pages/space/index'});return;}if(event.currentTarget.dataset.sheet==='account'){wx.navigateTo({url:'/pages/account/index'});return;}this.openSheet(event.currentTarget.dataset.sheet); },
+   onSheetChange(event) {
+     this.setData({
+       sheetType: event.detail.type,
+diff --git a/miniprogram/pages/me/index.json b/miniprogram/pages/me/index.json
+index f819474..c83e266 100644
+--- a/miniprogram/pages/me/index.json
++++ b/miniprogram/pages/me/index.json
+@@ -2,6 +2,7 @@
+   "usingComponents": {
+     "s-icon": "/components/icon/index",
+     "s-sheet": "/components/sheet/index",
+-    "s-toast": "/components/toast/index"
++    "s-toast": "/components/toast/index",
++    "s-identity-gate": "/components/identity-gate/index"
+   }
+ }
+diff --git a/miniprogram/pages/me/index.wxml b/miniprogram/pages/me/index.wxml
+index 72f62b0..ccbbcd7 100644
+--- a/miniprogram/pages/me/index.wxml
++++ b/miniprogram/pages/me/index.wxml
+@@ -1,4 +1,5 @@
+-<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
++<s-identity-gate wx:if="{{!identityReady}}"/>
++<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+   <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
+ 
+   <view class="screen-scroll">
+diff --git a/miniprogram/pages/us/index.js b/miniprogram/pages/us/index.js
+index f958071..d5d6dd7 100644
+--- a/miniprogram/pages/us/index.js
++++ b/miniprogram/pages/us/index.js
+@@ -92,6 +92,7 @@ Page({
+     store.updateSettings({ loveSent: !settings.loveSent });
+     if (!settings.loveSent) store.notify(i18n.t('A little love, added to your shared space.'));
+   },
++  onManageSpace(){wx.navigateTo({url:'/pages/space/index'});},
+   onTogether() { this.openSheet('together'); },
+   onJourney() { this.openSheet('journey'); },
+   onSharedOpen(event) { this.openSheet('memory', event.currentTarget.dataset.id); },
+diff --git a/miniprogram/pages/us/index.json b/miniprogram/pages/us/index.json
+index fe51171..c83e266 100644
+--- a/miniprogram/pages/us/index.json
++++ b/miniprogram/pages/us/index.json
+@@ -2,6 +2,7 @@
+   "usingComponents": {
+     "s-icon": "/components/icon/index",
+     "s-sheet": "/components/sheet/index",
+-    "s-toast": "/components/toast/index"
++    "s-toast": "/components/toast/index",
++    "s-identity-gate": "/components/identity-gate/index"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/miniprogram/pages/us/index.wxml b/miniprogram/pages/us/index.wxml
+index cc2d71a..f8acc5e 100644
+--- a/miniprogram/pages/us/index.wxml
++++ b/miniprogram/pages/us/index.wxml
+@@ -1,4 +1,5 @@
+-<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
++<s-identity-gate wx:if="{{!identityReady}}"/>
++<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+   <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
+ 
+   <view class="screen-scroll">
+@@ -13,6 +14,8 @@
+         </view>
+       </view>
+ 
++      <button bindtap="onManageSpace">{{locale === 'zh-CN' ? '管理双人空间与 Wishlist' : 'Manage shared space & wishlist'}}</button>
++
+       <!-- together card -->
+       <view class="together-card glass content-card">
+         <view class="couple-avatars">
+diff --git a/miniprogram/utils/cloudRecords.js b/miniprogram/utils/cloudRecords.js
+index bb90c8b..c7aed95 100644
+--- a/miniprogram/utils/cloudRecords.js
++++ b/miniprogram/utils/cloudRecords.js
+@@ -1,3 +1,4 @@
++const identity = require('./identity');
+ const i18n = require('./i18n');
+ // The only client CloudBase boundary. Pages consume Memory, never dining_records.
+ const data = require('./data');
+@@ -10,14 +11,27 @@ function initCloud() {
+   try { wx.cloud.init({ env: ENV, traceUser: true }); initialized = true; }
+   catch (e) { throw error('INIT_FAILED', i18n.t('Cloud could not start. Your draft is kept; please retry.'), e); }
+ }
+-async function call(action, args) {
++async function call(action, args, token = identity.lease()) {
++  identity.assertLease(token);
+   initCloud();
+   let response;
+-  try { response = await wx.cloud.callFunction({ name: 'mealRecords', data: Object.assign({ action }, args) }); }
++  try {
++    // A pre-S1/rolled-back server must reject the handshake BEFORE any mutation.
++    if(['add','update','flags','delete','setLocation'].includes(action)){
++      const check=await wx.cloud.callFunction({name:'mealRecords',data:{action:'identityHandshake',identityProtocol:1,expectedUserId:token.userId}});
++      identity.assertLease(token);
++      if(check.result&&check.result.code==='IDENTITY_MISMATCH'){identity.invalidate();throw error('IDENTITY_MISMATCH','账号已变化，请重新验证。');}
++      if(!check.result||check.result.success!==true||check.result.identityProtocol!==1||check.result.userId!==token.userId)throw error('UPGRADE_REQUIRED','请部署支持身份校验的 mealRecords 云函数。');
++    }
++    response = await wx.cloud.callFunction({ name: 'mealRecords', data: Object.assign({ action }, args, {identityProtocol:1,expectedUserId:token.userId}) }); }
+   catch (e) {
++    if(['STALE_IDENTITY','IDENTITY_MISMATCH','UPGRADE_REQUIRED'].includes(e.code))throw e;
++    if(identity.isCurrent(token))identity.markOffline();
+     throw error('CALL_FAILED', i18n.t('Could not reach mealRecords. Check your connection and deploy the cloud function. Your draft is kept; retry safely.'), e);
+   }
++  identity.assertLease(token);
+   const result = response && response.result;
++  if(result && result.code==='IDENTITY_MISMATCH') {identity.invalidate();throw error('IDENTITY_MISMATCH','账号已变化，请重新验证。');}
+   if (!result || !result.success) throw error(result && result.code || 'SERVER_ERROR', result && result.message || i18n.t('Cloud could not save or sync. Your draft and cache are kept.'));
+   return result;
+ }
+@@ -64,25 +78,31 @@ function cloudRecordToMemory(r) {
+ // Store cloud:// IDs, not expiring URLs. Renderers that cannot consume cloud
+ // IDs resolve them here; returned URLs are transient and never enter the diary.
+ async function resolvePhotoUrls(ids) {
++  const token=identity.lease();
+   initCloud();
+   const cloudIds = ids.filter(data.isCloudImage);
+   const urls = {};
+   for (let i = 0; i < cloudIds.length; i += 50) {
+     const result = await wx.cloud.getTempFileURL({ fileList: cloudIds.slice(i, i + 50) });
++    identity.assertLease(token);
+     (result.fileList || []).forEach(f => { if (f.status === 0 && f.tempFileURL) urls[f.fileID] = f.tempFileURL; });
+   }
+   return ids.map(id => urls[id] || id);
+ }
+-async function uploadPhotos(paths, attempt, persistAttempt) {
++async function uploadPhotos(paths, attempt, persistAttempt, token) {
++  identity.assertLease(token);
++  if(attempt.actorUserId!==token.userId)throw error('OUTBOX_IDENTITY_MISMATCH','原操作身份不匹配，已阻止发送。');
+   initCloud();
+   const result = [];
+   for (let index = 0; index < paths.length; index++) {
++    identity.assertLease(token);
+     const path = paths[index];
+     if (data.isCloudImage(path) || /^\/images\//.test(path) || /^https:\/\//.test(path)) { result.push(path); continue; }
+     if (attempt.uploads[path]) { result.push(attempt.uploads[path]); continue; }
+     if (!data.isSafeImage(path)) throw error('INVALID_PHOTO', i18n.t('This photo is no longer available. Please select it again.'));
+     try {
+-      const uploaded = await wx.cloud.uploadFile({ cloudPath: 'dining/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: path });
++      const uploaded = await wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: path });
++      identity.assertLease(token);
+       if (!data.isCloudImage(uploaded.fileID)) throw new Error('Invalid fileID');
+       attempt.uploads[path] = uploaded.fileID;
+       persistAttempt(); // Keep completed uploads across retries and process restarts.
+@@ -92,13 +112,14 @@ async function uploadPhotos(paths, attempt, persistAttempt) {
+   return result;
+ }
+ async function addRecord(attempt, persistAttempt) {
++  const token=identity.lease();
+   const payload = memoryToCloudRecord(attempt.memory);
+-  payload.photos = await uploadPhotos(payload.photos, attempt, persistAttempt);
+-  if (payload.placePhoto) payload.placePhoto = (await uploadPhotos([payload.placePhoto], attempt, persistAttempt))[0];
++  payload.photos = await uploadPhotos(payload.photos, attempt, persistAttempt, token);
++  if (payload.placePhoto) payload.placePhoto = (await uploadPhotos([payload.placePhoto], attempt, persistAttempt, token))[0];
+   attempt.submitted = true;
+   persistAttempt(); // Persist BEFORE call: an unknown outcome must reuse the same request ID.
+   let result;
+-  try { result = await call('add', { requestId: attempt.id, data: payload }); }
++  try { result = await call('add', { requestId: attempt.id, data: payload }, token); }
+   catch (e) {
+     // A definite input rejection happened before a write. Unlike a timeout,
+     // this is safe to edit; an ambiguous server/network failure stays frozen.
+@@ -115,9 +136,10 @@ async function addRecord(attempt, persistAttempt) {
+   return memory;
+ }
+ async function listRecords() {
++  const token=identity.lease();
+   const records = []; records.deletedIds=[]; let cursor = ''; const seen = {};
+   do {
+-    const result = await call('list', { paginated: true, cursor });
++    const result = await call('list', { paginated: true, cursor },token);
+     if (!Array.isArray(result.data)) throw error('INVALID_RESPONSE', i18n.t('Cloud sync failed. Cached memories are still available.'));
+     result.data.forEach(r => { if(r.deleted) {records.deletedIds.push(r._id);return;} const m = cloudRecordToMemory(r); if (m) records.push(m); });
+     cursor = result.nextCursor || '';
+@@ -133,17 +155,19 @@ async function setLocation(id, location) {
+   return memory;
+ }
+ async function mutate(operation, persistAttempt) {
++  const token=identity.lease();
++  if(operation.actorUserId!==token.userId)throw error('OUTBOX_IDENTITY_MISMATCH','原操作身份不匹配，已阻止发送。');
+   let payload=operation.patch || {};
+   if(operation.kind==='update') {
+     payload=memoryToCloudRecord(operation.memory);
+     // A cleared single score is explicit; legacy individual scores remain server-owned by this form.
+     payload.rating=operation.memory.ratingSource==='legacy-average' ? undefined : (operation.memory.rating || null);
+     if(payload.rating===undefined) delete payload.rating;
+-    payload.photos=await uploadPhotos(payload.photos,operation,persistAttempt);
+-    if(payload.placePhoto) payload.placePhoto=(await uploadPhotos([payload.placePhoto],operation,persistAttempt))[0];
++    payload.photos=await uploadPhotos(payload.photos,operation,persistAttempt,token);
++    if(payload.placePhoto) payload.placePhoto=(await uploadPhotos([payload.placePhoto],operation,persistAttempt,token))[0];
+   }
+   operation.submitted=true; persistAttempt();
+-  const result=await call(operation.kind,{id:operation.recordId,operationId:operation.id,revision:operation.revision,data:payload});
++  const result=await call(operation.kind,{id:operation.recordId,operationId:operation.id,revision:operation.revision,data:payload},token);
+   const memory=cloudRecordToMemory(result.record);
+   if(!memory || memory.id!==operation.recordId || (result.operationId && result.operationId!==operation.id)) throw error('INVALID_RESPONSE','The cloud returned an invalid result. Retry safely.');
+   // Transport receipt only; never persist it as a Memory field. Missing receipts
+@@ -162,6 +186,7 @@ async function confirmOperation(id, operationId) {
+ // Download a private photo only through the existing CloudBase boundary.
+ // Caller owns this temporary copy; never store it in Memory or outbox.
+ function downloadMapPhoto(fileID) {
++  const token=identity.lease();
+   if(!data.isCloudImage(fileID)) return Promise.reject(error('INVALID_PHOTO','Invalid cloud photo.'));
+   initCloud();
+   if(!wx.cloud.downloadFile) return Promise.reject(error('UNAVAILABLE','Photo preview unavailable.'));
+@@ -170,6 +195,7 @@ function downloadMapPhoto(fileID) {
+     const timer=setTimeout(()=>{expired=true;reject(error('PHOTO_TIMEOUT','Photo preview timed out.'));},8000);
+     wx.cloud.downloadFile({fileID,success:r=>{
+       clearTimeout(timer);
++      try{identity.assertLease(token);}catch(e){expired=true;reject(e);}
+       if(expired) {try{wx.getFileSystemManager().unlinkSync(r.tempFilePath);}catch(e){}return;}
+       if(!r.tempFilePath) {reject(error('INVALID_PHOTO','Invalid cloud photo.'));return;}
+       resolve(r.tempFilePath);
+@@ -191,4 +217,5 @@ async function searchPlaces(keyword,city) {
+   if(result.provider!=='tencent'||!Array.isArray(result.pois))throw error('INVALID_RESPONSE','Map search returned an invalid result.');
+   return result.pois.slice(0,10).filter(p=>p&&typeof p.name==='string'&&p.name&&typeof p.id==='string'&&p.id&&p.provider==='tencent'&&p.coordinateSystem==='gcj02'&&Array.isArray(p.coordinates)&&p.coordinates.length===2&&p.coordinates.every(Number.isFinite)&&Math.abs(p.coordinates[0])<=90&&Math.abs(p.coordinates[1])<=180).map(p=>({id:p.id.slice(0,100),name:p.name.slice(0,100),address:String(p.address||'').slice(0,150),categoryText:String(p.categoryText||'').slice(0,120),coordinates:p.coordinates.slice(),provider:'tencent',coordinateSystem:'gcj02'}));
+ }
+-module.exports = { searchPlaces, downloadMapPhoto, confirmOperation, mutate, getRecord, setLocation, ENV, initCloud, listRecords, addRecord, uploadPhotos, resolvePhotoUrls, memoryToCloudRecord, cloudRecordToMemory };
++async function requestResult(requestId){const result=await call('requestResult',{requestId});const memory=cloudRecordToMemory(result.record);if(!memory)throw error('INVALID_RESPONSE','Invalid response');return memory;}
++module.exports = { requestResult, searchPlaces, downloadMapPhoto, confirmOperation, mutate, getRecord, setLocation, ENV, initCloud, listRecords, addRecord, uploadPhotos, resolvePhotoUrls, memoryToCloudRecord, cloudRecordToMemory };
+diff --git a/miniprogram/utils/i18n.js b/miniprogram/utils/i18n.js
+index 7a45916..9836f52 100644
+--- a/miniprogram/utils/i18n.js
++++ b/miniprogram/utils/i18n.js
+@@ -32,6 +32,18 @@ function options() {
+   return [ { value: 'system', label: t('Follow system') }, { value: 'zh-CN', label: '简体中文' }, { value: 'en', label: 'English' } ];
+ }
+ function syncPage(page, state, selected) {
++  const session=state.identity;
++  if(session){
++    const changed=page._identityGeneration!==undefined&&page._identityGeneration!==session.generation;
++    page._identityGeneration=session.generation;
++    const patch={identityReady:!session.locked};
++    if(changed){
++      Object.assign(patch,{sheetShow:false,sheetType:'',sheetMemoryId:'',sheetFilter:'',imageErrors:{},focusedField:''});
++      if(selected===2){Object.assign(patch,{draft:require('./store').loadDraft(),knownPlace:null,importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',error:'',tag:'',saving:false,uploading:false});page.lookupSerial=(page.lookupSerial||0)+1;page.saveLock=false;}
++      if(selected===1){page.markerGeneration=(page.markerGeneration||0)+1;if(page.pinRenderer)page.pinRenderer.dispose();page.pinRenderer=null;Object.assign(patch,{mapDrawers:[],markers:[],clusterOpen:false,stackPositionsReady:false});}
++    }
++    page.setData(patch,()=>{if(changed&&selected===1&&!session.locked&&page.onReady){page.markerCanvas=null;page.onReady();}});
++  }
+   const dusk = state.settings.theme === 'dusk';
+   page.setData({ copy: copy(), locale: locale(), pageHeading: headings.resolve(state, ['home','map','add','us','me'][selected], t) });
+   page._tabAppearance = { dusk, quiet: state.settings.reduceMotion,
+@@ -47,6 +59,8 @@ function subscribe(fn) {
+   return function () { const index = listeners.indexOf(fn); if (index >= 0) listeners.splice(index, 1); };
+ }
+ function modal(options) {
++  const identity=require('./identity'),token=identity.lease(),original=options.success;
++  options=Object.assign({},options,{success:r=>{if(identity.isCurrent(token)&&original)original(r);}});
+   wx.showModal(Object.assign({}, options, { title: t(options.title), content: t(options.content), confirmText: t('OK'), cancelText: t('Cancel') }));
+ }
+ module.exports = { locale, setLanguage, t, copy, options, syncPage, subscribe, modal };
+diff --git a/miniprogram/utils/locales.js b/miniprogram/utils/locales.js
+index 5506ac0..35a2eda 100644
+--- a/miniprogram/utils/locales.js
++++ b/miniprogram/utils/locales.js
+@@ -2469,5 +2469,25 @@ module.exports = [
+     "key": "sddcd11b118",
+     "en": "Expand grouped pins",
+     "zh": "展开叠放地标"
++  },
++  {
++    "key": "se9f48b243a",
++    "en": "Account & legacy data",
++    "zh": "账号与旧数据"
++  },
++  {
++    "key": "s32a88e6746",
++    "en": "Identity partitions, backups and recovery",
++    "zh": "身份分区、隔离备份与恢复"
++  },
++  {
++    "key": "s66c95184e9",
++    "en": "Shared space & wishlist",
++    "zh": "双人空间与 Wishlist"
++  },
++  {
++    "key": "s9346597557",
++    "en": "Invite, consent and share explicitly",
++    "zh": "邀请、同意与主动共享"
+   }
+ ];
+diff --git a/miniprogram/utils/photos.js b/miniprogram/utils/photos.js
+index 9ba792f..25b8a2e 100644
+--- a/miniprogram/utils/photos.js
++++ b/miniprogram/utils/photos.js
+@@ -1,3 +1,4 @@
++const identity = require('./identity');
+ // Photo pipeline: pick → compress → persist under USER_DATA_PATH.
+ // Temporary files from wx.chooseMedia must be copied before their paths
+ // are stored in the diary, or they expire and leave broken images.
+@@ -5,8 +6,7 @@ const FS = wx.getFileSystemManager();
+ 
+ let dir = '';
+ function photosDir() {
+-  if (!dir) dir = wx.env.USER_DATA_PATH + '/savor-photos';
+-  return dir;
++  return wx.env.USER_DATA_PATH + '/savor-photos/' + identity.lease().userId;
+ }
+ 
+ function ensureDir() {
+@@ -18,7 +18,7 @@ function ensureDir() {
+ }
+ 
+ function isUserPhoto(path) {
+-  return typeof path === 'string' && path.indexOf(photosDir()) === 0;
++  return typeof path === 'string' && path.indexOf(photosDir()+'/') === 0;
+ }
+ 
+ function wrap(promiseStyleFn) {
+@@ -34,40 +34,44 @@ const compressImage = wrap(wx.compressImage);
+ 
+ // Pick up to `count` images and persist them; resolves with local paths.
+ function choosePhotos(count) {
++  let token=identity.lease();
+   return chooseMedia({
+     count: count,
+     mediaType: ['image'],
+     sizeType: ['compressed'],
+     sourceType: ['album', 'camera'],
+-  }).then(function (result) {
++  }).then(async function (result) {
++    token=await identity.resumeNative(token);
+     const tasks = (result.tempFiles || []).map(function (file) {
+       return persistPhoto(file.tempFilePath);
+     });
+-    return Promise.all(tasks);
++    return Promise.all(tasks).then(paths=>{identity.assertLease(token);return paths;});
+   });
+ }
+ 
+ // Copy one image into our persistent folder (compress first when possible).
+ function persistPhoto(tempPath) {
++  const token=identity.lease();
+   if (!tempPath) return Promise.reject(new Error('No photo selected.'));
+   if (isUserPhoto(tempPath)) return Promise.resolve(tempPath); // already ours
+   ensureDir();
+   return compressImage({ src: tempPath, quality: 78 })
+     .then(function (res) {
+-      return copyIn(res.tempFilePath);
++      identity.assertLease(token);return copyIn(res.tempFilePath);
+     })
+     .catch(function () {
+-      return copyIn(tempPath); // compression is best-effort
++      identity.assertLease(token);return copyIn(tempPath); // compression is best-effort
+     });
+ }
+ 
+ function copyIn(source) {
++  const token=identity.lease();
+   return new Promise(function (resolve, reject) {
+     const target = photosDir() + '/' + data_createId() + '.jpg';
+     FS.copyFile({
+       srcPath: source,
+       destPath: target,
+-      success: function () { resolve(target); },
++      success: function () { try{identity.assertLease(token);resolve(target);}catch(e){reject(e);} },
+       fail: function (error) {
+         // last resort: read + write (handles some temp filesystem quirks)
+         FS.readFile({
+@@ -76,7 +80,7 @@ function copyIn(source) {
+             FS.writeFile({
+               filePath: target,
+               data: res.data,
+-              success: function () { resolve(target); },
++              success: function () { try{identity.assertLease(token);resolve(target);}catch(e){reject(e);} },
+               fail: reject,
+             });
+           },
+@@ -92,12 +96,16 @@ function data_createId() {
+ }
+ 
+ function removePhoto(path) {
++  return; // S1: no destructive cleanup across uncertain legacy references.
++
+   if (!isUserPhoto(path)) return; // bundled /images and remote urls stay
+   try { FS.unlinkSync(path); } catch (error) { /* already gone */ }
+ }
+ 
+ // Delete user photos that are no longer referenced anywhere.
+ function pruneOrphans(keepPaths) {
++  return; // S1: retain local files until a cross-partition reference registry is approved.
++
+   const keep = Object.create(null);
+   (keepPaths || []).forEach(function (path) { if (path) keep[path] = true; });
+   try {
+@@ -119,7 +127,7 @@ function collectReferenced(state) {
+   const avatar = state.profile && state.profile.avatar;
+   if (isUserPhoto(avatar)) refs.push(avatar);
+   try {
+-    const raw = wx.getStorageSync('savor-draft-v1');
++    const raw = identity.getStorageSync('savor-draft-v1');
+     const draft = typeof raw === 'string' ? JSON.parse(raw) : raw;
+     (draft && draft.photos || []).forEach(path => { if (isUserPhoto(path)) refs.push(path); });
+   } catch (error) { /* corrupt draft has no valid references */ }
+diff --git a/miniprogram/utils/store.js b/miniprogram/utils/store.js
+index 91facd9..f1684d9 100644
+--- a/miniprogram/utils/store.js
++++ b/miniprogram/utils/store.js
+@@ -1,3 +1,4 @@
++const identity = require('./identity');
+ const localDate = require('./localDate');
+ // Diary store — CommonJS singleton port of the web baseline (src/store.tsx).
+ // Storage keys, defaults, validation, migration and dedupe semantics are
+@@ -15,7 +16,7 @@ const STORAGE_KEY = 'savor-diary-v1';
+ const DRAFT_KEY = 'savor-draft-v1';
+ 
+ const state = {
+-  memories: data.initialMemories.slice(),
++  memories: [],
+   profile: Object.assign({}, data.defaultProfile),
+   settings: Object.assign({}, data.defaultSettings),
+   feedback: [],
+@@ -24,6 +25,7 @@ const state = {
+ };
+ 
+ let loaded = false;
++let networkBound=false;
+ const listeners = [];
+ const toastListeners = [];
+ let toastTimer = null;
+@@ -31,7 +33,7 @@ let currentToast = null;
+ 
+ function defaults() {
+   return {
+-    memories: data.initialMemories.slice(),
++    memories: [],
+     profile: Object.assign({}, data.defaultProfile),
+     settings: Object.assign({}, data.defaultSettings),
+     feedback: [],
+@@ -77,11 +79,11 @@ function normalizeMemory(raw) {
+ function loadDiary() {
+   let parsed = null;
+   try {
+-    const saved = wx.getStorageSync(STORAGE_KEY);
++    const saved = identity.getStorageSync(STORAGE_KEY);
+     if (saved && typeof saved === 'string') parsed = JSON.parse(saved);
+     else if (saved && typeof saved === 'object') parsed = saved;
+   } catch (error) {
+-    return defaults(); // corrupt storage → clean fallback
++    throw error; // corrupt account cache remains untouched
+   }
+   if (!parsed || typeof parsed !== 'object') return defaults();
+ 
+@@ -91,7 +93,7 @@ function loadDiary() {
+         parsed.memories.filter(function (m) { return !data.isMemory(m); })
+           .map(normalizeMemory).filter(Boolean)
+       )
+-    : data.initialMemories.slice();
++    : [];
+   // dedupe by id (first wins)
+   const seen = Object.create(null);
+   const deduped = [];
+@@ -109,39 +111,22 @@ function loadDiary() {
+   return { memories: deduped, profile, settings, feedback, outbox: Array.isArray(parsed.outbox) ? parsed.outbox.filter(op=>op && typeof op.id==='string' && typeof op.recordId==='string' && ['flags','delete','update'].includes(op.kind)) : [], cloudHidden: Array.isArray(parsed.cloudHidden) ? parsed.cloudHidden.filter(id => typeof id === 'string') : [] };
+ }
+ 
+-function persist() {
+-  try {
+-    wx.setStorageSync(STORAGE_KEY, JSON.stringify(state));
+-  } catch (error) {
+-    notify('Storage is full or unavailable. Export your memories to keep a backup.');
+-  }
+-}
+-
+ function ensureLoaded() {
+   if (!loaded) {
+     const loadedState = loadDiary();
+     state.memories = loadedState.memories.map(m => ['tencent-picker','tencent-search'].includes(m.locationSource) && m.geoConfirmed !== true ? Object.assign({},m,{city:'',country:''}) : m);
+     state.profile = loadedState.profile;
+-    state.settings = loadedState.settings;
++    state.settings = Object.assign({},loadedState.settings,identity.deviceSettings());
+     state.feedback = loadedState.feedback;
+     state.cloudHidden = loadedState.cloudHidden || [];
+     state.outbox = loadedState.outbox || [];
+-    if(wx.onNetworkStatusChange) wx.onNetworkStatusChange(r=>{if(r.isConnected) flushOutbox().catch(()=>{});});
++    if(!networkBound&&wx.onNetworkStatusChange){networkBound=true;wx.onNetworkStatusChange(r=>{if(r.isConnected){identity.verify().then(()=>syncCloud()).catch(()=>{});}});}
+     loaded = true;
+-    migrateLegacyFlags();
++    state.identity=identity.snapshot();
++    // Unknown legacy changes are never automatically claimed.
+     i18n.setLanguage(state.settings.language);
+-    if (!state.memories.length) {
+-      // never boot into a dead screen: sample data returns when empty
+-      state.memories = data.initialMemories.slice();
+-    }
+-  }
+-}
+ 
+-function emit() {
+-  persist();
+-  listeners.slice().forEach(function (listener) {
+-    try { listener(state); } catch (error) { /* one bad subscriber must not break the rest */ }
+-  });
++  }
+ }
+ 
+ function get() {
+@@ -188,13 +173,14 @@ function onToast(listener) {
+ }
+ 
+ function addMemory(memory) {
++  identity.lease();
+   ensureLoaded();
+-  if(memory.deleted) {state.memories=state.memories.filter(m=>m.id!==memory.id);state.cloudHidden=Array.from(new Set(state.cloudHidden.concat(memory.id)));emit();return;}
+-  state.memories = [memory].concat(state.memories.filter(m => m.id !== memory.id));
+-  emit();
++  if(memory.deleted) {commit(Object.assign({},state,{memories:state.memories.filter(m=>m.id!==memory.id),cloudHidden:Array.from(new Set(state.cloudHidden.concat(memory.id)))}));return;}
++  commit(Object.assign({},state,{memories:[memory].concat(state.memories.filter(m=>m.id!==memory.id))}));
+ }
+ 
+ function updateMemory(id, changes) {
++  identity.lease();
+   ensureLoaded();
+   const cloudMemory=state.memories.find(m=>m.id===id && m.cloudId);
+   if(cloudMemory && Object.keys(changes).every(k=>['saved','liked','shared'].includes(k))) {
+@@ -211,6 +197,7 @@ function updateMemory(id, changes) {
+ // `collectFiles` (optional) lets the caller clean orphan photos after the
+ // state change; photos module handles the actual deletion.
+ function deleteMemory(id) {
++  identity.lease();
+   ensureLoaded();
+   const cloudMemory=state.memories.find(m=>m.id===id && m.cloudId);
+   if(cloudMemory) { queueMutation(cloudMemory,'delete',{}); flushOutbox().catch(()=>{}); return; }
+@@ -218,14 +205,15 @@ function deleteMemory(id) {
+ }
+ 
+ function updateProfile(changes) {
++  identity.lease();
+   ensureLoaded();
+-  state.profile = Object.assign({}, state.profile, changes);
+-  emit();
++  commit(Object.assign({},state,{profile:Object.assign({},state.profile,changes)}));
+ }
+ 
+ // Transactional local preferences: do not show success or mutate live state
+ // when storage fails. Profile photo, memories and unrelated settings survive.
+ function updatePersonalization(pageHeadings, profile) {
++  identity.lease();
+   ensureLoaded();
+   const headings = require('./pageHeadings');
+   const name = headings.clean(profile && profile.name, 32);
+@@ -233,7 +221,7 @@ function updatePersonalization(pageHeadings, profile) {
+   const nextProfile = Object.assign({}, state.profile, { name, bio: headings.clean(profile.bio, 55) });
+   const nextSettings = Object.assign({}, state.settings, { pageHeadings: headings.normalize(pageHeadings) });
+   const next = Object.assign({}, state, { profile: nextProfile, settings: nextSettings });
+-  wx.setStorageSync(STORAGE_KEY, JSON.stringify(next));
++  identity.setStorageSync(STORAGE_KEY, JSON.stringify(next));
+   state.profile = nextProfile;
+   state.settings = nextSettings;
+   listeners.slice().forEach(function (listener) { try { listener(state); } catch (error) {} });
+@@ -241,44 +229,57 @@ function updatePersonalization(pageHeadings, profile) {
+ 
+ function updateSettings(changes) {
+   ensureLoaded();
+-  state.settings = Object.assign({}, state.settings, changes);
+-  if (Object.prototype.hasOwnProperty.call(changes, 'language')) {
+-    if (['system', 'zh-CN', 'en'].indexOf(changes.language) < 0) state.settings.language = 'system';
+-    i18n.setLanguage(state.settings.language);
+-  }
+-  emit();
++  if(Object.keys(changes).some(k=>!['theme','language','reduceMotion'].includes(k)))identity.lease();
++  const settings=Object.assign({},state.settings,changes);
++  if(!['system','zh-CN','en'].includes(settings.language))settings.language='system';
++  identity.saveDeviceSettings(settings);
++  if(!identity.snapshot().locked)commit(Object.assign({},state,{settings}),settings.language);
++  else {state.settings=settings;i18n.setLanguage(settings.language);listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});}
+ }
+ 
+ function importMemories(memories) {
++  identity.lease();
+   ensureLoaded();
+   const knownIds = Object.create(null);
+   state.memories.forEach(function (memory) { knownIds[memory.id] = true; });
+   const additions = [];
+-  (memories || []).forEach(function (memory) {
++  (memories || []).forEach(function (source) {
++    if(state.memories.some(m=>m.importSourceId===source.id||m.id===source.id)||additions.some(m=>m.importSourceId===source.id))return;
++    const memory = privateCopy(source);
+     if (knownIds[memory.id]) return;
+     knownIds[memory.id] = true;
+     additions.push(memory);
+   });
+   if (additions.length) {
+-    state.memories = additions.concat(state.memories);
+-    emit();
++    commit(Object.assign({},state,{memories:additions.concat(state.memories)}));
+   }
+   return additions.length;
+ }
+ 
++function privateCopy(source) {
++  const memory=Object.assign({},source,{id:data.createId(),importSourceId:source.id,shared:false,liked:false,saved:false});
++  ['cloudId','revision','localChanges','pendingDelete','deleted','memberOpenids','coupleId','operationIds','operationReceipts'].forEach(k=>delete memory[k]);
++  // Backup ownership does not authorize reading private assets or dual votes.
++  ['ratings'].forEach(k=>delete memory[k]);
++  if(memory.ratingSource==='legacy-average'){memory.rating=0;memory.ratingSource='unrated';}
++  memory.photo=data.photos.meal;memory.noPhoto=true;memory.extraPhotos=[];delete memory.placePhoto;
++  return memory;
++}
+ function saveFeedback(message) {
++  identity.lease();
+   ensureLoaded();
+-  state.feedback = state.feedback.concat([{ message: message, date: new Date().toISOString() }]);
+-  emit();
++  commit(Object.assign({},state,{feedback:state.feedback.concat([{message,date:new Date().toISOString()}])}));
+ }
+ 
+ // Durable outbox: persist intent before optimistic UI; acknowledge before removing it.
+ let mutationFlight=null;
+ const resolvingRecords=new Set();
+ function canResolve(code) {return ['CONFLICT','DELETED','NOT_FOUND','INVALID_LOCAL_STATE','INVALID_DATE','INVALID_RATING','INVALID_PHOTOS','INVALID_COORDINATES','INVALID_LOCATION','INVALID_PER_CAPITA','INVALID_FLAG','INVALID_ID','INVALID_OPERATION_ID','RESTAURANT_REQUIRED'].includes(code);}
+-function commit(next) {
+-  wx.setStorageSync(STORAGE_KEY,JSON.stringify(next));
++function commit(next, language) {
++  identity.lease();
++  identity.setStorageSync(STORAGE_KEY,JSON.stringify(next));
+   Object.assign(state,next);
++  if(language!==undefined)i18n.setLanguage(language);
+   listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
+ }
+ function overlay(memory, ops) {
+@@ -294,32 +295,28 @@ function overlay(memory, ops) {
+ }
+ function queueMutation(memory,kind,patch,updated) {
+   ensureLoaded();
++  const token=identity.lease();
+   if(resolvingRecords.has(memory.id)) throw new Error('Sync in progress. Please try again.');
+-  const op={id:data.createId(),recordId:memory.cloudId,revision:memory.revision||0,kind,patch:patch||{},memory:updated||null,base:memory,uploads:{},submitted:false};
++  const op={actorUserId:token.userId,id:data.createId(),recordId:memory.cloudId,revision:memory.revision||0,kind,patch:patch||{},memory:updated||null,base:memory,uploads:{},submitted:false};
+   const outbox=state.outbox.concat(op);
+   const memories=state.memories.map(m=>m.id===memory.id?overlay(m,[op]):m).filter(m=>!m.pendingDelete);
+   commit(Object.assign({},state,{outbox,memories}));
+   return op;
+ }
+-function migrateLegacyFlags() {
+-  for(const memory of state.memories.slice()) {
+-    if(!memory.cloudId || !memory.localChanges || state.outbox.some(o=>o.recordId===memory.id)) continue;
+-    const flags={};['saved','liked','shared'].forEach(k=>{if(typeof memory.localChanges[k]==='boolean') flags[k]=memory.localChanges[k];});
+-    if(Object.keys(flags).length) {try{queueMutation(memory,'flags',flags);}catch(e){/* durable original localChanges remains for the next sync */}}
+-  }
+-}
+ function flushOutbox() {
+-  ensureLoaded(); migrateLegacyFlags(); if(mutationFlight) return mutationFlight;
++  ensureLoaded(); let token;try{token=identity.lease();}catch(e){return Promise.reject(e);} if(mutationFlight) return mutationFlight;
+   mutationFlight=(async()=>{
+     const blocked=new Set();
+     const attempted=new Set();
+     while(true) {
++      identity.assertLease(token);
+       const op=state.outbox.find(x=>!attempted.has(x.id)&&!blocked.has(x.recordId));
+       if(!op) break; attempted.add(op.id);
+       if(blocked.has(op.recordId) || canResolve(op.error)) {blocked.add(op.recordId);continue;}
+       try {
+         if(!op.base || !Number.isInteger(op.revision) || op.revision<0 || !op.uploads || typeof op.uploads!=='object' || Array.isArray(op.uploads) || (op.kind==='update' && !data.isMemory(op.memory))) {const e=new Error(i18n.t('The local pending change is invalid. Review it in Sync status.'));e.code='INVALID_LOCAL_STATE';throw e;}
+-        const saved=await require('./cloudRecords').mutate(op,()=>{wx.setStorageSync(STORAGE_KEY,JSON.stringify(state));});
++        const saved=await require('./cloudRecords').mutate(op,()=>{identity.assertLease(token);identity.setStorageSync(STORAGE_KEY,JSON.stringify(state));});
++        identity.assertLease(token);
+         const ownSuccessor=saved.operationRevision===op.revision+1 && saved.operationRevision===saved.revision;
+         const outbox=state.outbox.filter(x=>x.id!==op.id).map(x=>x.recordId===op.recordId && ownSuccessor && x.revision===op.revision?Object.assign({},x,{revision:saved.operationRevision}):x);
+         let memories=state.memories.filter(m=>m.id!==saved.id);
+@@ -327,17 +324,20 @@ function flushOutbox() {
+         const hidden=saved.deleted?Array.from(new Set(state.cloudHidden.concat(saved.id))):state.cloudHidden;
+         commit(Object.assign({},state,{outbox,memories,cloudHidden:hidden}));
+       } catch(e) {
++        identity.assertLease(token);
+         op.error=e.code||'OFFLINE'; op.message=e.message;
+         try {commit(Object.assign({},state,{outbox:state.outbox.slice()}));} catch(storageError) {}
+         blocked.add(op.recordId);
+       }
+     }
+     return state.outbox;
+-  })().finally(()=>{mutationFlight=null;});
++  })().finally(()=>{if(identity.snapshot().generation===token.generation)mutationFlight=null;});
+   return mutationFlight;
+ }
+ async function useCloudVersion(recordId) {
++  const token=identity.lease();
+   if(mutationFlight) await mutationFlight;
++  identity.assertLease(token);
+   if(resolvingRecords.has(recordId)) return;
+   resolvingRecords.add(recordId);
+   try {
+@@ -345,6 +345,7 @@ async function useCloudVersion(recordId) {
+   if(!pending.length || !pending.some(o=>canResolve(o.error))) throw new Error('Retry the uncertain operation first.');
+   let saved;
+   try {saved=await require('./cloudRecords').getRecord(recordId);} catch(e) {if(e.code!=='NOT_FOUND') throw e;}
++  identity.assertLease(token);
+   const outbox=state.outbox.filter(o=>o.recordId!==recordId);
+   const memories=state.memories.filter(m=>m.id!==recordId);
+   if(saved&&!saved.deleted) memories.unshift(saved);
+@@ -353,27 +354,32 @@ async function useCloudVersion(recordId) {
+   } finally {resolvingRecords.delete(recordId);}
+ }
+ function beginEdit(memory) {
++  identity.lease();
+   const current=loadDraft();
+   if(saveFlight || (current.cloudAttempt && current.cloudAttempt.submitted) || current.editOperationId || get().outbox.some(o=>o.recordId===memory.id && o.kind!=='flags')) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
+   const draft=Object.assign(freshDraft(),{editingId:memory.id,editBase:memory,importAddressHint:memory.importAddressHint||'',importAreaText:memory.importAreaText||'',platformRating:memory.platformRating==null?null:memory.platformRating,platformAveragePriceCny:memory.platformAveragePriceCny==null?null:memory.platformAveragePriceCny,diningTypes:(Array.isArray(memory.diningTypes)?memory.diningTypes:[]).slice(),sourceCategory:memory.sourceCategory||'',categorySource:memory.categorySource||'',diningMode:memory.diningMode||'',sourcePlatform:memory.sourcePlatform||'',sourceUrl:memory.sourceUrl||'',restaurant:memory.restaurant,notes:memory.notes,date:memory.date,rating:memory.rating,ratingSource:memory.ratingSource||'single',cuisine:memory.cuisine||'',perCapita:memory.perCapita||'',dishes:(memory.dishes||[]).join(', '),tags:memory.tags.slice(),photos:memory.noPhoto?[]:[memory.photo].concat(memory.extraPhotos||[]),location:['tencent-picker','tencent-search'].includes(memory.locationSource)?Object.assign({},memory):null});
+-  wx.setStorageSync(DRAFT_KEY,JSON.stringify(draft)); return draft;
++  identity.setStorageSync(DRAFT_KEY,JSON.stringify(draft)); return draft;
+ }
+ // Completion belongs to one durable attempt, not whichever draft is current.
+ function clearCompletedDraft(kind, id) {
+   try {
+-    const raw=wx.getStorageSync(DRAFT_KEY);
++    const raw=identity.getStorageSync(DRAFT_KEY);
+     const current=typeof raw==='string'?JSON.parse(raw):raw;
+     const matches=current && (kind==='add' ? current.cloudAttempt && current.cloudAttempt.id===id : current.editOperationId===id);
+     if(matches) clearDraft();
+   } catch(e) { /* never clear an unreadable or unrelated draft */ }
+ }
+ async function confirmCompletedEdit(recordId, operationId) {
++  const token=identity.lease();
+   if (!await require('./cloudRecords').confirmOperation(recordId, operationId)) {
+     throw new Error(i18n.t('The edit has no verifiable cloud receipt. Your draft is kept; do not clear it to retry.'));
+   }
++  identity.assertLease(token);
+   clearCompletedDraft('edit', operationId);
+ }
+ async function saveEdit(memory,draft) {
++  const token=identity.lease();
++  if(draft.actorUserId!==token.userId) throw new Error('DRAFT_IDENTITY_MISMATCH');
+   const base=draft.editBase;
+   if(!base || base.id!==draft.editingId) throw new Error('Invalid edit draft.');
+   // Local-only imports/samples stay local; never auto-upload them.
+@@ -384,8 +390,9 @@ async function saveEdit(memory,draft) {
+   let op=state.outbox.find(x=>x.id===draft.editOperationId || (x.kind==='update' && x.recordId===base.id));
+   if(!op) op=queueMutation(base,'update',{},updated);
+   draft.editOperationId=op.id;
+-  wx.setStorageSync(DRAFT_KEY,JSON.stringify(draft));
++  identity.setStorageSync(DRAFT_KEY,JSON.stringify(draft));
+   await flushOutbox();
++  identity.assertLease(token);
+   if(state.outbox.some(x=>x.id===op.id)) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
+   await confirmCompletedEdit(base.cloudId,op.id);
+   try {const p=require('./photos');p.pruneOrphans(p.collectReferenced(state));} catch(e) {}
+@@ -395,10 +402,9 @@ async function saveEdit(memory,draft) {
+ // Cloud records are merged by primary key; a late list cannot remove a just-saved meal.
+ let syncFlight = null;
+ let saveFlight = null;
+-function syncCloud() {
+-  ensureLoaded();
+-  if (syncFlight) return syncFlight;
+-  syncFlight = flushOutbox().then(()=>require('./cloudRecords').listRecords()).then(function (memories) {
++// Explicit read-only refresh must NOT flush legacy/private outboxes.
++function mergeCloudRead(memories,token) {
++    identity.assertLease(token);
+     const byId = Object.create(null);
+     state.memories.forEach(m => { byId[m.id] = m; });
+     (memories.deletedIds||[]).forEach(id=>{delete byId[id];});
+@@ -412,33 +418,51 @@ function syncCloud() {
+     });
+     const all = Object.keys(byId).map(id => byId[id]);
+     // Keep the curated sample/local order, with cloud memories before it.
+-    state.memories = all.filter(m => m.cloudId).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
++    const mergedMemories = all.filter(m => m.cloudId).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
+       .concat(all.filter(m => !m.cloudId));
+-    emit();
++    commit(Object.assign({},state,{memories:mergedMemories}));
+     return state.memories;
+-  }).finally(function () { syncFlight = null; });
++}
++async function refreshCloudReadOnly(){const token=identity.lease();const memories=await require('./cloudRecords').listRecords();return mergeCloudRead(memories,token);}
++function applyCloudProfile(profile,preferences,token){
++ identity.assertLease(token);ensureLoaded();
++ const p={name:profile.name,bio:profile.bio};if(profile.avatar)p.avatar=profile.avatar;
++ const settings={...state.settings};['dietary','cuisines','privateByDefault','showLocations','reminders'].forEach(k=>{if(preferences[k]!==undefined)settings[k]=preferences[k];});
++ commit({...state,profile:{...state.profile,...p},settings});
++}
++function syncCloud() {
++  ensureLoaded();
++  let token;try{token=identity.lease();}catch(e){return Promise.reject(e);}
++  if (syncFlight) return syncFlight;
++  syncFlight = flushOutbox().then(()=>{identity.assertLease(token);return require('./cloudRecords').listRecords();}).then(function (memories) {
++    return mergeCloudRead(memories,token);
++  }).finally(function () { if(identity.snapshot().generation===token.generation)syncFlight = null; });
+   return syncFlight;
+ }
+ function createCloudMemory(memory, draft) {
++  const token=identity.lease();
++  if(draft.actorUserId!==token.userId) return Promise.reject(new Error('DRAFT_IDENTITY_MISMATCH'));
+   if(draft.editingId) return saveEdit(memory,draft);
+   if (saveFlight) return saveFlight;
+   const savedDraft = Object.assign({}, draft);
+-  const attempt = savedDraft.cloudAttempt || { id: data.createId(), memory: memory, uploads: {}, submitted: false };
++  const attempt = savedDraft.cloudAttempt || { actorUserId:token.userId, id: data.createId(), memory: memory, uploads: {}, submitted: false };
+   savedDraft.cloudAttempt = attempt;
+   draft.cloudAttempt = attempt;
+   function keepAttempt() {
++    identity.assertLease(token);
+     // Unlike best-effort UI caching, retry identity must be durable before writing remotely.
+-    try { wx.setStorageSync(DRAFT_KEY, JSON.stringify(savedDraft)); }
++    try { identity.setStorageSync(DRAFT_KEY, JSON.stringify(savedDraft)); }
+     catch (e) { throw new Error('Storage unavailable. Free some space before saving; your input is still here.'); }
+   }
+   saveFlight = Promise.resolve().then(function () {
+     keepAttempt();
+     return require('./cloudRecords').addRecord(attempt, keepAttempt);
+   }).then(function (saved) {
++    identity.assertLease(token);
+     addMemory(saved);
+     clearCompletedDraft('add',attempt.id);
+     return saved;
+-  }).finally(function () { saveFlight = null; });
++  }).finally(function () { if(identity.snapshot().generation===token.generation)saveFlight = null; });
+   return saveFlight;
+ }
+ 
+@@ -451,7 +475,7 @@ const starterDraft = {
+ 
+ function loadDraft() {
+   try {
+-    const saved = wx.getStorageSync(DRAFT_KEY);
++    const saved = identity.getStorageSync(DRAFT_KEY);
+     const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved;
+     if (parsed && typeof parsed === 'object'
+       && typeof parsed.restaurant === 'string' && typeof parsed.notes === 'string'
+@@ -468,13 +492,16 @@ function loadDraft() {
+ 
+ function saveDraft(draft) {
+   try {
+-    wx.setStorageSync(DRAFT_KEY, JSON.stringify(draft));
++    const token=identity.lease();
++    if(draft.actorUserId!==token.userId) return false;
++    identity.setStorageSync(DRAFT_KEY, JSON.stringify(draft));
+     return true;
+   } catch (error) { return false; /* Callers that require durable import can fail closed. */ }
+ }
+ 
+ function freshDraft() {
+   return {
++    actorUserId:identity.snapshot().userId,
+     restaurant: '',
+     notes: '',
+     date: localDate.today(),
+@@ -491,16 +518,23 @@ function clearDraft() {
+ }
+ 
+ async function setMemoryLocation(memory, location) {
++  const token=identity.lease();
+   if (memory.cloudId) {
+     if(get().outbox.some(o=>o.recordId===memory.id && o.kind!=='flags')) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
+     const updated=Object.assign({},memory,location,{locationUnknown:false});
+     const op=queueMutation(memory,'update',{},updated);
+     await flushOutbox();
++    identity.assertLease(token);
+     if(state.outbox.some(o=>o.id===op.id)) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
+   } else updateMemory(memory.id, Object.assign({}, location, { locationUnknown: false }));
+ }
+ 
+-module.exports = { canResolve, flushOutbox, useCloudVersion, beginEdit,
++identity.subscribe(()=>{
++  loaded=false; mutationFlight=null;syncFlight=null;saveFlight=null;resolvingRecords.clear();
++  ensureLoaded();state.identity=identity.snapshot();
++  dismissToast();listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
++});
++module.exports = { refreshCloudReadOnly, applyCloudProfile, privateCopy, canResolve, flushOutbox, useCloudVersion, beginEdit,
+   setMemoryLocation,
+   STORAGE_KEY,
+   DRAFT_KEY,
+diff --git a/package.json b/package.json
+index 7db6c5b..ae9202d 100644
+--- a/package.json
++++ b/package.json
+@@ -8,13 +8,17 @@
+     "verify:tabbar": "node tools/verify-tabbar.cjs",
+     "verify:assets": "node tools/verify-assets.cjs",
+     "verify:cloud": "node tools/verify-cloud.cjs",
+-    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture",
++    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:workspace",
+     "build:locales": "node tools/build-locales.cjs",
+     "build:icons": "node tools/build-icons.cjs",
+     "verify:icons": "node tools/verify-icons.cjs",
+     "verify:ui": "node tools/verify-ui-quality.cjs",
+     "verify:handoff": "node tools/verify-tab-handoff.cjs",
+     "verify:capture": "node tools/analyze-tab-capture.cjs --self-test && node tools/capture-projected-tab-loop.cjs --self-test",
+-    "capture:projected": "node tools/capture-projected-tab-loop.cjs"
++    "capture:projected": "node tools/capture-projected-tab-loop.cjs",
++    "verify:identity": "node tools/verify-identity.cjs && node tools/verify-identity-runtime.cjs",
++    "verify:spaces": "node tools/verify-spaces.cjs",
++    "verify:media": "node tools/verify-media.cjs",
++    "verify:workspace": "node tools/verify-workspace.cjs && node tools/verify-workspace-adapter.cjs"
+   }
+ }
+diff --git a/reports/ui-approved-updates.json b/reports/ui-approved-updates.json
+index b15fa85..4717c39 100644
+--- a/reports/ui-approved-updates.json
++++ b/reports/ui-approved-updates.json
+@@ -1,35 +1,35 @@
+ {
+   "miniprogram/app.json": {
+-    "sha256": "c0e069a25e127902fc1e4f301a92a73bdbecf54486f291c0f9278e592ca71ba4",
+-    "reason": "用户要求五Tab统一Lucide轮廓；新增不接触业务数据的Morphicons Canvas原生适配验证页，Tab业务零依赖不变。"
++    "sha256": "fcad4880b2a89165f8e78255856cffd38f7b4cf70dc8109892fb6fde50fb7403",
++    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+   },
+   "miniprogram/components/sheet/index.wxml": {
+-    "sha256": "267fe47138aa6153da031dcabe2513b2268885162be458d15e7e58b6ef7621ba",
+-    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
++    "sha256": "bfde455511768ab145f2675929893c31f229a17fb9f808c9ccdcba3226dadfcd",
++    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+   },
+   "miniprogram/components/sheet/index.wxss": {
+     "sha256": "3b8e2885ab0e53445b6e8599787ad25a15883a42b60f65116e4e57a63a9e6aaf",
+     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+   },
+   "miniprogram/pages/us/index.wxml": {
+-    "sha256": "19d0654f02033a09fdba46fcd1ccca1adfe6ab798a9cb6af1054eb636834fcb7",
+-    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
++    "sha256": "072c0dccc6aecd8ef8a3d77a2c6fbb0813e55f597d5678ff1b4b7daaba419b0c",
++    "reason": "S1身份隔离基础上增加用户确认的S2双人空间/Wishlist独立页面入口；不恢复K1，不改Map样式。原生UI统一待验收。"
+   },
+   "miniprogram/pages/me/index.wxml": {
+-    "sha256": "2c93dd53583c60c3fac2531c77b5f5864efc6e31be0a45fedee22770f7f7d403",
+-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Me页可见诊断标记，业务内容不变。"
++    "sha256": "e609d14fa625d101ac3f939a43894536195110f5691798e72f733ee7e3558a2e",
++    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+   },
+   "miniprogram/pages/add/index.wxml": {
+-    "sha256": "84c918d9b950f257fe54df76dd0257d26268fb682dadc2a4a45892d49ec95d89",
+-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Add页可见诊断标记，业务内容不变。"
++    "sha256": "23800572ff853494fd604c8c854a13a2a7e3cc315d3bbd6e042b1718badf8e7f",
++    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+   },
+   "miniprogram/pages/add/index.wxss": {
+     "sha256": "6ac81ecff9830abc8d96cbbd2eadc2dc559ba1d11d41425ec728376b495c2d61",
+     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+   },
+   "miniprogram/pages/map/index.wxml": {
+-    "sha256": "4acba0b1f012d3038336fbabda621ed09fd11039c744ad1d33b32175f2980a57",
+-    "reason": "用户要求Map底部卡片展开/收缩按钮绝对位置重合；两态改为共用一个固定按钮。"
++    "sha256": "283fc88c79e1bc1a138ce5d621356f33ddbd3d57a593757d25fbef0159ab4ee5",
++    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+   },
+   "miniprogram/pages/map/index.wxss": {
+     "sha256": "2007afb2108ad387ee4c60bda137715c4fd0faf3d01b49bf31c7500a32356543",
+@@ -72,8 +72,8 @@
+     "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。"
+   },
+   "miniprogram/pages/home/index.wxml": {
+-    "sha256": "2c2e94812a427a2cdf3bec377c6de64aaebf2a3d7a43b2d2d0440d0917be070c",
+-    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
++    "sha256": "3e5a737dadc62f0a51c25101fa24d93a6d4bb888cd98d63b94cfc37aa813c511",
++    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+   },
+   "miniprogram/pages/home/index.wxss": {
+     "sha256": "dde5f0b6a93dcd1c1037bc670e231a6257ec8e52f5c3040e1a26444a07afe202",
+@@ -120,7 +120,7 @@
+     "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Add页探针计数状态。"
+   },
+   "miniprogram/pages/me/index.js": {
+-    "sha256": "42b0443a2361c506363d31ff395319905592ee3b4704a58f76750070a97cfa33",
+-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Me页探针计数状态。"
++    "sha256": "899d7486a1b7b089e715660ad6b81d24060381cf657c4784eb3d32e34ba6103e",
++    "reason": "S1身份隔离基础上增加用户确认的S2双人空间/Wishlist独立页面入口；不恢复K1，不改Map样式。原生UI统一待验收。"
+   }
+ }
+diff --git a/tools/lib/locale-translations.tsv b/tools/lib/locale-translations.tsv
+index 8db9758..c2a1900 100644
+--- a/tools/lib/locale-translations.tsv
++++ b/tools/lib/locale-translations.tsv
+@@ -492,3 +492,7 @@ Collapse expanded pins	收起标记
+ Previous pin page	上一页地标
+ Next pin page	下一页地标
+ Expand grouped pins	展开叠放地标
++Account & legacy data	账号与旧数据
++Identity partitions, backups and recovery	身份分区、隔离备份与恢复
++Shared space & wishlist	双人空间与 Wishlist
++Invite, consent and share explicitly	邀请、同意与主动共享
+diff --git a/tools/verify-cloud.cjs b/tools/verify-cloud.cjs
+index 31dd0c1..157f76b 100644
+--- a/tools/verify-cloud.cjs
++++ b/tools/verify-cloud.cjs
+@@ -12,7 +12,7 @@ const rows = new Map();
+ let owner = 'owner-A', uploadCount = 0, addCalls = 0, functionDown = false, uploadFailure = 0, lostReply = false;
+ let created = false, deniedCreate = false, lostMutationReply = false;
+ const sdk = {
+-  DYNAMIC_CURRENT_ENV: 'dynamic', init() {}, getWXContext: () => ({ OPENID: owner }),
++  DYNAMIC_CURRENT_ENV: 'dynamic', init() {}, getWXContext: () => ({ OPENID: owner, APPID:'test-app' }),
+   database: () => ({
+     command: { gt: value => ({ gt: value }), exists: value => ({exists:value}), remove:()=>({remove:true}) }, serverDate: () => new Date().toISOString(),
+     async createCollection(name) {
+@@ -22,6 +22,7 @@ const sdk = {
+       created = true;
+     },
+     collection(name) {
++      if(name==='savor_accounts')return {where(){return this;},limit(){return this;},async get(){return {data:[{userId:'u_'+(owner==='owner-A'?'a':'b').repeat(48)}]};}};
+       assert.equal(name, 'dining_records');
+       let where = {}, order = '_id', direction = 'asc', limit = Infinity;
+       const q = {
+@@ -52,7 +53,7 @@ function server() {
+   const filename = path.join(root, 'cloudfunctions/mealRecords/index.js');
+   const exports = {};
+   vm.runInNewContext(fs.readFileSync(filename, 'utf8'), { exports, require: name => name === 'wx-server-sdk' ? sdk : require(name.startsWith('.') ? path.resolve(path.dirname(filename), name) : name), console: { error() {} } }, { filename });
+-  return exports.main;
++  return event=>exports.main(Object.assign({identityProtocol:1,expectedUserId:'u_'+(owner==='owner-A'?'a':'b').repeat(48)},event));
+ }
+ let main = server();
+ global.wx = {
+@@ -84,6 +85,9 @@ global.wx = {
+   }
+ };
+ const data = require(path.join(mp, 'utils/data'));
++// This suite uses a known-session fixture; real S1 boundaries have a separate adversarial suite.
++const identityPath=require.resolve(path.join(mp,'utils/identity'));
++require.cache[identityPath]={id:identityPath,filename:identityPath,loaded:true,exports:require('./identity-fixture.cjs').fixture(wx,()=> 'u_'+(owner==='owner-A'?'a':'b').repeat(48))};
+ let store = require(path.join(mp, 'utils/store'));
+ const service = require(path.join(mp, 'utils/cloudRecords'));
+ const sample = () => ({ ...data.initialMemories[0], id: data.createId(), restaurant: 'Real dinner', extraPhotos: [], noPhoto: true });
+@@ -167,7 +171,7 @@ function nativeTabs(initial=0){
+     const cloud = wx.cloud; wx.cloud = null; assert.doesNotThrow(() => app.onLaunch()); wx.cloud = cloud; service.initCloud();
+   });
+   await test('sample boot and local Import never upload', () => {
+-    assert.equal(store.get().memories.length, 7); store.importMemories(data.initialMemories); assert.equal(addCalls, 0); assert.equal(uploadCount, 0);
++    assert.equal(store.get().memories.length, 0); store.importMemories(data.initialMemories); assert.equal(addCalls, 0); assert.equal(uploadCount, 0);
+   });
+   await test('image validator accepts cloud file IDs but rejects malformed schemes and traversal', () => {
+     assert(data.isSafeImage('cloud://env.bucket/dining/a.jpg'));
+@@ -229,7 +233,7 @@ function nativeTabs(initial=0){
+     await assert.rejects(store.syncCloud()); functionDown = false; assert.equal(JSON.stringify(store.get().memories), before);
+   });
+   await test('Case 10: sync does not upload seven bundled samples', async () => {
+-    const before = addCalls; await store.syncCloud(); assert.equal(addCalls, before); assert.equal(store.get().memories.filter(m => !m.cloudId).length, 7);
++    const before = addCalls; await store.syncCloud(); assert.equal(addCalls, before); assert.equal(store.get().memories.filter(m => !m.cloudId).length, 0);
+   });
+   await test('legacy integrated row maps without inventing two votes or a map location', () => {
+     const m = service.cloudRecordToMemory({ _id: 'old', restaurantName: 'Old meal', date: '2026-09-01', ratings: { lajiChong: 3, xiaoXiaoQi: 5 }, photos: [], address: 'Street', cuisine: 'Chinese' });
+@@ -698,13 +702,13 @@ function nativeTabs(initial=0){
+     const location={...pickedLocation,...require(path.join(mp,'utils/locations')).metadata('江苏省苏州市太仓市太仓大道'),address:'江苏省苏州市太仓市太仓大道'};
+     await store.setMemoryLocation(memory,location);assert.equal(rows.get(memory.id).city,'苏州市');assert.equal(rows.get(memory.id).country,'中国');assert.equal(rows.get(memory.id).revision,2);
+   });
+-  await test('legacy local flags migrate once to the durable outbox without uploading sample records', async () => {
++  await test('unknown legacy flags are not automatically claimed or sent', async () => {
+     const created=await main({action:'add',requestId:'old-local-flags-base',data:service.memoryToCloudRecord(sample())});
+     const snapshot=JSON.parse(storage['savor-diary-v1']);snapshot.memories.push({...service.cloudRecordToMemory(created.record),saved:true,localChanges:{saved:true}});
+     storage['savor-diary-v1']=JSON.stringify(snapshot);
+     delete require.cache[require.resolve(path.join(mp,'utils/store'))];store=require(path.join(mp,'utils/store'));
+-    const calls=addCalls;assert.equal(store.get().outbox.filter(o=>o.recordId===created.id).length,1);
+-    await store.syncCloud();assert.equal(rows.get(created.id).saved,true);assert.equal(addCalls,calls);assert(!store.get().memories.find(m=>m.id===created.id).localChanges);
++    const calls=addCalls;assert.equal(store.get().outbox.filter(o=>o.recordId===created.id).length,0);
++    await store.syncCloud();assert.equal(rows.get(created.id).saved,false);assert.equal(addCalls,calls);assert(!store.get().memories.find(m=>m.id===created.id).localChanges);
+   });
+   await test('editing a legacy dual-score memory without touching rating never creates a single score', async () => {
+     const input=service.memoryToCloudRecord(sample());delete input.rating;input.ratings={lajiChong:2,xiaoXiaoQi:4};
+@@ -720,8 +724,8 @@ function nativeTabs(initial=0){
+   });
+   await test('pending mutation snapshots keep local photos referenced during delete and retry', () => {
+     const photos=require(path.join(mp,'utils/photos'));
+-    const refs=photos.collectReferenced({memories:[],profile:{},outbox:[{base:{photo:'/user/savor-photos/base.jpg',extraPhotos:[]},memory:{photo:'/user/savor-photos/new.jpg',extraPhotos:[]}}]});
+-    assert(refs.includes('/user/savor-photos/base.jpg'));assert(refs.includes('/user/savor-photos/new.jpg'));
++    const refs=photos.collectReferenced({memories:[],profile:{},outbox:[{base:{photo:photos.photosDir()+'/base.jpg',extraPhotos:[]},memory:{photo:photos.photosDir()+'/new.jpg',extraPhotos:[]}}]});
++    assert(refs.includes(photos.photosDir()+'/base.jpg'));assert(refs.includes(photos.photosDir()+'/new.jpg'));
+   });
+   await test('negative and invalid costs fail server validation rather than becoming silent zero values', async () => {
+     for(const cost of [-1,'not-money',1000001]) {const result=await main({action:'add',data:{...service.memoryToCloudRecord(sample()),perCapita:cost}});assert.equal(result.code,'INVALID_PER_CAPITA');}
+@@ -745,7 +749,7 @@ function nativeTabs(initial=0){
+     } finally {service.listRecords=original;}
+   });
+   await test('replaying an old Add request after deletion reports deletion instead of resurrecting the meal', async () => {
+-    const attempt={id:'deleted-add-reply-test',memory:sample(),uploads:{},submitted:false};
++    const attempt={actorUserId:'u_'+'a'.repeat(48),id:'deleted-add-reply-test',memory:sample(),uploads:{},submitted:false};
+     const saved=await service.addRecord(attempt,()=>{});
+     const removed=await main({action:'delete',id:saved.id,revision:1,operationId:'delete-after-add-001'});assert(removed.success);
+     await assert.rejects(service.addRecord(attempt,()=>{}),e=>e.code==='DELETED');assert.equal(attempt.submitted,false);assert(rows.get(saved.id).deleted);
+@@ -776,7 +780,7 @@ function nativeTabs(initial=0){
+     const first=await main(request);assert.equal(first.operationRevision,2);
+     await main({action:'update',id:created.id,revision:2,operationId:'s0-receipt-other-edit',data:{note:'Other note'}});
+     const replay=await main(request);assert.equal(replay.record.revision,3);assert.equal(replay.operationRevision,2);assert.equal(replay.operationId,request.operationId);
+-    const memory=await service.mutate({id:request.operationId,recordId:created.id,revision:1,kind:'flags',patch:{saved:true}},()=>{});
++    const memory=await service.mutate({actorUserId:'u_'+'a'.repeat(48),id:request.operationId,recordId:created.id,revision:1,kind:'flags',patch:{saved:true}},()=>{});
+     assert.equal(memory.operationRevision,2);assert(!JSON.stringify(memory).includes('operationRevision'));assert(!replay.record.operationReceipts.some(r=>r.id==='forged'));
+   });
+   await test('S0 queued full-edit projection preserves acknowledged flags and revision', async () => {
+@@ -799,7 +803,7 @@ function nativeTabs(initial=0){
+   });
+   await test('S0 wrong record or operation identity in a response cannot acknowledge a different record', async () => {
+     const created=await main({action:'add',requestId:'s0-response-identity-base',data:service.memoryToCloudRecord(sample())});
+-    const op={id:'s0-response-identity-op',recordId:created.id,revision:1,kind:'flags',patch:{liked:true}};
++    const op={actorUserId:'u_'+'a'.repeat(48),id:'s0-response-identity-op',recordId:created.id,revision:1,kind:'flags',patch:{liked:true}};
+     const original=wx.cloud.callFunction;
+     wx.cloud.callFunction=async(options)=>{const reply=await original(options);if(['flags','get'].includes(options.data.action)) reply.result={...reply.result,record:{...reply.result.record,_id:'wrong-record'}};return reply;};
+     try {await assert.rejects(service.mutate(op,()=>{}),e=>e.code==='INVALID_RESPONSE');await assert.rejects(service.getRecord(created.id),e=>e.code==='INVALID_RESPONSE');}
+@@ -880,9 +884,9 @@ function nativeTabs(initial=0){
+   });
+   await test('import provenance survives owner-scoped cloud add/update and edit roundtrip; unknown metadata is stripped', async () => {
+     const m={...sample(),diningMode:'delivery',sourcePlatform:'meituan',sourceUrl:'https://dpurl.cn/g0eelkTz'};
+-    const saved=await service.addRecord({id:data.createId(),memory:m,uploads:{}},()=>{});
++    const saved=await service.addRecord({actorUserId:'u_'+'a'.repeat(48),id:data.createId(),memory:m,uploads:{}},()=>{});
+     assert.equal(saved.diningMode,'delivery');assert.equal(saved.sourcePlatform,'meituan');assert.equal(saved.sourceUrl,m.sourceUrl);
+-    const edited=await service.mutate({kind:'update',recordId:saved.id,revision:saved.revision,id:data.createId(),uploads:{},memory:{...saved,notes:'Still delivery'}},()=>{});
++    const edited=await service.mutate({actorUserId:'u_'+'a'.repeat(48),kind:'update',recordId:saved.id,revision:saved.revision,id:data.createId(),uploads:{},memory:{...saved,notes:'Still delivery'}},()=>{});
+     assert.equal(edited.sourceUrl,m.sourceUrl);
+     const d=store.beginEdit(edited);assert.equal(d.diningMode,'delivery');assert.equal(d.sourcePlatform,'meituan');store.clearDraft();
+     const schema=require(path.join(root,'cloudfunctions/mealRecords/schema'));
+@@ -899,7 +903,7 @@ function nativeTabs(initial=0){
+   await test('missing edit queue entry completes only with an owner-scoped remote receipt', async () => {
+     const created=await store.createCloudMemory(sample(),draft());
+     const editing=store.beginEdit(created);editing.editOperationId='applied-edit-proof';store.saveDraft(editing);
+-    await service.mutate({kind:'update',recordId:created.id,id:editing.editOperationId,revision:created.revision,uploads:{},memory:{...created,notes:'Acknowledged'}},()=>{});
++    await service.mutate({actorUserId:'u_'+'a'.repeat(48),kind:'update',recordId:created.id,id:editing.editOperationId,revision:created.revision,uploads:{},memory:{...created,notes:'Acknowledged'}},()=>{});
+     await store.createCloudMemory(created,editing);assert.equal(store.loadDraft().editOperationId,undefined);
+     owner='owner-B';try {await assert.rejects(service.confirmOperation(created.id,editing.editOperationId),e=>e.code==='NOT_FOUND');}finally{owner='owner-A';store.clearDraft();}
+   });
+@@ -1171,9 +1175,9 @@ function nativeTabs(initial=0){
+   await test('classification and Tencent POI identity survive cloud edit roundtrip and existing source stays compatible', async () => {
+     const pick=require(path.join(mp,'utils/locations')).fromSearchPoi(lookup.normalizePoi(poi));
+     const m={...sample(),...pick,cuisine:'中餐',diningTypes:['火锅','自助餐'],sourceCategory:poi.category,categorySource:'tencent-poi',noPhoto:true};
+-    const saved=await service.addRecord({id:data.createId(),memory:m,uploads:{}},()=>{});assert.equal(saved.locationSource,'tencent-search');assert.equal(saved.tencentPoiId,'poi-test');assert.deepEqual(saved.diningTypes,['火锅','自助餐']);
++    const saved=await service.addRecord({actorUserId:'u_'+'a'.repeat(48),id:data.createId(),memory:m,uploads:{}},()=>{});assert.equal(saved.locationSource,'tencent-search');assert.equal(saved.tencentPoiId,'poi-test');assert.deepEqual(saved.diningTypes,['火锅','自助餐']);
+     const editing=store.beginEdit(saved);assert.equal(editing.location.tencentPoiId,'poi-test');assert.deepEqual(editing.diningTypes,['火锅','自助餐']);store.clearDraft();
+-    const changed=await service.mutate({kind:'update',id:data.createId(),recordId:saved.id,revision:saved.revision,memory:{...saved,diningTypes:['火锅'],categorySource:'user-confirmed'},uploads:{}},()=>{});assert.deepEqual(changed.diningTypes,['火锅']);assert.equal(changed.categorySource,'user-confirmed');
++    const changed=await service.mutate({actorUserId:'u_'+'a'.repeat(48),kind:'update',id:data.createId(),recordId:saved.id,revision:saved.revision,memory:{...saved,diningTypes:['火锅'],categorySource:'user-confirmed'},uploads:{}},()=>{});assert.deepEqual(changed.diningTypes,['火锅']);assert.equal(changed.categorySource,'user-confirmed');
+     const schema=require(path.join(root,'cloudfunctions/mealRecords/schema'));assert.throws(()=>schema.normalizeLocation({...pick,tencentPoiId:''}),/INVALID_LOCATION/);
+     assert(!require(path.join(mp,'utils/locations')).confirmed({...pick,tencentPoiId:''}));
+   });
+@@ -1238,8 +1242,8 @@ function nativeTabs(initial=0){
+   await test('reference metadata survives cloud add, update and beginEdit without becoming personal rating',async()=>{
+     const d=shareImport.applyCandidate(store.freshDraft(),completeCandidate);
+     const m={...sample(),restaurant:d.restaurant,cuisine:d.cuisine,sourcePlatform:d.sourcePlatform,sourceUrl:d.sourceUrl,sourceCategory:d.sourceCategory,categorySource:d.categorySource,importAddressHint:d.importAddressHint,importAreaText:d.importAreaText,platformRating:d.platformRating,platformAveragePriceCny:d.platformAveragePriceCny,rating:3,ratingSource:'single',perCapita:80};
+-    const saved=await service.addRecord({id:data.createId(),memory:m,uploads:{}},()=>{});
+-    const edited=await service.mutate({kind:'update',recordId:saved.id,revision:saved.revision,id:data.createId(),uploads:{},memory:{...saved,notes:'edit reference roundtrip'}},()=>{});
++    const saved=await service.addRecord({actorUserId:'u_'+'a'.repeat(48),id:data.createId(),memory:m,uploads:{}},()=>{});
++    const edited=await service.mutate({actorUserId:'u_'+'a'.repeat(48),kind:'update',recordId:saved.id,revision:saved.revision,id:data.createId(),uploads:{},memory:{...saved,notes:'edit reference roundtrip'}},()=>{});
+     for(const item of [saved,edited,store.beginEdit(edited)]){assert.equal(item.platformRating,4.8);assert.equal(item.platformAveragePriceCny,172);assert.equal(item.importAddressHint,d.importAddressHint);assert.equal(item.importAreaText,'海运堤');assert.equal(item.rating,3);assert.equal(Number(item.perCapita),80);}
+     store.clearDraft();
+   });
+diff --git a/tools/verify-miniprogram.cjs b/tools/verify-miniprogram.cjs
+index f6152f4..5a4e575 100644
+--- a/tools/verify-miniprogram.cjs
++++ b/tools/verify-miniprogram.cjs
+@@ -291,7 +291,7 @@ section('S. store smoke test');
+     const sandbox = makeWxSandbox();
+     const store = loadStoreInSandbox(sandbox);
+     const state = store.get();
+-    check('S', 'defaults load (7 sample memories)', state.memories.length === 7, String(state.memories.length));
++    check('S', 'verified empty partition has no seeded private records', state.memories.length === 0, String(state.memories.length));
+ 
+     const created = {
+       id: 'smoke-1', restaurant: 'Smoke Diner', city: 'Paris', country: 'France', neighborhood: '',
+@@ -311,7 +311,7 @@ section('S. store smoke test');
+     // corrupt storage fallback: poison the box, reload the module
+     sandbox.storage['savor-diary-v1'] = '{corrupt json!!!';
+     const store2 = loadStoreInSandbox(sandbox);
+-    check('S', 'corrupt storage falls back to defaults', store2.get().memories.length === 7, String(store2.get().memories.length));
++    let refused=false;try{store2.get();}catch(e){refused=true;}check('S','corrupt storage fails closed without reset',refused);delete sandbox.storage['savor-diary-v1'];
+ 
+     // import + dedupe by id
+     const imported = store2.importMemories([created, { ...created, id: 'smoke-2' }]);
+@@ -344,6 +344,7 @@ section('T. import / export smoke test');
+     const store = loadStoreInSandbox(sandbox);
+     const dataMod = loadDataInSandbox(sandbox);
+ 
++    store.importMemories(dataMod.initialMemories);
+     const exported = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), memories: store.get().memories }, null, 2);
+     const parsed = JSON.parse(exported);
+     check('T', 'export payload shape {version, exportedAt, memories}', parsed.version === 1 && Array.isArray(parsed.memories));
+@@ -413,6 +414,7 @@ function loadStoreInSandbox(sandbox) {
+   const storeSrc = fs.readFileSync(path.join(ROOT, 'utils', 'store.js'), 'utf8');
+   const module = { exports: {} };
+   const requireShim = (target) => {
++    if (target === './identity') return require('./identity-fixture.cjs').fixture(sandbox.wx);
+     if (target === './data') return loadDataInSandbox(sandbox);
+     if (target === './i18n') return loadUIUtilityInSandbox(sandbox, 'i18n');
+     if (target === './localDate') return loadUIUtilityInSandbox(sandbox, 'localDate');
+diff --git a/tools/verify-ui-quality.cjs b/tools/verify-ui-quality.cjs
+index 1035ab2..19cdbda 100644
+--- a/tools/verify-ui-quality.cjs
++++ b/tools/verify-ui-quality.cjs
+@@ -8,6 +8,7 @@ const ui=require(path.join(mp,'utils/uiFeedback'));
+ const draft=()=>({restaurant:'',date:'2026-09-12',perCapita:'',photos:[],tags:[],notes:'',rating:0});
+ let scrolls=[];
+ const stubs={
++ identity:require('./identity-fixture.cjs').fixture({getStorageSync(){},setStorageSync(){}}),
+  i18n:{copy:()=>({}),locale:()=> 'en',options:()=>[],t:x=>x,syncPage(){}},
+  uiFeedback:ui,
+  data:{photos:{meal:'/images/le-comptoir.jpg'},defaultProfile:{},formatDate:x=>x,isValidDate:x=>/^\d{4}-\d{2}-\d{2}$/.test(x)},

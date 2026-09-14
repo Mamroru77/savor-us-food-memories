@@ -1,0 +1,13 @@
+{
+  "method": "Isolated actual component logic; synthetic load/commit callbacks; not native rendering",
+  "before": {
+    "generationBefore": 1,
+    "generationAfter": 2,
+    "sameMotionObject": false
+  },
+  "after": {
+    "generationBefore": 1,
+    "generationAfter": 1,
+    "sameMotionObject": true
+  }
+}

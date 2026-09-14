@@ -1,0 +1,66 @@
+{
+  "schema": "g1-local-simulator-v1",
+  "recordedAt": "2026-09-13T22:43:38.4306493+08:00",
+  "sourceControl": {
+    "available": false,
+    "reason": "No .git repository exists in the supplied local test package."
+  },
+  "environment": {
+    "node": "v24.14.0",
+    "wechatDevTools": "2.02.2608070",
+    "baseLibrary": "3.17.3"
+  },
+  "scope": "Historical local WeChat DevTools simulator evidence; G1 was later rejected on device and removed.",
+  "driver": "The runtime invoked the production custom-tab-bar onTabTap handler because element selectors do not cross the custom TabBar component boundary.",
+  "forward": {
+    "route": "pages/me/index",
+    "entryKey": 1,
+    "prepareMs": 0,
+    "addIcon": { "frames": 16, "durationMs": 495, "firstFrameWaitMs": 39, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "frames": 16, "durationMs": 498, "firstFrameWaitMs": 28, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "reverse": {
+    "route": "pages/add/index",
+    "entryKey": 2,
+    "prepareMs": 0,
+    "addIcon": { "frames": 15, "durationMs": 496, "firstFrameWaitMs": 62, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "frames": 13, "durationMs": 496, "firstFrameWaitMs": 51, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "consoleErrorMatches": [],
+  "devicePreviewPush": {
+    "at": "2026-09-13T22:50:07.3624427+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1578128,
+    "note": "Uploaded to WeChat preview infrastructure and pushed to the currently logged-in developer account with explicit user authorization. The resulting vbug13 device capture failed because Add/Me cover-image glyphs were blank."
+  },
+  "deviceDecision": {
+    "status": "rejected",
+    "video": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug13.mp4",
+    "sha256": "929D705101D0B1C37F310666E3E2FA23520702A0905207FA609578F88F2E411C",
+    "reason": "VP1 G1 provenance is visible, but Add and Me glyph pixels are blank while the three ordinary image glyphs remain visible.",
+    "evidenceReport": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug13-analysis/vbug13-evidence.md"
+  },
+  "rollback": {
+    "at": "2026-09-13T23:14:25.7889000+08:00",
+    "success": true,
+    "sourceHashesMatchPreG1Baseline": true,
+    "verifyAll": "PASS: 229 static, 21 TabBar, assets/icons, 233 cloud mocks, 74 handoff, 44 UI, 7 VP1, 4 capture analyzer",
+    "wxmlCompile": "PASS: custom-tab-bar/index.wxml and components/morph-icon/index.wxml",
+    "simulatorConsoleMatches": [],
+    "screenshot": {
+      "path": "reports/captures/devtools-g1-rollback.png",
+      "sha256": "9fabbe7a7984f21b34c9e050d0875c86859177a991a638d006e8f49f4554614c"
+    }
+  },
+  "screenshots": [
+    {
+      "path": "reports/captures/devtools-g1-me.png",
+      "sha256": "7cf5f107b4343eb28299a2ef5a32211d1a5b43ec2893a27ed3f5c4b8dbfd159b"
+    },
+    {
+      "path": "reports/captures/devtools-g1-add-return.png",
+      "sha256": "a90fb1e7794b8106b2c0588258e0e96d7916fe0bed143b00e57f189cbf51054f"
+    }
+  ]
+}

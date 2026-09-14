@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-13",
+  "baseline": "b67bf8c (same tree as 94585cb)",
+  "stage": "navigation independent of animation; declarative command dispatch only",
+  "native": "NOT_EXECUTED",
+  "bounce": "NOT_CLOSED",
+  "checks": {
+    "static": 229,
+    "tab": 21,
+    "mock": 233,
+    "handoff": 35,
+    "ui": 42
+  },
+  "counterexamples": {
+    "scope": "JS adversarial navigation checks; not native device proof",
+    "results": {
+      "rollback": {
+        "wrongOwnerSwitchCalls": 1,
+        "brokenViewSwitchCalls": 0,
+        "twoTapsWithoutSuccessCallbacks": 1
+      },
+      "withdrawnOwner": {
+        "wrongOwnerSwitchCalls": 0,
+        "brokenViewSwitchCalls": 1,
+        "twoTapsWithoutSuccessCallbacks": 1
+      },
+      "candidate": {
+        "wrongOwnerSwitchCalls": 1,
+        "brokenViewSwitchCalls": 1,
+        "twoTapsWithoutSuccessCallbacks": 2
+      }
+    }
+  },
+  "notes": "TAB_NAVIGATION_INDEPENDENCE_FIX.md"
+}

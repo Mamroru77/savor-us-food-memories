@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "s-icon": "/components/icon/index",
+    "s-morph": "/components/morph-icon/index"
+  }
+}

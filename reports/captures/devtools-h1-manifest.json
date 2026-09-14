@@ -1,0 +1,63 @@
+{
+  "schema": "h1-local-simulator-v1",
+  "recordedAt": "2026-09-14T02:24:17.1948158+08:00",
+  "sourceControl": {
+    "branch": "fix-9.13",
+    "baselineCommit": "861587c9049ea6958653c31b477c7619dd5aa381",
+    "experimentCommit": "c4e140133d3709499e1b05512b44d2aa9548e3ed",
+    "dirtyDuringCapture": true,
+    "reason": "H1 was captured before its independent experiment commit."
+  },
+  "environment": {
+    "node": "v24.14.0",
+    "wechatDevTools": "2.02.2608070",
+    "simulator": "iPhone 12/13 Pro",
+    "platform": "devtools",
+    "baseLibrary": "3.17.3"
+  },
+  "scope": "Local WeChat DevTools simulator only; not device evidence.",
+  "variable": "For Add <-> Me only, publish the current ACTIVE transition to every cached TabBar peer except the visible source immediately before wx.switchTab, without waiting.",
+  "automation": {
+    "prewarm": ["pages/me/index", "pages/add/index"],
+    "elementTap": "UNAVAILABLE: custom native TabBar was outside the element query surface",
+    "executed": "The supported runtime evaluator invoked the real onTabTap handler, which executed H1 and wx.switchTab.",
+    "deviceTouch": false
+  },
+  "forward": {
+    "route": "pages/me/index",
+    "entryKey": 1,
+    "prepareMs": 18,
+    "addIcon": { "durationMs": 504, "firstFrameWaitMs": 82, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "durationMs": 509, "firstFrameWaitMs": 71, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "reverse": {
+    "route": "pages/add/index",
+    "entryKey": 2,
+    "prepareMs": 14,
+    "addIcon": { "durationMs": 502, "firstFrameWaitMs": 88, "frameBudgetMs": 480, "fallbackOnly": false },
+    "meIcon": { "durationMs": 502, "firstFrameWaitMs": 80, "frameBudgetMs": 480, "fallbackOnly": false }
+  },
+  "consoleErrorMatches": [],
+  "screenshots": [
+    { "path": "reports/captures/devtools-h1-me.png", "sha256": "bd643ccb20d6aacedb3c4aca86fc7bc3305b0c09c76c6f98f56805533ee98bfa" },
+    { "path": "reports/captures/devtools-h1-add.png", "sha256": "b31e2f7a74f216417af047c004ded76f4f49b30d53ba99aeb39d3550ffbf6ad6" }
+  ],
+  "devicePreviewPush": {
+    "recordedAt": "2026-09-14T02:27:27.3909586+08:00",
+    "success": true,
+    "pagePath": "pages/add/index",
+    "packageBytes": 1577583,
+    "note": "Pushed to the currently logged-in developer WeChat account. This is delivery evidence, not device acceptance."
+  },
+  "deviceCapture": {
+    "path": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug16.mp4",
+    "sha256": "d0750b67380fe441211b7ff1971173d7c4277c70bd1d564c4ba0696b5d9dc051",
+    "captureCommit": "924e24e0e0acf90625233a96a2a777d86d8c0304",
+    "captureDirty": false,
+    "sequence": "Add -> Me -> Add",
+    "jsonLog": null,
+    "report": "E:/HuaweiMoveData/Users/HUAWEI/Desktop/临时/vbug16-analysis/vbug16-evidence.md",
+    "verdict": "REJECTED: both directions restored the old endpoint picture before the current primed entry and origin became visible."
+  },
+  "deviceStatus": "REJECTED_AND_REMOVED"
+}

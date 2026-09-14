@@ -1,0 +1,1 @@
+<image wx:if="{{src}}" class="s-icon" style="{{box}}" src="{{src}}" mode="aspectFit" />

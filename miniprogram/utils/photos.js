@@ -1,0 +1,145 @@
+const identity = require('./identity');
+// Photo pipeline: pick → compress → persist under USER_DATA_PATH.
+// Temporary files from wx.chooseMedia must be copied before their paths
+// are stored in the diary, or they expire and leave broken images.
+const FS = wx.getFileSystemManager();
+
+let dir = '';
+function photosDir() {
+  return wx.env.USER_DATA_PATH + '/savor-photos/' + identity.lease().userId;
+}
+
+function ensureDir() {
+  try {
+    FS.accessSync(photosDir());
+  } catch (error) {
+    try { FS.mkdirSync(photosDir(), true); } catch (inner) { /* handle on write */ }
+  }
+}
+
+function isUserPhoto(path) {
+  return typeof path === 'string' && path.indexOf(photosDir()+'/') === 0;
+}
+
+function wrap(promiseStyleFn) {
+  return function (options) {
+    return new Promise(function (resolve, reject) {
+      promiseStyleFn.call(wx, Object.assign({}, options, { success: resolve, fail: reject }));
+    });
+  };
+}
+
+const chooseMedia = wrap(wx.chooseMedia);
+const compressImage = wrap(wx.compressImage);
+
+// Pick up to `count` images and persist them; resolves with local paths.
+function choosePhotos(count) {
+  let token=identity.lease();
+  return chooseMedia({
+    count: count,
+    mediaType: ['image'],
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+  }).then(async function (result) {
+    token=await identity.resumeNative(token);
+    const tasks = (result.tempFiles || []).map(function (file) {
+      return persistPhoto(file.tempFilePath);
+    });
+    return Promise.all(tasks).then(paths=>{identity.assertLease(token);return paths;});
+  });
+}
+
+// Copy one image into our persistent folder (compress first when possible).
+function persistPhoto(tempPath) {
+  const token=identity.lease();
+  if (!tempPath) return Promise.reject(new Error('No photo selected.'));
+  if (isUserPhoto(tempPath)) return Promise.resolve(tempPath); // already ours
+  ensureDir();
+  return compressImage({ src: tempPath, quality: 78 })
+    .then(function (res) {
+      identity.assertLease(token);return copyIn(res.tempFilePath);
+    })
+    .catch(function () {
+      identity.assertLease(token);return copyIn(tempPath); // compression is best-effort
+    });
+}
+
+function copyIn(source) {
+  const token=identity.lease();
+  return new Promise(function (resolve, reject) {
+    const target = photosDir() + '/' + data_createId() + '.jpg';
+    FS.copyFile({
+      srcPath: source,
+      destPath: target,
+      success: function () { try{identity.assertLease(token);resolve(target);}catch(e){reject(e);} },
+      fail: function (error) {
+        // last resort: read + write (handles some temp filesystem quirks)
+        FS.readFile({
+          filePath: source,
+          success: function (res) {
+            FS.writeFile({
+              filePath: target,
+              data: res.data,
+              success: function () { try{identity.assertLease(token);resolve(target);}catch(e){reject(e);} },
+              fail: reject,
+            });
+          },
+          fail: reject,
+        });
+      },
+    });
+  });
+}
+
+function data_createId() {
+  return 'ph-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+function removePhoto(path) {
+  return; // S1: no destructive cleanup across uncertain legacy references.
+
+  if (!isUserPhoto(path)) return; // bundled /images and remote urls stay
+  try { FS.unlinkSync(path); } catch (error) { /* already gone */ }
+}
+
+// Delete user photos that are no longer referenced anywhere.
+function pruneOrphans(keepPaths) {
+  return; // S1: retain local files until a cross-partition reference registry is approved.
+
+  const keep = Object.create(null);
+  (keepPaths || []).forEach(function (path) { if (path) keep[path] = true; });
+  try {
+    FS.readdirSync(photosDir()).forEach(function (name) {
+      const full = photosDir() + '/' + name;
+      if (!keep[full]) removePhoto(full);
+    });
+  } catch (error) { /* folder missing — nothing to prune */ }
+}
+
+// Collect every user photo path referenced by a diary state object.
+function collectReferenced(state) {
+  const refs = [];
+  (state.memories || []).concat((state.outbox||[]).reduce((all,op)=>all.concat([op.base,op.memory].filter(Boolean)),[])).forEach(function (memory) {
+    [memory.photo, memory.placePhoto].concat(memory.extraPhotos || []).forEach(function (path) {
+      if (isUserPhoto(path)) refs.push(path);
+    });
+  });
+  const avatar = state.profile && state.profile.avatar;
+  if (isUserPhoto(avatar)) refs.push(avatar);
+  try {
+    const raw = identity.getStorageSync('savor-draft-v1');
+    const draft = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    (draft && draft.photos || []).forEach(path => { if (isUserPhoto(path)) refs.push(path); });
+  } catch (error) { /* corrupt draft has no valid references */ }
+  return refs;
+}
+
+module.exports = {
+  photosDir,
+  isUserPhoto,
+  choosePhotos,
+  persistPhoto,
+  removePhoto,
+  pruneOrphans,
+  collectReferenced,
+};

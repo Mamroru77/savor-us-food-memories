@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="286" viewBox="0 0 256 286"><defs><clipPath id="photo"><rect x="32" y="43" width="192" height="195" rx="27" /></clipPath></defs>
+ <ellipse cx="128" cy="279" rx="36" ry="6" fill="#263b31" opacity=".13" />
+ <path d="M65 35H192Q232 35 232 77V203Q232 249 187 249H149L128 276 107 249H66Q24 249 24 203V78Q24 35 65 35Z" fill="none" stroke="#fff9ef" stroke-width="11" />
+ <path d="M65 35H192Q232 35 232 77V203Q232 249 187 249H149L128 276 107 249H66Q24 249 24 203V78Q24 35 65 35Z" fill="none" stroke="#2d3c31" stroke-width="4" />
+ <path d="M106 247h44l-22 28Z" fill="#fff9ef" />
+ <path d="M106 249l22 27 22-27" fill="none" stroke="#2d3c31" stroke-width="4" />
+ <g clip-path="url(#photo)"><rect x="32" y="43" width="192" height="195" fill="#e5e4d7" /><g data-lucide="image" transform="translate(87 97) scale(3.4166666667)" fill="none" stroke="#a6af98" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+  <circle cx="9" cy="9" r="2" />
+  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+</g></g>
+ <path d="M25 5H63Q82 5 82 25V61Q82 80 60 80L46 94 33 80H24Q6 80 6 61V26Q6 5 25 5Z" fill="#273b31" stroke="#fff9ef" stroke-width="3.5" />
+ <text x="44" y="63" text-anchor="middle" font-family="Noto Serif CJK SC,serif" font-size="60" fill="#fff9ef">S</text>
+ <path d="M181 164H220Q241 164 241 186V216Q241 237 220 237L204 253 190 237H181Q164 237 164 217V186Q164 164 181 164Z" fill="#fff7e7" stroke="#52604b" stroke-width="3" />
+ <g data-lucide="utensils" transform="translate(173 172) scale(2.4166666667)" fill="none" stroke="#ae6241" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+  <path d="M7 2v20" />
+  <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+</g><circle cx="218" cy="40" r="25" fill="#416344" stroke="#fffaf0" stroke-width="4" /><g data-lucide="check" transform="translate(198 20) scale(1.6666666667)" fill="none" stroke="#fffaf0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" />
+</g></svg>

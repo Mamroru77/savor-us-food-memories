@@ -1,0 +1,18 @@
+{
+  "baseVersion": "e3b434c",
+  "productionRenderer": "svg-image",
+  "nativeCanvasInProductionTabs": false,
+  "durationMs": 480,
+  "schedulerMs": 32,
+  "maxInFlightPerIconPerGeneration": 1,
+  "newMockScenarios": 6,
+  "addProposal": "APPROVED_AND_IMPLEMENTED: L, Utensils / UtensilsCrossed, 480ms",
+  "nativeRootCause": "INFERRED_NOT_UNIQUELY_CONFIRMED",
+  "nativeVisualAcceptance": "NOT_EXECUTED",
+  "nativeMapArchitecture": "NOT_CHANGED",
+  "clock": "first SVG image load AND view commit",
+  "frameProgress": "bounded visual budget; delayed commits extend, not skip",
+  "firstFrameTimeoutMs": 1200,
+  "timingRegressionScenarios": 4,
+  "candidatePreview": "L selected and implemented; other external candidates remain alternatives"
+}

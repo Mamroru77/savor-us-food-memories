@@ -1,0 +1,1 @@
+.gate{padding:240rpx 56rpx 180rpx;display:flex;flex-direction:column;gap:32rpx;background:#eeece9;min-height:100vh;box-sizing:border-box;color:#424740;font-size:28rpx;line-height:1.8}.title{font-size:42rpx;font-weight:600}.gate-button{font-size:28rpx;background:#dedfd4;color:#171a16;width:100%}
