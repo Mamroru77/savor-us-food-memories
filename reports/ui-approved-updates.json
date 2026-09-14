@@ -64,8 +64,8 @@
     "reason": "J1真机PTS证据显示hide后停放仍未更新下一次恢复画面，故删除hide发布及专属状态；恢复即时导航且点击前后不修改源栏，保留VP1、480ms真实形变与Map。"
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "6d5761671734cbe6a5d62bc28179d8c18bbbd0e92555f09afdd761517e21b00c",
-    "reason": "J1真机证据判定失败后删除专属包标识；保留通用VP1、真实图形、即时导航、五Tab、480ms时钟与Map。"
+    "sha256": "0319ed325461ccd790bc1df12617d501473099d087cc4ac1f95a46c9093e9c25",
+    "reason": "K1仅增加真机包来源标识，用于Add/Me Skyline渲染管线对照；不参与布局、导航、SVG形变、480ms时钟或Map。"
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "5a30eac0dea3f257b9af715d0307d3451bc500372aa0fd98b7c9cd0e8db507ac",

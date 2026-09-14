@@ -24,6 +24,15 @@ test('parent badge identifies actual publishing instance not guessed owner',()=>
  const bar=read('custom-tab-bar/index.wxml');assert(bar.includes('B{{viewState.probeBar}} K{{entryKey}} R{{viewState.revision}}'));
  assert(read('custom-tab-bar/index.wxss').includes('pointer-events:none'));
 });
+test('K1 changes only the Add and Me page renderers, never Map',()=>{
+ assert.equal(JSON.parse(read('pages/add/index.json')).renderer,'skyline');
+ assert.equal(JSON.parse(read('pages/me/index.json')).renderer,'skyline');
+ assert.equal(JSON.parse(read('pages/add/index.json')).componentFramework,'glass-easel');
+ assert.equal(JSON.parse(read('pages/me/index.json')).componentFramework,'glass-easel');
+ assert.equal(JSON.parse(read('pages/map/index.json')).renderer,undefined);
+ assert.equal(JSON.parse(read('pages/map/index.json')).componentFramework,undefined);
+ assert(read('custom-tab-bar/index.wxml').includes('VP1 K1'));
+});
 for(const name of ['add','me'])test(name+' page marker counts instance and show visits without sharing business data',()=>{
  const src=read('pages/'+name+'/index.js');const a=src.indexOf('this._visualProbeId=this._visualProbeId||++visualProbeSerial;');
  const b=src.indexOf('\n',src.indexOf('this.setData({visualProbe:',a));const code=src.slice(a,b);

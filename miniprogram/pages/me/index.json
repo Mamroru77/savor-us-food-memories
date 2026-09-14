@@ -1,4 +1,6 @@
 {
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
   "usingComponents": {
     "s-icon": "/components/icon/index",
     "s-sheet": "/components/sheet/index",
