@@ -83,7 +83,7 @@ P0/P1 已实施，P2 仅修正实拍支持的禁用文字对比度；无依据�
 > 已确认缺少 savor_accounts，已通过云控制台安全补建并回读“所有用户不可读写”；客户端读/更新均 -502003。两次 account success:true、同一身份、集合仅1条记录。account 已部署白名单诊断响应，SDK核心版本不变；本批 handshake=0，默认仍 diagnostic，未恢复同步。最终报告：docs/mcp-account-complete-20260915.md。以下记录为保留的旧阶段状态，不覆盖本条最新结果。
 
 > **2026-09-15 审计修复更新（独立候选，未发布）**
-> 本轮 8/8 审计问题组已完成本地候选修复；正常模式已准备，默认仍为 diagnostic。完整离线回归与原包 SDK 拦截检查见 `AUDIT_REPAIRS.md`。没有推送、部署或真实账号/业务调用。历史 ACCOUNT_UNAVAILABLE 根因仍未定位，L4/L5 未验收；此前 S1–S4 的 9/9 仅指候选实现，不能等同生产通过。以下为保留的原进度记录。
+> 本轮 8/8 审计问题组已完成本地候选修复；正常模式已准备，默认仍为 diagnostic。完整离线回归与原包 SDK 拦截检查见 `docs/history/AUDIT_REPAIRS.md`。没有推送、部署或真实账号/业务调用。历史 ACCOUNT_UNAVAILABLE 根因仍未定位，L4/L5 未验收；此前 S1–S4 的 9/9 仅指候选实现，不能等同生产通过。以下为保留的原进度记录。
 
 # Savor 总进度：9类业务均已有候选实现
 
@@ -159,7 +159,7 @@ P0/P1 已实施，P2 仅修正实拍支持的禁用文字对比度；无依据�
 
 ## 下一阶段：一次性统一验收
 
-唯一总清单：**`UNIFIED_ACCEPTANCE.md`**。本批实现与范围：`S4_IMPLEMENTATION.md`。
+唯一总清单：**`docs/status/UNIFIED_ACCEPTANCE.md`**。本批实现与范围：`docs/history/S4_IMPLEMENTATION.md`。
 
 1. 独立代码审查与本地微信编译/模拟器自动化。
 2. 获授权后协同部署云函数、集合、私有权限、模板/渠道/工作器。

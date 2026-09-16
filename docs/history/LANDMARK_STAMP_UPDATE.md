@@ -13,8 +13,8 @@
 - 保留点击标记居中、显式全览的逻辑，并补上餐厅名称 callout 点击事件。
 - 深浅主题共用有奶白轮廓的标记，不修改主题体系、Map 卡片尺寸或 Me 高度。
 
-设计预览：`design-references/landmark-stamp-preview.png`，使用示例照片，非真机截图。
-用户参考图：`design-references/landmark-user-reference.png`。
+设计预览：`docs/design/landmark-stamp-preview.png`，使用示例照片，非真机截图。
+用户参考图：`docs/design/landmark-user-reference.png`。
 
 ## 真实照片，而非固定示例贴图
 

@@ -1,4 +1,4 @@
-> 历史范围说明：本文记录 bb2cb52 的 Map-only 调整。当前 Tab 修正版与验收状态请看 `TAB_ATOMIC_HANDOFF_FIX.md`；下文“本包不修改 Tab”仅指当时的 Map 提交。
+> 历史范围说明：本文记录 bb2cb52 的 Map-only 调整。当前 Tab 修正版与验收状态请看 `docs/history/TAB_ATOMIC_HANDOFF_FIX.md`；下文“本包不修改 Tab”仅指当时的 Map 提交。
 
 # Map 堆叠与底部卡片一致性调整
 

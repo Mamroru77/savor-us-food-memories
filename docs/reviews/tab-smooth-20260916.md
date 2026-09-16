@@ -32,5 +32,5 @@ SVG 帧图片到最终静态图标的原生解码/合成交接仍是后续排查
 
 - 新预览码：`Savor_Tab优化版预览二维码.jpg`，包含此前地图优化和本轮 Tab 变更。
 - Windows 证据、原始备份：`reports/tab-smooth-20260916/`。
-- 工程说明：`docs/tab-smooth-20260916.md`。
+- 工程说明：`docs/reviews/tab-smooth-20260916.md`。
 - 正常模式、Map 修复、数据权限、日记、草稿和其他业务流程不变。

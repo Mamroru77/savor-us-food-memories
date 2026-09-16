@@ -97,11 +97,11 @@ Add 已增加入口，展示：链接导入 / 截图 OCR / 手动记录。前两
 - `app.json`：chooseLocation 隐私 API 声明与 scope.userLocation 用途说明。
 - `cloudfunctions/mealRecords/index.js`、`schema.js`：位置字段增量及服务端授权更新。
 - `tools/verify-cloud.cjs`：新增位置、权限、动态背景、滚动结构检查。
-- `README.md`、`STAGE2_SETUP.md`、`MIGRATION_REPORT.md`：新增本次更新指引，原迁移报告保留为历史记录。
+- `README.md`、`docs/history/STAGE2_SETUP.md`、`docs/history/MIGRATION_REPORT.md`：新增本次更新指引，原迁移报告保留为历史记录。
 
 新增：
 - `utils/locations.js`：原生腾讯地图选点、坐标校验与确认状态的统一封装。
-- `reports/ui-approved-updates.json`：11 个本轮用户明确要求调整的 UI 文件哈希和理由。原 ui-baseline.json 不删除；其余 UI 文件继续对比原 best-ui，TabBar 仍完全不变。
+- `tools/fixtures/regression/ui-approved-updates.json`：11 个本轮用户明确要求调整的 UI 文件哈希和理由。原 ui-baseline.json 不删除；其余 UI 文件继续对比原 best-ui，TabBar 仍完全不变。
 - `reports/latest-validation.log`：本轮完整测试结果。
 - 本更新说明。
 

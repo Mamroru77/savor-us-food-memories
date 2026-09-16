@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
 let tests=0;function test(name,fn){fn();tests++;console.log('PASS '+name);}
-const read=p=>fs.readFileSync(p,'utf8'),base='reports/ui-polish-20260916/backup/';
+const read=p=>fs.readFileSync(p,'utf8'),base='tools/fixtures/regression/ui-polish-20260916/backup/';
 const attrs=s=>Array.from(s.matchAll(/\b(bindtap|bindinput|bindchange)="([^"]+)"/g),m=>m[1]+':'+m[2]).sort();
 for(const name of ['account','space','workspace','reports'])test(name+' preserves all business interaction bindings',()=>{const p='miniprogram/pages/'+name+'/index.wxml';assert.deepEqual(attrs(read(p)),attrs(read(base+p)));});
 for(const name of ['workspace','reports'])test(name+' displays gate OR normal content, never a full-screen gate above normal content',()=>{const s=read('miniprogram/pages/'+name+'/index.wxml');assert.match(s,/^<s-identity-gate wx:if="\{\{locked\}\}"\s*\/>\s*<view wx:else/);assert.equal((s.match(/<s-identity-gate/g)||[]).length,1);});
@@ -10,14 +10,14 @@ test('identity gate reads device theme without verification or private reads',()
 test('empty lists are not claimed during loading or errors',()=>{for(const [page,list] of [['workspace','tasks'],['workspace','jobs'],['space','wishes'],['space','meals']])assert(read('miniprogram/pages/'+page+'/index.wxml').includes('!busy && !message && !'+list+'.length'));});
 test('Us entry and help cloud entry use existing secondary controls',()=>{assert(read('miniprogram/pages/us/index.wxml').includes('space-management secondary-button'));const s=read('miniprogram/components/sheet/index.wxml');assert.match(s,/class="secondary-button cloud-feedback-link" bindtap="onCloudFeedback"/);assert(s.includes("locale === 'zh-CN' ? '云端反馈' : 'Cloud feedback'"));});
 test('year report poster dimensions and sharing safeguards remain intact',()=>{const js=read('miniprogram/pages/reports/index.js');assert(js.includes('canvas.width=720;canvas.height=1040'));assert(js.includes('if(!consent.confirm||!this.alive(token))return'));assert(read('miniprogram/pages/reports/index.wxml').includes('checked="{{details}}" bindchange="details"'));assert(read('miniprogram/pages/reports/index.wxss').includes('height:991rpx'));});
-test('normal mode and native map/tab geometries are unchanged',()=>{assert.equal(require('../miniprogram/utils/runtimeConfig').identityMode,'normal');const changed=JSON.parse(read('reports/ui-polish-20260916/changes.json')).files.map(x=>x.path);for(const p of changed)assert(!p.includes('custom-tab-bar')&&!p.includes('pages/map/')&&!p.includes('pages/home/'));});
+test('normal mode and native map/tab geometries are unchanged',()=>{assert.equal(require('../miniprogram/utils/runtimeConfig').identityMode,'normal');const changed=JSON.parse(read('tools/fixtures/regression/ui-polish-20260916/changes.json')).files.map(x=>x.path);for(const p of changed)assert(!p.includes('custom-tab-bar')&&!p.includes('pages/map/')&&!p.includes('pages/home/'));});
 // Official WXSS compatibility: native disabled semantics stay authoritative.
 const controlTemplates=['components/identity-gate','pages/account','pages/space','pages/workspace','pages/reports'].map(p=>'miniprogram/'+p+'/index.wxml');
 const openingButtons=s=>s.match(/<button\b(?:[^>"']|"[^"]*"|'[^']*')*>/g)||[];
 const buttonAttributes=s=>Object.fromEntries(Array.from(s.matchAll(/\s([\w:-]+)="([^"]*)"/g),m=>[m[1],m[2]]));
 test('official WXSS state classes preserve every button attribute and existing class',()=>{
   for(const p of controlTemplates){
-    const before=openingButtons(read('reports/official-review-20260916/backup/'+p));
+    const before=openingButtons(read('tools/fixtures/regression/official-review-20260916/backup/'+p));
     const after=openingButtons(read(p));assert.equal(after.length,before.length,p);
     before.forEach((tag,i)=>{const a=buttonAttributes(tag),b=buttonAttributes(after[i]);const ca=a.class||'',cb=b.class||'';delete a.class;delete b.class;assert.deepEqual(b,a,p+' button '+i);
       const d=a.disabled&&a.disabled.match(/^\{\{([\s\S]*)\}\}$/);

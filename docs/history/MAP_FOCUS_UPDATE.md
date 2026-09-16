@@ -16,9 +16,9 @@
 
 用户最终提供自己的照片＋S 字标＋叉勺组合图并要求应用，不再使用早前候选。
 
-- 参考：`design-references/landmark-user-reference.png`。
-- 最终预览：`design-references/landmark-stamp-preview.png`。
-- 当前实现、渲染边界与部署说明见 `LANDMARK_STAMP_UPDATE.md`。
+- 参考：`docs/design/landmark-user-reference.png`。
+- 最终预览：`docs/design/landmark-stamp-preview.png`。
+- 当前实现、渲染边界与部署说明见 `docs/history/LANDMARK_STAMP_UPDATE.md`。
 
 ## 上轮居中修复的验证和部署
 

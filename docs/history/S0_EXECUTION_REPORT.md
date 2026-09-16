@@ -86,9 +86,9 @@
 | 平台链接访问与字段支持结论 | 已执行首轮网页探测，未获得详情；不影响本地文案候选 |
 | S1 身份与缓存方案 | 契约草案已准备，未接入运行时 |
 
-设备验收模板：`S0_DEVICE_ACCEPTANCE.csv`。
-链接验证模板：`S0_LINK_SUPPORT_MATRIX.csv`。
-S1 准备：`S1_IDENTITY_CACHE_CONTRACT.md`。
+设备验收模板：`docs/history/S0_DEVICE_ACCEPTANCE.csv`。
+链接验证模板：`docs/history/S0_LINK_SUPPORT_MATRIX.csv`。
+S1 准备：`docs/history/S1_IDENTITY_CACHE_CONTRACT.md`。
 
 ## 6. 下一步输入
 

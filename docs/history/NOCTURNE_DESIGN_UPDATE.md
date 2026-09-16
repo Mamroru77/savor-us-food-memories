@@ -32,7 +32,7 @@ Home / Map / Us / Me 八处内容卡片仍统一材质。Me 菜单增加暗色�
 
 ## 配色预览
 
-打开 [NOCTURNE_PREVIEW.html](NOCTURNE_PREVIEW.html)，可在上一版与新版之间切换，比较 Me / Sheet 的材质。它是使用相同色值制作的**配色示意，不是微信截图或原生运行结果**；示例数字不是用户实时统计，字体/地图合成仍以微信端为准。
+打开 [NOCTURNE_PREVIEW.html](../design/NOCTURNE_PREVIEW.html)，可在上一版与新版之间切换，比较 Me / Sheet 的材质。它是使用相同色值制作的**配色示意，不是微信截图或原生运行结果**；示例数字不是用户实时统计，字体/地图合成仍以微信端为准。
 
 ## 验证
 

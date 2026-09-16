@@ -8,7 +8,7 @@
     "verify:tabbar": "node tools/verify-tabbar.cjs",
     "verify:assets": "node tools/verify-assets.cjs",
     "verify:cloud": "node tools/verify-cloud.cjs",
-    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:workspace && npm run verify:audit && npm run verify:map-save && npm run verify:secondary-ui && npm run verify:map-motion && npm run verify:page-lifecycle && npm run verify:menu-copy && npm run verify:audit-stages && npm run verify:sheet-edits && npm run verify:visual-language",
+    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:workspace && npm run verify:audit && npm run verify:map-save && npm run verify:secondary-ui && npm run verify:map-motion && npm run verify:page-lifecycle && npm run verify:menu-copy && npm run verify:audit-stages && npm run verify:sheet-edits && npm run verify:visual-language && npm run verify:structure",
     "build:locales": "node tools/build-locales.cjs",
     "build:icons": "node tools/build-icons.cjs",
     "verify:icons": "node tools/verify-icons.cjs",
@@ -29,6 +29,7 @@
     "verify:menu-copy": "node tools/verify-menu-copy.cjs",
     "verify:audit-stages": "node tools/verify-audit-stages.cjs",
     "verify:sheet-edits": "node tools/verify-sheet-edits.cjs",
-    "verify:visual-language": "node tools/verify-visual-language.cjs"
+    "verify:visual-language": "node tools/verify-visual-language.cjs",
+    "verify:structure": "node tools/verify-structure.cjs"
   }
 }

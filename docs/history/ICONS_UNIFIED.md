@@ -11,7 +11,7 @@ User approved the full SVG review, stamp glyph treatment and replacement of Spar
 - Lightbulb for preference tips; Bell for notification symbols; NotebookPen for Save. No remaining Sparkles in runtime icon data or UI.
 - Map error placeholder: MapPinOff. LoaderCircle, CircleQuestionMark and Trash canonical names replace old aliases.
 - Native stack buttons use official ChevronUp/Down inside existing round containers.
-- Stamp Utensils, Check and Image glyphs updated. S brand, frame, photo aperture, anchors and pixel dimensions retained. Four PNGs were compared with 2068cc6: no pixel changes outside declared icon regions (`reports/icon-unification-validation.json`).
+- Stamp Utensils, Check and Image glyphs updated. S brand, frame, photo aperture, anchors and pixel dimensions retained. Four PNGs were compared with 2068cc6: no pixel changes outside declared icon regions (`tools/fixtures/regression/icon-unification-validation.json`).
 - Removed unused legacy pin.png / stack-chevron.svg and home-filled shape. Baseline guard permits only that explicit obsolete PNG removal; current native map assets are now required by asset validation.
 - Nested asset paths are included in asset-reference scanning.
 

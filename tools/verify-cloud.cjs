@@ -115,8 +115,8 @@ function nativeTabs(initial=0){
 }
 (async () => {
   await test('best-ui visual files match baseline or explicit user-requested UI amendments', () => {
-    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'reports/ui-baseline.json')));
-    const approved = JSON.parse(fs.readFileSync(path.join(root, 'reports/ui-approved-updates.json')));
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tools/fixtures/regression/ui-baseline.json')));
+    const approved = JSON.parse(fs.readFileSync(path.join(root, 'tools/fixtures/regression/ui-approved-updates.json')));
     for (const [file, original] of Object.entries(manifest.sha256)) {
       if (approved[file] && approved[file].removed === true) {
         assert.equal(file, 'miniprogram/images/pin.png', 'only the explicitly audited obsolete pin may be removed');
@@ -827,7 +827,7 @@ function nativeTabs(initial=0){
     finally {service.addRecord=original;store.clearDraft();}
   });
   const shareImport = require(path.join(mp, 'utils/shareImport'));
-  const shareSamples = JSON.parse(fs.readFileSync(path.join(root, 'reports/link-samples-2026-09-11.json'))).samples;
+  const shareSamples = JSON.parse(fs.readFileSync(path.join(root, 'tools/fixtures/regression/link-samples-2026-09-11.json'))).samples;
   for (const [index, item] of shareSamples.entries()) await test('share import real text fixture ' + item.id, () => {
     const c = shareImport.parse(item.shareText, index < 3 ? 'dianping' : 'meituan');
     assert.equal(c.name, item.candidateFromUserText.name);
@@ -1273,7 +1273,7 @@ function nativeTabs(initial=0){
   });
   await test('merchant page status is noninteractive and separate from optional Tencent location errors',()=>{
     const w=fs.readFileSync(path.join(mp,'pages/add/index.wxml'),'utf8');const status=w.split('<view class="merchant-page-status">')[1].split('</view>')[0];assert(!/bindtap|switch|button/.test(status));assert(w.indexOf('merchant-page-status')<w.indexOf('location-search-section'));assert(w.indexOf('{{importLookupError}}')>w.indexOf('location-search-section'));assert(!w.includes('copy.sd6d6617fee'));
-    const report=JSON.parse(fs.readFileSync(path.join(root,'reports/merchant-page-public-recheck.json'),'utf8'));assert.equal(report.results.length,5);assert(report.results.every(x=>x.merchantFieldsRetrieved.length===0));
+    const report=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/regression/merchant-page-public-recheck.json'),'utf8'));assert.equal(report.results.length,5);assert(report.results.every(x=>x.merchantFieldsRetrieved.length===0));
   });
   await test('DevTools camera skips unsupported moveToLocation and falls back to one real point',()=>{
     const original=wx.getDeviceInfo;wx.getDeviceInfo=()=>({platform:'devtools'});

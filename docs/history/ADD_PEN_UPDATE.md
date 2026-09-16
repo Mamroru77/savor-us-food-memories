@@ -8,4 +8,4 @@ Added two reviewed SVG originals with source hashes. Registry: 47 canonical shap
 
 Regression checks cover the exact official Pen/PenLine paths, all production pairs, finite intermediates, SVG reverse/re-entry/Quiet and existing native-layer guards. Native visual/performance and residual ghosting acceptance remain NOT EXECUTED. No cloud deployment required.
 
-Current visual reference: `design-references/add-tab-preview.html`. Earlier full-catalog previews document the previously approved Add design, not the current endpoint pair.
+Current visual reference: `docs/design/add-tab-preview.html`. Earlier full-catalog previews document the previously approved Add design, not the current endpoint pair.

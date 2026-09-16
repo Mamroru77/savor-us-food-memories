@@ -90,6 +90,6 @@ Windows 最新工作区：
 - `reports/mcp-unified-evidence/cloud-only/`：策略回归、生产部署、编译与真实配置验证。
 - `reports/mcp-unified-evidence/isolated/`：隔离 ACL、206 次调用结果、数据保全、关闭入口证据。
 - `tools/verify-feedback-policy.cjs`：已接入常规回归的新增策略检查。
-- `docs/mcp-cloud-only-isolated-20260915.md`：本次最终报告。
+- `docs/reviews/mcp-cloud-only-isolated-20260915.md`：本次最终报告。
 
 未用旧 ZIP 覆盖最新工程。历史报告中“缺少提醒模板/反馈接收端”和“500 条云端测试未执行”的状态，已由本报告中的最新选择与证据更新。

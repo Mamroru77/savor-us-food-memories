@@ -17,7 +17,7 @@
 1. 先记录 `git status --short --branch`、`git rev-parse HEAD`、本机未提交变更，并备份。禁止 reset --hard、整目录覆盖或换回旧 ZIP。
 2. 如果 S1 已在本地工程，直接审查；若未应用，使用交付的 `savor-s1-4daeb2e.patch`：先 `git apply --check <补丁路径>`，通过后再 `git apply <补丁路径>`。补丁以 4daeb2e 为基线，包含新增文件。
 3. 如果本地 HEAD 有更新、check 失败或有未提交重叠，停止自动应用，逐文件三方合并并保留用户变更。全量源码 ZIP 仅供比对，不整目录覆盖。
-4. 阅读 `S1_IMPLEMENTATION_PROGRESS.md`、`S1_DEPLOYMENT_AND_ROLLBACK.md`、`S1_IDENTITY_CACHE_CONTRACT.md` 顶部状态更新和本提示词。
+4. 阅读 `docs/history/S1_IMPLEMENTATION_PROGRESS.md`、`docs/history/S1_DEPLOYMENT_AND_ROLLBACK.md`、`docs/history/S1_IDENTITY_CACHE_CONTRACT.md` 顶部状态更新和本提示词。
 
 ## B. 独立源码审查
 

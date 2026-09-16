@@ -61,7 +61,7 @@ npm run verify:all
 
 ## 4. 后续执行
 
-先给本地 Codex 使用 `CODEX_S1_TEST_PROMPT.md`。经本地检查与授权部署后，再按 `S1_DEVICE_ACCEPTANCE.csv` 真机测试。Tab 微抽动不在本次验收门槛内，但导航和你最新 Map 样式不得回归。
+先给本地 Codex 使用 `docs/history/CODEX_S1_TEST_PROMPT.md`。经本地检查与授权部署后，再按 `docs/history/S1_DEVICE_ACCEPTANCE.csv` 真机测试。Tab 微抽动不在本次验收门槛内，但导航和你最新 Map 样式不得回归。
 
 ## S1-R2 补充审查
 

@@ -24,7 +24,7 @@ def sync(p):
 for state in ([] if BUTTONS_ONLY else ['normal','selected']):
  for kind in ['frame','fallback']:
   name=f'landmark-{state}-{kind}'
-  source=sync(ROOT/'design-references'/f'{name}.svg')
+  source=sync(ROOT/'docs/design'/f'{name}.svg')
   cairosvg.svg2png(bytestring=source,write_to=str(ROOT/'miniprogram/images/markers'/f'{name}.png'),output_width=768,output_height=858)
 for direction in ['up','down']:
  for suffix in ['', '-dusk']:

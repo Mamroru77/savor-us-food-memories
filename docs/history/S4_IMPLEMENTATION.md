@@ -77,4 +77,4 @@
 - `verify-workspace-adapter.cjs`：5 项生产 index 适配器线格式、订阅返回、HTTPS ack 和 Timer 路由检查。
 - 独立云函数不能运行时 require 兄弟目录：schema/image 是可独立部署的精确副本；自动测试要求与 canonical 文件字节一致，防止版本分叉。
 - 网络、CloudBase、微信原生接口用 mock 替代；没有真实投递、云部署、权限变更、实际数据删除或 Git push。
-- 完整证据以 `CURRENT_TEST_RESULTS.txt` 为准；最终集中执行事项见 `UNIFIED_ACCEPTANCE.md`。
+- 完整证据以 `CURRENT_TEST_RESULTS.txt` 为准；最终集中执行事项见 `docs/status/UNIFIED_ACCEPTANCE.md`。

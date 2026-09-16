@@ -11,7 +11,7 @@
 - 业务参考：`integrated-with-cloud`，提交 `1a6a09c5cd67dc524102762ccc327d29b3811f27`。
 - 工作分支：`best-ui-cloud-stage2`，从 best-ui 创建，未把旧 UI 合并进来。
 - 已下载两个远程分支并在本地修改；**未推送到 GitHub，也未部署云函数**。
-- 来源分支实际首页为 `source/current_project/miniprogram/pages/index/index.js`，不是请求示例中的 `pages/home/index.js`；已按实际 app.json 路由提取云逻辑。
+- 来源分支实际首页为 `archive/legacy-handoff/source/current_project/miniprogram/pages/index/index.js`，不是请求示例中的 `pages/home/index.js`；已按实际 app.json 路由提取云逻辑。
 
 ## 实施顺序
 
@@ -63,9 +63,9 @@
 | `cloudfunctions/mealRecords/config.json` | 从来源保留云函数 OpenAPI 权限配置（无额外 OpenAPI 权限） |
 | `project.config.json` | 完整云工程入口，指向既有 miniprogram/ 与新增 cloudfunctions/ |
 | `tools/verify-cloud.cjs` | Node 零依赖 mock 契约验证：服务端、service、store、页面生命周期与安全行为 |
-| `STAGE2_SETUP.md` | 最短部署步骤、必要安全规则、失败处理、阶段边界 |
-| `MIGRATION_REPORT.md` | 本报告 |
-| `reports/ui-baseline.json` | 从 best-ui 提取的 32 个 UI 文件 SHA-256 基线，用于验证不换 UI |
+| `docs/history/STAGE2_SETUP.md` | 最短部署步骤、必要安全规则、失败处理、阶段边界 |
+| `docs/history/MIGRATION_REPORT.md` | 本报告 |
+| `tools/fixtures/regression/ui-baseline.json` | 从 best-ui 提取的 32 个 UI 文件 SHA-256 基线，用于验证不换 UI |
 
 没有修改或删除原 `verify-miniprogram.cjs`、`verify-tabbar.cjs`、`verify-assets.cjs` 的验证规则。新增云函数在前端包之外，后端依赖不会进入小程序包；新测试单独覆盖它。
 

@@ -43,7 +43,7 @@ assert.match(add,/<s-icon wx:else name="notebook-pen"/);assert.match(add,/name="
 assert.match(fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8'),/name="map-pin-off"/);
 const me=fs.readFileSync(path.join(mp,'pages/me/index.js'),'utf8');for(const m of me.matchAll(/icon: '([^']+)'/g))assert(icons[m[1]],m[1]);
 for(const state of ['normal','selected'])for(const kind of ['frame','fallback']){
- const name='landmark-'+state+'-'+kind,svg=fs.readFileSync(path.join(root,'design-references',name+'.svg'),'utf8');
+ const name='landmark-'+state+'-'+kind,svg=fs.readFileSync(path.join(root,'docs/design',name+'.svg'),'utf8');
  const found=[];
  for(const m of svg.matchAll(/<g\s+([^>]*data-lucide="([^"]+)"[^>]*)>([\s\S]*?)<\/g>/g)){
   found.push(m[2]);assert.match(m[1],/stroke-width="1.75"/);assert.deepEqual(parse(m[3]),nodes[m[2]]);
@@ -56,11 +56,11 @@ for(const direction of ['up','down'])for(const suffix of ['', '-dusk']){
  const svg=fs.readFileSync(path.join(mp,'images/markers','stack-button-'+direction+suffix+'.svg'),'utf8');const group=svg.match(/<g\s+([^>]*data-lucide="([^"]+)"[^>]*)>([\s\S]*?)<\/g>/);
  assert(group);assert.equal(group[2],'chevron-'+direction);assert.deepEqual(parse(group[3]),nodes[group[2]]);assert.match(group[1],/stroke-width="1.75"/);
 }
-const pixelReport=JSON.parse(fs.readFileSync(path.join(root,'reports/icon-unification-validation.json')));
+const pixelReport=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/regression/icon-unification-validation.json')));
 assert.equal(pixelReport.stampPixelChecks.length,4);
 for(const item of pixelReport.stampPixelChecks){
  assert.equal(item.unchangedOutsideIconRegions,true);
- for(const [file,digest] of [[item.asset,item.pngSha256],[item.composition,item.compositionSha256]])assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex'),digest,'stamp export drift: '+file);
+ for(const [file,digest] of [[item.asset,item.pngSha256],[item.composition,item.compositionSha256]])assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file.replace(/^design-references\//,'docs/design/')))).digest('hex'),digest,'stamp export drift: '+file);
 }
 const generated=['miniprogram/utils/icons.js','miniprogram/utils/lucideMorphNodes.js','tools/_gen/icons.json'];const before=generated.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
 const run=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'build-icons.cjs')],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);

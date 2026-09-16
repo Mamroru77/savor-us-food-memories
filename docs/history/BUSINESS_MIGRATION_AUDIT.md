@@ -195,7 +195,7 @@ cityCount: cities.size
 
 ## 7. 本轮四项修复与验证
 
-四项 UI/语言/主题修改说明见 `UI_LANGUAGE_THEME_UPDATE.md`。
+四项 UI/语言/主题修改说明见 `docs/history/UI_LANGUAGE_THEME_UPDATE.md`。
 
 实际执行：
 - 原静态验证：187/187 PASS。

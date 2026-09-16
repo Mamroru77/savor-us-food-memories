@@ -1,4 +1,4 @@
-> 历史说明：本文为94585cb旧机制，其全实例准备/800ms等待已撤销。当前实现及未闭环事项见 `TAB_NAVIGATION_INDEPENDENCE_FIX.md`。
+> 历史说明：本文为94585cb旧机制，其全实例准备/800ms等待已撤销。当前实现及未闭环事项见 `docs/history/TAB_NAVIGATION_INDEPENDENCE_FIX.md`。
 
 # Tab 原生回跳修正版：原子状态与视图交接
 
