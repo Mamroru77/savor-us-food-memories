@@ -66,13 +66,23 @@ Page({
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
   },
 
-  onReady() {
-    if (!this.createSelectorQuery) return;
+  onReady() { this.ensureMarkerRenderer(); },
+  ensureMarkerRenderer() {
+    if(!this.active||this.disposed||this.pinRenderer||this.markerCanvasPending||!this.createSelectorQuery)return;
+    const request=this.markerCanvasRequest=(this.markerCanvasRequest||0)+1;
+    this.markerCanvasPending=true;
     this.createSelectorQuery().select('#marker-render-canvas').fields({node:true,size:true}).exec(result=>{
-      if (this.disposed || !result[0] || !result[0].node) return;
+      if(request!==this.markerCanvasRequest)return;
+      this.markerCanvasPending=false;
+      if(!this.active||this.disposed||!result[0]||!result[0].node)return;
       this.markerCanvas=result[0].node;
       this.initMarkerRenderer();
-      if(this.active) this.syncState(store.get());
+      // Identity recovery may mount the canvas after onReady. Enhance current pins only;
+      // do not rebuild groups or issue another camera command when the canvas arrives.
+      if(this.pinRenderer) {
+        this.renderMarkerPhotos((this.markerGroups||[]).map(g=>g.memory),this.data.selectedId,this.markerGeneration);
+        this.renderDrawerPhotos(this.markerGeneration);
+      }
     });
   },
   initMarkerRenderer() {
@@ -82,6 +92,7 @@ Page({
   },
   onResize() { const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120},()=>this.syncStackPositions()); },
   onHide() {
+    this.markerCanvasRequest=(this.markerCanvasRequest||0)+1;this.markerCanvasPending=false;
     this.onStackRelease();
     this.stackGesture=false;clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
     this.stackProjectionBusy=false;
@@ -166,8 +177,9 @@ Page({
       if(groups[index].members.length>1){target.width=80;target.height=90;}
       const cached=this.pinRenderer && this.pinRenderer.peek && this.pinRenderer.peek(memory,isSelected);
       if(cached) target.iconPath=cached;
-      else if(old && old.stampSelected===isSelected) target.iconPath=old.iconPath;
-      const from=old?old.width:48;
+      else if(old && old.groupCount===1 && old.stampSelected===isSelected) target.iconPath=old.iconPath;
+      // A stack anchor is transparent and 1px wide; it is never a singleton image/size.
+      const from=old&&old.groupCount===1?old.width:48;
       if(groups[index].members.length===1 && this.active && !this.data.quiet && Math.abs(from-target.width)>.1) {animation.push({index,from,to:target.width});target.width=from;target.height=from*286/256;}
       if(groups[index].members.length>1){target.width=1;target.height=1;target.iconPath='/images/markers/stack-anchor.png';target.anchor={x:0.5,y:1};}
       target.width=Math.max(1,Math.round(Number(target.width)||48));
@@ -204,6 +216,7 @@ Page({
     // A native pan need not update data.latitude: explicit focus also handles
     // tapping the same marker again after panning away.
     this.setData(patch, () => {
+      this.ensureMarkerRenderer();
       this.syncStackPositions();
       this.animateMarkerSizes(animation,generation);
       this.renderMarkerPhotos(representatives, selected && selected.id, generation);
@@ -257,7 +270,7 @@ Page({
     },fail:finish});
   },
   buildDrawers(groups,markers,selectedId) {
-    const buttonBox=mapStack.buttonGeometry(metrics.getMetrics().screenWidth);
+    const windowWidth=metrics.getMetrics().screenWidth;
     return groups.map((g,index)=>{
       if(g.members.length<2)return null;
       const targetOpen=this.data.clusterOpen&&g.memory.id===this.drawerRootId;
@@ -265,6 +278,11 @@ Page({
       const open=targetOpen||progress>0;
       const others=g.members.filter(m=>m.id!==g.memory.id),pages=Math.ceil(others.length/3);
       const page=Math.max(0,Math.min(this.data.drawerPage||0,pages-1));
+      const buttonBox=mapStack.buttonGeometry(windowWidth,pages===1);
+      // Keep native callout bounds fixed while the logical 320ms frame moves.
+      // Full page capacity also prevents the shorter last page moving the root.
+      const bounds=mapStack.layout(Math.min(3,others.length),1),reserve=pages>1?28:0;
+      const frameHeight=bounds.height+reserve,frameRootTop=bounds.rootTop+reserve;
       const members=others.slice(page*3,page*3+3),frame=mapStack.layout(open?members.length:0,progress);
       const photo=m=>{
         const selected=m.id===selectedId;
@@ -273,7 +291,7 @@ Page({
       if(pages>1){const extra=Math.round(28*progress);frame.height+=extra;frame.rootTop+=extra;frame.slots.forEach(slot=>{slot.top+=extra;});}
       const rows=open?members.map((m,j)=>Object.assign(photo(m),frame.slots[j],{layer:members.length-j})).reverse():[];
       const pos=(this.stackPositions||{})[g.memory.id]||{x:0,y:0};
-      return {buttonBox,progress,screenX:pos.x-44,screenY:pos.y,markerId:index,rootId:g.memory.id,root:photo(g.memory),rootTop:frame.rootTop,height:frame.height,open,targetOpen,rows,count:g.members.length,page,pages};
+      return {frameHeight,frameRootTop,buttonBox,progress,screenX:pos.x-44,screenY:pos.y,markerId:index,rootId:g.memory.id,root:photo(g.memory),rootTop:frame.rootTop,height:frame.height,open,targetOpen,rows,count:g.members.length,page,pages};
     }).filter(Boolean);
   },
   renderDrawerPhotos(generation) {
@@ -435,8 +453,21 @@ Page({
     const request=this.scaleRequest=(this.scaleRequest||0)+1;
     const update=scale=>{
       if(!this.active || request!==this.scaleRequest || !Number.isFinite(scale) || Math.abs(scale-this.data.mapScale)<.05) return;
-      this.stopDrawerReveal();
-      this.setData({mapScale:Math.max(3,Math.min(18,scale)),clusterOpen:false});
+      const nextScale=Math.max(3,Math.min(18,scale));
+      const rootId=(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:this.data.selectedId;
+      const groups=mapLayout.group(visibleMemories(this.allMemories||[],this.data.query,this.data.filter),nextScale,rootId);
+      const same=(a,b)=>!!a&&!!b&&a.memory.id===b.memory.id&&a.members.length===b.members.length&&a.members.every((m,i)=>m.id===b.members[i].id);
+      const previous=this.markerGroups||[];
+      // A camera scale update is not a new restaurant selection or a drawer-close intent.
+      // Keep native callouts/photos mounted when grouping did not change.
+      if(groups.length===previous.length&&groups.every((g,i)=>same(g,previous[i]))) {
+        this.setData({mapScale:nextScale});
+        return;
+      }
+      // A distant group may split while the open group remains identical.
+      const keepDrawer=this.data.clusterOpen&&same(previous.find(g=>g.memory.id===this.drawerRootId),groups.find(g=>g.memory.id===this.drawerRootId));
+      if(!keepDrawer)this.stopDrawerReveal();
+      this.setData(keepDrawer?{mapScale:nextScale}:{mapScale:nextScale,clusterOpen:false,drawerPage:0});
       this.applyFilters(this.data.query,this.data.filter,this.data.selectedId,'preserve');
     };
     if(Number.isFinite(value)) update(value);

@@ -1,0 +1,7 @@
+{
+  "file": "miniprogram/pages/map/index.wxml",
+  "baseSha256": "df594862876358230a333e71d228f690558f3331182c40b5abee43e37f022d34",
+  "sha256": "25d8b303640711417d38af6d27a001b92a4f6aa627926ab9f295834147c54221",
+  "reason": "User VID_1.mp4 review: fixed native callout bounds with equivalent visible/hit projection. No historical fixture rewrite.",
+  "review": "docs/reviews/map-stack-video-20260916.md"
+}

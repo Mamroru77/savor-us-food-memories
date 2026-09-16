@@ -117,6 +117,18 @@ function nativeTabs(initial=0){
   await test('best-ui visual files match baseline or explicit user-requested UI amendments', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(root, 'tools/fixtures/regression/ui-baseline.json')));
     const approved = JSON.parse(fs.readFileSync(path.join(root, 'tools/fixtures/regression/ui-approved-updates.json')));
+    // Historical fixtures stay byte-for-byte frozen; new visual reviews live separately.
+    const refinements = JSON.parse(fs.readFileSync(path.join(root, 'tools/visual-refinements.json')));
+    // A single reviewed Map geometry binding change; not a general WXML allowlist.
+    const mapFrameReview = JSON.parse(fs.readFileSync(path.join(root, 'tools/map-frame-review.json')));
+    assert.equal(mapFrameReview.file, 'miniprogram/pages/map/index.wxml');
+    assert.match(mapFrameReview.sha256, /^[a-f0-9]{64}$/);
+    assert(mapFrameReview.reason && mapFrameReview.review && fs.existsSync(path.join(root, mapFrameReview.review)));
+    for (const [file, review] of Object.entries(refinements)) {
+      assert(Object.hasOwn(manifest.sha256, file) && file.endsWith('.wxss'), 'refinements may only approve existing visual styles');
+      assert.match(review.sha256, /^[a-f0-9]{64}$/);
+      assert(review.reason && review.review && fs.existsSync(path.join(root, review.review)), 'a visual amendment requires its review record');
+    }
     for (const [file, original] of Object.entries(manifest.sha256)) {
       if (approved[file] && approved[file].removed === true) {
         assert.equal(file, 'miniprogram/images/pin.png', 'only the explicitly audited obsolete pin may be removed');
@@ -125,7 +137,15 @@ function nativeTabs(initial=0){
         for (const replacement of approved[file].replacements) assert(fs.existsSync(path.join(root, replacement)));
         continue;
       }
-      const expected = approved[file] ? approved[file].sha256 : original;
+      let expected = approved[file] ? approved[file].sha256 : original;
+      if (refinements[file]) {
+        assert.equal(refinements[file].baseSha256, expected, 'visual review must name the frozen checkpoint');
+        expected = refinements[file].sha256;
+      }
+      if (file === mapFrameReview.file) {
+        assert.equal(mapFrameReview.baseSha256, expected, 'Map geometry review must name its frozen checkpoint');
+        expected = mapFrameReview.sha256;
+      }
       let bytes = fs.readFileSync(path.join(root, file));
       if (!approved[file] && file === 'miniprogram/pages/add/index.wxml') bytes = Buffer.from(bytes.toString().replace("saving ? 'Saving memory...'", "saving ? 'Memory saved'"));
       assert.equal(require('crypto').createHash('sha256').update(bytes).digest('hex'), expected, file);

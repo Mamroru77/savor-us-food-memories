@@ -2,7 +2,8 @@
 .add-screen {
   padding-left: var(--page-gutter);
   padding-right: var(--page-gutter);
-  padding-bottom: calc(var(--tab-clearance) + 16rpx);
+  /* The sibling tab-spacer owns safe-area/Tab clearance; keep only local breathing room. */
+  padding-bottom: var(--space-sm);
 }
 
 .add-heading { display: flex; gap: 17rpx; align-items: flex-start; margin-left: -12rpx; }

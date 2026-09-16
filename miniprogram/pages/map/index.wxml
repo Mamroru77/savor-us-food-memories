@@ -22,15 +22,15 @@
     enable-overlooking="{{false}}"
   >
     <cover-view slot="callout">
-      <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.height}}px">
-        <cover-image class="native-stack-toggle" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.buttonBox.top}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? (drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
-        <cover-view wx:if="{{drawer.open && drawer.pages > 1}}" class="native-stack-pages" style="height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}}">
+      <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.frameHeight}}px">
+        <cover-image class="native-stack-toggle" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.frameHeight-drawer.height+drawer.buttonBox.top}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? (drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
+        <cover-view wx:if="{{drawer.open && drawer.pages > 1}}" class="native-stack-pages" style="top:{{drawer.frameHeight-drawer.height+36}}px;height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}}">
           <cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-left.png" /><cover-view class="native-stack-page-number">{{drawer.page+1}}/{{drawer.pages}}</cover-view><cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-right.png" />
         </cover-view>
-        <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row" style="top:{{pin.top}}px;opacity:{{pin.opacity}};z-index:{{pin.layer}}">
+        <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row" style="top:{{drawer.frameHeight-drawer.height+pin.top}}px;opacity:{{pin.opacity}};z-index:{{pin.layer}}">
           <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
         </cover-view>
-        <cover-view class="native-stack-root" style="top:{{drawer.rootTop}}px">
+        <cover-view class="native-stack-root" style="top:{{drawer.frameHeight-drawer.height+drawer.rootTop}}px">
           <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
         </cover-view>
       </cover-view>

@@ -12,10 +12,12 @@ function layout(count,progress) {
   const extent=slots.reduce((max,s)=>Math.max(max,s.rise),0),rootTop=ARROW+extent;
   return {height:rootTop+HEIGHT,rootTop,slots:slots.map(s=>({top:rootTop-s.rise,opacity:s.opacity})),width:WIDTH,pinHeight:HEIGHT};
 }
-function buttonGeometry(windowWidth) {
+function buttonGeometry(windowWidth,nearPin=false) {
   // Map stamps use a bounded native coordinate system; do not let tablet rpx scaling overlap paging.
   const unit=Math.min(430,Number(windowWidth)||375)/750, size=64*unit, hitWidth=Math.max(44,88*unit);
   // The PNG's 28/32 inner material and 14/32 glyph map to 56rpx / 28rpx.
-  return {size,left:44-size/2,top:16-size/2,hitWidth,hitLeft:44-hitWidth/2,hitTop:-4,hitHeight:40};
+  // Single-page stacks can bring the glyph 8px nearer the pin. Keep its full
+  // hit target above the root; paged stacks retain the existing safe gap.
+  return {size,left:44-size/2,top:(nearPin?24:16)-size/2,hitWidth,hitLeft:44-hitWidth/2,hitTop:nearPin?0:-4,hitHeight:40};
 }
 module.exports={layout,ease,buttonGeometry,DURATION,WIDTH,HEIGHT};
