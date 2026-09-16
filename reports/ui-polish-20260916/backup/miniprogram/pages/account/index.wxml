@@ -1,0 +1,9 @@
+<s-identity-gate wx:if="{{locked}}"/>
+<view wx:else class="account">
+  <text class="title">{{labels.title}}</text><text>{{labels.partition}}：{{shortId}}</text><text>{{labels.intro}}</text>
+  <button bindtap="exportCurrent">{{labels.backup}}</button><button bindtap="copyProfile">{{labels.profile}}</button>
+  <button bindtap="inspect" disabled="{{busy}}">{{labels.inspect}}</button><button bindtap="exportRaw">{{labels.raw}}</button>
+  <button bindtap="copyMemories">{{labels.memories}}</button><button bindtap="copyDraft">{{labels.draft}}</button>
+  <text selectable>{{message}}</text>
+  <view wx:for="{{results}}" wx:key="index"><text>{{item.kind}} · {{item.status}}</text></view>
+</view>

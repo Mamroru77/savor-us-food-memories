@@ -1,0 +1,21 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'..');let count=0;
+function check(name,fn){fn();count++;console.log('PASS '+name);}
+let chinese=true;global.wx={getAppBaseInfo:()=>({language:chinese?'zh_CN':'en'})};
+const copy=require('../miniprogram/utils/identityCopy');
+check('localized freeze copy explicitly differs from network retry',()=>{assert(copy().frozen.includes('诊断冻结'));assert(!copy().frozen.includes('请联网'));chinese=false;assert(copy().frozen.includes('Diagnostic freeze'));chinese=true;});
+check('diagnostic gate does not promise an unlock after verification',()=>{const c=copy({diagnosisActive:true,diagnosisAttempted:false});assert(c.gate.includes('不会解除'));assert.equal(c.retry,c.diagnose);assert.equal(copy({diagnosisActive:true,diagnosisAttempted:true}).retry,c.diagnosed);});
+let frozen=true,failLease=false,durable=false,leases=0,stores=0,spec;
+const identity={isDiagnosisActive:()=>frozen,lease(){leases++;if(failLease)throw Error('IDENTITY_LOCKED');return {};}};
+const store={freshDraft:()=>({restaurant:'',notes:'',tags:[],photos:[]}),saveDraft(){stores++;return durable;},get:()=>({})};
+const i18n={copy:()=>({}),locale:()=> 'zh-CN',t:s=>s};
+vm.runInNewContext(fs.readFileSync(path.join(root,'miniprogram/pages/add/index.js'),'utf8'),{Page:x=>spec=x,require:name=>name.endsWith('/identity')?identity:name.endsWith('/identityCopy')?copy:name.endsWith('/store')?store:name.endsWith('/i18n')?i18n:{},console});
+const page=()=>({...spec,data:{...spec.data,draft:{...store.freshDraft()}},setData(p){Object.assign(this.data,p);},syncContext(){}});
+check('frozen Save performs no lease or draft/cloud write and shows inline reason',()=>{const p=page();p.onSave();assert.equal(leases,0);assert.equal(stores,0);assert.equal(p.data.error,copy().frozen);});
+check('stale normal session Save is handled inline without throwing',()=>{frozen=false;failLease=true;const p=page();assert.doesNotThrow(()=>p.onSave());assert.equal(p.data.error,'IDENTITY_LOCKED');assert.equal(stores,0);});
+check('failed draft persistence retains visible edits but does not claim they are saved',()=>{const p=page();p.changeDraft('notes','unsaved text');assert.equal(p.data.draft.notes,'unsaved text');assert.equal(p.data.error,copy().draftFailed);});
+check('successful draft persistence clears previous error',()=>{durable=true;const p=page();p.data.error='old error';p.changeDraft('notes','saved text');assert.equal(p.data.error,'');assert.equal(p.data.draft.notes,'saved text');});
+check('save accessibility declares both freeze and in-flight disabled states',()=>{const s=fs.readFileSync(path.join(root,'miniprogram/pages/add/index.wxml'),'utf8');assert(s.includes('aria-disabled="{{businessFrozen || uploading || saving}}"'));assert(s.includes('{{identityLabels.frozen}}'));});
+check('default build remains diagnostic, without weakening cloud authorization',()=>{assert.equal(require('../miniprogram/utils/runtimeConfig').identityMode,'diagnostic');const s=fs.readFileSync(path.join(root,'miniprogram/utils/identity.js'),'utf8');assert(s.includes("if(diagnosisActive)throw error('DIAGNOSTIC_MODE')"));});
+console.log(count+' checks passed; mock/static only, no network or user storage.');

@@ -1,0 +1,45 @@
+# Machine-specific WeChat DevTools state
+project.private.config.json
+miniprogram/project.private.config.json
+
+# Generated/local artifacts
+node_modules/
+reports/captures/*.png
+npm-debug.log*
+Thumbs.db
+.DS_Store
+
+# Local credentials, tooling state and generated audit evidence
+.cli/
+**/project.private.config.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/BASELINE_DELTA.patch
+/FILE_MANIFEST.sha256
+/CURRENT_TEST_RESULTS.txt
+/S1_TEST_RESULTS.txt
+
+# Reports are private/local by default; retain only regression fixtures.
+/reports/**
+!/reports/**/
+!/reports/ui-baseline.json
+!/reports/ui-approved-updates.json
+!/reports/link-samples-2026-09-11.json
+!/reports/merchant-page-public-recheck.json
+!/reports/icon-unification-validation.json
+!/reports/ui-polish-20260916/changes.json
+!/reports/lifecycle-review-20260916/batch4/backup/miniprogram/pages/me/index.js
+!/reports/ui-polish-20260916/backup/miniprogram/pages/account/index.wxml
+!/reports/ui-polish-20260916/backup/miniprogram/pages/space/index.wxml
+!/reports/ui-polish-20260916/backup/miniprogram/pages/workspace/index.wxml
+!/reports/ui-polish-20260916/backup/miniprogram/pages/reports/index.wxml
+!/reports/official-review-20260916/backup/miniprogram/components/identity-gate/index.wxml
+!/reports/official-review-20260916/backup/miniprogram/pages/account/index.wxml
+!/reports/official-review-20260916/backup/miniprogram/pages/space/index.wxml
+!/reports/official-review-20260916/backup/miniprogram/pages/workspace/index.wxml
+!/reports/official-review-20260916/backup/miniprogram/pages/reports/index.wxml

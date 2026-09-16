@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "s-icon": "/components/icon/index",
+    "s-sheet": "/components/sheet/index",
+    "s-toast": "/components/toast/index",
+    "s-identity-gate": "/components/identity-gate/index"
+  }
+}

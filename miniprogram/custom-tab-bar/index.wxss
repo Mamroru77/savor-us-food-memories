@@ -1,0 +1,91 @@
+
+/* Font tokens on :host — the single source of truth lives in app.wxss;
+   this fallback keeps type consistent even if variable inheritance is
+   interrupted by the component boundary. */
+:host {
+  --serif: 'SavorSerif', Georgia, 'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+  --sans: 'DMSans', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  font-family: var(--sans);
+}
+/* Floating glass tab bar — tokens mirror app.wxss
+   (--tabbar-height: 170rpx, --tabbar-gap: 26rpx).
+   Shape changes belong to the SVG morph. Press feedback changes opacity only;
+   it must not shrink/lift the icon before a cross-page morph starts.      */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  height: calc(170rpx + env(safe-area-inset-bottom));
+  padding: 6rpx 20rpx calc(26rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: linear-gradient(rgba(249, 248, 246, 0.66), rgba(246, 246, 244, 0.84));
+  border-top: 1rpx solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(55rpx);
+  -webkit-backdrop-filter: blur(55rpx);
+}
+
+.tab-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 24rpx;
+  line-height: 30rpx;
+  color: #828480;
+  transition: color 0.2s, opacity 0.15s;
+}
+.tab-item.is-active { color: #171a16; font-weight: 600; }
+
+.tab-label { transition: color 0.2s; }
+
+/* Do not stack a press scale/pop on top of the SVG shape transition. */
+.tab-icon-wrap { display: flex; }
+.tab-press { opacity: 0.7; }
+
+.tab-add {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tab-add-button {
+  width: 130rpx;
+  height: 130rpx;
+  margin-top: -14rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.97), rgba(217, 217, 215, 0.83));
+  box-shadow: 0 18rpx 28rpx -5rpx rgba(59, 62, 61, 0.21), 0 0 0 18rpx rgba(248, 248, 246, 0.27), inset 0 2rpx 5rpx #ffffff;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease, box-shadow 0.18s ease;
+}
+/* Preserve tactile feedback without moving the circle, glyph or halo. */
+.add-press { opacity: 0.85; }
+
+/* Quiet motion (reduceMotion setting) removes every tab animation */
+.theme-quiet .tab-item,
+.theme-quiet .tab-icon-wrap,
+.theme-quiet .tab-add-button,
+.theme-quiet .tab-label { transition: none !important; animation: none !important; }
+.theme-quiet .tab-item.is-active .tab-icon-wrap { animation: none !important; transform: none; }
+
+
+/* Navigation has its own elevation, not another content card. */
+.theme-dusk.tab-bar { background:linear-gradient(rgba(24,25,28,.88),rgba(18,19,21,.97)); border-top-color:rgba(238,234,227,.09); box-shadow:0 -12rpx 40rpx #0002; }
+.theme-dusk .tab-item { color:#a9a69f; }
+.theme-dusk .tab-item.is-active { color:#dec8a7; }
+.theme-dusk .tab-add-button { background:linear-gradient(145deg,#f0e3ce,#cfb48d); border-color:#f4e6d0; box-shadow:0 12rpx 30rpx #0005,0 0 0 12rpx rgba(222,200,167,.065),inset 0 2rpx 3rpx #ffffff88; }
+
+/* Shape change communicates selection; no extra backing or entry-only pop. */
+.tab-item.is-active .tab-icon-wrap { transform:none;animation:none; }

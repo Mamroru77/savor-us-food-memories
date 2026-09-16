@@ -1,0 +1,38 @@
+// Read-only audit harness. Real published SDKs; every DB transport is intercepted.
+// No actual cloud invocation, credentials, accounts or database writes.
+const assert=require('node:assert/strict'),path=require('node:path'),vm=require('node:vm'),fs=require('node:fs');
+let networkAttempts=0;const block=()=>{networkAttempts++;throw Error('AUDIT_NETWORK_FORBIDDEN');};
+require('node:http').request=block;require('node:http').get=block;require('node:https').request=block;require('node:https').get=block;require('node:net').Socket.prototype.connect=block;
+const base=path.resolve(process.env.ACCOUNT_SDK_ROOT || path.join(__dirname,'../cloudfunctions/account/node_modules'));
+process.env.WX_CONTEXT_KEYS='WX_OPENID,WX_APPID';process.env.WX_OPENID='audit-fake-openid';process.env.WX_APPID='wx-audit-fake';process.env.TCB_ENV='audit-fake-env';process.env.TCB_CONTEXT_KEYS='TCB_ENV';
+const {DBRequest}=require(path.join(base,'@cloudbase/node-sdk/lib/utils/dbRequest'));
+let wire=[],responder;DBRequest.prototype.send=async function(action,data){wire.push({action,data});return responder(action,data);};
+const {EJSON}=require(path.join(base,'bson'));
+const cloud=require(path.join(base,'wx-server-sdk'));cloud.init({env:cloud.DYNAMIC_CURRENT_ENV});
+const col=cloud.database().collection('savor_accounts'),key='a'.repeat(64),uid='u_'+'b'.repeat(48),row={_id:key,userId:uid,profileRevision:0,membershipVersion:0,createdAt:1700000000000};
+const getReply=list=>({data:{list:list.map(x=>EJSON.stringify(x))},requestId:'synthetic-request'});
+let n=0;async function test(label,fn){wire=[];await fn();n++;console.log('PASS '+label);}
+(async()=>{
+ await test('real SDK query returns data ARRAY, preserves 64-character _id and limit=1',async()=>{responder=()=>getReply([row]);const r=await col.where({_id:key}).limit(1).get();assert(Array.isArray(r.data));assert.deepEqual(r.data[0],row);assert.equal(wire[0].action,'database.getDocument');assert.equal(wire[0].data.limit,1);assert(JSON.stringify(wire[0].data.query).includes(key));});
+ await test('real SDK empty where query resolves with data:[]',async()=>{responder=()=>getReply([]);assert.deepEqual((await col.where({_id:key}).limit(1).get()).data,[]);});
+ await test('real SDK doc.get returns OBJECT, and empty doc rejects by default',async()=>{responder=()=>getReply([row]);assert.deepEqual((await col.doc(key).get()).data,row);responder=()=>getReply([]);await assert.rejects(()=>col.doc(key).get());});
+ await test('real SDK throwOnNotFound:false returns data:null for missing doc',async()=>{responder=()=>getReply([]);assert.equal((await cloud.database({throwOnNotFound:false}).collection('savor_accounts').doc(key).get()).data,null);});
+ await test('wx-server-sdk add({data:row}) serializes scalar fields and forwards custom _id',async()=>{responder=()=>({data:{insertedIds:[key]}});assert.equal((await col.add({data:row}))._id,key);assert.equal(wire[0].action,'database.insertDocument');assert.deepEqual(EJSON.parse(wire[0].data.data[0]),row);});
+ await test('actual serializer omits undefined object fields and encodes Date, not plain epoch number',async()=>{responder=()=>({data:{insertedIds:[key]}});await col.add({data:{...row,omitted:undefined,time:new Date(0),nested:{value:1,omitted:undefined}}});const sent=JSON.parse(wire[0].data.data[0]);assert(!('omitted'in sent));assert(!('omitted'in sent.nested));assert.deepEqual(sent.time,{$date:{$numberLong:'0'}});assert.deepEqual(sent.createdAt,{$numberLong:'1700000000000'});});
+ await test('permission, missing collection and parameter errors reject through wx wrapper as numeric errCode',async()=>{for(const [code,number]of [['DATABASE_PERMISSION_DENIED',-502003],['DATABASE_COLLECTION_NOT_EXIST',-502005],['INVALID_PARAM',-501007],['INVALIID_ENV',-501005],['EXCEED_REQUEST_LIMIT',-501003],['EXCEED_CONCURRENT_REQUEST_LIMIT',-501004],['INVALID_COMMON_PARAM',-501006],['INVALID_REQUEST_SOURCE',-501008],['RESOURCE_NOT_INITIAL',-501009],['DATABASE_COLLECTION_EXCEED_LIMIT',-502004]]){responder=()=>({code,message:'synthetic-only'});await assert.rejects(()=>col.where({_id:key}).get(),e=>e.errCode===number);}});
+ await test('underlying unknown DUPLICATE_KEY string does NOT survive wx wrapper as that string',async()=>{responder=()=>({code:'DUPLICATE_KEY',message:'synthetic-only'});await assert.rejects(()=>col.add({data:row}),e=>e.errCode===-501001&&e.code!=='DUPLICATE_KEY');});
+ await test('malformed transport success envelope rejects rather than proving a real platform shape',async()=>{responder=()=>({data:{}});await assert.rejects(()=>col.where({_id:key}).get());});
+ // Execute unchanged target adapter + handler with real SDK, synthetic transport.
+ let safeLogs=[];const handlerFile=path.resolve(__dirname,'../cloudfunctions/account/handler.js');const handlerModule={exports:{}};
+ vm.runInNewContext(fs.readFileSync(handlerFile,'utf8'),{module:handlerModule,exports:handlerModule.exports,require,Date,Set,console:{error:s=>safeLogs.push(JSON.parse(s))}});
+ const indexFile=path.resolve(__dirname,'../cloudfunctions/account/index.js'),exportsObject={};
+ vm.runInNewContext(fs.readFileSync(indexFile,'utf8'),{exports:exportsObject,require:name=>name==='wx-server-sdk'?cloud:name==='./handler'?handlerModule.exports:require(name)});
+ const main=exportsObject.main,input={action:'bootstrap',protocolVersion:1};
+ await test('unchanged production adapter + real SDK bootstrap builds a stable private candidate on synthetic empty DB',async()=>{let saved;responder=(action,data)=>{if(action==='database.getDocument')return getReply([]);saved=JSON.parse(data.data[0]);return {data:{insertedIds:[saved._id]}};};const r=await main(input);assert.equal(r.success,true);assert(/^u_[a-f0-9]{48}$/.test(r.userId));assert.equal(saved._id.length,64);assert.equal(saved.userId,r.userId);assert.equal(wire.length,2);});
+ await test('unchanged handler returns synthetic existing winner after duplicate insert, and logger preserves wrapper SYS_ERR without guessing duplicate',async()=>{let finds=0;safeLogs=[];responder=action=>action==='database.getDocument'?getReply(++finds===1?[]:[row]):{code:'DUPLICATE_KEY',message:'synthetic-only'};const r=await main(input);assert.equal(r.success,true);assert.equal(r.userId,uid);assert.equal(safeLogs[0].stage,'account-insert');assert.equal(safeLogs[0].sdkCode,'SYS_ERR');});
+ await test('even a nonduplicate insert rejection rereads, and an existing valid row yields business success',async()=>{let finds=0;safeLogs=[];responder=action=>action==='database.getDocument'?getReply(++finds===1?[]:[row]):{code:'INVALID_PARAM',message:'synthetic-only'};const r=await main(input);assert.equal(r.success,true);assert.equal(safeLogs[0].category,'invalid-input');assert.equal(wire.length,3);});
+ await test('known SDK environment error is preserved by repaired whitelist',async()=>{safeLogs=[];responder=()=>({code:'INVALIID_ENV',message:'synthetic-only'});const r=await main(input);assert.equal(r.code,'ACCOUNT_UNAVAILABLE');assert.equal(safeLogs[0].stage,'account-find');assert.equal(safeLogs[0].sdkCode,'INVALID_ENV');});
+ await test('context reads at request time; fake event.OPENID is not authority',async()=>{const before=process.env.WX_CONTEXT_KEYS;delete process.env.WX_CONTEXT_KEYS;responder=()=>{throw Error('UNEXPECTED_DB_CALL');};assert.equal((await main({...input,OPENID:'fake',APPID:'fake'})).code,'IDENTITY_UNAVAILABLE');assert.equal(wire.length,0);process.env.WX_CONTEXT_KEYS=before;});
+ assert.equal(networkAttempts,0);
+ console.log(JSON.stringify({level:'L3 repaired handler with original artifact SDK, intercepted transport only',checks:n,networkAttempts,versions:{wx:'2.4.0',node:'2.4.7',database:'1.2.2'}}));
+})().catch(e=>{console.error(e);process.exitCode=1;});

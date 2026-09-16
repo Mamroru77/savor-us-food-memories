@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict');
+const { createHandler } = require('../cloudfunctions/account/handler');
+const { createPartitions, KEY } = require('../miniprogram/utils/identityPartitions');
+async function main() {
+  let owner = 'A', records = new Map();
+  const handler = createHandler({ context:() => ({ OPENID:owner, APPID:'app' }), repository:{ find:async key => records.get(key), insert:async row => { if(records.has(row._id)) throw Error('duplicate'); records.set(row._id,row); } } });
+  const request = { action:'bootstrap', protocolVersion:1, userId:'spoof', OPENID:'spoof' };
+  const [a, a2] = await Promise.all([handler(request), handler(request)]);
+  assert.equal(a.userId,a2.userId); assert(!JSON.stringify(a).includes('spoof')); assert(!('OPENID' in a));
+  owner='B'; const b=await handler(request); assert.notEqual(a.userId,b.userId);
+  owner=''; assert.equal((await handler(request)).code,'IDENTITY_UNAVAILABLE');
+  assert.equal((await handler({action:'bootstrap',protocolVersion:2})).code,'UNSUPPORTED_PROTOCOL');
+  const disk = { 'savor-diary-v1':'{"outbox":[{"id":"legacy"}]}', 'savor-draft-v1':'raw-draft' };
+  const storage = { getStorageSync:key => disk[key], setStorageSync:(key,value) => { disk[key]=value; }, removeStorageSync:key=>{delete disk[key];} };
+  let cache=createPartitions(storage); assert.throws(()=>cache.lease(),/IDENTITY_LOCKED/);
+  const expired=cache.beginVerification(), ticket=cache.beginVerification(); assert.throws(()=>cache.accept(expired,a),/STALE_IDENTITY/);
+  const ta=cache.accept(ticket,a); assert.deepEqual(cache.get(ta).outbox,[]);
+  cache.save(ta,{ diary:{private:'A',outbox:[{actorUserId:a.userId,id:'op-a'}]},draft:{actorUserId:a.userId,text:'A'},outbox:[{actorUserId:a.userId,id:'op-a'}] });
+  const tb=cache.accept(cache.beginVerification(),b); assert.equal(cache.get(tb).diary,null);
+  assert.throws(()=>cache.save(ta,{outbox:[]}),/STALE_IDENTITY/);
+  assert.throws(()=>cache.save(tb,{outbox:[{actorUserId:a.userId}]}),/OUTBOX_IDENTITY_MISMATCH/);
+  const ta2=cache.accept(cache.beginVerification(),a); assert.equal(cache.get(ta2).draft.text,'A');
+  assert.equal(cache.quarantine()['savor-draft-v1'],'raw-draft');
+  cache=createPartitions(storage); assert.throws(()=>cache.lease(),/IDENTITY_LOCKED/);
+  assert.equal(disk['savor-draft-v1'],'raw-draft');
+  const before=disk[KEY];
+  const broken=createPartitions({ getStorageSync:storage.getStorageSync, setStorageSync:()=>{throw Error('quota');} });
+  const c={...a,userId:'u_'+'c'.repeat(48)};
+  assert.throws(()=>broken.accept(broken.beginVerification(),c),/CACHE_WRITE_FAILED/); assert.equal(disk[KEY],before); assert.throws(()=>broken.lease(),/IDENTITY_LOCKED/);
+  disk[KEY]='invalid'; assert.throws(()=>cache.accept(cache.beginVerification(),{...a,userId:'u_'+'d'.repeat(48)}),/CACHE_CORRUPT/); assert.equal(disk[KEY],'invalid');
+  console.log('PASS S1 foundation: server identity, concurrent bootstrap, spoofed identity ignored, A/B isolation, stale leases, cold-start lock, legacy preservation, quota/corruption fail-closed. Foundation tests only; real runtime tests are in verify-identity-runtime.cjs. Device acceptance NOT_EXECUTED.');
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});

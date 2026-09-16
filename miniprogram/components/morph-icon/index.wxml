@@ -1,0 +1,15 @@
+<block wx:if="{{presentation}}">
+  <view class="morph-box" style="width:{{size}}rpx;height:{{size}}rpx">
+    <image wx:if="{{viewCommand && viewCommand.active && renderRevision === viewCommand.revision && painting && frameSrc}}" wx:for="{{frameSlots}}" wx:key="id" class="morph-svg" binderror="svgError" bindload="svgLoaded" data-generation="{{item.id}}" src="{{frameSrc}}" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx;opacity:{{frameVisible ? 1 : 0}}" />
+    <view wx:if="{{!viewCommand || !viewCommand.active || renderRevision !== viewCommand.revision || !painting || !frameVisible}}" class="morph-fallback">
+      <image wx:if="{{viewCommand}}" wx:for="{{[viewCommand.quiet || fallbackOnly || !viewCommand.key || (viewCommand.active && settledEntryKey === viewCommand.key) ? viewCommand.targetSrc : viewCommand.originSrc]}}" wx:for-item="endpointSrc" wx:key="*this" data-icon="{{'lucide-'+(viewCommand.quiet || fallbackOnly || !viewCommand.key || (viewCommand.active && settledEntryKey === viewCommand.key) ? viewCommand.name : viewCommand.fromName)}}" data-revision="{{viewCommand.revision}}" data-src="{{endpointSrc}}" src="{{endpointSrc}}" bindload="staticLoaded" binderror="staticError" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx" />
+    </view>
+  </view>
+</block>
+<block wx:else>
+<view class="morph-box" style="width:{{size}}rpx;height:{{size}}rpx">
+  <canvas wx:if="{{renderer !== 'svg'}}" type="2d" id="morph-canvas" class="morph-canvas" style="width:{{size}}rpx;height:{{size}}rpx;opacity:{{ready && painting ? 1 : 0}}" binderror="canvasError" />
+  <image wx:if="{{renderer === 'svg' && entryActive && painting && frameSrc}}" wx:for="{{frameSlots}}" wx:key="id" class="morph-svg" binderror="svgError" bindload="svgLoaded" data-generation="{{item.id}}" src="{{frameSrc}}" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx;opacity:{{frameVisible ? 1 : 0}}" />
+  <view wx:if="{{!ready || !painting || !entryActive || (renderer === 'svg' && !frameVisible)}}" class="morph-fallback"><image wx:if="{{renderer === 'svg' && entryActive && painting}}" src="{{loadingSrc}}" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx" /><s-icon wx:else name="{{'lucide-'+(quiet || fallbackOnly ? name : (entryKey && (entryActive === false || settledEntryKey !== entryKey) && fromName ? fromName : (staticName || name)))}}" size="{{size}}" color="{{color}}" stroke="1.75" /></view>
+</view>
+</block>

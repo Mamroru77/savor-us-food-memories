@@ -1,0 +1,2 @@
+@import "../../styles/secondary.wxss";
+.account{display:flex;flex-direction:column;gap:20rpx}.account .title{margin:0}.account>button{margin:0}.account>.notice{margin-top:8rpx}

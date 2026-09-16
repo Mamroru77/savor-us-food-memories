@@ -1,0 +1,2 @@
+@import "../../styles/secondary.wxss";
+.poster{width:100%;height:991rpx;margin:28rpx auto;border-radius:24rpx;overflow:hidden;display:block}

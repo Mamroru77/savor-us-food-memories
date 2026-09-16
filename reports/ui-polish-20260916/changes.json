@@ -1,0 +1,103 @@
+{
+  "date": "2026-09-16",
+  "files": [
+    {
+      "path": "miniprogram/pages/account/index.js",
+      "sha256": "5d7deefb638c7b4f54c163b5c1917ac2d7b53994d377f00f712e7e2c23a16d29"
+    },
+    {
+      "path": "miniprogram/pages/space/index.js",
+      "sha256": "2b941043e86a6678761ead2ce33f55a7f04404893ecc1c46ce6e3ac85e0b83fd"
+    },
+    {
+      "path": "miniprogram/pages/workspace/index.js",
+      "sha256": "c18b45136a4c083385cd30d44f1a052568f01c1ee072f6760602fd1e44be8c48"
+    },
+    {
+      "path": "miniprogram/pages/reports/index.js",
+      "sha256": "b469fed86415bfb1845b1d109e867f1c966c18ffbae22069ed753febc58c2999"
+    },
+    {
+      "path": "miniprogram/components/identity-gate/index.js",
+      "sha256": "b07d381a26456001a30a882d0257f78e6d10e25c4e5a5e5ae7a82a62d96791e7"
+    },
+    {
+      "path": "miniprogram/components/identity-gate/index.wxml",
+      "sha256": "bdccb260dd2dca2a57749c0648e9e9b366a1bf0ea8756f6f176aea5666e66455"
+    },
+    {
+      "path": "miniprogram/components/identity-gate/index.wxss",
+      "sha256": "6da078473da40479ae2668914c5396b3d5832dfd23354175dd10eb6d2b771dbd"
+    },
+    {
+      "path": "miniprogram/pages/account/index.wxml",
+      "sha256": "8a24eefe5d14858a663795ebef81b14d5b5d0b034cd339619204203506761278"
+    },
+    {
+      "path": "miniprogram/pages/space/index.wxml",
+      "sha256": "b263e1f94e1162ae2504503270f46b32a5886be7dcfc6bed0764f92b94ace53e"
+    },
+    {
+      "path": "miniprogram/pages/workspace/index.wxml",
+      "sha256": "211711751455a9e7af3a77fcd5fda439afdc482600cb8beef845edf85b1d2611"
+    },
+    {
+      "path": "miniprogram/pages/account/index.wxss",
+      "sha256": "f794a725a1c0d17acb5be36d427216d17224e573ca2db4ec45fb902267f307b3"
+    },
+    {
+      "path": "miniprogram/pages/space/index.wxss",
+      "sha256": "b0be7626f68e753df69374701c1788cd394978e2b701df83e4cdeed2586767bc"
+    },
+    {
+      "path": "miniprogram/pages/workspace/index.wxss",
+      "sha256": "789021da4efa7711e7165ea024fb1e0ee25e0ec229c98967a1c577a4eeb65758"
+    },
+    {
+      "path": "miniprogram/pages/reports/index.wxss",
+      "sha256": "bd6a4be1a6193702ea40daaf0557ef1426e8ea424ccd6cc8d77aa52872be6160"
+    },
+    {
+      "path": "miniprogram/pages/us/index.wxml",
+      "sha256": "49c7ad790d1b2ea66a1512118ba18117f71c08e02f3e93839c23786fdf61318d"
+    },
+    {
+      "path": "miniprogram/pages/us/index.wxss",
+      "sha256": "2e34b1c0f1226ddde76caf26b1f0dea8e6fbfa11da17a423c13ea1bbddf75365"
+    },
+    {
+      "path": "miniprogram/components/sheet/index.wxml",
+      "sha256": "b37c16516476611031e67e076e970b07b9cda2cec00c37a9bb193ac79bdc5428"
+    },
+    {
+      "path": "miniprogram/components/sheet/index.wxss",
+      "sha256": "d51ed67b670f2c97830729ddf84833e8bb84a6f01c8bf93081e7971f688bfb67"
+    },
+    {
+      "path": "miniprogram/pages/add/index.wxss",
+      "sha256": "5c1324cada27f4e47807a1a239af67eb5f400436d1621cc7db3e5e56bf17e8e5"
+    },
+    {
+      "path": "miniprogram/pages/reports/index.wxml",
+      "sha256": "9d7e98c0decbdcd9309b95cabf4abfd48b1799beb2675b3aeba8305bc289677d"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3e7ef20f95e7b1c02c889666be4122e23c2646bf78dab7dc17c3d54348f84fc6"
+    },
+    {
+      "path": "miniprogram/styles/secondary.wxss",
+      "sha256": "88883213ffedc7332ca790f9a7bc1d7f40a69f5f90f286fcc95ebd2f425d0840"
+    },
+    {
+      "path": "miniprogram/utils/secondaryUI.js",
+      "sha256": "8b44f459ca1304bae6f18ff6c433e81acb3086b9123484ef6e2ecebbd7c87410"
+    },
+    {
+      "path": "tools/verify-secondary-ui.cjs",
+      "sha256": "bc6ec4c9f1d7b988b1b8c5927f1e95db51735db06ddf7e52a91089eb72435729"
+    }
+  ],
+  "phoneBaseline": "User confirmed prior normal build; new UI not phone-tested by agent",
+  "p2": "Native light-theme disabled-label contrast refinement only. No speculative Home/Map/MemoryRow changes."
+}

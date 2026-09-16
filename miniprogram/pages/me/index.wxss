@@ -1,0 +1,114 @@
+/* Me — port of screens.css “Profile” (×2.5). */
+.me-screen {
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+  padding-bottom: 16rpx;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 35rpx;
+  height: 185rpx;
+  margin: 0 5rpx 42rpx;
+}
+.profile-avatar {
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 5rpx solid rgba(255, 255, 255, 0.84);
+  box-shadow: 0 2rpx 8rpx rgba(70, 75, 65, 0.13);
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.4);
+}
+.profile-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.profile-name {
+  font-family: var(--serif);
+  font-size: 64rpx;
+  line-height: 76rpx;
+  letter-spacing: -0.5rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-bio {
+  font-size: 27rpx;
+  line-height: 38rpx;
+  margin-top: 10rpx;
+  color: var(--muted, #565752);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edit-profile-button {
+  width: 78rpx;
+  height: 78rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  margin-right: -5rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-stats-card {
+  position: relative;
+  height: 280rpx;
+  width: 100%;
+  border-radius: var(--radius-card);
+  padding: 30rpx 27rpx 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.profile-stats {
+  position: absolute;
+  top: 36rpx;
+  left: 22rpx;
+  right: 22rpx;
+  display: flex;
+}
+.profile-stats .stat { flex: 1; font-size: 25rpx; line-height: 38rpx; align-items: center; gap: 8rpx; }
+.me-divided { border-left: 1rpx solid rgba(111, 115, 112, 0.045); }
+.me-strong { font-size: 70rpx; line-height: 80rpx; letter-spacing: -1rpx; }
+.memory-chart {
+  position: absolute;
+  bottom: 24rpx;
+  left: 38rpx;
+  width: calc(100% - 76rpx);
+  height: 80rpx;
+}
+
+.profile-menu {
+  margin-top: var(--space-lg);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-card);
+}
+.profile-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 25rpx;
+  width: 100%;
+  min-height: 136rpx;
+  height: auto;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid rgba(72, 76, 70, 0.055);
+  box-sizing: border-box;
+}
+.profile-menu-row:last-child { border: 0; }
+.profile-menu-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 9rpx;
+}
+.profile-menu-title { font-family: var(--sans); font-size: 30rpx; line-height: 40rpx; font-weight: 500; }
+.profile-menu-sub { font-family: var(--sans); font-size: 24rpx; line-height: 36rpx; color: var(--muted, #6b6c66); }
+
+/* Native image defaults are not viewport-sized, even with fixed edges. */
+.ambient-photo { width: 100vw; height: 100vh; }
+
+.dusk .profile-menu-row { border-bottom-color:rgba(238,234,227,.075); }
+.dusk .profile-menu-row:last-child { border-bottom-color:transparent; }
+.dusk .edit-profile-button { background:rgba(238,234,227,.075); border:1rpx solid rgba(238,234,227,.12); }

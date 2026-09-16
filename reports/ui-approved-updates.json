@@ -1,0 +1,190 @@
+{
+  "miniprogram/app.json": {
+    "sha256": "fcad4880b2a89165f8e78255856cffd38f7b4cf70dc8109892fb6fde50fb7403",
+    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+  },
+  "miniprogram/components/sheet/index.wxml": {
+    "sha256": "b37c16516476611031e67e076e970b07b9cda2cec00c37a9bb193ac79bdc5428",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/components/sheet/index.wxss": {
+    "sha256": "96cdb3d0ac4a017802e238766e7fbfabf01abe672cd85f2dd5cbfd468c900ebf",
+    "reason": "Concept-led round4: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/pages/us/index.wxml": {
+    "sha256": "49c7ad790d1b2ea66a1512118ba18117f71c08e02f3e93839c23786fdf61318d",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/pages/me/index.wxml": {
+    "sha256": "e609d14fa625d101ac3f939a43894536195110f5691798e72f733ee7e3558a2e",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+  },
+  "miniprogram/pages/add/index.wxml": {
+    "sha256": "6a384681dd12c04e3f69672458b959dd205d802d667c5e901d8d23ca6acd39ab",
+    "reason": "2026-09-16 user-authorized screenshot repair: bounded wider Toast, unambiguous rating label, one inline save error; no Map/Tab geometry redesign. Native phone acceptance pending."
+  },
+  "miniprogram/pages/add/index.wxss": {
+    "sha256": "50b8933b8922953b619c53fed0ad11d5c1781b38702ae0fc74ded4bd4116e0db",
+    "reason": "Concept-led round3: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/pages/map/index.wxml": {
+    "sha256": "df594862876358230a333e71d228f690558f3331182c40b5abee43e37f022d34",
+    "reason": "2026-09-16 user screenshot request: search shares exact bottom-card material; keep Map geometry and Morphicons-compatible official Lucide icon sources. Phone performance not claimed."
+  },
+  "miniprogram/pages/map/index.wxss": {
+    "sha256": "b3ba98ea8b9448881606c16b5c6adb013855cf2c9087038b5e7c89585a6f5435",
+    "reason": "2026-09-16 user screenshot request: search shares exact bottom-card material; keep Map geometry and Morphicons-compatible official Lucide icon sources. Phone performance not claimed."
+  },
+  "miniprogram/pages/us/index.wxss": {
+    "sha256": "d4a9b1b32f4efaf3f88061269ec38f886a39ddf3aae76c5106a91ede0fafbbe3",
+    "reason": "Concept-led round2: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/pages/me/index.wxss": {
+    "sha256": "3e8e458dac2352384c3025b527970ea04e58d2320e67673477b2c2a494b7abc4",
+    "reason": "Concept-led round3: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/app.wxss": {
+    "sha256": "e9b86abfa9aaf04200ff2347512319db00039dc994c5adde87bc0dfe8a5bbcca",
+    "reason": "Concept-led visual round1: shared surface, restrained atmosphere, heading and secondary-page spacing tokens. No JS/WXML/Tab/Map geometry change."
+  },
+  "miniprogram/components/memory-row/index.wxml": {
+    "sha256": "fa51bcdd7883efffde26d52b00e9d91fb6b6ac626ae9c05572aca1f5d8d0c801",
+    "reason": "用户确认Lucide统一方案：仅替换图案与线宽，其他已验收布局保持不变。"
+  },
+  "miniprogram/components/memory-row/index.wxss": {
+    "sha256": "e8831b65eeebfa6199723c51246115e89e2a290c5c005c8dcab69c72fb25c4a6",
+    "reason": "Concept-led round4: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/components/toast/index.wxml": {
+    "sha256": "68aabcdee7c9cd906f71b90721c83d53e3883658d6ddcf7a6546097422cbf9e2",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/custom-tab-bar/index.js": {
+    "sha256": "73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。"
+  },
+  "miniprogram/custom-tab-bar/index.wxml": {
+    "sha256": "413cf4ccc74e52ac83ca555bd53d50d75d044d81108336986e646f7902119d07",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。"
+  },
+  "miniprogram/custom-tab-bar/index.wxss": {
+    "sha256": "57e506ffa7e14d8d832ac1259c12a72fc2395f2037c94c8f4635b340811adae0",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。"
+  },
+  "miniprogram/pages/home/index.wxml": {
+    "sha256": "a369416c6b85c27119dccd13387d456714af94269442a7c7f195c9fc6c544998",
+    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。 本轮只同步目标分支已存在的 R2 非视觉定位属性 id=\"identity-gate\"；移除此单个属性即与原哈希完全相同，未改布局/样式，非新增原生视觉验收。"
+  },
+  "miniprogram/pages/home/index.wxss": {
+    "sha256": "a9be695bf2427cd13066e910312a2adf878936d41721873fde6baa60bae381b3",
+    "reason": "Concept-led round5: related page proportions, typography and spacing; no JS/WXML/business change."
+  },
+  "miniprogram/components/toast/index.wxss": {
+    "sha256": "81ad659141c4ee6dc75253ebf83a5ad3b3960dce34f91b0c4a8968eecb33dfad",
+    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+  },
+  "miniprogram/components/morph-icon/index.wxml": {
+    "sha256": "cc9cfaef93ca8069492ae0ce40e7b0e6fa5f2af58855c55dc80aa7d0ebd1c4c6",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。"
+  },
+  "miniprogram/custom-tab-bar/index.json": {
+    "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/pages/morph-lab/index.wxml": {
+    "sha256": "510aba2d5081c2067253670e35fd980cf8f8c2a90efc3f01cfd64b4a93f02745",
+    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+  },
+  "miniprogram/images/pin.png": {
+    "removed": true,
+    "replacements": [
+      "miniprogram/images/markers/landmark-normal-fallback.png",
+      "miniprogram/images/markers/landmark-selected-fallback.png"
+    ],
+    "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
+  },
+  "miniprogram/components/morph-icon/index.js": {
+    "sha256": "ebce76ff577e16daa7e272031c02f698af49b1fedad405a6b11ab06cbbe274b4",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。"
+  },
+  "miniprogram/components/morph-icon/index.wxss": {
+    "sha256": "a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。"
+  },
+  "miniprogram/pages/morph-lab/index.js": {
+    "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
+    "reason": "用户选择L餐具主题/480ms：Add端点改为官方Utensils/UtensilsCrossed；原480ms首帧计时修复、SVG层、尺寸、路线及地图不变。"
+  },
+  "miniprogram/pages/add/index.js": {
+    "sha256": "81d734c7e4a6bcdbd97b895cadcf878e9d81a89d89f465ccc9eab488d92c99aa",
+    "reason": "2026-09-16 user-authorized screenshot repair: bounded wider Toast, unambiguous rating label, one inline save error; no Map/Tab geometry redesign. Native phone acceptance pending."
+  },
+  "miniprogram/pages/me/index.js": {
+    "sha256": "e1270c9a4cc88791949ec52b94dbb0494bfb8dae26afed4e5b6dd2203144c69a",
+    "reason": "User-authorized sequential audit: localize two existing Me entries through the existing TSV build. No menu order, icons, routes, Tab behavior, preferences or private content changes."
+  },
+  "miniprogram/pages/workspace/index.wxml": {
+    "sha256": "bd951fdbd08a5b034e4dad6e5584b9af2afa02465a836b693c3000e4d610c224",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/components/identity-gate/index.wxml": {
+    "sha256": "35529bbd6ae5ebf2aba93983ba2da8927f23a8029954ab75728e4d9be0fd687f",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/components/identity-gate/index.wxss": {
+    "sha256": "f1a59a0a2b45bde8f26cb58b68e3b0af552e24391ddd3973cf75649006e31a4d",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/pages/account/index.wxml": {
+    "sha256": "22d843a84ef3090f6229155b33dd8084b01683e18eb6c6d54305316af3ecf26c",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/pages/space/index.wxml": {
+    "sha256": "e3d38e9b4181d1c00d5cae16a8e7f949ea2c15f5cce6a0e9f9ff0b7573ae2da6",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/pages/account/index.wxss": {
+    "sha256": "f794a725a1c0d17acb5be36d427216d17224e573ca2db4ec45fb902267f307b3",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/pages/space/index.wxss": {
+    "sha256": "b0be7626f68e753df69374701c1788cd394978e2b701df83e4cdeed2586767bc",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/pages/workspace/index.wxss": {
+    "sha256": "789021da4efa7711e7165ea024fb1e0ee25e0ec229c98967a1c577a4eeb65758",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/pages/reports/index.wxss": {
+    "sha256": "bd6a4be1a6193702ea40daaf0557ef1426e8ea424ccd6cc8d77aa52872be6160",
+    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+  },
+  "miniprogram/pages/reports/index.wxml": {
+    "sha256": "4b60b9b8815e2db28fe9dea76c6a1dac137115b980f52dc6745ef5bd96548881",
+    "reason": "2026-09-16 official WXSS rule: replace unsupported [disabled] with scoped state classes only; preserve native disabled and all other button attributes. No JS, Tab, Map, palette or geometry changes. Device visual acceptance pending."
+  },
+  "miniprogram/styles/secondary.wxss": {
+    "sha256": "ad47ed71e421c1bc1be26e29b128725241023b9b0a003dcea07152c7303ae9ff",
+    "reason": "Concept-led visual round1: shared surface, restrained atmosphere, heading and secondary-page spacing tokens. No JS/WXML/Tab/Map geometry change."
+  },
+  "miniprogram/pages/workspace/index.js": {
+    "sha256": "3832e00bc47af27755128526b2c99671f9ce2a1178de5f4f83f392dce4aa16df",
+    "reason": "Phase5: stale read/pagination results and completion callbacks cannot overwrite a new page visit; no identity, cloud mutation, native chooser or storage behavior rewritten."
+  },
+  "miniprogram/pages/reports/index.js": {
+    "sha256": "4a0d0530d14d6cb15b630a080c81c60cadf36b8cad80b2b3e62bc19da7c78e6d",
+    "reason": "Official async node query lifecycle: superseded/cleared report render callbacks cannot redraw or replace the latest canvas. No sharing, export, identity, persisted data or palette changes."
+  },
+  "miniprogram/utils/locales.js": {
+    "sha256": "edc24265e7e3f4552b48b1374261ce90ff4fa2edae11a512ea086f4c0a08cd3e",
+    "reason": "User-authorized sequential audit: localize two existing Me entries through the existing TSV build. No menu order, icons, routes, Tab behavior, preferences or private content changes."
+  },
+  "miniprogram/components/sheet/index.js": {
+    "sha256": "7f698743706957c388fe5b3d8fcb0d68b419d02c261b9ff6da1199e9e1be474c",
+    "reason": "Preserve unsaved form fields and guard stale avatar results; no change to identity recovery or persistence."
+  },
+  "miniprogram/styles/visual-tokens.wxss": {
+    "sha256": "d259392ff5b37ecc062f7882e3789ba93f8f840b854e7f2d25a6bf1deba8e28e",
+    "reason": "Concept-led round2: related page proportions, typography and spacing; no JS/WXML/business change."
+  }
+}

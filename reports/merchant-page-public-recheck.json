@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-11",
+  "purpose": "Public-page feasibility recheck after user clarified page enrichment vs Tencent location search",
+  "results": [
+    {
+      "sampleId": "L01",
+      "requestedUrl": "https://m.dianping.com/shopinfo/k9s2UXBQSNeAFMFc",
+      "method": "fetch_page; public unauthenticated request; no cookies or bypass",
+      "result": "tool error: Failed to fetch page (HTTP 500)",
+      "merchantFieldsRetrieved": []
+    },
+    {
+      "sampleId": "L02",
+      "requestedUrl": "https://m.dianping.com/shopinfo/H49uXjTdApfW0994",
+      "method": "fetch_page; public unauthenticated request; no cookies or bypass",
+      "result": "tool error: Failed to fetch page (HTTP 500)",
+      "merchantFieldsRetrieved": []
+    },
+    {
+      "sampleId": "L03",
+      "requestedUrl": "https://m.dianping.com/shopinfo/H58Sb57xR2kxnxhN",
+      "method": "fetch_page; public unauthenticated request; no cookies or bypass",
+      "result": "tool error: Failed to fetch page (HTTP 500)",
+      "merchantFieldsRetrieved": []
+    },
+    {
+      "sampleId": "L04",
+      "requestedUrl": "http://dpurl.cn/g0eelkTz",
+      "method": "fetch_page; public unauthenticated request; no cookies or bypass",
+      "result": "redirected to Meituan error page: F404#2JC8#UCEVCP",
+      "merchantFieldsRetrieved": []
+    },
+    {
+      "sampleId": "L05",
+      "requestedUrl": "http://dpurl.cn/VjHcUruz",
+      "method": "fetch_page; public unauthenticated request; no cookies or bypass",
+      "result": "redirected to Meituan error page: F404#2JC8#LQNJLA",
+      "merchantFieldsRetrieved": []
+    }
+  ],
+  "limits": "No usable merchant page fields retrieved. Tool failures do not prove permanent inaccessibility. No authenticated access, bypass, scraping deployment, or merchant image fetching performed."
+}

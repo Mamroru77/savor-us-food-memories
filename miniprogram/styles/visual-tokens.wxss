@@ -1,0 +1,45 @@
+/* Savor visual language — concept-led, shared by pages through app.wxss.
+   Existing palette/font aliases remain authoritative; no runtime dependency. */
+page {
+  --surface-page: #efeeeb;
+  --surface-card: rgba(251, 250, 247, .82);
+  --surface-elevated: #f7f6f2;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --space-xs: 12rpx;
+  --space-sm: 24rpx;
+  --space-md: 32rpx;
+  --space-lg: 40rpx;
+  --space-xl: 56rpx;
+  --page-gutter: 40rpx;
+  --card-inset: 36rpx;
+  --radius-image: 28rpx;
+  --radius-control: 24rpx;
+  --radius-card: 40rpx;
+  --radius-panel: 56rpx;
+  --type-page: 52rpx;
+  --type-page-zh: 48rpx;
+  --type-section: 32rpx;
+  --type-stat-secondary: 60rpx;
+  --type-body: 28rpx;
+  --type-caption: 24rpx;
+  --leading-page: 64rpx;
+  --leading-body: 42rpx;
+  --leading-caption: 36rpx;
+  --weight-display: 400;
+  --weight-label: 500;
+  --shadow-flat: none;
+  --shadow-card: 0 14rpx 36rpx -16rpx rgba(37, 43, 38, .14);
+  --shadow-floating: 0 18rpx 44rpx -16rpx rgba(37, 43, 38, .20);
+  --ambient-opacity: .12;
+  --motion-quick: 140ms;
+  --motion-normal: 220ms;
+  --motion-panel: 320ms;
+  --ease-soft: cubic-bezier(.2,.7,.3,1);
+}
+.dusk {
+  --surface-page: #121315;
+  --surface-card: #242528;
+  --surface-elevated: #2b2c30;
+  --shadow-card: 0 14rpx 36rpx -16rpx rgba(0,0,0,.35);
+}

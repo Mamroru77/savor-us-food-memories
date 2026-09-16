@@ -1,0 +1,29 @@
+<s-identity-gate wx:if="{{locked}}" />
+<view wx:else class="screen secondary-screen tools {{dusk ? 'dusk' : ''}} {{locale === 'zh-CN' ? 'locale-zh' : ''}}">
+  <text class="eyebrow">SAVOR / YOUR YEAR</text>
+  <text class="title">{{uiText.reportTitle}}</text>
+  <text class="hint">{{uiText.reportIntro}}</text>
+  <picker mode="selector" range="{{years}}" bindchange="selectYear" aria-label="{{uiText.chooseYear}}">
+    <view class="field">{{year}} · {{uiText.chooseYear}}</view>
+  </picker>
+  <view class="card" wx:if="{{report}}">
+    <text class="heading">{{report.year}} · {{report.count}} {{uiText.meals}}</text>
+    <text class="hint">{{uiText.asOf}} {{report.asOf}} · {{report.days}} {{uiText.days}} · {{report.places}} {{uiText.places}} · {{uiText.streak}} {{report.longestStreak}} {{uiText.dayUnit}}</text>
+    <text class="hint">{{report.unknownLocations}} {{uiText.unknown}} {{uiText.rated}} {{report.ratedCount}} {{uiText.noEstimates}}</text>
+    <view wx:for="{{report.milestones}}" wx:key="count" class="row">{{uiText.milestone}} {{item.count}} · {{item.date}}</view>
+    <view wx:if="{{!report.milestones.length}}" class="ui-empty">{{uiText.slow}}</view>
+  </view>
+  <canvas type="2d" id="report-canvas" class="poster" />
+  <view class="card">
+    <text class="heading">{{uiText.shareScope}}</text>
+    <text class="hint">{{uiText.shareIntro}}</text>
+    <view class="switch-row">
+      <switch checked="{{details}}" bindchange="details" color="{{dusk ? '#dec8a7' : '#809176'}}" aria-label="{{uiText.includeDetails}}" />
+      <text>{{uiText.includeDetails}}</text>
+    </view>
+    <button class="ui-primary {{(busy) ? 'ui-disabled' : ''}}" disabled="{{busy}}" bindtap="exportHtml" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{uiText.exportHtml}}</button>
+    <button class="{{(busy) ? 'ui-disabled' : ''}}" disabled="{{busy}}" bindtap="sharePoster" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{uiText.sharePoster}}</button>
+    <text class="hint">{{uiText.irreversible}}</text>
+  </view>
+  <text wx:if="{{message}}" class="notice" selectable>{{message}}</text>
+</view>
