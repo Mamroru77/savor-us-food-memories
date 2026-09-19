@@ -66,7 +66,12 @@ function createRenderer(canvas) {
       } catch(e) {return backup;}
       finally {if(downloaded) remove(downloaded);}
     });
-    cache.set(key,job);job.then(path=>{if(!disposed)ready.set(key,path);});queue=job.catch(()=>{});return job;
+    cache.set(key,job);job.then(path=>{
+      if(disposed)return;
+      // A failed download/canvas export is not a ready photo. Retry only when a later
+      // existing render request arrives; no polling, timer or second renderer.
+      if(path===backup){cache.delete(key);ready.delete(key);}else ready.set(key,path);
+    });queue=job.catch(()=>{});return job;
   }
   return {render,peek(memory,selected){return ready.get(JSON.stringify([photoFor(memory),!!selected]));},dispose(){disposed=true;files.forEach(remove);files.clear();cache.clear();ready.clear();}};
 }

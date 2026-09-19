@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),crypto=require('crypto');
-const source=fs.readFileSync('miniprogram/pages/me/index.js','utf8');
+const source=require('./lib/reviewed-me-memory-return.cjs').project(fs.readFileSync('miniprogram/pages/me/index.js','utf8'));
 const menu=s=>JSON.parse(JSON.stringify(vm.runInNewContext(s.match(/const MENU_ROWS = (\[[\s\S]*?\n\]);/)[1])));
 const rows=menu(source),catalog=require('../miniprogram/utils/locales');
 for(const row of rows)for(const k of ['title','subtitle'])assert(catalog.some(x=>x.en===row[k]),'Missing English source key: '+row[k]);
@@ -10,5 +10,6 @@ const moduleStub={exports:{}};vm.runInNewContext(fs.readFileSync('miniprogram/ut
 for(const [lang,expected] of [['en',['Cloud tools','Backups, preferences and feedback','Annual reports','Memories, milestones and sharing']],['zh-CN',['云端工具','备份、偏好与反馈','年度报告','日记、里程碑与主动分享']]]){i18n.setLanguage(lang);assert.deepEqual(rows.slice(0,2).flatMap(r=>[i18n.t(r.title),i18n.t(r.subtitle)]),expected);}
 console.log('PASS both language preferences produce single-language entry labels');
 const before=fs.readFileSync('tools/fixtures/regression/lifecycle-review-20260916/batch4/backup/miniprogram/pages/me/index.js','utf8');assert.deepEqual(rows.map(({title,subtitle,...other})=>other),menu(before).map(({title,subtitle,...other})=>other));assert.equal(source.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'),before.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'));
-console.log('PASS menu count/order/icons/routes and every non-menu line are unchanged');
+console.log('PASS menu count/order/icons/routes and every non-menu line outside exact reviewed A integration are unchanged');
+require('./verify-me-review-contract.cjs');
 console.log('4/4 menu copy checks passed. No live preferences or private content modified.');

@@ -54,6 +54,7 @@ Page({
 
   onUnload() {
     this.disposed = true;
+    this.releaseNativeImportShow();
     if (this.unsubscribe) this.unsubscribe();
   },
 
@@ -73,12 +74,21 @@ Page({
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.showSelection(2, this._tabAppearance);
     this.syncContext(state);
+    this.releaseNativeImportShow();
   },
 
   onHide() { this.active = false; },
 
+  onPageScroll(event) { this._nativeScrollTop = event.scrollTop; },
+
   syncContext(state) {
+    const wasReady = this.data.identityReady;
     i18n.syncPage(this, state, 2);
+    // Verification already redacted the old projection. Rehydrate only after
+    // unlock; a same-generation verified notification is not a new account reset.
+    if (wasReady === false && state.identity && !state.identity.locked && !this.saveLock) {
+      this.setData({draft:store.loadDraft()});
+    }
     this.setData({businessFrozen:identity.isDiagnosisActive(),identityLabels:identityCopy()});
     const draft = this.data.draft;
     const knownPlace = state.memories.find(function (memory) {
@@ -339,7 +349,15 @@ Page({
       this.updateImportCandidate(candidate);this.setData({error:''});
     } catch (e) { this.setData({ importCandidate: null }); this.importError(e); }
   },
+  releaseNativeImportShow() {
+    const waiting = this._nativeImportShow;
+    this._nativeImportShow = null;
+    if (waiting) waiting.resolve();
+  },
+
   resetImportLookup() {
+    this.releaseNativeImportShow();
+    this.nativeImportSerial = (this.nativeImportSerial || 0) + 1;
     this.lookupSerial=(this.lookupSerial||0)+1;
     this.setData({importMatches:[],importSearching:false,importSearchDone:false,importLookupError:''});
   },
@@ -404,9 +422,38 @@ Page({
   },
   async onImportNativePick() {
     if(this.importBlocked()||!this.data.importCandidate)return;
-    const c=this.data.importCandidate;
-    try {const pick=await locations.choose(c.confirmedLocation);if(!this.disposed&&this.data.importCandidate===c)this.confirmImportLocation(pick,'');}
-    catch(e){if(!e.cancelled&&!this.disposed)this.setData({error:i18n.t(e.message)});}
+    let token = identity.lease();
+    const c = this.data.importCandidate;
+    const serial = this.nativeImportSerial = (this.nativeImportSerial || 0) + 1;
+    const visibleAgain = new Promise(resolve => { this._nativeImportShow = {serial, resolve}; });
+    const scrollTop = this._nativeScrollTop || 0;
+    const scene = {};
+    ['importOpen','importText','importSourceIndex','importCity','importMatches','importSearchDone','importLookupError'].forEach(key => { scene[key] = this.data[key]; });
+    this.locating = true;
+    let pick, pickerError;
+    try {
+      try { pick = await locations.choose(c.confirmedLocation); }
+      catch (error) { pickerError = error; }
+      // Native cancel can arrive BEFORE Page.onShow / App verification starts.
+      if (!this.active && this._nativeImportShow && this._nativeImportShow.serial === serial) await visibleAgain;
+      // Cancellation also needs the normal same-owner verification handshake.
+      token = await identity.resumeNative(token);
+      identity.assertLease(token);
+      if (this.disposed || !this.active || serial !== this.nativeImportSerial) return;
+      this.updateImportCandidate(c);
+      this.setData(Object.assign({}, scene, {importSearching:false}), () => {
+        if (!this.disposed && this.active && serial === this.nativeImportSerial && identity.isCurrent(token) && wx.pageScrollTo) wx.pageScrollTo({scrollTop, duration:0});
+      });
+      this.syncContext(store.get());
+      this.locating = false;
+      if (pickerError) {
+        if (!pickerError.cancelled) this.setData({error:i18n.t(pickerError.message)});
+      } else this.confirmImportLocation(pick, '');
+    } catch (error) { /* Failed/different identity stays gated; never restore its scene. */ }
+    finally {
+      if (this._nativeImportShow && this._nativeImportShow.serial === serial) this.releaseNativeImportShow();
+      this.locating = false;
+    }
   },
   confirmImportLocation(pick,categoryText) {
     const c=this.data.importCandidate;if(!c||this.importBlocked()||!locations.confirmed(pick))return;

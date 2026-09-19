@@ -1,2 +1,4 @@
 @import "../../styles/secondary.wxss";
 
+.workspace-summary { padding:24rpx 0; border-bottom:1rpx solid var(--border,rgba(120,120,110,.2)); margin-bottom:24rpx; }
+

@@ -16,6 +16,8 @@
 
       <button class="space-management secondary-button" bindtap="onManageSpace" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{locale === 'zh-CN' ? '管理双人空间与 Wishlist' : 'Manage shared space & wishlist'}}</button>
 
+      <view class="secondary-subtle" style="margin-top:16rpx">{{copy.s325a78d28f}}</view>
+
       <!-- together card -->
       <view class="together-card glass content-card">
         <view class="couple-avatars">
@@ -29,7 +31,7 @@
           <text class="together-label">{{copy.s5e084bb624}}</text>
           <view class="together-days">
             <text class="together-days-strong">{{days}}</text>
-            <text class="together-days-unit">{{copy.s5548ae4f34}}</text>
+            <text class="together-days-unit">{{days === 1 ? copy.sa2620cbc10 : copy.s5548ae4f34}}</text>
           </view>
         </view>
       </view>
@@ -38,9 +40,9 @@
       <view class="journey-card glass content-card" bindtap="onJourney" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
         <text class="journey-title">{{copy.sd8ae704fc5}}</text>
         <view class="journey-stats">
-          <view class="stat"><text class="stat-strong journey-strong">{{meals}}</text><text>{{copy.sffdd1f1a28}}</text></view>
-          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{places}}</text><text>{{copy.s0cd3597453}}</text></view>
-          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{savedCount}}</text><text>{{copy.s85b44d2ebb}}</text></view>
+          <view class="stat"><text class="stat-strong journey-strong">{{meals}}</text><text>{{meals === 1 ? copy.s0c0b3ce402 : copy.sffdd1f1a28}}</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{places}}</text><text>{{places === 1 ? copy.sc32a0147f2 : copy.s0cd3597453}}</text></view>
+          <view class="stat journey-divided"><text class="stat-strong journey-strong">{{savedCount}}</text><text>{{savedCount === 1 ? copy.s40960c6b3b : copy.s85b44d2ebb}}</text></view>
         </view>
         <view class="journey-latest">
           <text class="journey-latest-label">{{copy.s6741d5102e}} {{latestLabel}}</text>
@@ -54,7 +56,7 @@
           <text class="section-title">{{copy.sb8ef4a331b}}</text>
           <text class="section-link" bindtap="onSeeAll" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s2941c5ce61}}</text>
         </view>
-        <scroll-view class="shared-gallery" scroll-x enhanced show-scrollbar="{{false}}">
+        <scroll-view class="shared-gallery" scroll-x enhanced scroll-left="{{sharedScrollLeft}}" bindscroll="onGalleryScroll" show-scrollbar="{{false}}">
           <view class="shared-gallery-inner">
             <view wx:for="{{sharedRows}}" wx:key="id" class="shared-photo-card">
               <view class="shared-photo-open" data-id="{{item.memory.id}}" bindtap="onSharedOpen" aria-role="button" aria-label="{{copy.s0201abab39}} {{item.memory.restaurant}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
@@ -83,6 +85,8 @@
     type="{{sheetType}}"
     memory-id="{{sheetMemoryId}}"
     filter="{{sheetFilter}}"
+    reading-position="{{sheetReadingPosition}}"
+    bind:nativepreview="onNativePreview"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />

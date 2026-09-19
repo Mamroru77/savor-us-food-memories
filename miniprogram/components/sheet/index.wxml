@@ -12,11 +12,12 @@
       </view>
     </view>
 
-    <scroll-view class="sheet-content {{sheetScrollHeight > 0 ? 'sheet-content-measured' : ''}}" style="{{sheetScrollHeight > 0 ? 'height: ' + sheetScrollHeight + 'px;' : ''}}" scroll-y enhanced show-scrollbar="{{false}}" scroll-into-view="{{sheetScrollTarget}}">
+    <scroll-view class="sheet-content {{sheetScrollHeight > 0 ? 'sheet-content-measured' : ''}}" style="{{sheetScrollHeight > 0 ? 'height: ' + sheetScrollHeight + 'px;' : ''}}" scroll-y enhanced show-scrollbar="{{false}}" scroll-into-view="{{sheetScrollTarget}}" scroll-top="{{sheetScrollTop}}" bindscroll="onSheetScroll">
       <!-- ================= MEMORY DETAIL ================= -->
       <block wx:if="{{displayType === 'memory'}}">
         <view wx:if="{{!detail}}" class="empty-state">{{copy.s5180f8c462}}</view>
-        <view wx:else class="memory-detail">
+        <view wx:else id="memory-start" class="memory-detail">
+          <text wx:if="{{detail.memory.restaurant}}" class="detail-restaurant">{{detail.memory.restaurant}}</text>
           <text wx:if="{{detail.memory.noPhoto}}" class="helper-note">{{copy.s9ecb30ac50}}</text>
           <image class="detail-photo" bindtap="onDetailPreview" src="{{imageErrors[(detail.images[photoIndex])] ? '/images/le-comptoir.jpg' : (detail.images[photoIndex])}}" mode="aspectFill"  data-source="{{detail.images[photoIndex]}}" binderror="onImageError" />
           <scroll-view wx:if="{{detail.images.length > 1}}" class="photo-thumbnail-scroll" scroll-x enhanced show-scrollbar="{{false}}" scroll-into-view="photo-thumb-{{photoIndex}}"><view class="photo-thumbnails" style="width:{{detail.images.length * 90 + (detail.images.length - 1) * 15}}rpx">
@@ -56,6 +57,7 @@
             <text wx:for="{{detail.memory.dishes}}" wx:key="index">{{item}}</text>
             <view class="secondary-button" bindtap="onEditMemory" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s67cbb906f4}}</view>
           </view>
+          <text class="helper-note">{{copy.s325a78d28f}}</text>
           <view class="detail-action-row">
             <view class="detail-action {{detail.memory.liked ? 'is-active' : ''}}" bindtap="onLove" aria-role="button" aria-pressed="{{detail.memory.liked}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
               <s-icon class="detail-action-icon" color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="heart" size="40" fill="{{detail.memory.liked ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
@@ -67,7 +69,7 @@
             </view>
             <view class="detail-action {{detail.memory.shared ? 'is-active' : ''}}" bindtap="onShare" aria-role="button" aria-pressed="{{detail.memory.shared}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
               <s-icon class="detail-action-icon" color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="users-round" size="40" fill="{{detail.memory.shared ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
-              <text>{{detail.memory.shared ? copy.sc0cd992be8 : copy.s54355d0d44}}</text>
+              <text>{{detail.memory.shared ? copy.s02c4cb2c6c : copy.s1e9167322e}}</text>
             </view>
           </view>
           <block wx:if="{{confirmDelete}}">
@@ -130,7 +132,7 @@
             <text>{{item.restaurant}} · {{item.kind}}</text><text class="helper-note">{{item.status}} · {{item.message}}</text>
             <view wx:if="{{item.conflict}}" data-id="{{item.recordId}}" bindtap="onUseCloud" class="secondary-button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s260490e9e0}}</view>
           </view>
-          <view class="primary-button" bindtap="onSyncRetry" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s8c553e1fe4}}</view>
+          <view class="{{syncRows.length ? 'primary-button' : 'secondary-button'}}" bindtap="onSyncRetry" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s8c553e1fe4}}</view>
         </view>
       </block>
       <!-- Personalization reuses the scrollable Sheet; changes remain a draft until Save. -->

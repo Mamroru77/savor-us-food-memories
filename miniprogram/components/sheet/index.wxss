@@ -118,6 +118,7 @@
 .photo-thumb.is-selected { border-color: #777d64; opacity: 1; }
 .photo-thumb-img { width: 100%; height: 100%; }
 
+.detail-restaurant { display:block; font-size:30rpx; line-height:42rpx; margin-bottom:20rpx; color:var(--text,#1b1c1a); word-break:break-all; }
 .detail-meta {
   display: flex;
   justify-content: space-between;

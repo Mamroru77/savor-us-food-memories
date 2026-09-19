@@ -63,7 +63,8 @@
   position: relative;
   display: block;
   width: 100%;
-  height: 300rpx;
+  height: auto;
+  min-height: 300rpx;
   margin-top: var(--space-md);
   border-radius: var(--radius-card);
   padding: 35rpx 35rpx 0;
@@ -71,27 +72,22 @@
   overflow: hidden;
 }
 .journey-title {
-  position: absolute;
-  top: 35rpx;
-  left: 35rpx;
+  position: static;
+  display: block;
   font-size: 29rpx;
   line-height: 40rpx;
 }
 .journey-stats {
-  position: absolute;
+  position: static;
   display: flex;
-  left: 35rpx;
-  right: 35rpx;
-  top: 90rpx;
+  margin-top: 15rpx;
 }
 .journey-stats .stat { flex: 1; font-size: 25rpx; }
 .journey-stats .stat:nth-child(2), .journey-stats .stat:nth-child(3) { border-left: 1rpx solid rgba(66, 68, 62, 0.065); padding-left: 28rpx; }
 .journey-strong { font-size: var(--type-stat-secondary); line-height: 70rpx; }
 .journey-latest {
-  position: absolute;
-  bottom: 0;
-  left: 35rpx;
-  right: 32rpx;
+  position: static;
+  margin-top: 16rpx;
   height: 96rpx;
   display: flex;
   justify-content: space-between;

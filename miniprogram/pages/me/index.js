@@ -50,6 +50,7 @@ Page({
   },
 
   onUnload() {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     if (this.unsubscribe) this.unsubscribe();
   },
 
@@ -87,19 +88,30 @@ Page({
   onStatsCard() { this.openSheet('library'); },
   onEditProfile() { this.openSheet('profile'); },
   onMenuRow(event) { if(['workspace','reports'].includes(event.currentTarget.dataset.sheet)){wx.navigateTo({url:event.currentTarget.dataset.sheet==='workspace'?'/pages/workspace/index':'/pages/reports/index'});return;} if(event.currentTarget.dataset.sheet==='space'){wx.navigateTo({url:'/pages/space/index'});return;}if(event.currentTarget.dataset.sheet==='account'){wx.navigateTo({url:'/pages/account/index'});return;}this.openSheet(event.currentTarget.dataset.sheet); },
+  onPageScroll(event) { this._memoryParentScrollTop = event.scrollTop; },
+  restoreMemoryParent(position) {
+    if (position.scrollTop > 0 && wx.pageScrollTo) wx.pageScrollTo({scrollTop:position.scrollTop, duration:0});
+  },
+  onNativePreview(event) { return require('../../utils/memoryPreview').open(this, event.detail); },
+
   onSheetChange(event) {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
+      sheetReadingPosition: null,
       sheetType: event.detail.type,
       sheetMemoryId: event.detail.memoryId,
       sheetFilter: event.detail.filter,
     });
   },
-  onSheetClose() {
+  onSheetClose(event) {
+    if (!(event && event.detail && event.detail.reason === 'identity') && this._memoryPreview) this._memoryPreview.cancel();
     this.setData({ sheetShow: false, sheetType: '', sheetMemoryId: '', sheetFilter: '' });
   },
   openSheet(type, memoryId, filter) {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetShow: true,
+      sheetReadingPosition: null,
       sheetType: type,
       sheetMemoryId: memoryId || '',
       sheetFilter: filter || '',

@@ -4,5 +4,23 @@
     "sha256": "40b3d376d13cc9209f2acf0ca91df540643e98e0d14092725903fb9fd649e497",
     "reason": "R7 reviewed Add end spacing: retain shared safe-area spacer, remove duplicate page clearance; no application JS/WXML change.",
     "review": "docs/reviews/visual-refinement-20260916.md"
+  },
+  "miniprogram/pages/us/index.wxss": {
+    "baseSha256": "d4a9b1b32f4efaf3f88061269ec38f886a39ddf3aae76c5106a91ede0fafbbe3",
+    "sha256": "a021a8dba2129f3ea269521c4b84b38e341eecb1275de0f62d020aa92a73882e",
+    "reason": "R2 native 390/en measured label/photo overlap: normal-flow Journey statistics and footer retain real photo, tokens and minimum card height while allowing localized content to grow. Dedicated clearance suite and native evidence; no historical fixtures changed.",
+    "review": "docs/mcp-r2-remaining-layout-review-20260919.md"
+  },
+  "miniprogram/components/sheet/index.wxss": {
+    "baseSha256": "96cdb3d0ac4a017802e238766e7fbfabf01abe672cd85f2dd5cbfd468c900ebf",
+    "sha256": "98e1fa0cf519ba5bed0fa2a27ada91455a4610058968dcbcca5254674aed3e23",
+    "reason": "Reviewed R4 minimal style change only: raw restaurant identity in existing Memory flow, or removal of prohibited whole-map dark veil. Native acceptance separate. Exact disk bytes include final LF.",
+    "review": "docs/mcp-r5-byte-review-20260919.md"
+  },
+  "miniprogram/pages/map/index.wxss": {
+    "baseSha256": "b3ba98ea8b9448881606c16b5c6adb013855cf2c9087038b5e7c89585a6f5435",
+    "sha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
+    "reason": "Reviewed R4 minimal style change only: raw restaurant identity in existing Memory flow, or removal of prohibited whole-map dark veil. Native acceptance separate. Exact disk bytes include final LF.",
+    "review": "docs/mcp-r5-byte-review-20260919.md"
   }
 }

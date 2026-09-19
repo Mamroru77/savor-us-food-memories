@@ -19,9 +19,9 @@
       <!-- stats card -->
       <view class="profile-stats-card glass content-card" bindtap="onStatsCard" aria-role="button" aria-label="{{copy.sc722b55e27}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
         <view class="profile-stats">
-          <view class="stat"><text class="stat-strong me-strong">{{meals}}</text><text>{{copy.sffdd1f1a28}}</text></view>
-          <view class="stat me-divided"><text class="stat-strong me-strong">{{places}}</text><text>{{copy.s0cd3597453}}</text></view>
-          <view class="stat me-divided"><text class="stat-strong me-strong">{{savedCount}}</text><text>{{copy.s85b44d2ebb}}</text></view>
+          <view class="stat"><text class="stat-strong me-strong">{{meals}}</text><text>{{meals === 1 ? copy.s0c0b3ce402 : copy.sffdd1f1a28}}</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">{{places}}</text><text>{{places === 1 ? copy.sc32a0147f2 : copy.s0cd3597453}}</text></view>
+          <view class="stat me-divided"><text class="stat-strong me-strong">{{savedCount}}</text><text>{{savedCount === 1 ? copy.s40960c6b3b : copy.s85b44d2ebb}}</text></view>
         </view>
         <image class="memory-chart" aria-hidden="true" src="{{chartUri}}" mode="scaleToFill" />
       </view>
@@ -47,6 +47,8 @@
     type="{{sheetType}}"
     memory-id="{{sheetMemoryId}}"
     filter="{{sheetFilter}}"
+    reading-position="{{sheetReadingPosition}}"
+    bind:nativepreview="onNativePreview"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />

@@ -2509,5 +2509,90 @@ module.exports = [
     "key": "sb406018f97",
     "en": "Memories, milestones and sharing",
     "zh": "日记、里程碑与主动分享"
+  },
+  {
+    "key": "s8cce9c0f1b",
+    "en": "No matching places",
+    "zh": "没有匹配的地点"
+  },
+  {
+    "key": "s8b27d5f065",
+    "en": "No favorites on the map",
+    "zh": "地图上暂无收藏"
+  },
+  {
+    "key": "sc7df3edd6c",
+    "en": "Show all mapped memories instead.",
+    "zh": "切换到全部回忆，查看已定位的地点。"
+  },
+  {
+    "key": "s9d84359d99",
+    "en": "No places in this view",
+    "zh": "当前筛选下没有地点"
+  },
+  {
+    "key": "s1e9167322e",
+    "en": "Show in Us",
+    "zh": "加入「我们」"
+  },
+  {
+    "key": "s02c4cb2c6c",
+    "en": "In Us",
+    "zh": "已加入「我们」"
+  },
+  {
+    "key": "s325a78d28f",
+    "en": "Us is your diary collection, not proof of sharing with another account. Manage cross-account access separately in Shared space.",
+    "zh": "「我们」展示你日记中标记的记录，不代表另一账号已获授权。跨账号访问请在双人空间中单独管理。"
+  },
+  {
+    "key": "s588a1c3e4f",
+    "en": "Added to your Us collection; not sent to another account.",
+    "zh": "已加入你的「我们」合集，未发送给另一账号。"
+  },
+  {
+    "key": "s6f1baad68a",
+    "en": "Removed from your Us collection; shared-space access is unchanged.",
+    "zh": "已从你的「我们」合集移除，双人空间的访问权限未改变。"
+  },
+  {
+    "key": "s0209fb0ca9",
+    "en": "Tap Show in Us to organize your own diary. This does not send a record or grant another account access. Shared space has separate consent and sharing controls.",
+    "zh": "点击「加入我们」整理自己的日记，不会发送记录或授权另一账号访问。双人空间另有明确同意和共享入口。"
+  },
+  {
+    "key": "s81f547195b",
+    "en": "Previous page",
+    "zh": "上一页"
+  },
+  {
+    "key": "s4bfc194b68",
+    "en": "Next page",
+    "zh": "下一页"
+  },
+  {
+    "key": "s0c0b3ce402",
+    "en": "Meal",
+    "zh": "餐食"
+  },
+  {
+    "key": "sc32a0147f2",
+    "en": "Place",
+    "zh": "地点"
+  },
+  {
+    "key": "s40960c6b3b",
+    "en": "Saved memory",
+    "zh": "已收藏回忆"
+  },
+  {
+    "key": "sa2620cbc10",
+    "en": "day",
+    "zh": "天"
+  },
+  {
+    "key": "sa65210588a",
+    "en": "Show all mapped memories",
+    "zh": "全览已定位的回忆"
   }
 ];

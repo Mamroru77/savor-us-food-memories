@@ -19,7 +19,7 @@ Page({
     places: 0,
     latestLabel: '',
     journeyPhoto: data.photos.paris,
-    sharedRows: [],
+    sharedRows: [], sharedScrollLeft: 0,
     loveSent: false,
     dusk: false,
     quiet: false,
@@ -39,6 +39,7 @@ Page({
   },
 
   onUnload() {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     if (this.unsubscribe) this.unsubscribe();
   },
 
@@ -95,6 +96,7 @@ Page({
   onManageSpace(){wx.navigateTo({url:'/pages/space/index'});},
   onTogether() { this.openSheet('together'); },
   onJourney() { this.openSheet('journey'); },
+  onGalleryScroll(event) { this._memoryGalleryScrollLeft = event.detail.scrollLeft; },
   onSharedOpen(event) { this.openSheet('memory', event.currentTarget.dataset.id); },
   onSeeAll() { this.openSheet('library', '', 'shared'); },
   onSharedLike(event) {
@@ -103,19 +105,31 @@ Page({
     if (memory) store.updateMemory(id, { liked: !memory.liked });
   },
   onMemoryOpen(event) { this.openSheet('memory', event.detail.id); },
+  onPageScroll(event) { this._memoryParentScrollTop = event.scrollTop; },
+  restoreMemoryParent(position) {
+    this.setData({sharedScrollLeft:position.galleryLeft});
+    if (position.scrollTop > 0 && wx.pageScrollTo) wx.pageScrollTo({scrollTop:position.scrollTop, duration:0});
+  },
+  onNativePreview(event) { return require('../../utils/memoryPreview').open(this, event.detail); },
+
   onSheetChange(event) {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
+      sheetReadingPosition: null,
       sheetType: event.detail.type,
       sheetMemoryId: event.detail.memoryId,
       sheetFilter: event.detail.filter,
     });
   },
-  onSheetClose() {
+  onSheetClose(event) {
+    if (!(event && event.detail && event.detail.reason === 'identity') && this._memoryPreview) this._memoryPreview.cancel();
     this.setData({ sheetShow: false, sheetType: '', sheetMemoryId: '', sheetFilter: '' });
   },
   openSheet(type, memoryId, filter) {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetShow: true,
+      sheetReadingPosition: null,
       sheetType: type,
       sheetMemoryId: memoryId || '',
       sheetFilter: filter || '',

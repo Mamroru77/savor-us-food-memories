@@ -13,9 +13,21 @@ const rows={
  exportTitle:['导出年度报告','Export annual report'],exportDetailConsent:['包含日期、餐厅和已确认城市，不含笔记/照片。分享后无法撤回副本。确认继续？','Include dates, restaurants and confirmed cities, but no notes or photos. Shared copies cannot be recalled. Continue?'],exportSummaryConsent:['仅导出汇总与里程碑日期，不含姓名、餐厅、笔记或照片。分享后无法撤回副本。','Export summaries and milestone dates only; no names, restaurants, notes or photos. Shared copies cannot be recalled.'],
  posterShared:['海报仅含汇总。分享后无法撤回对方保存的副本。','The poster contains summaries only. Copies saved by recipients cannot be recalled.'],posterUnavailable:['海报暂不可用，请导出 HTML 报告。','The poster is unavailable. Please export the HTML report.']
 };
-function copy(){const index=i18n.locale()==='zh-CN'?0:1;const text={};Object.keys(rows).forEach(k=>text[k]=rows[k][index]);return text;}
-function sync(page){let dusk=false;try{dusk=require('./store').get().settings.theme==='dusk';}catch(e){}
+function copy(report){const index=i18n.locale()==='zh-CN'?0:1;const text={};Object.keys(rows).forEach(k=>text[k]=rows[k][index]);
+ if(index===1&&report){
+  if(report.count===1)text.meals='meal record';
+  if(report.days===1)text.days='recording day';
+  if(report.places===1)text.places='confirmed place';
+  if(report.longestStreak===1)text.dayUnit='day';
+  if(report.unknownLocations===1)text.unknown='unknown location excluded from the place count.';
+  text.rated=report.ratedCount===1?'Single-rating entry:':'Single-rating entries:';
+  text.noEstimates='— no estimates of joint ratings or total spending.';
+ }
+ return text;
+}
+function sync(page,navigationTitle){let dusk=false;try{dusk=require('./store').get().settings.theme==='dusk';}catch(e){}
  page.setData({dusk,locale:i18n.locale(),uiText:copy()});
+ try{if(navigationTitle&&wx.setNavigationBarTitle)wx.setNavigationBarTitle({title:i18n.t(navigationTitle)});}catch(e){}
  try{if(wx.setNavigationBarColor)wx.setNavigationBarColor({frontColor:dusk?'#ffffff':'#000000',backgroundColor:dusk?'#121315':'#eeece9'});}catch(e){}
 }
 module.exports={copy,sync,onFieldFocus:feedback.onFieldFocus,onFieldBlur:feedback.onFieldBlur};

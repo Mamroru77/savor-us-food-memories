@@ -28,6 +28,23 @@ function visibleMemories(memories, query, filter) {
   });
 }
 
+// The active view explains zero results; unrelated pending locations do not.
+function emptyMapState(query, filter, pendingCount) {
+  let kind, title, text, action;
+  if ((query || '').trim()) {
+    kind='search'; title='No matching places'; text='Try another place, restaurant, or tag.'; action='Clear search';
+  } else if (filter === 'favorites') {
+    kind='favorites'; title='No favorites on the map'; text='Show all mapped memories instead.'; action='Show all memories';
+  } else if (filter !== 'all') {
+    kind='filter'; title='No places in this view'; text='Show all mapped memories instead.'; action='Show all memories';
+  } else if (pendingCount > 0) {
+    kind='pending'; title='Restaurant locations pending'; text='Older city coordinates do not identify a restaurant.'; action='Confirm restaurant locations';
+  } else {
+    kind='empty'; title='No memories here yet.'; text='Try another place, restaurant, or tag.'; action='Show all memories';
+  }
+  return {kind, title:i18n.t(title), text:i18n.t(text), action:i18n.t(action)};
+}
+
 Page({
   onFieldFocus: uiFeedback.onFieldFocus,
   onFieldBlur: uiFeedback.onFieldBlur,
@@ -40,11 +57,14 @@ Page({
     overlayTop: 174,
     query: '',
     filter: 'all',
+    emptyState: null,
     showFilters: false,
     selectedId: 'comptoir',
     dusk: false,
     quiet: false,
     markers: [],
+    // Bind only the initial camera seed; observed zoom is for grouping, not camera commands.
+    initialMapScale:13,
     stackPositionsReady:false, mapScale:13, cardCollapsed:false, clusterOpen:false, clusterChoices:[], mapDrawers:[], drawerPage:0,
     resultsCount: 0,
     selected: null,
@@ -85,12 +105,25 @@ Page({
       }
     });
   },
+  // Measure after view updates: a fixed px allowance cannot bound rpx headings
+  // and search controls on all devices. This updates hit-region clearance only.
+  syncOverlayClearance() {
+    if(!this.active||this.disposed||this.stackGesture||!this.createSelectorQuery)return;
+    const request=this.overlayLayoutRequest=(this.overlayLayoutRequest||0)+1;
+    this.createSelectorQuery().select('.map-search').boundingClientRect(rect=>{
+      if(!this.active||this.disposed||this.stackGesture||request!==this.overlayLayoutRequest)return;
+      if(!rect||!Number.isFinite(rect.bottom))return;
+      const top=Math.ceil(rect.bottom+8);
+      if(this.data.overlayTop===top)return;
+      this.setData({overlayTop:top},()=>this.syncStackPositions());
+    }).exec();
+  },
   initMarkerRenderer() {
     if(this.active && this.markerCanvas && !this.pinRenderer) {
       try {this.pinRenderer=mapMarkers.createRenderer(this.markerCanvas);} catch(e) { /* bundled fallback remains usable */ }
     }
   },
-  onResize() { const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120},()=>this.syncStackPositions()); },
+  onResize() { const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120},()=>{this.syncOverlayClearance();this.syncStackPositions();}); },
   onHide() {
     this.markerCanvasRequest=(this.markerCanvasRequest||0)+1;this.markerCanvasPending=false;
     this.onStackRelease();
@@ -105,6 +138,7 @@ Page({
     if(this.pinRenderer) this.pinRenderer.dispose();this.pinRenderer=null;
   },
   onUnload() {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.disposed=true;this.onHide();
     if (this.unsubscribe) this.unsubscribe();
   },
@@ -204,6 +238,7 @@ Page({
       markers: markers,
       mapDrawers:this.buildDrawers(groups,markers,selected && selected.id),
       resultsCount: query ? visible.length : 0,
+      emptyState: visible.length ? null : emptyMapState(query, filter, this.data.pendingCount),
       selected: selected ? Object.assign({}, selected, { dateLabel: data.formatDate(selected.date),categoryLabel:restaurantCategory.summary(selected)||i18n.t('Category not recorded') }) : null,
       selectedPhoto: selected ? (selected.placePhoto || selected.photo || data.photos.meal) : '',
       selectedSaved: Boolean(selected && selected.saved),
@@ -212,11 +247,23 @@ Page({
     if (shouldFocus && viewportMode !== 'overview') {
       patch.latitude = selected.coordinates[0]; patch.longitude = selected.coordinates[1];
     }
+    // IDE 的全览指令可能停在旧中心：同一批可见点改由既有受控属性表达。
+    // 只更新中心，不改变缩放、分组、固定边界与 320ms 动效。
+    const overviewLocalFit = viewportMode === 'overview' && visible.length > 1 && this.cameraFitLocal();
+    if (overviewLocalFit) {
+      let la = Infinity, hi = -Infinity, lo = Infinity, hj = -Infinity;
+      visible.forEach(function (m) {
+        la = Math.min(la, m.coordinates[0]); hi = Math.max(hi, m.coordinates[0]);
+        lo = Math.min(lo, m.coordinates[1]); hj = Math.max(hj, m.coordinates[1]);
+      });
+      patch.latitude = (la + hi) / 2; patch.longitude = (lo + hj) / 2;
+    }
     // Wait for the marker/card update before issuing one camera command.
     // A native pan need not update data.latitude: explicit focus also handles
     // tapping the same marker again after panning away.
     this.setData(patch, () => {
       this.ensureMarkerRenderer();
+      this.syncOverlayClearance();
       this.syncStackPositions();
       this.animateMarkerSizes(animation,generation);
       this.renderMarkerPhotos(representatives, selected && selected.id, generation);
@@ -224,7 +271,8 @@ Page({
       if (!this.mapCtx) return;
       if (viewportMode === 'overview' && visible.length) {
         const points = visible.map(m => ({latitude:m.coordinates[0], longitude:m.coordinates[1]}));
-        try {this.mapCtx.includePoints({ points, padding: [90, 40, 165, 40],fail:()=>{} });}catch(e){/* Existing viewport remains usable. */}
+        const overviewReason = overviewLocalFit ? 'overview-bound-fit' : 'overview';
+        try {this.mapCtx.includePoints({ points, padding: [90, 40, 165, 40],success:()=>this.onCameraViewportReady(generation,overviewReason),fail:()=>{} });}catch(e){/* Existing viewport remains usable. */}
       } else if (shouldFocus) {
         this.focusMapCamera(selected.coordinates);
       }
@@ -240,17 +288,45 @@ Page({
       if(this.disposed||generation!==this.markerGeneration)return;
       this.setData({latitude,longitude});
       // A single point also restores focus after a manual pan; never fit unrelated restaurants.
-      if(this.mapCtx&&this.mapCtx.includePoints)try{this.mapCtx.includePoints({points:[{latitude,longitude}],padding:[90,40,165,40],fail:()=>{}});}catch(e){}
+      if(this.mapCtx&&this.mapCtx.includePoints)try{this.mapCtx.includePoints({points:[{latitude,longitude}],padding:[90,40,165,40],success:()=>this.onCameraViewportReady(generation),fail:()=>{}});}catch(e){}
     };
     if(devtools||this.cameraMoveUnavailable||!this.mapCtx||!this.mapCtx.moveToLocation){fallback();return;}
-    try {this.mapCtx.moveToLocation({latitude,longitude,fail:()=>{this.cameraMoveUnavailable=true;fallback();}});}
+    try {this.mapCtx.moveToLocation({latitude,longitude,success:()=>this.onCameraViewportReady(generation),fail:()=>{this.cameraMoveUnavailable=true;fallback();}});}
     catch(e){this.cameraMoveUnavailable=true;fallback();}
   },
+  cameraFitLocal() {
+    // Whether an imperative viewport fit can be trusted; when it cannot, the
+    // fit is expressed through the bound props already driving the map.
+    if (this.cameraMoveUnavailable) return true;
+    try {
+      const info = wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+      return info.platform === 'devtools';
+    } catch (e) { return false; }
+  },
+  onCameraViewportReady(generation, reason) {
+    if (!this.active || this.disposed || generation !== this.markerGeneration || this.stackGesture) return;
+    // Imperative native camera calls may not emit regionchange (notably IDE).
+    // Never let an earlier getRegion reply re-enable hit regions for the old view.
+    this.stackPositionRequest = (this.stackPositionRequest || 0) + 1;
+    this.stackProjectionBusy = false;
+    if (this.data.stackPositionsReady) this.setData({stackPositionsReady:false});
+    // A fit moves the native centre without moving the bound props, and the scale
+    // reply below re-asserts them: track the anchor to that same native viewport
+    // first, or applying the new scale silently pulls the view back to the
+    // previous centre. 单点聚焦与原生定位各自保留显式目标，不参与对齐。
+    // 顺序保持既有可观察时序（本帧内同步刷新缩放与投影），锚点仅追加一次只读对齐。
+    // 只对齐一次：由下面 syncStackPositions 已发起的那次 getRegion 回复消费，
+    // 不额外查询、不新增定时器、不下发新的相机指令。
+    this.cameraAnchorPending = reason === 'overview';
+    this.readMapScale();
+    this.syncStackPositions();
+  },
+
   // Project transparent hit regions only, once the native camera has settled.
   // Project real coordinates from the actual native viewport, never data.latitude.
   syncStackPositions() {
-    if(!this.active||this.stackGesture||!this.mapCtx||!this.mapCtx.getRegion)return;
-    if(this.stackProjectionBusy)return;
+    if(!this.active||this.stackGesture||!this.mapCtx||!this.mapCtx.getRegion){this.cameraAnchorPending=false;return;}
+    if(this.stackProjectionBusy){this.cameraAnchorPending=false;return;}
     this.stackProjectionBusy=true;
     const request=this.stackPositionRequest=(this.stackPositionRequest||0)+1;
     const finish=()=>{if(request===this.stackPositionRequest)this.stackProjectionBusy=false;};
@@ -264,7 +340,19 @@ Page({
           if(point)positions[g.memory.id]=point;
         });
         this.stackPositions=positions;
-        this.setData({stackPositionsReady:Object.keys(positions).length>0});
+        // An imperative overview moves the native view but leaves the bound anchor
+        // on the previous centre; adopting the centre of this same reply keeps the
+        // fit instead of re-asserting it, and costs no extra query.
+        const anchor={};
+        if(this.cameraAnchorPending){
+          this.cameraAnchorPending=false;
+          const ne=region&&region.northeast,sw=region&&region.southwest;
+          if(ne&&sw){
+            const latitude=(ne.latitude+sw.latitude)/2,longitude=(ne.longitude+sw.longitude)/2;
+            if(Math.abs(latitude-this.data.latitude)>1e-7||Math.abs(longitude-this.data.longitude)>1e-7){anchor.latitude=latitude;anchor.longitude=longitude;}
+          }
+        }
+        this.setData(Object.assign({stackPositionsReady:Object.keys(positions).length>0},anchor));
         this.refreshStackFrame();finish();
       }).exec();
     },fail:finish});
@@ -278,20 +366,26 @@ Page({
       const open=targetOpen||progress>0;
       const others=g.members.filter(m=>m.id!==g.memory.id),pages=Math.ceil(others.length/3);
       const page=Math.max(0,Math.min(this.data.drawerPage||0,pages-1));
-      const buttonBox=mapStack.buttonGeometry(windowWidth,pages===1);
+      let buttonBox=mapStack.buttonGeometry(windowWidth,pages===1);
       // Keep native callout bounds fixed while the logical 320ms frame moves.
       // Full page capacity also prevents the shorter last page moving the root.
       const bounds=mapStack.layout(Math.min(3,others.length),1),reserve=pages>1?28:0;
-      const frameHeight=bounds.height+reserve,frameRootTop=bounds.rootTop+reserve;
+      let frameHeight=bounds.height+reserve,frameRootTop=bounds.rootTop+reserve;
       const members=others.slice(page*3,page*3+3),frame=mapStack.layout(open?members.length:0,progress);
       const photo=m=>{
         const selected=m.id===selectedId;
         return {id:m.id,selected,iconPath:this.pinRenderer&&this.pinRenderer.peek&&this.pinRenderer.peek(m,selected)||mapMarkers.style(selected).iconPath};
       };
       if(pages>1){const extra=Math.round(28*progress);frame.height+=extra;frame.rootTop+=extra;frame.slots.forEach(slot=>{slot.top+=extra;});}
-      const rows=open?members.map((m,j)=>Object.assign(photo(m),frame.slots[j],{layer:members.length-j})).reverse():[];
       const pos=(this.stackPositions||{})[g.memory.id]||{x:0,y:0};
-      return {frameHeight,frameRootTop,buttonBox,progress,screenX:pos.x-44,screenY:pos.y,markerId:index,rootId:g.memory.id,root:photo(g.memory),rootTop:frame.rootTop,height:frame.height,open,targetOpen,rows,count:g.members.length,page,pages};
+      // Choose from full capacity before opening; neither animation nor last-page length flips it.
+      const down=Boolean(this.stackPositions&&this.stackPositions[g.memory.id]&&pos.y-frameHeight+buttonBox.hitTop<this.data.overlayTop);
+      // Mirroring a paged hit box with hitTop=-4 extends its far edge by 4px.
+      // Reserve that once in the fixed native frame; root compensation stays exact.
+      if(down){const padding=Math.max(0,-buttonBox.hitTop);frameHeight+=padding;frameRootTop+=padding;}
+      buttonBox=mapStack.orient(frame,buttonBox,down);
+      const rows=open?members.map((m,j)=>Object.assign(photo(m),frame.slots[j],{layer:members.length-j})).reverse():[];
+      return {down,calloutOffset:down?frameHeight-mapStack.HEIGHT:0,frameHeight,frameRootTop,buttonBox,progress,screenX:pos.x-44,screenY:pos.y,markerId:index,rootId:g.memory.id,root:photo(g.memory),rootTop:frame.rootTop,height:frame.height,open,targetOpen,rows,count:g.members.length,page,pages};
     }).filter(Boolean);
   },
   renderDrawerPhotos(generation) {
@@ -317,7 +411,12 @@ Page({
     });
   },
   refreshStackFrame(done) {
-    this.setData({mapDrawers:this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId)},done);
+    const mapDrawers=this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId),patch={mapDrawers};
+    mapDrawers.forEach(d=>{
+      const marker=(this.data.markers||[])[d.markerId];
+      if(marker&&marker.customCallout&&marker.customCallout.anchorY!==d.calloutOffset)patch['markers['+d.markerId+'].customCallout.anchorY']=d.calloutOffset;
+    });
+    this.setData(patch,done);
   },
   patchDrawerFrame(progress,done) {
     const index=this.data.mapDrawers.findIndex(d=>d.rootId===this.drawerRootId);
@@ -327,6 +426,7 @@ Page({
     const base='mapDrawers['+index+']',patch={};
     const set=(key,value)=>{patch[base+'.'+key]=value;};
     set('progress',progress);set('height',frame.height);set('rootTop',frame.rootTop);
+    if(d.down){const button=mapStack.orient(frame,d.buttonBox,true);set('buttonBox.top',button.top);set('buttonBox.hitTop',button.hitTop);}
     // Rows are in reverse paint order. Keep images/keys mounted throughout both directions.
     d.rows.forEach((row,i)=>{const slot=frame.slots[d.rows.length-1-i];set('rows['+i+'].top',slot.top);set('rows['+i+'].opacity',slot.opacity);});
     this.setData(patch,done);
@@ -426,6 +526,8 @@ Page({
     // Only hit regions disappear. Native callouts stay anchored and visible.
     if(this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
     if(phase==='begin') {
+      // A scale reply from before the gesture must never write camera props during it.
+      this.scaleRequest=(this.scaleRequest||0)+1;
       this.stackGesture=true;
       if(this.drawerAnimating){this.drawerResumeTarget=this.data.clusterOpen?1:0;this.pauseDrawerReveal();}
       this.markerResumeNeeded=this.markerResumeNeeded||!!this.markerAnimation;this.stopMarkerAnimation();
@@ -449,10 +551,10 @@ Page({
     }
   },
   readMapScale(value) {
-    if(!this.active) return;
+    if(!this.active || this.disposed || this.stackGesture) return;
     const request=this.scaleRequest=(this.scaleRequest||0)+1;
     const update=scale=>{
-      if(!this.active || request!==this.scaleRequest || !Number.isFinite(scale) || Math.abs(scale-this.data.mapScale)<.05) return;
+      if(!this.active || this.disposed || this.stackGesture || request!==this.scaleRequest || !Number.isFinite(scale) || Math.abs(scale-this.data.mapScale)<.05) return;
       const nextScale=Math.max(3,Math.min(18,scale));
       const rootId=(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:this.data.selectedId;
       const groups=mapLayout.group(visibleMemories(this.allMemories||[],this.data.query,this.data.filter),nextScale,rootId);
@@ -512,22 +614,44 @@ Page({
 
   recenter() {
     this.stopDrawerReveal();
-    this.setData({ query: '', filter: 'all', selectedId: 'comptoir', showFilters: false, clusterOpen:false });
-    this.applyFilters('', 'all', 'comptoir', 'overview');
+    // An overview must not silently move the selection: keep the memory the
+    // reader is on while it stays visible, so card and map agree afterwards.
+    // visibleIds is the native marker-index mapping (roots only). A selected
+    // drawer child is still visible while it belongs to a filtered marker group.
+    const visibleChild = (this.markerGroups || []).some(g => (g.members || []).some(m => m.id === this.data.selectedId));
+    const keep = (this.visibleIds || []).indexOf(this.data.selectedId) >= 0 || visibleChild
+      ? this.data.selectedId : 'comptoir';
+    this.setData({ query: '', filter: 'all', selectedId: keep, showFilters: false, clusterOpen:false });
+    this.applyFilters('', 'all', keep, 'overview');
   },
 
-  onEmptyMapAction() { if (this.data.pendingCount) this.onFillLocation(); else this.recenter(); },
+  onEmptyMapAction() {
+    if ((this.data.query || '').trim()) this.onClearSearch();
+    else if (this.data.filter !== 'all') this.onFilterPick({currentTarget:{dataset:{value:'all'}}});
+    else if (this.data.pendingCount) this.onFillLocation();
+    else this.recenter();
+  },
 
   onTogglePending() { this.setData({ pendingExpanded: !this.data.pendingExpanded }); },
   onCollapsePending() { this.setData({ pendingExpanded: false }); },
 
-  onFillLocation() {
+  onFillLocation(pageIndex) {
     if (this.locationBusy || !this.pendingLocations.length) return;
     this.setData({ pendingExpanded: false });
-    const batch = this.pendingLocations.slice(0, 6);
-    const token=identity.lease();
-    wx.showActionSheet({ itemList: batch.map(m => (m.restaurant + ' · ' + m.date).slice(0, 48)),
-      success: result => {if(identity.isCurrent(token))this.pickLocationFor(batch[result.tapIndex]);} });
+    const total=this.pendingLocations.length,page=Math.max(0,Math.min(typeof pageIndex==='number'?pageIndex:0,Math.ceil(total/4)-1));
+    const start=page*4,batch=this.pendingLocations.slice(start,start+4),token=identity.lease();
+    // Four records leave room for both navigation controls within the native six-entry cap.
+    const itemList=batch.map(m=>(m.restaurant+' · '+m.date).slice(0,48));
+    const previous=page>0?itemList.push(i18n.t('Previous page'))-1:-1;
+    const next=start+batch.length<total?itemList.push(i18n.t('Next page'))-1:-1;
+    wx.showActionSheet({alertText:(start+1)+'–'+(start+batch.length)+' / '+total,itemList,
+      success:result=>{
+        if(!this.active||this.disposed||!identity.isCurrent(token))return;
+        if(result.tapIndex===previous&&previous>=0){this.onFillLocation(page-1);return;}
+        if(result.tapIndex===next&&next>=0){this.onFillLocation(page+1);return;}
+        const chosen=batch[result.tapIndex];
+        if(chosen&&this.pendingLocations.some(m=>m.id===chosen.id))this.pickLocationFor(chosen);
+      }});
   },
   onCorrectLocation() { if (this.data.selected) return this.pickLocationFor(this.data.selected); },
   pickLocationFor(memory) {
@@ -556,9 +680,10 @@ Page({
   },
 
   onPlaceOpen() {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     const selected = this.data.selected;
     if (!selected) return;
-    this.setData({ sheetShow: true, sheetType: 'memory', sheetMemoryId: selected.id, sheetFilter: '' });
+    this.setData({ sheetShow: true, sheetType: 'memory', sheetMemoryId: selected.id, sheetFilter: '', sheetReadingPosition: null });
   },
 
   onBookmark() {
@@ -569,18 +694,32 @@ Page({
   },
 
   onClearSearch() {
-    this.recenter();
+    this.onQuery({detail:{value:''}});
+  },
+
+  onNativePreview(event) { return require('../../utils/memoryPreview').open(this, event.detail); },
+  // Called by the existing same-owner/lease-verified preview return helper.
+  // Identity redaction may have reset Map selection while retaining reading intent.
+  restoreMemoryParent() {
+    const id=this.data.sheetMemoryId;
+    if(!this.active||this.disposed||identity.snapshot().locked||!this.data.sheetShow||this.data.sheetType!=='memory')return;
+    if(!visibleMemories(this.allMemories||[],this.data.query,this.data.filter).some(m=>m.id===id))return;
+    if(this.data.selectedId===id&&this.data.selected&&this.data.selected.id===id)return;
+    this.applyFilters(this.data.query,this.data.filter,id,'preserve');
   },
 
   onSheetChange(event) {
+    if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
+      sheetReadingPosition: null,
       sheetType: event.detail.type,
       sheetMemoryId: event.detail.memoryId,
       sheetFilter: event.detail.filter,
     });
   },
 
-  onSheetClose() {
+  onSheetClose(event) {
+    if (!(event && event.detail && event.detail.reason === 'identity') && this._memoryPreview) this._memoryPreview.cancel();
     this.setData({ sheetShow: false, sheetType: '', sheetMemoryId: '', sheetFilter: '' });
   },
 });

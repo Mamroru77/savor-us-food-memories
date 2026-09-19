@@ -129,6 +129,15 @@ function nativeTabs(initial=0){
       assert.match(review.sha256, /^[a-f0-9]{64}$/);
       assert(review.reason && review.review && fs.existsSync(path.join(root, review.review)), 'a visual amendment requires its review record');
     }
+    const uxReviews = JSON.parse(fs.readFileSync(path.join(root, 'tools/ux-remediation-review.json')));
+    const uxScope = new Set(['miniprogram/components/sheet/index.wxml', 'miniprogram/pages/home/index.wxml', 'miniprogram/pages/map/index.wxml', 'miniprogram/pages/us/index.wxml', 'miniprogram/pages/me/index.wxml']);
+    for (const [file, review] of Object.entries(uxReviews)) {
+      assert(uxScope.has(file) && Object.hasOwn(manifest.sha256, file), 'UX review remains explicitly file-scoped');
+      assert.match(review.baseSha256, /^[a-f0-9]{64}$/);
+      assert.match(review.sha256, /^[a-f0-9]{64}$/);
+      assert.equal(review.review, 'docs/reviews/ux-remediation-20260917.md');
+      assert(review.reason && fs.existsSync(path.join(root, review.review)));
+    }
     for (const [file, original] of Object.entries(manifest.sha256)) {
       if (approved[file] && approved[file].removed === true) {
         assert.equal(file, 'miniprogram/images/pin.png', 'only the explicitly audited obsolete pin may be removed');
@@ -145,6 +154,10 @@ function nativeTabs(initial=0){
       if (file === mapFrameReview.file) {
         assert.equal(mapFrameReview.baseSha256, expected, 'Map geometry review must name its frozen checkpoint');
         expected = mapFrameReview.sha256;
+      }
+      if (uxReviews[file]) {
+        assert.equal(uxReviews[file].baseSha256, expected, 'UX review must chain to the frozen approved checkpoint');
+        expected = uxReviews[file].sha256;
       }
       let bytes = fs.readFileSync(path.join(root, file));
       if (!approved[file] && file === 'miniprogram/pages/add/index.wxml') bytes = Buffer.from(bytes.toString().replace("saving ? 'Saving memory...'", "saving ? 'Memory saved'"));
@@ -440,7 +453,7 @@ function nativeTabs(initial=0){
     };
     const contrast = (a,b) => (Math.max(lum(a),lum(b))+.05)/(Math.min(lum(a),lum(b))+.05);
     for (const [text, background] of [['eeeae3','2b2c2f'],['b6b2aa','303135'],['f5f0e8','5a4d3d'],['302a23','cfb48d'],['dec8a7','2b2c30'],['253329','9c9b99']]) assert(contrast(text,background) >= 4.5, text + '/' + background);
-    const css = fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8'); assert.match(css,/\.map-night-veil\s*\{[^}]*pointer-events:none/);
+    const css = require('./lib/reviewed-map-veil-removal.cjs').historicalContrastView(fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8'), fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8')); assert.match(css,/\.map-night-veil\s*\{[^}]*pointer-events:none/);
     assert(fs.readFileSync(path.join(mp,'app.wxss'),'utf8').includes('--content-card-bg: linear-gradient(155deg,rgba(43,44,47,.90),rgba(28,29,32,.90))')); assert(fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxss'),'utf8').includes('#cfb48d'));
   });
   await test('language preference survives reloading the store module', () => {
@@ -1191,7 +1204,7 @@ function nativeTabs(initial=0){
   await test('search failure keeps candidate; native map remains available without the lookup service', async () => {
     const original=service.searchPlaces,modal=wx.showModal;service.searchPlaces=async()=>{throw new Error('offline');};wx.showModal=o=>o.success({confirm:true});
     try {
-      const p=page('add');p.data.draft=store.freshDraft();p.updateImportCandidate(shareImport.parse(shareSamples[3].shareText,'meituan'));
+      const p=page('add');p.onShow();p.data.draft=store.freshDraft();p.updateImportCandidate(shareImport.parse(shareSamples[3].shareText,'meituan'));
       const c=p.data.importCandidate;await p.onImportSearch();assert.equal(p.data.importCandidate,c);assert.equal(p.data.importSearching,false);assert(p.data.importLookupError);
       await p.onImportNativePick();assert.equal(p.data.importCandidate.confirmedLocation.locationSource,'tencent-picker');
     } finally {service.searchPlaces=original;wx.showModal=modal;}

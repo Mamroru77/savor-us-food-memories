@@ -234,7 +234,6 @@
 .pending-explainer { display:block; margin-top:16rpx; font-size:24rpx; color:var(--muted); line-height:36rpx; }
 .pending-action { margin-top:22rpx; padding:18rpx 24rpx; border-radius:20rpx; background:#293b31; color:#f7faf5; text-align:center; font-size:25rpx; }
 .map-demo-note { position:absolute; right:42rpx; z-index:5; font-size:22rpx; padding:8rpx 14rpx; border-radius:12rpx; background:rgba(251,250,247,.74); color:#404f44; }
-.map-night-veil { position:absolute; inset:0; background:rgba(0,0,0,.3); pointer-events:none; z-index:1; }
 .dusk .map-search, .dusk .recenter-map, .dusk .pending-bubble { background:rgba(28,28,28,.9); }
 .dusk .pending-popover, .dusk .map-filter-menu { background:rgba(26,26,26,.95); }
 .dusk .map-top-fade { background:linear-gradient(rgba(14,14,14,.96), rgba(14,14,14,0)); }

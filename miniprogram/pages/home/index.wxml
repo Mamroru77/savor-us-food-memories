@@ -31,11 +31,11 @@
         <view class="weekly-stats">
           <view class="stat weekly-stat">
             <text class="stat-strong weekly-strong">{{weeklyMeals}}</text>
-            <text>{{copy.sffdd1f1a28}}</text>
+            <text>{{weeklyMeals === 1 ? copy.s0c0b3ce402 : copy.sffdd1f1a28}}</text>
           </view>
           <view class="stat weekly-stat weekly-stat-divided">
             <text class="stat-strong weekly-strong">{{weeklyPlaces}}</text>
-            <text>{{copy.s0cd3597453}}</text>
+            <text>{{weeklyPlaces === 1 ? copy.sc32a0147f2 : copy.s0cd3597453}}</text>
           </view>
         </view>
         <image class="weekly-photo" src="{{imageErrors[(weeklyPhoto)] ? '/images/le-comptoir.jpg' : (weeklyPhoto)}}" mode="aspectFill"  data-source="{{weeklyPhoto}}" binderror="onImageError" />
@@ -62,6 +62,8 @@
     type="{{sheetType}}"
     memory-id="{{sheetMemoryId}}"
     filter="{{sheetFilter}}"
+    reading-position="{{sheetReadingPosition}}"
+    bind:nativepreview="onNativePreview"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />

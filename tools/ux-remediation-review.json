@@ -1,0 +1,32 @@
+{
+  "miniprogram/components/sheet/index.wxml": {
+    "baseSha256": "b37c16516476611031e67e076e970b07b9cda2cec00c37a9bb193ac79bdc5428",
+    "sha256": "7b757d302bfc8c6400d210defe10a5a82f97a6353267796b9d4ec145d2bba42c",
+    "review": "docs/reviews/ux-remediation-20260917.md",
+    "reason": "E collection-only label and explicit cross-account access boundary; existing events/private content intact; R4 reviewed raw Memory restaurant identity / queue-dependent retry hierarchy or removal of prohibited whole-map dark veil; all existing business bindings retained."
+  },
+  "miniprogram/pages/home/index.wxml": {
+    "baseSha256": "a369416c6b85c27119dccd13387d456714af94269442a7c7f195c9fc6c544998",
+    "sha256": "d4252f1a986a47b3b83fe8d7c68e8c95f23bca55325bf45d7850efd26d29164b",
+    "review": "docs/reviews/ux-remediation-20260917.md",
+    "reason": "A: native Memory return event and matching reading position; no layout redesign; F1 reviewed singular/plural units and/or F7 overview semantics; no Tab changes"
+  },
+  "miniprogram/pages/map/index.wxml": {
+    "baseSha256": "25d8b303640711417d38af6d27a001b92a4f6aa627926ab9f295834147c54221",
+    "sha256": "464c48ae3efc36197a54de494efaaddee5616023d4457d5241381437193c9db1",
+    "review": "docs/reviews/ux-remediation-20260917.md",
+    "reason": "D2 directional native callout; upward ink/hit contract retained; down branch has matching native anchor compensation; F1 reviewed singular/plural units and/or F7 overview semantics; no Tab changes; R2 scale-echo RED/GREEN contract: initial scale 13 remains bound, precise observed mapScale is grouping-only, no added camera commands.; R4 reviewed raw Memory restaurant identity / queue-dependent retry hierarchy or removal of prohibited whole-map dark veil; all existing business bindings retained."
+  },
+  "miniprogram/pages/us/index.wxml": {
+    "baseSha256": "49c7ad790d1b2ea66a1512118ba18117f71c08e02f3e93839c23786fdf61318d",
+    "sha256": "3abe216ebf9f2a3e867d475ae51ea40812a98d5168eb08b201e83bd991e45adc",
+    "review": "docs/reviews/ux-remediation-20260917.md",
+    "reason": "E scope explanation; Together/Journey/Shared Moments structure preserved; F1 reviewed singular/plural units and/or F7 overview semantics; no Tab changes"
+  },
+  "miniprogram/pages/me/index.wxml": {
+    "baseSha256": "e609d14fa625d101ac3f939a43894536195110f5691798e72f733ee7e3558a2e",
+    "sha256": "311f7be86eb592003fa2689e7c802d349c3dbd547daaa0a92938fe117e22f744",
+    "review": "docs/reviews/ux-remediation-20260917.md",
+    "reason": "A: native Memory return event and matching reading position; no layout redesign; F1 reviewed singular/plural units and/or F7 overview semantics; no Tab changes"
+  }
+}

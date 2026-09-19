@@ -19,7 +19,7 @@ const WEEK_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 const FAQS = [
   { question: 'Where are my memories saved?', answer: 'New meals and changes to your cloud meals sync privately. Offline edits, favorites and deletions are kept in a local queue; check Sync status in Me. Samples and local-only imports are not auto-uploaded. Cloud photo files are retained after deletion.' },
-  { question: 'How do I share a moment?', answer: 'Open a memory and tap Share with us. The shared flag syncs for this diary. Couple binding and sending records to another person are not enabled.' },
+  { question: 'How do I share a moment?', answer: 'Tap Show in Us to organize your own diary. This does not send a record or grant another account access. Shared space has separate consent and sharing controls.' },
   { question: 'Can I add my own photos?', answer: 'Tap Add to keep up to nine photos. Tap a photo for fullscreen preview, or remove any thumbnail.' },
 ];
 
@@ -59,13 +59,14 @@ Component({
     type: { type: null, value: '' },
     memoryId: { type: null, value: '' },
     filter: { type: null, value: '' },
+    readingPosition: { type: Object, value: null },
   },
 
   data: {
     focusedField: '', imageErrors: {},
     copy: i18n.copy(), locale: i18n.locale(), sheetMounted:false, sheetClosing:false, displayType:'', quiet:false,
     languageOptions: i18n.options(), languageIndex: 0,
-    sheetTop: 90, sheetScrollHeight: 0,
+    sheetTop: 90, sheetScrollHeight: 0, sheetScrollTop: 0,
     personalizationRows: [], personalizationError: '', personalizationNameError: '',
     title: '',
     subtitle: '',
@@ -121,8 +122,21 @@ Component({
       const formType=this.data.show?this.data.type:'';
       if(this._formType!==formType||!this.data.show)this.resetFormEdits();
       this._formType=formType;
+      const readingKey = this.data.show && this.data.type === 'memory' ? this.data.memoryId : '';
+      const enteringMemory = readingKey && readingKey !== this._readingKey;
+      this._readingKey = readingKey;
       if (this.data.show) {this.setData({displayType:this.data.type,imageErrors:{},focusedField:'',sheetScrollTarget:'',sheetTop:metrics.getMetrics(true).headerTop+8});this.refresh();}
       else this._personalizing = false;
+      if (enteringMemory) {
+        const position = this.data.readingPosition;
+        const resume = position && position.memoryId === readingKey;
+        this._readingScrollTop = resume ? Math.max(0, Number(position.scrollTop) || 0) : 0;
+        this.setData({
+          sheetScrollTarget: resume ? '' : 'memory-start',
+          sheetScrollTop: this._readingScrollTop,
+          photoIndex: resume ? Math.max(0, Number(position.photoIndex) || 0) : 0,
+        });
+      }
       motionPresence.update(this,'sheet',this.data.show,this.data.quiet);
     },
   },
@@ -138,7 +152,7 @@ Component({
           this.resetFormEdits();
           this._personalizing=false;
           this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
-          this.triggerEvent('close');return;
+          this.triggerEvent('close', {reason:'identity'});return;
         }
         if (this.data.show) this.refresh();
       }.bind(this));
@@ -280,7 +294,18 @@ Component({
       const draft=store.loadDraft();
       if(draft.restaurant || draft.photos.length) i18n.modal({title:'Edit memory',content:'Replace the existing Add draft?',success:r=>{if(r.confirm) start();}}); else start();
     },
-    onDetailPreview() { const images=this.data.detail && this.data.detail.images; if(images&&images.length) wx.previewImage({current:images[this.data.photoIndex||0],urls:images}); },
+    onSheetScroll(event) {
+      // Read position only; no setData per scroll frame and no parent gallery reset.
+      if (this.data.type === 'memory') this._readingScrollTop = event.detail.scrollTop;
+    },
+    onDetailPreview() {
+      const detail = this.data.detail;
+      if (!detail || !detail.images.length) return;
+      this.triggerEvent('nativepreview', {
+        memoryId: this.data.memoryId, images: detail.images,
+        photoIndex: this.data.photoIndex || 0, scrollTop: this._readingScrollTop || 0,
+      });
+    },
 
     // ---------- memory detail ----------
     refreshMemory(patch, state) {
@@ -315,7 +340,7 @@ Component({
       const memory = this.data.detail && this.data.detail.memory;
       if (!memory) return;
       store.updateMemory(memory.id, { shared: !memory.shared });
-      store.notify(memory.shared ? i18n.t('This moment is now just for you.') : i18n.t('A new chapter in your shared story.'));
+      store.notify(memory.shared ? i18n.t('Removed from your Us collection; shared-space access is unchanged.') : i18n.t('Added to your Us collection; not sent to another account.'));
     },
     onDeleteAsk() {
       this.setData({ confirmDelete: true });

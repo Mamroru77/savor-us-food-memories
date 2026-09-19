@@ -20,4 +20,14 @@ function buttonGeometry(windowWidth,nearPin=false) {
   // hit target above the root; paged stacks retain the existing safe gap.
   return {size,left:44-size/2,top:(nearPin?24:16)-size/2,hitWidth,hitLeft:44-hitWidth/2,hitTop:nearPin?0:-4,hitHeight:40};
 }
-module.exports={layout,ease,buttonGeometry,DURATION,WIDTH,HEIGHT};
+// Mirror positions, never images or real coordinates. Legacy upward layout is unchanged.
+function orient(frame,button,down) {
+  if(!down)return button;
+  const baseTop=button.baseTop===undefined?button.top:button.baseTop;
+  const baseHitTop=button.baseHitTop===undefined?button.hitTop:button.baseHitTop;
+  frame.slots.forEach(slot=>{slot.top=2*frame.rootTop-slot.top;});
+  return Object.assign({},button,{baseTop,baseHitTop,
+    top:2*frame.rootTop+HEIGHT-button.size-baseTop,
+    hitTop:2*frame.rootTop+HEIGHT-button.hitHeight-baseHitTop});
+}
+module.exports={layout,ease,buttonGeometry,orient,DURATION,WIDTH,HEIGHT};

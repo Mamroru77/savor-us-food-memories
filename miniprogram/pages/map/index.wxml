@@ -8,7 +8,7 @@
     class="memory-map"
     latitude="{{latitude}}"
     longitude="{{longitude}}"
-    scale="{{mapScale}}"
+    scale="{{initialMapScale}}"
     bindregionchange="onMapRegionChange"
     min-scale="3"
     max-scale="18"
@@ -23,15 +23,30 @@
   >
     <cover-view slot="callout">
       <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.frameHeight}}px">
+        <block wx:if="{{!drawer.down}}">
         <cover-image class="native-stack-toggle" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.frameHeight-drawer.height+drawer.buttonBox.top}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? (drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
-        <cover-view wx:if="{{drawer.open && drawer.pages > 1}}" class="native-stack-pages" style="top:{{drawer.frameHeight-drawer.height+36}}px;height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}}">
-          <cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-left.png" /><cover-view class="native-stack-page-number">{{drawer.page+1}}/{{drawer.pages}}</cover-view><cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-right.png" />
-        </cover-view>
+
         <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row" style="top:{{drawer.frameHeight-drawer.height+pin.top}}px;opacity:{{pin.opacity}};z-index:{{pin.layer}}">
           <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
         </cover-view>
         <cover-view class="native-stack-root" style="top:{{drawer.frameHeight-drawer.height+drawer.rootTop}}px">
           <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
+        </cover-view>
+        </block>
+        <block wx:else>
+        <cover-image class="native-stack-toggle" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.buttonBox.top-drawer.rootTop}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? (!drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (!drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
+
+        <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row" style="top:{{pin.top-drawer.rootTop}}px;opacity:{{pin.opacity}};z-index:{{pin.layer}}">
+          <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
+        </cover-view>
+        <cover-view class="native-stack-root" style="top:{{0}}px">
+          <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
+        </cover-view>
+        </block>
+        <cover-view style="position:absolute;left:0;top:{{drawer.down ? 2*drawer.height-drawer.frameHeight-72-30*drawer.progress : 0}}px;width:88px;height:{{drawer.frameHeight}}px">
+        <cover-view wx:if="{{drawer.open && drawer.pages > 1}}" class="native-stack-pages" style="top:{{drawer.frameHeight-drawer.height+36}}px;height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}}">
+          <cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-left.png" /><cover-view class="native-stack-page-number">{{drawer.page+1}}/{{drawer.pages}}</cover-view><cover-image class="native-stack-page-arrow" src="/images/icons/lucide/chevron-right.png" />
+        </cover-view>
         </cover-view>
       </cover-view>
     </cover-view>
@@ -40,7 +55,7 @@
   <view class="map-stack-overlay" wx:if="{{stackPositionsReady && !mapError}}">
     <view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" class="pin-stack" style="left:{{drawer.screenX}}px;top:{{drawer.screenY-drawer.height}}px;height:{{drawer.height}}px">
       <view class="pin-stack-toggle" style="left:{{drawer.buttonBox.hitLeft}}px;width:{{drawer.buttonBox.hitWidth}}px;top:{{drawer.buttonBox.hitTop}}px;height:{{drawer.buttonBox.hitHeight}}px" data-root-id="{{drawer.rootId}}" bindtouchstart="onStackPress" bindtouchend="onStackRelease" bindtouchcancel="onStackRelease" catchtap="onDrawerToggle" data-index="{{drawer.markerId}}" aria-role="button" aria-expanded="{{drawer.targetOpen}}" aria-label="{{drawer.targetOpen ? copy.sd22536b714 : copy.sddcd11b118}}" />
-      <view wx:if="{{drawer.open && drawer.pages > 1}}" class="pin-stack-pages" style="height:{{30 * drawer.progress}}px;pointer-events:{{drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'}}">
+      <view wx:if="{{drawer.open && drawer.pages > 1}}" class="pin-stack-pages" style="top:{{drawer.down ? drawer.rootTop+drawer.height-36-30*drawer.progress : 36}}px;height:{{30 * drawer.progress}}px;pointer-events:{{drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'}}">
         <view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.s8e21e3af14}}" catchtap="onDrawerPage" data-step="-1" /><view class="pin-stack-page-number" /><view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.sb9cb5c2ebd}}" catchtap="onDrawerPage" data-step="1" />
       </view>
       <view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="pin-stack-row" style="top:{{pin.top}}px;z-index:{{pin.layer}};pointer-events:{{pin.opacity > 0.2 ? 'auto' : 'none'}}" catchtap="onClusterPick" data-id="{{pin.id}}" />
@@ -56,7 +71,6 @@
     <view class="map-fallback-button" bindtap="onMapRetry" aria-role="button">{{copy.s9f5cd8a2e8}}</view>
   </view>
 
-  <view wx:if="{{dusk}}" class="map-night-veil" />
 
   <!-- top fade so the heading stays readable over map tiles -->
   <view class="map-top-fade" />
@@ -120,8 +134,8 @@
   </view>
 
   <!-- recenter -->
-  <view class="recenter-map glass" style="top: {{overlayTop}}px" bindtap="recenter" aria-role="button" aria-label="{{copy.s392420f827}}">
-    <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="navigation" size="40" stroke="1.75" />
+  <view class="recenter-map glass" style="top: {{overlayTop}}px" bindtap="recenter" aria-role="button" aria-label="{{copy.sa65210588a}}">
+    <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pinned" size="40" stroke="1.75" />
   </view>
 
 
@@ -154,9 +168,9 @@
   <!-- empty state -->
   <view wx:if="{{!selected}}" class="map-empty glass content-card">
     <s-icon name="search" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
-    <text class="map-empty-title">{{pendingCount ? copy.s9f4f238913 : copy.s676b7e8f6b}}</text>
-    <text class="map-empty-text">{{pendingCount ? copy.sead04f3057 : copy.sc35c07caee}}</text>
-    <view class="map-empty-button" bindtap="onEmptyMapAction">{{pendingCount ? copy.s2dd35d32eb : copy.s2b3566361e}}</view>
+    <text class="map-empty-title">{{emptyState.title}}</text>
+    <text class="map-empty-text">{{emptyState.text}}</text>
+    <view class="map-empty-button" bindtap="onEmptyMapAction">{{emptyState.action}}</view>
   </view>
 
   <s-sheet
@@ -164,6 +178,8 @@
     type="{{sheetType}}"
     memory-id="{{sheetMemoryId}}"
     filter="{{sheetFilter}}"
+    reading-position="{{sheetReadingPosition}}"
+    bind:nativepreview="onNativePreview"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />
