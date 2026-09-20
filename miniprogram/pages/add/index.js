@@ -38,13 +38,31 @@ Page({
     cloudPlaceSearchEnabled:require('../../utils/importPolicy').cloudPlaceSearchEnabled, importLookupError:'', importCity:'', importMatches:[], importSearching:false, importSearchDone:false, importTypes:[],
     dusk: false,
     quiet: false,
+    uploadProgress: 0,
+    uploadTotal: 0,
+    uploadCurrent: 0,
+    originalMode: false,
+    saveProgress: 0,
+    saveProgressText: '',
   },
 
   onLoad() {
+    let capsule = { top: 0, height: 32, borderRadius: 16 };
+    try {
+      const rect = wx.getMenuButtonBoundingClientRect();
+      if (rect && rect.top) {
+        capsule = { top: rect.top, height: rect.height, borderRadius: rect.height/2, left: rect.left, width: rect.width };
+      }
+    } catch(e) {}
     this.setData({
       headerTop: metrics.getMetrics().headerTop,
       draft: store.loadDraft(),
       today: localDate.today(),
+      menuButtonTop: capsule.top,
+      menuButtonHeight: capsule.height,
+      menuButtonBorderRadius: capsule.borderRadius,
+      menuButtonLeft: capsule.left,
+      menuButtonWidth: capsule.width,
     });
     this.saveLock = false;
     this.disposed = false;
@@ -61,6 +79,18 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
+    try {
+      const rect = wx.getMenuButtonBoundingClientRect();
+      if (rect && rect.top) {
+        this.setData({
+          menuButtonTop: rect.top,
+          menuButtonHeight: rect.height,
+          menuButtonBorderRadius: rect.height/2,
+          menuButtonLeft: rect.left,
+          menuButtonWidth: rect.width,
+        });
+      }
+    } catch(e) {}
     this.setData({imageErrors:{},focusedField:''});
     this.setData({ headerTop: metrics.getMetrics(true).headerTop });
     this.setData({today:localDate.today(),cloudPlaceSearchEnabled:importPolicy.enabled()});
@@ -131,15 +161,21 @@ Page({
   // ---------- photos ----------
   onReplacePhoto() {
     if (this.data.uploading || this.saveLock || (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted)) return;
-    this.pickPhotos(1, true);
-  },
-  onAddMore() {
-    if (this.data.uploading || this.saveLock || (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted)) return;
-    const available = 9 - this.data.draft.photos.length;
-    if (available <= 0) {
+    if (this.data.draft.photos.length >= 9) {
       store.notify(i18n.t('You can keep up to nine photos in one memory.'));
       return;
     }
+    const available = 9 - this.data.draft.photos.length;
+    // Unified: left "留住这一刻" also supports multi like right side
+    this.pickPhotos(available, true);
+  },
+  onAddMore() {
+    if (this.data.uploading || this.saveLock || (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted)) return;
+    if (this.data.draft.photos.length >= 9) {
+      store.notify(i18n.t('You can keep up to nine photos in one memory.'));
+      return;
+    }
+    const available = 9 - this.data.draft.photos.length;
     this.pickPhotos(available, false);
   },
   onRemoveExtra() {
@@ -150,17 +186,30 @@ Page({
     this.changeDraft('photos', draft.photos.slice(0, -1));
   },
   pickPhotos(count, replace) {
-    let token=identity.lease();
+    let token;
+    try { token=identity.lease(); } catch (e) { this.setData({ uploading:false, error: e.message }); return; }
     const that = this;
-    this.setData({ uploading: true, error: '', errorContext:'save',errorField:'',fieldErrors:{} });
-    photos.choosePhotos(count).then(async function (paths) {
-      token=await identity.resumeNative(token);
+    this.setData({ uploading: true, uploadProgress: 0, uploadTotal: count, uploadCurrent: 0, originalMode: false, error: '', errorContext:'save',errorField:'',fieldErrors:{} });
+    photos.choosePhotos(count, function(p){
+      that.setData({
+        uploadProgress: p.percent || 0,
+        uploadCurrent: p.current || 0,
+        uploadTotal: p.total || count,
+        originalMode: !!p.original
+      });
+    }).then(async function (paths) {
+      that.setData({ uploadProgress: 100, uploadCurrent: paths.length, uploadTotal: paths.length });
+      await new Promise(r=>setTimeout(r, 300));
+
+      try { token=await identity.resumeNative(token); } catch (e) {}
+      if (!paths || !paths.length) {
+        that.setData({ uploading: false, error: i18n.t('Could not prepare the photo. Please select it again.') });
+        return;
+      }
       const draft = that.data.draft;
       let next;
       if (replace) {
-        const discarded = draft.photos[0];
-
-        next = [paths[0]].concat(draft.photos.slice(1));
+        next = paths.concat(draft.photos.slice(1)).slice(0, 9);
       } else {
         next = draft.photos.concat(paths).slice(0, 9);
       }
@@ -168,13 +217,27 @@ Page({
         store.saveDraft(Object.assign({}, draft, { photos: next }));
         return;
       }
-      that.setData({ uploading: false });
-      that.changeDraft('photos', next);
+      const newDraft = Object.assign({}, draft, { photos: next });
+      delete newDraft.cloudAttempt;
+      if(!store.saveDraft(newDraft)) {
+        that.setData({ uploading: false, error: require('../../utils/identityCopy')().draftFailed });
+        return;
+      }
+      that.setData({ uploading: false, uploadProgress: 100, draft: newDraft, fieldErrors:{},errorField:'',error:'' });
+      that.syncContext(store.get());
+      setTimeout(()=>{ if(!that.data.uploading) that.setData({uploadProgress:0, uploadTotal:0, uploadCurrent:0}); }, 800);
     }).catch(function (error) {
-      if(!identity.isCurrent(token))return;
-      if (that.disposed) return;
-      const cancelled = /cancel/i.test(String(error && (error.errMsg || error.message)));
-      that.setData({ uploading: false, error: cancelled ? '' : i18n.t('Could not prepare the photo. Please select it again.') });
+      if (that.disposed) {
+        that.setData({ uploading: false });
+        return;
+      }
+      const msg = String(error && (error.errMsg || error.message) || '');
+      const cancelled = /cancel/i.test(msg);
+      if(token && !identity.isCurrent(token) && !cancelled) {
+        that.setData({ uploading: false });
+        return;
+      }
+      that.setData({ uploading: false, error: cancelled ? '' : (msg.includes('IDENTITY') ? error.message : i18n.t('Could not prepare the photo. Please select it again.')) });
     });
   },
 
@@ -237,7 +300,7 @@ Page({
     const draft = this.data.draft;
     if(draft.editOperationId) {
       this.saveLock=true;this.setData({saving:true});
-      return store.createCloudMemory(draft.editBase,draft).then(()=>{if(!identity.isCurrent(token))return;if(!this.disposed)this.setData({draft:store.freshDraft(),error:''});if(this.active&&!this.disposed) wx.switchTab({url:'/pages/home/index'});}).catch(e=>{if(!identity.isCurrent(token))return;if(!this.disposed)this.setData({error:i18n.t(e.message)});}).finally(()=>{if(!identity.isCurrent(token))return;this.saveLock=false;if(!this.disposed)this.setData({saving:false});});
+      return store.createCloudMemory(draft.editBase,draft).then(()=>{if(identity.isCurrent(token)&&!this.disposed)this.setData({draft:store.freshDraft(),error:''});if(this.active&&!this.disposed&&identity.isCurrent(token)) wx.switchTab({url:'/pages/home/index'});}).catch(e=>{if(identity.isCurrent(token)&&!this.disposed)this.setData({error:i18n.t(e.message)});}).finally(()=>{this.saveLock=false;if(!this.disposed)this.setData({saving:false});});
     }
     if (!draft.restaurant.trim()) {
       this.showFieldError('restaurant', i18n.t('Give this memory a restaurant or place name.'));
@@ -249,17 +312,13 @@ Page({
     }
     if (!Number.isFinite(Number(draft.perCapita || 0)) || Number(draft.perCapita || 0)<0 || Number(draft.perCapita || 0)>1000000) { this.showFieldError('perCapita',i18n.t('Enter a valid per-person cost.')); return; }
     this.saveLock = true;
-    this.setData({ saving: true });
+    this.setData({ saving: true, saveProgress: 10, saveProgressText: '准备保存...' });
     const state = store.get();
 
     const known = this.data.knownPlace;
     const locationPick = locations.confirmed(draft.location) ? draft.location : draft.cloudAttempt && draft.cloudAttempt.submitted ? draft.cloudAttempt.memory : null;
-    if (!locationPick) {
-      this.saveLock = false;
-      this.showFieldError('location',i18n.t('请先在腾讯地图中确认餐馆位置，避免将城市中心当作餐馆。'));
-      return;
-    }
-    if (!!locationPick.city !== !!locationPick.country) {this.saveLock=false;this.showFieldError('geography',i18n.t('Location city and country must be confirmed together.'));return;}
+    // Location now optional per user request — no forced Tencent Map selection
+    if (locationPick && !!locationPick.city !== !!locationPick.country) {this.saveLock=false;this.showFieldError('geography',i18n.t('Location city and country must be confirmed together.'));return;}
     const memory = {
       id: data.createId(),
       restaurant: draft.restaurant.trim(),
@@ -270,7 +329,7 @@ Page({
       rating: draft.rating,
       tags: draft.tags.slice(),
       cuisine: (draft.cuisine || '').trim(),
-      diningTypes:(Array.isArray(draft.diningTypes)?draft.diningTypes:[]).slice(),sourceCategory:draft.sourceCategory||'',categorySource:draft.categorySource||'',tencentPoiId:locationPick.tencentPoiId||'',
+      diningTypes:(Array.isArray(draft.diningTypes)?draft.diningTypes:[]).slice(),sourceCategory:draft.sourceCategory||'',categorySource:draft.categorySource||'',tencentPoiId:(locationPick && locationPick.tencentPoiId)||'',
       perCapita: draft.perCapita === '' ? 0 : Number(draft.perCapita || 0),
       dishes: Array.isArray(draft.dishes) ? draft.dishes : String(draft.dishes || '').split(/[，,\n]/).map(s=>s.trim()).filter(Boolean),
       ratingSource: draft.ratingSource || (draft.rating ? 'single' : 'unrated'),
@@ -278,33 +337,39 @@ Page({
       noPhoto: !draft.photos.length,
       extraPhotos: draft.photos.slice(1),
       placePhoto: draft.editBase ? draft.editBase.placePhoto : undefined,
-      city: locationPick.city || '',
-      country: locationPick.country || '',
-      geoConfirmed: locationPick.geoConfirmed === true, geoSource: locationPick.geoSource || 'unknown',
+      city: (locationPick && locationPick.city) || '',
+      country: (locationPick && locationPick.country) || '',
+      geoConfirmed: locationPick ? locationPick.geoConfirmed === true : false, geoSource: locationPick ? (locationPick.geoSource || 'unknown') : 'manual',
       neighborhood: '',
-      coordinates: locationPick.coordinates,
-      address: locationPick.address,
-      locationName: locationPick.locationName,
-      locationSource: locationPick.locationSource,
-      coordinateSystem: locationPick.coordinateSystem,
-      locationUnknown: false,
+      coordinates: locationPick && locationPick.coordinates ? locationPick.coordinates : [39.9042, 116.4074],
+      address: locationPick ? locationPick.address : undefined,
+      locationName: locationPick ? locationPick.locationName : undefined,
+      locationSource: locationPick ? locationPick.locationSource : undefined,
+      coordinateSystem: locationPick ? locationPick.coordinateSystem : undefined,
+      locationUnknown: !locationPick,
       shared: !state.settings.privateByDefault,
       liked: false,
       saved: false,
     };
+    const thatSave = this;
+    const saveProgressInterval = setInterval(()=>{
+      if (thatSave.data.saveProgress < 90) {
+        thatSave.setData({ saveProgress: thatSave.data.saveProgress + 5, saveProgressText: thatSave.data.saveProgress < 50 ? '上传照片到云端...' : '同步到云端...' });
+      }
+    }, 400);
     return store.createCloudMemory(memory, draft).then(() => {
-      if(!identity.isCurrent(token))return;
-      if (!this.disposed) this.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '' });
+      clearInterval(saveProgressInterval);
+      if(identity.isCurrent(token)&&!thatSave.disposed) thatSave.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '', saveProgress: 100, saveProgressText: '保存成功' });
       store.notify(i18n.t('A little moment, kept forever. Memory saved.'));
-      if (this.active && !this.disposed) wx.switchTab({ url: '/pages/home/index' });
+      setTimeout(()=>{ if (thatSave.active && !thatSave.disposed && identity.isCurrent(token)) wx.switchTab({ url: '/pages/home/index' }); }, 400);
     }).catch(error => {
-      if(!identity.isCurrent(token))return;
-      if (!this.disposed) this.setData({ error: i18n.t(error.message) || i18n.t('Save failed. Your draft is kept.'), draft: draft });
-      // Keep one persistent inline error; a duplicate Toast obscures the form.
+      clearInterval(saveProgressInterval);
+      if(identity.isCurrent(token)&&!thatSave.disposed) thatSave.setData({ error: i18n.t(error.message) || i18n.t('Save failed. Your draft is kept.'), draft: draft, saveProgress: 0, saveProgressText: '' });
     }).finally(() => {
-      if(!identity.isCurrent(token))return;
-      this.saveLock = false;
-      if (!this.disposed) this.setData({ saving: false });
+      clearInterval(saveProgressInterval);
+      thatSave.saveLock = false;
+      if (!thatSave.disposed) thatSave.setData({ saving: false });
+      setTimeout(()=>{ if(!thatSave.data.saving) thatSave.setData({saveProgress:0, saveProgressText:''}); }, 1000);
     });
   },
 

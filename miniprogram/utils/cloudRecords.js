@@ -17,14 +17,19 @@ async function call(action, args, token = identity.lease()) {
   initCloud();
   let response;
   try {
-    // A pre-S1/rolled-back server must reject the handshake BEFORE any mutation.
     if(['add','update','flags','delete','setLocation'].includes(action)){
-      const check=await wx.cloud.callFunction({name:'mealRecords',data:{action:'identityHandshake',identityProtocol:1,expectedUserId:token.userId}});
+      const check=await Promise.race([
+        wx.cloud.callFunction({name:'mealRecords',data:{action:'identityHandshake',identityProtocol:1,expectedUserId:token.userId}}),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('HANDSHAKE_TIMEOUT')), 15000))
+      ]);
       identity.assertLease(token);
       if(check.result&&check.result.code==='IDENTITY_MISMATCH'){identity.invalidate();throw error('IDENTITY_MISMATCH','账号已变化，请重新验证。');}
       if(!check.result||check.result.success!==true||check.result.identityProtocol!==1||check.result.userId!==token.userId)throw error('UPGRADE_REQUIRED','请部署支持身份校验的 mealRecords 云函数。');
     }
-    response = await wx.cloud.callFunction({ name: 'mealRecords', data: Object.assign({ action }, args, {identityProtocol:1,expectedUserId:token.userId}) }); }
+    response = await Promise.race([
+      wx.cloud.callFunction({ name: 'mealRecords', data: Object.assign({ action }, args, {identityProtocol:1,expectedUserId:token.userId}) }),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('CALL_TIMEOUT')), 20000))
+    ]); }
   catch (e) {
     if(['STALE_IDENTITY','IDENTITY_MISMATCH','UPGRADE_REQUIRED'].includes(e.code))throw e;
     if(identity.isCurrent(token))identity.markOffline();
@@ -104,13 +109,19 @@ async function uploadPhotos(paths, attempt, persistAttempt, token) {
     if (attempt.uploads[path]) { result.push(attempt.uploads[path]); continue; }
     if (!data.isSafeImage(path)) throw error('INVALID_PHOTO', i18n.t('This photo is no longer available. Please select it again.'));
     try {
-      const uploaded = await wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: path });
+      const uploaded = await Promise.race([
+        wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: path }),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('UPLOAD_TIMEOUT')), 20000))
+      ]);
       identity.assertLease(token);
       if (!data.isCloudImage(uploaded.fileID)) throw new Error('Invalid fileID');
       attempt.uploads[path] = uploaded.fileID;
-      persistAttempt(); // Keep completed uploads across retries and process restarts.
+      try { persistAttempt(); } catch(e) {}
       result.push(uploaded.fileID);
-    } catch (e) { throw error('UPLOAD_FAILED', i18n.t('Photo upload failed. No incomplete meal was submitted. Your draft is kept; please retry.'), e); }
+    } catch (e) {
+      if (String(e.message).includes('TIMEOUT')) throw error('UPLOAD_FAILED', i18n.t('Photo upload timed out. Try smaller photos.'), e);
+      throw error('UPLOAD_FAILED', i18n.t('Photo upload failed. No incomplete meal was submitted. Your draft is kept; please retry.'), e);
+    }
   }
   return result;
 }

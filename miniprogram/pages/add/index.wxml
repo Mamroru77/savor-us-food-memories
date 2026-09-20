@@ -1,8 +1,13 @@
-<s-identity-gate wx:if="{{!identityReady}}"/>
-<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+<view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;">
+  <view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;">
+    <s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" />
+    <text>{{identityLabels ? identityLabels.busy : '正在验证...'}}</text>
+  </view>
+</view>
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
   <!-- ambient follows the photo being captured: swaps live as the
        user picks/removes draft photos (falls back to the house photo) -->
-  <image class="ambient-photo" src="{{imageErrors[(draft.photos[0] || '/images/le-comptoir.jpg')] ? '/images/le-comptoir.jpg' : (draft.photos[0] || '/images/le-comptoir.jpg')}}" mode="aspectFill" aria-hidden="true"  data-source="{{draft.photos[0] || '/images/le-comptoir.jpg'}}" binderror="onImageError" />
+  <image class="ambient-photo ambient-stable" src="{{(draft.photos[0] || '/images/le-comptoir.jpg')}}" mode="aspectFill" aria-hidden="true" />
 
   <view class="screen-scroll">
     <view class="add-screen" style="padding-top: {{headerTop}}px">
@@ -105,6 +110,19 @@
               <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="30" stroke="1.75" />
             </view>
           </view>
+        </view>
+
+        <view wx:if="{{uploading}}" class="upload-progress-wrap">
+          <view class="upload-progress-bar">
+            <view class="upload-progress-fill" style="width: {{uploadProgress}}%"></view>
+          </view>
+          <text class="upload-progress-text">{{uploadCurrent}}/{{uploadTotal}} {{uploadProgress}}% {{originalMode ? '原图' : ''}}</text>
+        </view>
+        <view wx:if="{{saving}}" class="save-progress-wrap">
+          <view class="save-progress-bar">
+            <view class="save-progress-fill" style="width: {{saveProgress}}%"></view>
+          </view>
+          <text class="save-progress-text">{{saveProgressText}}</text>
         </view>
 
         <scroll-view wx:if="{{draft.photos.length}}" class="photo-strip" scroll-x>

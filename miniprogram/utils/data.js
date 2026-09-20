@@ -26,70 +26,20 @@ const baseMemory = {
   saved: false,
 };
 
-const initialMemories = [
-  {
-    ...baseMemory, id: 'arabica', restaurant: '% Arabica', city: 'Tokyo', country: 'Japan',
-    neighborhood: 'Shibuya', date: '2025-08-26', rating: 5,
-    notes: 'A slow afternoon, a perfect coffee, and nowhere else we needed to be.',
-    tags: ['Coffee', 'Japanese', 'Cafe'], photo: photos.coffee,
-    coordinates: [35.6643, 139.6984], shared: true, liked: true,
-  },
-  {
-    ...baseMemory, id: 'comptoir', restaurant: 'Le Comptoir', city: 'Paris', country: 'France',
-    neighborhood: 'Saint-Germain', date: '2025-08-24', rating: 4,
-    notes: 'Perfect late-night dinner. The duck was unforgettable.',
-    tags: ['French', 'Dinner', 'Date Night'], photo: photos.meal, placePhoto: photos.paris,
-    coordinates: [48.8523, 2.3386], shared: true, liked: true,
-  },
-  {
-    ...baseMemory, id: 'mstand', restaurant: 'M Stand', city: 'Tokyo', country: 'Japan',
-    neighborhood: 'Nakameguro', date: '2025-08-22', rating: 4,
-    notes: 'Found a little corner by the window. Stayed for a second cup.',
-    tags: ['Coffee', 'Breakfast'], photo: photos.cafe, placePhoto: photos.paris,
-    coordinates: [35.6435, 139.6992],
-  },
-  {
-    ...baseMemory, id: 'kyoto', restaurant: 'Kyoto Gojo', city: 'Kyoto', country: 'Japan',
-    neighborhood: 'Gojo', date: '2025-07-14', rating: 5,
-    notes: 'Rain outside, a warm bowl between us. A little place we will always come back to.',
-    tags: ['Japanese', 'Lunch', 'Travel'], photo: photos.japanese,
-    coordinates: [34.9956, 135.7649], shared: true, liked: true,
-  },
-  {
-    ...baseMemory, id: 'kitsune', restaurant: 'Cafe Kitsune', city: 'Paris', country: 'France',
-    neighborhood: 'Palais-Royal', date: '2025-08-20', rating: 5,
-    notes: 'Coffee in the gardens, before the city woke up. The best kind of morning.',
-    tags: ['Coffee', 'French', 'Breakfast'], photo: photos.meal,
-    coordinates: [48.864, 2.3345], saved: true,
-  },
-  {
-    ...baseMemory, id: 'flore', restaurant: 'Cafe de Flore', city: 'Paris', country: 'France',
-    neighborhood: 'Saint-Germain', date: '2025-08-19', rating: 4,
-    notes: 'People-watching over a long lunch. One more chapter in our Paris story.',
-    tags: ['French', 'Lunch', 'Bistro'], photo: photos.japanese,
-    coordinates: [48.8542, 2.3325], shared: true,
-  },
-  {
-    ...baseMemory, id: 'vieux', restaurant: 'Au Vieux Paris', city: 'Paris', country: 'France',
-    neighborhood: 'Ile de la Cite', date: '2025-08-17', rating: 5,
-    notes: 'A tiny table on a beautiful street. Some places feel like a secret.',
-    tags: ['French', 'Dinner', 'Date Night'], photo: photos.meal, placePhoto: photos.paris,
-    coordinates: [48.8534, 2.3497],
-  },
-];
+const initialMemories = [];
 
 const defaultProfile = {
-  name: 'Jamie Lin',
-  bio: 'Where next?',
-  avatar: photos.jamie,
-  partner: 'Alex',
-  togetherSince: require('./localDate').today(),
+  name: '',
+  bio: '',
+  avatar: '',
+  partner: '',
+  togetherSince: '',
 };
 
 const defaultSettings = {
   language: 'system',
   dietary: 'No restrictions',
-  cuisines: ['French', 'Japanese'],
+  cuisines: [],
   privateByDefault: false,
   showLocations: true,
   reminders: true,
@@ -149,7 +99,8 @@ function isCloudImage(value) {
 function isSafeImage(value) {
   if (typeof value !== 'string') return false;
   if (isCloudImage(value)) return true;
-  if (/^(https?:\/\/|\/images\/|data:image\/(jpeg|jpg|png|webp|gif);base64,)/.test(value)) return true;
+  if (/^(https?:\/\/|\/images\/|wxfile:\/\/|data:image\/(jpeg|jpg|png|webp|gif);base64,)/.test(value)) return true;
+  if (/^http:\/\/tmp\//.test(value) || /^wxfile:\/\//.test(value)) return true;
   const root = userRoot();
   return Boolean(root && value.indexOf(root + '/') === 0 && !value.split('/').some(function (p) { return p === '..'; }));
 }

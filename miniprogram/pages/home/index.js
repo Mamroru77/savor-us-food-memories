@@ -29,6 +29,8 @@ Page({
   },
 
   onLoad() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
+
     this.visible=false;this.alive=true;
     this.setData({ headerTop: metrics.getMetrics().headerTop });
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
@@ -45,6 +47,8 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
+
     this.visible=true;
     this.setData({imageErrors:{},focusedField:'',headerTop:metrics.getMetrics(true).headerTop});
     // Tab bar contract: every tab page pushes selected + theme + quiet.

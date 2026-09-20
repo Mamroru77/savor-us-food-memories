@@ -102,3 +102,21 @@
 
 .notification-button { width:88rpx; height:88rpx; right:31rpx; margin-top:-11rpx; }
 .notification-dot { top:21rpx; right:21rpx; }
+.identity-inline-loading {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 180rpx;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.92);
+  border: 1rpx solid rgba(0,0,0,0.08);
+  padding: 0 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.identity-inline-loading.dusk { background: rgba(40,40,40,0.92); border-color: rgba(255,255,255,0.12); }
+.inline-loading-inner { display:flex; align-items:center; gap:10rpx; font-size:26rpx; line-height:64rpx; color:#565752; white-space:nowrap; }
+.dusk .inline-loading-inner { color:#d7d1c7; }

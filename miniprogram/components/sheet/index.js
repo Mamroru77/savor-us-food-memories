@@ -119,13 +119,17 @@ Component({
 
   observers: {
     'show, type, memoryId, filter': function () {
-      const formType=this.data.show?this.data.type:'';
-      if(this._formType!==formType||!this.data.show)this.resetFormEdits();
-      this._formType=formType;
+      const native=this._avatarNativeOwner;
+      const preservingAvatar=!!native && (!this.data.type || this.data.type==='profile') && (this.data.show || identity.snapshot().status==='verifying');
+      const formType=preservingAvatar?'profile':this.data.show?this.data.type:'';
+      if(preservingAvatar&&!this.data.show)native.suspended=true;
+      if(this.data.show&&this._avatarViewReady){this._avatarViewReady();this._avatarViewReady=null;}
+      if(!preservingAvatar&&(this._formType!==formType||!this.data.show))this.resetFormEdits();
+      if(!preservingAvatar||this.data.show)this._formType=formType;
       const readingKey = this.data.show && this.data.type === 'memory' ? this.data.memoryId : '';
       const enteringMemory = readingKey && readingKey !== this._readingKey;
       this._readingKey = readingKey;
-      if (this.data.show) {this.setData({displayType:this.data.type,imageErrors:{},focusedField:'',sheetScrollTarget:'',sheetTop:metrics.getMetrics(true).headerTop+8});this.refresh();}
+      if (this.data.show) {this.setData({displayType:formType,imageErrors:{},focusedField:'',sheetScrollTarget:'',sheetTop:metrics.getMetrics(true).headerTop+8});this.refresh();}
       else this._personalizing = false;
       if (enteringMemory) {
         const position = this.data.readingPosition;
@@ -147,8 +151,21 @@ Component({
       this._onResize = () => { if(this._detached)return; this.setData({ sheetTop: metrics.getMetrics(true).headerTop + 8, sheetScrollHeight: 0 }, () => this.measureScroll()); };
       if (wx.onWindowResize) wx.onWindowResize(this._onResize);
       this.unsubscribe = store.subscribe(function (state) {
-        if(state.identity && this._identityGeneration!==state.identity.generation){
-          this._identityGeneration=state.identity.generation;
+        const session=state.identity;
+        if(this._avatarNativeOwner&&session){
+          if(session.locked&&session.status==='verifying'){
+            this._identityGeneration=session.generation;
+            return;
+          }
+          if(session.locked||session.userId!==this._avatarNativeOwner.userId){
+            this.resetFormEdits();
+            this._personalizing=false;
+            this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
+            this.triggerEvent('close', {reason:'identity'});return;
+          }
+          this._identityGeneration=session.generation;
+        } else if(session && this._identityGeneration!==session.generation){
+          this._identityGeneration=session.generation;
           this.resetFormEdits();
           this._personalizing=false;
           this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
@@ -174,9 +191,25 @@ Component({
   methods: {
     onFieldFocus: uiFeedback.onFieldFocus,
     onFieldBlur: uiFeedback.onFieldBlur,
-    onImageError: uiFeedback.onImageError,
+    onImageError(event) {
+      uiFeedback.onImageError.call(this,event);
+      if(this.data.displayType==='profile'&&this.data.profileAvatar&&event.currentTarget.dataset.source===this.data.profileAvatar){
+        photos.logFailure({code:'IMAGE_LOAD_FAILED'},'preview');
+        this.setData({profileError:i18n.t('Could not prepare the photo. Please select it again.')});
+      }
+    },
     // ---------- shell ----------
-    resetFormEdits() { this._formEdits={};this._avatarRequest=(this._avatarRequest||0)+1; },
+    finishAvatar(request) {
+      if(!this._avatarNativeOwner || this._avatarNativeOwner.request!==request)return;
+      this._avatarNativeOwner=null;
+      this.triggerEvent('nativeavatar',{phase:'end',request});
+    },
+    resetFormEdits() {
+      if(this._avatarViewReady){this._avatarViewReady();this._avatarViewReady=null;}
+      if(this._avatarNativeOwner)this.finishAvatar(this._avatarNativeOwner.request);
+      this._formEdits={};this._avatarRequest=(this._avatarRequest||0)+1;
+      if(!this._detached)this.setData({profileUploading:false,profileError:''});
+    },
     markFormEdit(field) { (this._formEdits||(this._formEdits={}))[field]=true; },
     close() {
       this.resetFormEdits();
@@ -461,31 +494,70 @@ Component({
     // ---------- profile ----------
     refreshProfile(patch, state) {
       const edited=this._formEdits||{};
-      if(!Object.keys(edited).length)patch.profileError = '';
       if(!edited.profileName)patch.profileName = state.profile.name;
       if(!edited.profileBio)patch.profileBio = state.profile.bio;
       if(!edited.profileAvatar)patch.profileAvatar = state.profile.avatar;
-      patch.profileUploading = false;
+      patch.profileUploading = !!this._avatarNativeOwner;
     },
     onProfileName(event) { this.markFormEdit('profileName');this.setData({ profileName: event.detail.value, profileError:'' }); },
     onProfileBio(event) { this.markFormEdit('profileBio');this.setData({ profileBio: event.detail.value }); },
     onAvatarChange() {
-      let token=identity.lease();
       const that = this,request=this._avatarRequest=(this._avatarRequest||0)+1;
-      const active=()=>!that._detached&&that.data.show&&that.data.type==='profile'&&request===that._avatarRequest;
-      photos.choosePhotos(1).then(async function (paths) {
+      const active=()=>!that._detached&&that.data.show&&( !that.data.type || that.data.type==='profile')&&request===that._avatarRequest;
+      let owner;
+      try {
+        owner=identity.lease();
+        that._avatarNativeOwner={userId:owner.userId,request:request};
+        that.triggerEvent('nativeavatar',{phase:'start',userId:owner.userId,request:request});
+      } catch(error) {
+        photos.logFailure(error,'identity');
+        that.setData({profileUploading:false,profileError:require('../../utils/identityCopy')().verify});
+        return Promise.resolve();
+      }
+      that.setData({ profileUploading: true, profileError: '' });
+      return photos.choosePhotos(1, function(p){
+        if(active()) that.setData({ profileUploading: true });
+      }).then(async function (paths) {
+        if(!that.data.show&&that._avatarNativeOwner&&that._avatarNativeOwner.request===request&&that._avatarNativeOwner.suspended){
+          await new Promise(resolve=>{that._avatarViewReady=resolve;});
+        }
         if(!active())return;
-        token=await identity.resumeNative(token);
-        if (active()&&paths.length) {that.markFormEdit('profileAvatar');that.setData({ profileAvatar: paths[0], profileUploading: false });}
-      }).catch(function () { /* cancelled */ });
+        // Recheck at the UI boundary too; resumeNative does not start verification.
+        try { owner=await identity.resumeNative(owner); }
+        catch(error) { throw photos.logFailure(error,'identity'); }
+        if (active()&&paths.length) {
+          const avatar=paths[0];
+          that.markFormEdit('profileAvatar');
+          that.setData({ profileAvatar: avatar, profileUploading: false, imageErrors: {} });
+        }
+        else if(active()) that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
+      }).catch(function (err) {
+        const cancelled=photos.isCancelled(err);
+        const error=cancelled?null:photos.logFailure(err);
+        if(!active())return;
+        if(cancelled) { that.setData({ profileUploading: false }); return; }
+        const message=error.category==='identity'?require('../../utils/identityCopy')().verify:error.category==='filesystem'?'Could not save. Free some storage and try again.':'Could not prepare the photo. Please select it again.';
+        that.setData({ profileUploading: false, profileError: i18n.t(message) });
+      }).finally(function(){
+        that.finishAvatar(request);
+      });
     },
     onProfileSave() {
+      if(this.data.profileUploading || this._avatarNativeOwner)return;
+      if(this.data.profileAvatar&&this.data.imageErrors[this.data.profileAvatar]){
+        this.setData({profileError:i18n.t('Could not prepare the photo. Please select it again.')});return;
+      }
       const name = this.data.profileName.trim();
       if (!name) { this.setData({profileError:i18n.t('Your name cannot be empty.'),sheetScrollTarget:''},()=>this.setData({sheetScrollTarget:'profile-name-field'})); return; }
-      store.updateProfile({ name: name, bio: this.data.profileBio.trim(), avatar: this.data.profileAvatar });
-      photos.pruneOrphans(photos.collectReferenced(store.get()));
-      store.notify(i18n.t('A little more you. Profile updated.'));
-      this.close();
+      try {
+        store.updateProfile({ name: name, bio: this.data.profileBio.trim(), avatar: this.data.profileAvatar });
+        photos.pruneOrphans(photos.collectReferenced(store.get()));
+        store.notify(i18n.t('A little more you. Profile updated.'));
+        this.close();
+      } catch (error) {
+        const reported=photos.logFailure(error,'profile-save');
+        this.setData({ profileError: reported.category==='identity'?require('../../utils/identityCopy')().verify:i18n.t('Could not save. Free some storage and try again.') });
+      }
     },
 
     // ---------- together ----------

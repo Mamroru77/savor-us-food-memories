@@ -452,9 +452,15 @@ function createCloudMemory(memory, draft) {
   draft.cloudAttempt = attempt;
   function keepAttempt() {
     identity.assertLease(token);
-    // Unlike best-effort UI caching, retry identity must be durable before writing remotely.
     try { identity.setStorageSync(DRAFT_KEY, JSON.stringify(savedDraft)); }
-    catch (e) { throw new Error('Storage unavailable. Free some space before saving; your input is still here.'); }
+    catch (e) {
+      // If draft too large (e.g., many large photo paths), clear uploads to shrink and retry
+      try {
+        savedDraft.cloudAttempt.uploads = {};
+        draft.cloudAttempt.uploads = {};
+        identity.setStorageSync(DRAFT_KEY, JSON.stringify(savedDraft));
+      } catch (e2) { throw new Error('Storage unavailable. Free some space before saving; your input is still here.'); }
+    }
   }
   saveFlight = Promise.resolve().then(function () {
     keepAttempt();
@@ -464,7 +470,7 @@ function createCloudMemory(memory, draft) {
     addMemory(saved);
     clearCompletedDraft('add',attempt.id);
     return saved;
-  }).finally(function () { if(identity.snapshot().generation===token.generation)saveFlight = null; });
+  }).finally(function () { saveFlight = null; });
   return saveFlight;
 }
 

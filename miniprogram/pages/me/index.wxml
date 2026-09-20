@@ -1,12 +1,24 @@
-<s-identity-gate wx:if="{{!identityReady}}"/>
-<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+<view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;">
+  <view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;">
+    <s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" />
+    <text>正在验证...</text>
+  </view>
+</view>
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
   <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
 
   <view class="screen-scroll">
     <view class="me-screen" style="padding-top: {{headerTop + 10}}px">
       <!-- profile heading -->
       <view class="profile-heading">
+        <block wx:if="{{profile.avatar}}">
         <image class="profile-avatar" src="{{imageErrors[(profile.avatar)] ? '/images/jamie.jpg' : (profile.avatar)}}" mode="aspectFill"  data-source="{{profile.avatar}}" binderror="onImageError" />
+      </block>
+      <block wx:else>
+        <view class="profile-avatar avatar-blank">
+          <s-icon name="user-round" size="80" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
+        </view>
+      </block>
         <view class="profile-copy">
           <text class="profile-name">{{profile.name}}</text>
           <text class="profile-bio">{{profile.bio}}</text>
@@ -49,6 +61,7 @@
     filter="{{sheetFilter}}"
     reading-position="{{sheetReadingPosition}}"
     bind:nativepreview="onNativePreview"
+    bind:nativeavatar="onNativeAvatar"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />

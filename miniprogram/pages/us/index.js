@@ -34,6 +34,9 @@ Page({
   onAmbientError() { this.setData({ ambientPhoto: '/images/paris-evening.jpg' }); },
 
   onLoad() {
+    let capsule = { top: 0, height: 32, borderRadius: 16 };
+    try { const rect = wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) capsule={top:rect.top,height:rect.height,borderRadius:rect.height/2}; } catch(e){}
+    this.setData({ menuButtonTop: capsule.top, menuButtonHeight: capsule.height, menuButtonBorderRadius: capsule.borderRadius });
     this.setData({ headerTop: metrics.getMetrics().headerTop });
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
   },
@@ -46,6 +49,7 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
     this.setData({imageErrors:{},focusedField:''});
     this.setData({ headerTop: metrics.getMetrics(true).headerTop });
     const state = store.get();

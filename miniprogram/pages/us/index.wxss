@@ -165,7 +165,7 @@
 /* Native image defaults are not viewport-sized, even with fixed edges. */
 .ambient-photo { width: 100vw; height: 100vh; }
 
-.us-settings { width:88rpx; height:88rpx; margin-top:-13rpx; margin-right:-19rpx; flex-shrink:0; }
+.us-settings { width:88rpx; height:88rpx; margin-top:0; margin-right:0; flex-shrink:0; }
 .us-heading > view:first-child { min-width:0; }
 .shared-like { width:88rpx; height:88rpx; right:0; bottom:0; }
 .shared-like.is-liked { background:transparent; }
@@ -174,3 +174,66 @@
 .shared-photo-copy { right:100rpx; }
 .shared-photo-name { font-weight:500; }
 .space-management{width:100%;margin:28rpx 0 0;color:var(--ink);font-family:var(--sans);line-height:40rpx;font-size:25rpx;white-space:normal}.space-management::after{border:0}
+
+.avatar-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+}
+.dusk .avatar-blank {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(238,234,227,.18);
+}
+.us-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.us-manage-button {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  flex-shrink: 0;
+}
+.dusk .us-manage-button {
+  background: transparent;
+  border: none;
+}
+.us-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: -13rpx;
+  margin-right: -19rpx;
+}
+.us-settings {
+  width: 88rpx;
+  height: 88rpx;
+  margin-top: 0;
+  margin-right: 0;
+  flex-shrink: 0;
+}
+.identity-inline-loading {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 180rpx;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.92);
+  border: 1rpx solid rgba(0,0,0,0.08);
+  padding: 0 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.identity-inline-loading.dusk { background: rgba(40,40,40,0.92); border-color: rgba(255,255,255,0.12); }
+.inline-loading-inner { display:flex; align-items:center; gap:10rpx; font-size:26rpx; line-height:64rpx; color:#565752; white-space:nowrap; }
+.dusk .inline-loading-inner { color:#d7d1c7; }

@@ -74,6 +74,8 @@ Page({
   },
 
   onLoad() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
+
     const m = metrics.getMetrics();
     // Same value the Us screen feeds its padding-top — both headings are
     // positioned from one source, so they always sit at the same height.
@@ -144,6 +146,8 @@ Page({
   },
 
   onShow() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
+
     const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120});
     this.active=true;this.initMarkerRenderer();
     const state = store.get();

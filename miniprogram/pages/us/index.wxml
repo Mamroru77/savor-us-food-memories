@@ -1,5 +1,5 @@
-<s-identity-gate wx:if="{{!identityReady}}"/>
-<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+<view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;"><view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;"><s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" /><text>正在验证...</text></view></view>
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
   <image class="ambient-photo" src="{{ambientPhoto}}" mode="aspectFill" binderror="onAmbientError" aria-hidden="true" />
 
   <view class="screen-scroll">
@@ -9,23 +9,38 @@
           <text class="heading-title">{{pageHeading.title}}</text>
           <text class="heading-sub">{{pageHeading.subtitle}}</text>
         </view>
-        <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="{{copy.s23f3b65ad3}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="settings" size="42" stroke="1.75" />
+        <view class="us-heading-actions">
+          <view class="us-manage-button" bindtap="onManageSpace" aria-role="button" aria-label="Manage shared space & wishlist" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="users" size="42" stroke="1.75" />
+          </view>
+          <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="{{copy.s23f3b65ad3}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="settings" size="42" stroke="1.75" />
+          </view>
         </view>
       </view>
-
-      <button class="space-management secondary-button" bindtap="onManageSpace" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{locale === 'zh-CN' ? '管理双人空间与 Wishlist' : 'Manage shared space & wishlist'}}</button>
-
-      <view class="secondary-subtle" style="margin-top:16rpx">{{copy.s325a78d28f}}</view>
 
       <!-- together card -->
       <view class="together-card glass content-card">
         <view class="couple-avatars">
+          <block wx:if="{{avatar}}">
           <image class="avatar" src="{{imageErrors[(avatar)] ? '/images/jamie.jpg' : (avatar)}}" mode="aspectFill"  data-source="{{avatar}}" binderror="onImageError" />
+        </block>
+        <block wx:else>
+          <view class="avatar avatar-blank">
+            <s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
+          </view>
+        </block>
           <view class="couple-heart {{loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{loveSent ? copy.s59000d4666 : copy.sc279e1cef9}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
             <s-icon name="heart" size="47" color="{{loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.75" />
           </view>
+          <block wx:if="{{partner}}">
           <image class="avatar" src="/images/alex.jpg" mode="aspectFill" />
+        </block>
+        <block wx:else>
+          <view class="avatar avatar-blank">
+            <s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
+          </view>
+        </block>
         </view>
         <view class="together-count" bindtap="onTogether" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
           <text class="together-label">{{copy.s5e084bb624}}</text>

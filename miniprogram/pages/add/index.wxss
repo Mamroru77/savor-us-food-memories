@@ -333,3 +333,94 @@
 .dusk .add-screen .date-input, .dusk .add-screen .rating-input {
   background:var(--field); border-color:var(--glass-border);
 }
+
+.ambient-photo.ambient-stable {
+  transition: opacity 0.25s ease;
+  will-change: opacity;
+  opacity: 0.92;
+}
+.photo-editor-row, .main-photo-wrap {
+  transform: translateZ(0);
+  will-change: transform;
+}
+.main-memory-photo {
+  transition: opacity 0.2s ease;
+}
+.identity-inline-loading {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 180rpx;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.92);
+  border: 1rpx solid rgba(0,0,0,0.08);
+  padding: 0 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* top/height/border-radius now dynamically set from menuButtonBoundingClientRect */
+}
+.identity-inline-loading.dusk {
+  background: rgba(40,40,40,0.92);
+  border-color: rgba(255,255,255,0.12);
+}
+.inline-loading-inner {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  font-size: 26rpx;
+  line-height: 64rpx;
+  color: #565752;
+  white-space: nowrap;
+}
+.dusk .inline-loading-inner { color: #d7d1c7; }
+.upload-progress-wrap {
+  margin: 16rpx 0 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.upload-progress-bar {
+  height: 8rpx;
+  background: rgba(0,0,0,0.08);
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+.dusk .upload-progress-bar { background: rgba(255,255,255,0.12); }
+.upload-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #81926b, #a8c090);
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+.upload-progress-text {
+  font-size: 22rpx;
+  color: var(--muted, #565752);
+  text-align: center;
+}
+.save-progress-wrap {
+  margin: 16rpx 0 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.save-progress-bar {
+  height: 8rpx;
+  background: rgba(0,0,0,0.08);
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+.dusk .save-progress-bar { background: rgba(255,255,255,0.12); }
+.save-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7a8a6a, #9ab08a);
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+.save-progress-text {
+  font-size: 22rpx;
+  color: var(--muted, #565752);
+  text-align: center;
+}

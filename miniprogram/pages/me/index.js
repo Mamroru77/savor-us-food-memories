@@ -22,7 +22,12 @@ const MENU_ROWS = [
 ];
 
 Page({
-  onImageError: uiFeedback.onImageError,
+  onImageError(event) {
+    uiFeedback.onImageError.call(this,event);
+    if(this.data.profile.avatar&&event.currentTarget.dataset.source===this.data.profile.avatar){
+      require('../../utils/photos').logFailure({code:'IMAGE_LOAD_FAILED'},'me-preview');
+    }
+  },
   data: {
     focusedField: '', imageErrors: {},
     copy: i18n.copy(), locale: i18n.locale(),
@@ -45,6 +50,9 @@ Page({
   onAmbientError() { this.setData({ ambientPhoto: '/images/le-comptoir.jpg' }); },
 
   onLoad() {
+    let capsule = { top: 0, height: 32, borderRadius: 16 };
+    try { const rect = wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) capsule={top:rect.top,height:rect.height,borderRadius:rect.height/2}; } catch(e){}
+    this.setData({ menuButtonTop: capsule.top, menuButtonHeight: capsule.height, menuButtonBorderRadius: capsule.borderRadius });
     this.setData({ headerTop: metrics.getMetrics().headerTop });
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
   },
@@ -57,6 +65,7 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
     this.setData({imageErrors:{},focusedField:''});
     this.setData({ headerTop: metrics.getMetrics(true).headerTop });
     const state = store.get();
@@ -70,9 +79,21 @@ Page({
   },
 
   syncState(state) {
+    const session=state.identity;
+    let resumeAvatarSheet=false;
+    if(this._nativeAvatarResume&&session){
+      if(session.locked){
+        if(session.status!=='verifying')this._nativeAvatarResume=null;
+      } else if(session.userId===this._nativeAvatarResume.userId){
+        resumeAvatarSheet=true;
+      } else {
+        this._nativeAvatarResume=null;
+      }
+    }
     i18n.syncPage(this, state, 4);
     const summary = memoryStats.summary(state.memories);
-    this.setData({
+    const isAvatarChanged = this.data.profile && this.data.profile.avatar !== state.profile.avatar;
+    const patch={
       savedCount: memoryStats.countSaved(state.memories, false),
       chartUri: memoryStats.chart(summary.counts),
       profile: state.profile,
@@ -82,7 +103,10 @@ Page({
       places: summary.places,
       dusk: state.settings.theme === 'dusk',
       quiet: state.settings.reduceMotion,
-    });
+      imageErrors: isAvatarChanged ? {} : this.data.imageErrors,
+    };
+    if(resumeAvatarSheet)Object.assign(patch,{sheetShow:true,sheetType:'profile',sheetMemoryId:'',sheetFilter:''});
+    this.setData(patch);
   },
 
   onStatsCard() { this.openSheet('library'); },
@@ -93,8 +117,14 @@ Page({
     if (position.scrollTop > 0 && wx.pageScrollTo) wx.pageScrollTo({scrollTop:position.scrollTop, duration:0});
   },
   onNativePreview(event) { return require('../../utils/memoryPreview').open(this, event.detail); },
+  onNativeAvatar(event) {
+    const detail=event&&event.detail||{};
+    if(detail.phase==='start'&&detail.userId)this._nativeAvatarResume={userId:detail.userId,request:detail.request};
+    else if(detail.phase==='end'&&this._nativeAvatarResume&&detail.request===this._nativeAvatarResume.request)this._nativeAvatarResume=null;
+  },
 
   onSheetChange(event) {
+    this._nativeAvatarResume=null;
     if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetReadingPosition: null,
@@ -104,10 +134,12 @@ Page({
     });
   },
   onSheetClose(event) {
+    this._nativeAvatarResume=null;
     if (!(event && event.detail && event.detail.reason === 'identity') && this._memoryPreview) this._memoryPreview.cancel();
     this.setData({ sheetShow: false, sheetType: '', sheetMemoryId: '', sheetFilter: '' });
   },
   openSheet(type, memoryId, filter) {
+    this._nativeAvatarResume=null;
     if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetShow: true,

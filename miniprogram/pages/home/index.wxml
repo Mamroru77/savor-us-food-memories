@@ -1,5 +1,5 @@
-<s-identity-gate id="identity-gate" wx:if="{{!identityReady}}"/>
-<view wx:if="{{identityReady}}" class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
+<view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;"><view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;"><s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" /><text>正在验证...</text></view></view>
+<view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
   <!-- dynamic ambient light: the “This week” photo, heavily blurred and
      biased behind the weekly card — the frosted cards melt THIS, so the
      glass tint follows the featured memory automatically -->
