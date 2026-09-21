@@ -138,6 +138,19 @@ function nativeTabs(initial=0){
       assert.equal(review.review, 'docs/reviews/ux-remediation-20260917.md');
       assert(review.reason && fs.existsSync(path.join(root, review.review)));
     }
+    const stage6Reviews = JSON.parse(fs.readFileSync(path.join(root, 'tools/stage6-refactor-review.json')));
+    const stage6Scope = [
+      'miniprogram/components/settings-editor/index.wxml',
+      'miniprogram/components/settings-editor/index.wxss',
+      'miniprogram/components/sheet/index.wxml',
+      'miniprogram/components/sheet/index.wxss',
+    ];
+    assert.deepEqual(Object.keys(stage6Reviews).sort(), stage6Scope);
+    for (const [file, review] of Object.entries(stage6Reviews)) {
+      assert.match(review.sha256, /^[a-f0-9]{64}$/);
+      assert.equal(review.review, 'docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md');
+      assert(review.reason && fs.existsSync(path.join(root, review.review)) && fs.existsSync(path.join(root, file)));
+    }
     for (const [file, original] of Object.entries(manifest.sha256)) {
       if (approved[file] && approved[file].removed === true) {
         assert.equal(file, 'miniprogram/images/pin.png', 'only the explicitly audited obsolete pin may be removed');
@@ -159,9 +172,17 @@ function nativeTabs(initial=0){
         assert.equal(uxReviews[file].baseSha256, expected, 'UX review must chain to the frozen approved checkpoint');
         expected = uxReviews[file].sha256;
       }
+      if (stage6Reviews[file]) {
+        assert.equal(stage6Reviews[file].baseSha256, expected, 'Stage 6 review must chain to the active checkpoint');
+        expected = stage6Reviews[file].sha256;
+      }
       let bytes = fs.readFileSync(path.join(root, file));
       if (!approved[file] && file === 'miniprogram/pages/add/index.wxml') bytes = Buffer.from(bytes.toString().replace("saving ? 'Saving memory...'", "saving ? 'Memory saved'"));
       assert.equal(require('crypto').createHash('sha256').update(bytes).digest('hex'), expected, file);
+    }
+    for (const file of stage6Scope.filter(file=>!Object.hasOwn(manifest.sha256,file))) {
+      const bytes=fs.readFileSync(path.join(root,file));
+      assert.equal(require('crypto').createHash('sha256').update(bytes).digest('hex'),stage6Reviews[file].sha256,file);
     }
   });
   function memoryRow() {

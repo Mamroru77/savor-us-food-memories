@@ -1,0 +1,24 @@
+{
+  "miniprogram/components/sheet/index.wxml": {
+    "baseSha256": "7b757d302bfc8c6400d210defe10a5a82f97a6353267796b9d4ec145d2bba42c",
+    "sha256": "30a3974c26f061c0e12ca366e7feda61e13ae888fba9d45b728ec8585387b423",
+    "review": "docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md",
+    "reason": "Stage 6 moves Preferences, Settings, and Privacy into the reviewed SettingsEditor boundary without changing their content or Sheet navigation."
+  },
+  "miniprogram/components/sheet/index.wxss": {
+    "baseSha256": "98e1fa0cf519ba5bed0fa2a27ada91455a4610058968dcbcca5254674aed3e23",
+    "sha256": "ac384c698f8ee86bd9523ff0111af4e3902c48836ed5ef516d2c1701ac878b75",
+    "review": "docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md",
+    "reason": "Stage 6 removes only the settings-specific rules moved into SettingsEditor; shared Sheet rules remain."
+  },
+  "miniprogram/components/settings-editor/index.wxml": {
+    "sha256": "cd0d235ec0ff16fdaaacf56ae43781f0b47bbb79321e6d59f1428a5b52506d6f",
+    "review": "docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md",
+    "reason": "The new component owns the existing Preferences, Settings, and Privacy markup."
+  },
+  "miniprogram/components/settings-editor/index.wxss": {
+    "sha256": "8c9b8251a0c4bc8e7f3fcc873b138a4d524a30c95bb0d3103be882db3c70b1bb",
+    "review": "docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md",
+    "reason": "The new component owns the moved settings-specific styles and style-isolation dark variants."
+  }
+}
