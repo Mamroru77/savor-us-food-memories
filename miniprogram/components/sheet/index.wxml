@@ -170,7 +170,6 @@
         show="{{show}}"
         dusk="{{dusk}}"
         bind:close="onProfileClose"
-        bind:nativeavatar="onProfileNativeAvatar"
         bind:scrolltarget="onProfileScrollTarget"
       />
 

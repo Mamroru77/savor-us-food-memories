@@ -12,6 +12,7 @@ const data = require('../../utils/data');
 const photos = require('../../utils/photos');
 const stats = require('../../utils/memoryStats');
 const metrics = require('../../utils/metrics');
+const nativeFlow = require('../../utils/nativeFlow');
 
 const DIETARY_OPTIONS = ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free', 'Dairy-free'];
 const CUISINE_OPTIONS = ['French', 'Japanese', 'Italian', 'Chinese', 'Korean', 'Mediterranean', 'Mexican', 'Indian'];
@@ -115,11 +116,12 @@ Component({
 
   observers: {
     'show, type, memoryId, filter': function () {
-      const native=this._avatarNativeOwner;
+      const native=nativeFlow.snapshot();
       const preservingAvatar=!!native && (!this.data.type || this.data.type==='profile') && (this.data.show || identity.snapshot().status==='verifying');
       const formType=preservingAvatar?'profile':this.data.show?this.data.type:'';
-      if(preservingAvatar&&!this.data.show)native.suspended=true;
-      if(this.data.show&&this._avatarViewReady){this._avatarViewReady();this._avatarViewReady=null;}
+      if(preservingAvatar&&!this.data.show)nativeFlow.suspend(native.id);
+      if(preservingAvatar&&this.data.show)nativeFlow.show(native.id);
+      if(native&&!preservingAvatar)nativeFlow.cancel(native.id);
       if(!preservingAvatar&&(this._formType!==formType||!this.data.show))this.resetFormEdits();
       if(!preservingAvatar||this.data.show)this._formType=formType;
       const readingKey = this.data.show && this.data.type === 'memory' ? this.data.memoryId : '';
@@ -148,12 +150,14 @@ Component({
       if (wx.onWindowResize) wx.onWindowResize(this._onResize);
       this.unsubscribe = store.subscribe(function (state) {
         const session=state.identity;
-        if(this._avatarNativeOwner&&session){
+        const native=nativeFlow.snapshot();
+        if(native&&session){
           if(session.locked&&session.status==='verifying'){
             this._identityGeneration=session.generation;
             return;
           }
-          if(session.locked||session.userId!==this._avatarNativeOwner.userId){
+          if(session.locked||session.userId!==native.userId){
+            nativeFlow.cancel(native.id);
             this.resetFormEdits();
             this._personalizing=false;
             this.setData({detail:null,libraryRows:[],libraryQuery:'',feedbackMessage:'',state:{},syncRows:[]});
@@ -177,6 +181,7 @@ Component({
     },
     detached() {
       this._detached = true;
+      nativeFlow.cancel();
       this.resetFormEdits();
       motionPresence.dispose(this);
       if (wx.offWindowResize && this._onResize) wx.offWindowResize(this._onResize);
@@ -196,6 +201,7 @@ Component({
     },
     markFormEdit(field) { (this._formEdits||(this._formEdits={}))[field]=true; },
     close() {
+      nativeFlow.cancel();
       this.resetFormEdits();
       this._personalizing = false;
       this.setData({focusedField:'',sheetScrollTarget:''});
@@ -205,12 +211,6 @@ Component({
       const detail=event&&event.detail;
       if(detail&&detail.reason==='identity')this.triggerEvent('close',detail);
       else this.close();
-    },
-    onProfileNativeAvatar(event) {
-      const detail=event&&event.detail||{};
-      if(detail.phase==='start'&&detail.userId)this._avatarNativeOwner={userId:detail.userId,request:detail.request};
-      else if(detail.phase==='end'&&this._avatarNativeOwner&&detail.request===this._avatarNativeOwner.request)this._avatarNativeOwner=null;
-      this.triggerEvent('nativeavatar',detail);
     },
     onProfileScrollTarget(event) {
       const id=event&&event.detail&&event.detail.id||'';

@@ -6,6 +6,7 @@ const store = require('../../utils/store');
 const data = require('../../utils/data');
 const metrics = require('../../utils/metrics');
 const memoryStats = require('../../utils/memoryStats');
+const nativeFlow = require('../../utils/nativeFlow');
 
 const MENU_ROWS = [
   { title:'Cloud tools',subtitle:'Backups, preferences and feedback',icon:'archive',sheet:'workspace' },
@@ -58,6 +59,7 @@ Page({
   },
 
   onUnload() {
+    nativeFlow.cancel();
     if (this._memoryPreview) this._memoryPreview.cancel();
     if (this.unsubscribe) this.unsubscribe();
   },
@@ -81,13 +83,14 @@ Page({
   syncState(state) {
     const session=state.identity;
     let resumeAvatarSheet=false;
-    if(this._nativeAvatarResume&&session){
+    const native=nativeFlow.snapshot();
+    if(native&&session){
       if(session.locked){
-        if(session.status!=='verifying')this._nativeAvatarResume=null;
-      } else if(session.userId===this._nativeAvatarResume.userId){
+        if(session.status!=='verifying')nativeFlow.cancel(native.id);
+      } else if(session.userId===native.userId){
         resumeAvatarSheet=true;
       } else {
-        this._nativeAvatarResume=null;
+        nativeFlow.cancel(native.id);
       }
     }
     i18n.syncPage(this, state, 4);
@@ -117,14 +120,8 @@ Page({
     if (position.scrollTop > 0 && wx.pageScrollTo) wx.pageScrollTo({scrollTop:position.scrollTop, duration:0});
   },
   onNativePreview(event) { return require('../../utils/memoryPreview').open(this, event.detail); },
-  onNativeAvatar(event) {
-    const detail=event&&event.detail||{};
-    if(detail.phase==='start'&&detail.userId)this._nativeAvatarResume={userId:detail.userId,request:detail.request};
-    else if(detail.phase==='end'&&this._nativeAvatarResume&&detail.request===this._nativeAvatarResume.request)this._nativeAvatarResume=null;
-  },
-
   onSheetChange(event) {
-    this._nativeAvatarResume=null;
+    nativeFlow.cancel();
     if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetReadingPosition: null,
@@ -134,12 +131,12 @@ Page({
     });
   },
   onSheetClose(event) {
-    this._nativeAvatarResume=null;
+    nativeFlow.cancel();
     if (!(event && event.detail && event.detail.reason === 'identity') && this._memoryPreview) this._memoryPreview.cancel();
     this.setData({ sheetShow: false, sheetType: '', sheetMemoryId: '', sheetFilter: '' });
   },
   openSheet(type, memoryId, filter) {
-    this._nativeAvatarResume=null;
+    nativeFlow.cancel();
     if (this._memoryPreview) this._memoryPreview.cancel();
     this.setData({
       sheetShow: true,

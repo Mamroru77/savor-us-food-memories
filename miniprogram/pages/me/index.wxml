@@ -61,7 +61,6 @@
     filter="{{sheetFilter}}"
     reading-position="{{sheetReadingPosition}}"
     bind:nativepreview="onNativePreview"
-    bind:nativeavatar="onNativeAvatar"
     bind:sheetchange="onSheetChange"
     bind:close="onSheetClose"
   />
