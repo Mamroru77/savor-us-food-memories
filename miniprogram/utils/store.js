@@ -14,6 +14,7 @@ const i18n = require('./i18n');
 const profileRepository = require('./profileRepository');
 const settingsRepository = require('./settingsRepository');
 const memoryRepository = require('./memoryRepository');
+const syncRepository = require('./syncRepository');
 
 const STORAGE_KEY = 'savor-diary-v1';
 const DRAFT_KEY = 'savor-draft-v1';
@@ -209,7 +210,7 @@ function saveFeedback(message) {
 // Durable outbox: persist intent before optimistic UI; acknowledge before removing it.
 let mutationFlight=null;
 const resolvingRecords=new Set();
-function canResolve(code) {return ['CONFLICT','DELETED','NOT_FOUND','INVALID_LOCAL_STATE','INVALID_DATE','INVALID_RATING','INVALID_PHOTOS','INVALID_COORDINATES','INVALID_LOCATION','INVALID_PER_CAPITA','INVALID_FLAG','INVALID_ID','INVALID_OPERATION_ID','RESTAURANT_REQUIRED'].includes(code);}
+function canResolve(code) {return syncRepository.canResolve(code);}
 function commit(next, language) {
   identity.lease();
   identity.setStorageSync(STORAGE_KEY,JSON.stringify(next));
@@ -217,24 +218,13 @@ function commit(next, language) {
   if(language!==undefined)i18n.setLanguage(language);
   listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
 }
-function overlay(memory, ops) {
-  let result=Object.assign({},memory); delete result.localChanges;
-  ops.filter(o=>o.recordId===memory.id).forEach(o=>{
-    if(o.kind==='flags') ['saved','liked','shared'].forEach(key=>{if(o.patch && typeof o.patch[key]==='boolean') result[key]=o.patch[key];});
-    // An edit snapshot may predate acknowledged flags, identity or revisions.
-    // Project editable content only, not the entire cached Memory object.
-    if(o.kind==='update' && o.memory) ['importAddressHint','importAreaText','platformRating','platformAveragePriceCny','diningTypes','sourceCategory','categorySource','tencentPoiId','diningMode','sourcePlatform','sourceUrl','restaurant','notes','date','city','country','neighborhood','cuisine','perCapita','dishes','tags','photo','extraPhotos','noPhoto','placePhoto','coordinates','address','locationName','locationSource','coordinateSystem','geoConfirmed','geoSource','rating','ratingSource','locationUnknown'].forEach(key=>{if(Object.prototype.hasOwnProperty.call(o.memory,key)) result[key]=o.memory[key];});
-    if(o.kind==='delete') result.pendingDelete=true;
-  });
-  return result;
-}
 function queueMutation(memory,kind,patch,updated) {
   ensureLoaded();
   const token=identity.lease();
   if(resolvingRecords.has(memory.id)) throw new Error('Sync in progress. Please try again.');
   const op={actorUserId:token.userId,id:data.createId(),recordId:memory.cloudId,revision:memory.revision||0,kind,patch:patch||{},memory:updated||null,base:memory,uploads:{},submitted:false};
   const outbox=state.outbox.concat(op);
-  const memories=state.memories.map(m=>m.id===memory.id?overlay(m,[op]):m).filter(m=>!m.pendingDelete);
+  const memories=state.memories.map(m=>m.id===memory.id?syncRepository.overlay(m,[op]):m).filter(m=>!m.pendingDelete);
   commit(Object.assign({},state,{outbox,memories}));
   return op;
 }
@@ -256,7 +246,7 @@ function flushOutbox() {
         const ownSuccessor=saved.operationRevision===op.revision+1 && saved.operationRevision===saved.revision;
         const outbox=state.outbox.filter(x=>x.id!==op.id).map(x=>x.recordId===op.recordId && ownSuccessor && x.revision===op.revision?Object.assign({},x,{revision:saved.operationRevision}):x);
         let memories=state.memories.filter(m=>m.id!==saved.id);
-        if(!saved.deleted) { const m=overlay(saved,outbox); if(!m.pendingDelete) memories.unshift(m); }
+        if(!saved.deleted) { const m=syncRepository.overlay(saved,outbox); if(!m.pendingDelete) memories.unshift(m); }
         const hidden=saved.deleted?Array.from(new Set(state.cloudHidden.concat(saved.id))):state.cloudHidden;
         commit(Object.assign({},state,{outbox,memories,cloudHidden:hidden}));
       } catch(e) {
@@ -340,24 +330,10 @@ let syncFlight = null;
 let saveFlight = null;
 // Explicit read-only refresh must NOT flush legacy/private outboxes.
 function mergeCloudRead(memories,token) {
-    identity.assertLease(token);
-    const byId = Object.create(null);
-    state.memories.forEach(m => { byId[m.id] = m; });
-    (memories.deletedIds||[]).forEach(id=>{delete byId[id];});
-    memories.forEach(m => {
-      if (state.cloudHidden.indexOf(m.id) >= 0) return;
-      const old = byId[m.id];
-      if(old && (old.revision||0)>(m.revision||0)) return;
-      const pending=state.outbox.filter(o=>o.recordId===m.id);
-      const merged=overlay(Object.assign({},m,old&&old.localChanges),pending);
-      if(merged.pendingDelete) delete byId[m.id]; else byId[m.id]=merged;
-    });
-    const all = Object.keys(byId).map(id => byId[id]);
-    // Keep the curated sample/local order, with cloud memories before it.
-    const mergedMemories = all.filter(m => m.cloudId).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-      .concat(all.filter(m => !m.cloudId));
-    commit(Object.assign({},state,{memories:mergedMemories}));
-    return state.memories;
+  identity.assertLease(token);
+  const merged=syncRepository.mergeCloud(state.memories,memories,state.cloudHidden,state.outbox);
+  commit(Object.assign({},state,{memories:merged}));
+  return state.memories;
 }
 async function refreshCloudReadOnly(){identity.assertBusinessCloudAllowed();const token=identity.lease();const memories=await require('./cloudRecords').listRecords();return mergeCloudRead(memories,token);}
 function applyCloudProfile(profile,preferences,token){

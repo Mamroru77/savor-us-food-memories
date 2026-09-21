@@ -422,6 +422,7 @@ function loadStoreInSandbox(sandbox) {
     if (target === './profileRepository') return loadUIUtilityInSandbox(sandbox, 'profileRepository');
     if (target === './settingsRepository') return loadUIUtilityInSandbox(sandbox, 'settingsRepository');
     if (target === './memoryRepository') return loadUIUtilityInSandbox(sandbox, 'memoryRepository');
+    if (target === './syncRepository') return loadUIUtilityInSandbox(sandbox, 'syncRepository');
     throw new Error('unexpected require ' + target);
   };
   const fn = new Function('module', 'exports', 'require', 'wx', 'setTimeout', 'clearTimeout', storeSrc);
@@ -436,7 +437,7 @@ function loadDataInSandbox(sandbox) {
 // Run the actual language module, not a no-op stub. Keep the dependency
 // allowlist strict so unexpected business/network imports still fail tests.
 function loadUIUtilityInSandbox(sandbox, name) {
-  if (!['data', 'i18n', 'locales', 'pageHeadings', 'localDate', 'profileRepository', 'settingsRepository', 'memoryRepository'].includes(name)) throw new Error('unexpected UI dependency ' + name);
+  if (!['data', 'i18n', 'locales', 'pageHeadings', 'localDate', 'profileRepository', 'settingsRepository', 'memoryRepository', 'syncRepository'].includes(name)) throw new Error('unexpected UI dependency ' + name);
   const cache = sandbox.uiModules || (sandbox.uiModules = Object.create(null));
   if (cache[name]) return cache[name].exports;
   const mod = { exports: {} }; cache[name] = mod;
