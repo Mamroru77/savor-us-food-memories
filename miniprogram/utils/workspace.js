@@ -1,13 +1,6 @@
 // A single owner-partitioned, explicitly resumed operation. Never replay on launch.
-const identity=require('./identity'),data=require('./data'),records=require('./cloudRecords'),stats=require('./memoryStats'),avatar=require('./avatar');
+const identity=require('./identity'),data=require('./data'),records=require('./cloudRecords'),stats=require('./memoryStats'),avatar=require('./avatar'),client=require('./workspaceClient');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
-async function call(action,args={},token=identity.lease()){
- identity.assertBusinessCloudAllowed();identity.assertLease(token);records.initCloud();
- const response=await wx.cloud.callFunction({name:'workspace',data:{...args,action,protocolVersion:1,expectedUserId:token.userId}});
- identity.assertLease(token);const r=response&&response.result;
- if(r&&r.code==='IDENTITY_MISMATCH'){identity.invalidate();fail('IDENTITY_MISMATCH');}
- if(!r||!r.success)fail(r&&r.code||'WORKSPACE_UNAVAILABLE');if(r.protocolVersion!==1)fail('UPGRADE_REQUIRED');return r;
-}
 function directory(token){identity.assertLease(token);const path=wx.env.USER_DATA_PATH+'/savor-workspace/'+require('./runtimeConfig').fileScope+token.userId;try{wx.getFileSystemManager().accessSync(path);}catch(e){wx.getFileSystemManager().mkdirSync(path,true);}return path;}
 function writeFile(contents,suffix='json',token=identity.lease()){
  const path=directory(token)+'/savor-'+Date.now()+'-'+data.createId()+'.'+suffix;
@@ -28,15 +21,15 @@ async function execute(intent,token){identity.assertBusinessCloudAllowed();
  if(intent.actorUserId!==token.userId)fail('OUTBOX_IDENTITY_MISMATCH');
  let result;
  if(intent.action==='archive'){
-  result=await call('createTask',{operationId:intent.operationId,kind:intent.kind,count:intent.count,consent:true},token);
+  result=await client.call('createTask',{operationId:intent.operationId,kind:intent.kind,count:intent.count,consent:true},token);
   if(result.task.state==='uploading'){
    const prefix=directory(token)+'/';if(!intent.filePath.startsWith(prefix)||intent.filePath.includes('..'))fail('INVALID_ARCHIVE_PATH');
    const rows=JSON.parse(wx.getFileSystemManager().readFileSync(intent.filePath,'utf8')).rows;
    if(rows.length!==intent.count)fail('ARCHIVE_CHANGED');
-   for(let i=0;i<Math.ceil(rows.length/5);i++)result=await call('putChunk',{taskId:result.task.id,index:i,rows:rows.slice(i*5,i*5+5)},token);
-   result=await call('sealTask',{taskId:result.task.id},token);
+   for(let i=0;i<Math.ceil(rows.length/5);i++)result=await client.call('putChunk',{taskId:result.task.id,index:i,rows:rows.slice(i*5,i*5+5)},token);
+   result=await client.call('sealTask',{taskId:result.task.id},token);
   }
- }else result=await call(intent.action,{...intent.args,operationId:intent.operationId},token);
+ }else result=await client.call(intent.action,{...intent.args,operationId:intent.operationId},token);
  keep(null,token);return result;
 }
 async function mutate(action,args){identity.assertBusinessCloudAllowed();const token=identity.lease();if(identity.workspaceIntent())fail('WORKSPACE_PENDING');const intent={actorUserId:token.userId,operationId:data.createId(),action,args};keep(intent,token);return execute(intent,token);}
@@ -50,14 +43,14 @@ async function createArchive(rows,kind,originalRaw){identity.assertBusinessCloud
 function retry(){identity.assertBusinessCloudAllowed();const token=identity.lease(),intent=identity.workspaceIntent();if(!intent)fail('NO_PENDING_OPERATION');return execute(intent,token);}
 function preservePending(){const token=identity.lease(),intent=identity.workspaceIntent();if(!intent)fail('NO_PENDING_OPERATION');const path=writeFile(JSON.stringify(intent,null,2),'json',token);keep(null,token);return path;}
 async function finishTask(task){
- const token=identity.lease();let result=await call('taskStatus',{taskId:task.id},token);
- while(result.task.state==='running')result=await call('stepTask',{taskId:task.id,cursor:result.task.cursor},token);
+ const token=identity.lease();let result=await client.call('taskStatus',{taskId:task.id},token);
+ while(result.task.state==='running')result=await client.call('stepTask',{taskId:task.id,cursor:result.task.cursor},token);
  return result;
 }
-async function exportTask(task){const token=identity.lease(),current=(await call('taskStatus',{taskId:task.id},token)).task;if(current.uploaded!==current.chunkCount)fail('CHUNKS_MISSING');const rows=[];for(let i=0;i<current.chunkCount;i++)rows.push(...(await call('getChunk',{taskId:task.id,index:i},token)).rows);return writeFile(JSON.stringify({kind:'savor-cloud-archive',formatVersion:1,manifest:current.manifest,rows},null,2),'json',token);}
+async function exportTask(task){const token=identity.lease(),current=(await client.call('taskStatus',{taskId:task.id},token)).task;if(current.uploaded!==current.chunkCount)fail('CHUNKS_MISSING');const rows=[];for(let i=0;i<current.chunkCount;i++)rows.push(...(await client.call('getChunk',{taskId:task.id,index:i},token)).rows);return writeFile(JSON.stringify({kind:'savor-cloud-archive',formatVersion:1,manifest:current.manifest,rows},null,2),'json',token);}
 async function chooseAvatar(){
  let token=identity.lease();const picked=await new Promise((resolve,reject)=>wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],success:resolve,fail:reject}));token=await identity.resumeNative(token);
  const src=picked.tempFiles&&picked.tempFiles[0]&&picked.tempFiles[0].tempFilePath;if(!src)fail('NO_AVATAR_SELECTED');
  return avatar.forCloud(await avatar.prepare(src,token,'album'),token);
 }
-module.exports={call,writeFile,localRows,parseArchive,createArchive,mutate,retry,preservePending,finishTask,exportTask,chooseAvatar};
+module.exports={call:client.call,writeFile,localRows,parseArchive,createArchive,mutate,retry,preservePending,finishTask,exportTask,chooseAvatar};
