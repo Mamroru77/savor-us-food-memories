@@ -1,5 +1,5 @@
 // A single owner-partitioned, explicitly resumed operation. Never replay on launch.
-const identity=require('./identity'),data=require('./data'),records=require('./cloudRecords'),stats=require('./memoryStats');
+const identity=require('./identity'),data=require('./data'),records=require('./cloudRecords'),stats=require('./memoryStats'),avatar=require('./avatar');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 async function call(action,args={},token=identity.lease()){
  identity.assertBusinessCloudAllowed();identity.assertLease(token);records.initCloud();
@@ -56,20 +56,17 @@ async function finishTask(task){
 }
 async function exportTask(task){const token=identity.lease(),current=(await call('taskStatus',{taskId:task.id},token)).task;if(current.uploaded!==current.chunkCount)fail('CHUNKS_MISSING');const rows=[];for(let i=0;i<current.chunkCount;i++)rows.push(...(await call('getChunk',{taskId:task.id,index:i},token)).rows);return writeFile(JSON.stringify({kind:'savor-cloud-archive',formatVersion:1,manifest:current.manifest,rows},null,2),'json',token);}
 function profilePayload(){const s=require('./store').get();return {profile:{name:s.profile.name,bio:s.profile.bio,avatar:null},preferences:{dietary:s.settings.dietary,cuisines:s.settings.cuisines.slice(),privateByDefault:s.settings.privateByDefault,showLocations:s.settings.showLocations,reminders:s.settings.reminders}};}
-function applyProfile(remote){
+async function applyProfile(remote){
  const token=identity.lease();if(!remote||!remote.profile||!remote.preferences)fail('PROFILE_MISSING');
  // Keep a complete owner-local before-image; never restore old outbox/identity.
  writeFile(JSON.stringify(identity.exportCurrent()),'json',token);
  const p={name:remote.profile.name,bio:remote.profile.bio},a=remote.profile.avatar;
- if(a){if(!/^[a-f0-9]{64}$/.test(a.digest)||!['jpg','png'].includes(a.extension)||typeof a.base64!=='string'||a.base64.length>87384)fail('INVALID_AVATAR');const path=directory(token)+'/avatar-'+a.digest+'.'+a.extension;wx.getFileSystemManager().writeFileSync(path,a.base64,'base64');p.avatar=path;}
+ if(a)p.avatar=(await avatar.restore(a,token)).localPath;
  identity.assertLease(token);require('./store').applyCloudProfile(p,remote.preferences,token);
 }
 async function chooseAvatar(){
  let token=identity.lease();const picked=await new Promise((resolve,reject)=>wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],success:resolve,fail:reject}));token=await identity.resumeNative(token);
- const src=picked.tempFiles[0].tempFilePath;
- const info=await new Promise((resolve,reject)=>wx.getImageInfo({src,success:resolve,fail:reject}));identity.assertLease(token);
- const scale=Math.min(1,256/info.width,256/info.height);
- const compressed=await new Promise((resolve,reject)=>wx.compressImage({src,quality:60,compressedWidth:Math.max(1,Math.round(info.width*scale)),compressedHeight:Math.max(1,Math.round(info.height*scale)),success:resolve,fail:reject}));identity.assertLease(token);
- const b64=wx.getFileSystemManager().readFileSync(compressed.tempFilePath,'base64');if(b64.length>87384)fail('AVATAR_TOO_LARGE');return b64;
+ const src=picked.tempFiles&&picked.tempFiles[0]&&picked.tempFiles[0].tempFilePath;if(!src)fail('NO_AVATAR_SELECTED');
+ return avatar.forCloud(await avatar.prepare(src,token,'album'),token);
 }
 module.exports={call,writeFile,localRows,parseArchive,createArchive,mutate,retry,preservePending,finishTask,exportTask,profilePayload,applyProfile,chooseAvatar};

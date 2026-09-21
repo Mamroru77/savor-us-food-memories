@@ -4,6 +4,7 @@ const i18n = require('../../utils/i18n');
 const uiFeedback = require('../../utils/uiFeedback');
 const store = require('../../utils/store');
 const photos = require('../../utils/photos');
+const avatarService = require('../../utils/avatar');
 
 Component({
   properties: {
@@ -143,7 +144,7 @@ Component({
         return Promise.resolve();
       }
       that.setData({ profileUploading: true, profileError: '' });
-      return photos.persistPhoto(tempPath, false, owner).then(async function (avatar) {
+      return avatarService.prepare(tempPath, owner, 'chooseAvatar').then(async function (asset) {
         if (!that.data.show && that._avatarNativeOwner && that._avatarNativeOwner.request === request && that._avatarNativeOwner.suspended) {
           await new Promise(resolve => { that._avatarViewReady = resolve; });
         }
@@ -153,9 +154,9 @@ Component({
         } catch (error) {
           throw photos.logFailure(error, 'identity');
         }
-        if (active() && avatar) {
+        if (active() && asset.localPath) {
           that.markFormEdit('profileAvatar');
-          that.setData({ profileAvatar: avatar, profileUploading: false, imageErrors: {} });
+          that.setData({ profileAvatar: asset.localPath, profileUploading: false, imageErrors: {} });
         } else if (active()) {
           that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
         }

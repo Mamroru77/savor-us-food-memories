@@ -1,8 +1,8 @@
-// Production photos + identity + partitions + Store. Real host file I/O, simulated wx APIs.
+// Production avatar/photos + Workspace + identity + Store. Real host file I/O, simulated wx APIs.
 // getImageInfo/chooser/compression are contracts, NOT an iOS/Android decoder or lifecycle test.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),os=require('node:os');
 const fixtures=require('./fixtures/shared-media-images.json');
-const png=Buffer.from(fixtures.png,'base64'),jpg=fs.readFileSync('miniprogram/images/jamie.jpg');
+const png=Buffer.from(fixtures.png,'base64'),jpg=fs.readFileSync('miniprogram/images/coffee.jpg');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'savor-avatar-check-'));
 const uid=letter=>'u_'+letter.repeat(48);
 let checks=0;
@@ -22,6 +22,8 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     copyFile(o){calls.push('copy');const run=()=>{if(options.copyFails){o.fail(apiError());return;}try{fs.copyFileSync(o.srcPath,o.destPath);}catch(e){o.fail(e);return;}o.success();};if(options.holdCopy)holdCopy=run;else run();},
     readFile(o){calls.push('read');if(options.readFails){o.fail(apiError());return;}try{o.success({data:fs.readFileSync(o.filePath)});}catch(e){o.fail(e);}},
     writeFile(o){calls.push('write');if(options.writeFails){o.fail(apiError());return;}try{fs.writeFileSync(o.filePath,o.data);o.success();}catch(e){o.fail(e);}},
+    readFileSync(p,encoding){calls.push('read-sync');return fs.readFileSync(p,encoding);},
+    writeFileSync(p,data,encoding){calls.push('write-sync');return fs.writeFileSync(p,data,encoding);},
   };
   const wx={
     env:{USER_DATA_PATH:base},getFileSystemManager:()=>FS,getSystemInfoSync:()=>({platform:options.platform||'ios',language:'en'}),
@@ -30,7 +32,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     chooseMedia(o){calls.push('choose');if(options.cancel){o.fail({errMsg:'chooseMedia:fail cancel'});return;}if(options.chooseFails){o.fail(apiError());return;}const run=()=>o.success({tempFiles:[{tempFilePath:source,size:options.original?3000000:10}]});if(options.holdPick)holdPick=run;else run();},
     chooseImage(o){calls.push('chooseImage');o.success({tempFilePaths:[source]});},
     compressImage(o){calls.push('compress');if(options.programError)throw new TypeError('private details');if(options.compressFails){o.fail(apiError());return;}o.success({tempFilePath:compressed});},
-    getImageInfo(o){calls.push(o.src===source||o.src===compressed?'source-info':'saved-info');if(options.decodeFails&&o.src.includes('/savor-photos/')){o.fail(apiError());return;}let bytes;try{bytes=fs.readFileSync(o.src);}catch(e){o.fail(e);return;}if(options.unknownFormat){o.success({width:1,height:1,type:'unknown'});return;}const type=bytes.equals(png)?'png':bytes.equals(jpg)?'jpeg':null;if(!type){o.fail(apiError());return;}o.success({width:1,height:1,type});},
+    getImageInfo(o){calls.push(o.src===source||o.src===compressed?'source-info':'saved-info');if(options.decodeFails&&o.src.includes('/savor-photos/')){o.fail(apiError());return;}let bytes;try{bytes=fs.readFileSync(o.src);}catch(e){o.fail(e);return;}if(options.unknownFormat){o.success({width:1,height:1,type:'unknown'});return;}if(options.cloudOutputType&&o.src===compressed){o.success({width:1,height:1,type:options.cloudOutputType});return;}const type=bytes.equals(png)?'png':bytes.equals(jpg)?'jpeg':null;if(!type){o.fail(apiError());return;}o.success({width:1,height:1,type});},
     cloud:{init(){},async callFunction({name}){return {result:name==='account'?{success:true,protocolVersion:1,userId:uid(owner)}:{success:true,identityProtocol:1,userId:uid(owner)}};}},
   };
   const logger={error:(...args)=>logs.push(args.join(' ')),warn:(...args)=>logs.push(args.join(' ')),log(){}};
@@ -42,6 +44,8 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     return module.exports;
   }
   const identity=load('miniprogram/utils/identity.js'),store=load('miniprogram/utils/store.js'),photos=load('miniprogram/utils/photos.js'),data=load('miniprogram/utils/data.js');
+  let avatar;try{avatar=load('miniprogram/utils/avatar.js');}catch(error){if(error.code!=='ENOENT')throw error;}
+  const workspace=load('miniprogram/utils/workspace.js');
   function mount(){
     load('miniprogram/pages/me/index.js');load('miniprogram/components/sheet/index.js');load('miniprogram/components/profile-editor/index.js');let sheet,profile;
     const syncProfile=()=>{if(!profile||!sheet)return;const active=sheet.data.displayType==='profile',show=sheet.data.show;Object.assign(profile.data,{active,show,dusk:sheet.data.dusk});profileSpec.observers['active, show'].call(profile,active,show);};
@@ -52,9 +56,53 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     sheetSpec.lifetimes.attached.call(sheet);profileSpec.lifetimes.attached.call(profile);me.onShow();me.onEditProfile();
     return {me,sheet,profile,dispose(){profileSpec.lifetimes.detached.call(profile);sheetSpec.lifetimes.detached.call(sheet);me.onUnload();store.dismissToast();}};
   }
-  return {mount,identity,store,photos,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
+  function mountWorkspace(){
+    load('miniprogram/pages/workspace/index.js');
+    const page={...pageSpec,data:JSON.parse(JSON.stringify(pageSpec.data)),setData(patch){Object.assign(this.data,patch);}};
+    page.data.locked=false;page._hidden=false;page._viewEpoch=0;return page;
+  }
+  return {mount,mountWorkspace,identity,store,photos,avatar,workspace,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
 }
 (async()=>{
+  await test('avatar service prepares a canonical owner-local asset',async()=>{
+    const r=runtime();await r.ready();assert(r.avatar,'avatar service missing');
+    const asset=await r.avatar.prepare(r.source,r.identity.lease(),'chooseAvatar');
+    assert(asset.localPath.startsWith(r.base+'/savor-photos/'+uid('a')+'/'));
+    assert.deepEqual({mime:asset.mime,width:asset.width,height:asset.height,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{mime:'image/jpeg',width:1,height:1,source:'chooseAvatar',syncState:'local',remoteRef:null});
+  });
+  await test('avatar service derives a bounded cloud payload from the same local asset',async()=>{
+    const r=runtime();await r.ready();assert.equal(typeof r.avatar.forCloud,'function');const owner=r.identity.lease();
+    const asset=await r.avatar.prepare(r.source,owner,'album');
+    const cloud=await r.avatar.forCloud(asset,owner);
+    assert.equal(cloud.asset.localPath,asset.localPath);assert.equal(cloud.asset.syncState,'pending');
+    assert(fs.readFileSync(cloud.asset.localPath).equals(jpg));assert(Buffer.from(cloud.base64,'base64').equals(jpg));assert(cloud.base64.length<=87384);
+  });
+  await test('avatar service rejects a cloud derivative outside JPEG and PNG',async()=>{
+    const r=runtime({cloudOutputType:'webp'});await r.ready();const owner=r.identity.lease(),asset=await r.avatar.prepare(r.source,owner,'album');
+    await assert.rejects(r.avatar.forCloud(asset,owner),error=>error.code==='AVATAR_CLOUD_FORMAT_UNSUPPORTED');
+  });
+  await test('avatar service restores a validated cloud asset into the owner photo store',async()=>{
+    const r=runtime();await r.ready();assert.equal(typeof r.avatar.restore,'function');const digest='a'.repeat(64);
+    const asset=await r.avatar.restore({digest,extension:'png',mime:'image/png',base64:png.toString('base64')},r.identity.lease());
+    assert.equal(asset.localPath,r.base+'/savor-photos/'+uid('a')+'/avatar-'+digest+'.png');
+    assert.deepEqual({digest:asset.digest,mime:asset.mime,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{digest,mime:'image/png',source:'cloud',syncState:'synced',remoteRef:digest});
+    assert(fs.readFileSync(asset.localPath).equals(png));assert(r.calls.includes('write-sync'));assert(r.calls.includes('saved-info'));
+  });
+  await test('production Workspace chooser returns the unified asset and cloud payload',async()=>{
+    const r=runtime();await r.ready();const selected=await r.workspace.chooseAvatar();
+    assert(selected&&selected.asset);assert(selected.asset.localPath.includes('/savor-photos/'+uid('a')+'/'));
+    assert.equal(selected.asset.source,'album');assert.equal(selected.asset.syncState,'pending');assert(Buffer.from(selected.base64,'base64').equals(jpg));
+  });
+  await test('production Workspace page pushes only the service cloud payload',async()=>{
+    const r=runtime();await r.ready();const page=r.mountWorkspace();await page.avatar();const selected=page._avatar;assert(selected&&selected.asset);
+    let pushed;r.workspace.mutate=async(action,args)=>{pushed=args.payload.profile.avatar;return {revision:1};};page.confirm=async()=>true;page.data.profileRead=true;page._remote={revision:0,profile:{avatar:null}};
+    await page.push();assert.equal(typeof pushed,'string');assert.equal(pushed,selected.base64);
+  });
+  await test('production Workspace apply restores cloud avatar through the owner photo store',async()=>{
+    const r=runtime();await r.ready();const digest='b'.repeat(64);
+    await r.workspace.applyProfile({profile:{name:'Cloud',bio:'Synced',avatar:{digest,extension:'png',mime:'image/png',base64:png.toString('base64')}},preferences:{dietary:'',cuisines:[],privateByDefault:true,showLocations:false,reminders:false}});
+    const localPath=r.store.get().profile.avatar;assert(localPath.includes('/savor-photos/'+uid('a')+'/'));assert(!localPath.includes('/savor-workspace/'));assert(fs.readFileSync(localPath).equals(png));
+  });
   await test('JPG processing: copy completes, nonzero file and saved-path image info precede result',async()=>{
     const r=runtime();await r.ready();const [p]=await r.photos.choosePhotos(1);
     assert(p.startsWith(r.base+'/savor-photos/'+uid('a')+'/'));assert(p.endsWith('.jpg'));
@@ -118,6 +166,11 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   await test('existing missing or invalid saved file cannot bypass verification',async()=>{
     const r=runtime();await r.ready();const [p]=await r.photos.choosePhotos(1);fs.writeFileSync(p,'not an image');await assert.rejects(r.photos.persistPhoto(p),e=>e.stage==='decode');
     fs.unlinkSync(p);await assert.rejects(r.photos.persistPhoto(p),e=>e.stage==='stat');
+  });
+  await test('production ProfileEditor previews the canonical path returned by avatar service',async()=>{
+    const r=runtime();await r.ready();const canonical=r.base+'/avatar-service-result.jpg';r.avatar.prepare=async()=>({localPath:canonical});
+    r.store.updateProfile({name:'Saved'});const {profile,dispose}=r.mount();await profile.onAvatarChange({detail:{avatarUrl:r.source}});
+    assert.equal(profile.data.profileAvatar,canonical);assert.equal(r.store.get().profile.avatar,'');dispose();
   });
   await test('production Me + Sheet + i18n + identity: same-owner return previews, Save commits, reopen keeps it',async()=>{
     const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();

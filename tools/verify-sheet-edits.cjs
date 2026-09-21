@@ -22,6 +22,7 @@ function fixture(){
     store:{get:()=>state,subscribe:fn=>{listener=fn;return()=>{};},updateProfile:changes=>{state.profile={...state.profile,...changes};},notify(){}},
     pageHeadings:{},data:{},
     photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code}),pruneOrphans(){},collectReferenced:()=>[]},
+    avatar:{},
     memoryStats:{},metrics:{getMetrics:()=>({headerTop:60})},
   };
   return {state,deps,emit:()=>listener&&listener(state)};
@@ -60,7 +61,7 @@ function avatar(h,tempPath='temporary-avatar'){
   let resolve,reject;
   const persisted=new Promise((a,b)=>{resolve=a;reject=b;});
   const calls=[];
-  h.deps.photos.persistPhoto=(source,keepOriginal,owner)=>{calls.push({source,keepOriginal,userId:owner.userId});return persisted;};
+  h.deps.avatar.prepare=(source,owner,kind)=>{calls.push({source,userId:owner.userId,kind});return persisted.then(localPath=>({localPath}));};
   const completion=h.p.onAvatarChange({detail:{avatarUrl:tempPath}});
   return {resolve,reject,completion,calls};
 }
@@ -101,7 +102,7 @@ function avatar(h,tempPath='temporary-avatar'){
   await test('together edits survive unrelated refresh',()=>{const h=sheet();enterSheet(h,'together');edit(h,'onPartnerInput','draft partner');edit(h,'onSinceChange','2025-01-01');h.p.refresh();assert.equal(h.p.data.partner,'draft partner');assert.equal(h.p.data.since,'2025-01-01');});
   await test('close and reopen discard unsaved view edits, not Store',()=>{const h=profileEditor();enter(h);edit(h,'onProfileName','draft');leave(h);enter(h);assert.equal(h.p.data.profileName,'Saved');assert.equal(h.state.profile.name,'Saved');});
   await test('changing form type resets dirty flags',()=>{const h=profileEditor();enter(h);edit(h,'onProfileName','draft');leave(h);enter(h);assert.equal(h.p.data.profileName,'Saved');});
-  await test('chooseAvatar path is persisted before draft preview',async()=>{const h=profileEditor();enter(h);const q=avatar(h,'wxfile://temporary');q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.deepEqual(q.calls,[{source:'wxfile://temporary',keepOriginal:false,userId:'fixture'}]);h.p.refresh();assert.equal(h.p.data.profileAvatar,'chosen');});
+  await test('chooseAvatar path is persisted before draft preview',async()=>{const h=profileEditor();enter(h);const q=avatar(h,'wxfile://temporary');q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.deepEqual(q.calls,[{source:'wxfile://temporary',userId:'fixture',kind:'chooseAvatar'}]);h.p.refresh();assert.equal(h.p.data.profileAvatar,'chosen');});
   await test('old avatar cannot overwrite a closed and reopened profile',async()=>{const h=profileEditor();enter(h);const q=avatar(h);leave(h);enter(h);q.resolve('old');await flush();assert.notEqual(h.p.data.profileAvatar,'old');});
   await test('avatar callback cannot cross inactive or detached boundary',async()=>{for(const detached of [false,true]){const h=profileEditor();enter(h);const q=avatar(h);if(detached)h.spec.lifetimes.detached.call(h.p);else leave(h);q.resolve('old');await flush();assert.notEqual(h.p.data.profileAvatar,'old');}});
   await test('editor rechecks same-owner authorization at the UI boundary without starting verification',async()=>{const h=profileEditor();enter(h);let resumes=0;h.deps.identity.resumeNative=async token=>{resumes++;return token;};const q=avatar(h);q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.equal(resumes,1);});
