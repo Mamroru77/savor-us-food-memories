@@ -13,6 +13,7 @@ const data = require('./data');
 const i18n = require('./i18n');
 const profileRepository = require('./profileRepository');
 const settingsRepository = require('./settingsRepository');
+const memoryRepository = require('./memoryRepository');
 
 const STORAGE_KEY = 'savor-diary-v1';
 const DRAFT_KEY = 'savor-draft-v1';
@@ -42,42 +43,6 @@ function defaults() {
   };
 }
 
-// Strict mode: every memory must fully validate (web parity).
-function allMemoriesValid(list) {
-  return Array.isArray(list) && list.every(data.isMemory);
-}
-
-// Migration / normalize path: accept older or slightly malformed entries,
-// coerce known shapes, and drop only irreparable items.
-function normalizeMemory(raw) {
-  if (!raw || typeof raw !== 'object') return null;
-  const item = Object.assign({}, raw);
-  if (['tencent-picker','tencent-search'].includes(item.locationSource) && item.geoConfirmed !== true) { item.city=''; item.country=''; }
-  item.id = typeof item.id === 'string' && item.id ? item.id : data.createId();
-  item.restaurant = typeof item.restaurant === 'string' ? item.restaurant.trim() : '';
-  item.city = typeof item.city === 'string' ? item.city : '';
-  item.country = typeof item.country === 'string' ? item.country : '';
-  item.neighborhood = typeof item.neighborhood === 'string' ? item.neighborhood : '';
-  item.notes = typeof item.notes === 'string' ? item.notes : '';
-  item.rating = Math.round(Number(item.rating));
-  if (!(item.rating >= 0 && item.rating <= 5)) item.rating = 0;
-  item.tags = Array.isArray(item.tags) ? item.tags.filter(function (t) { return typeof t === 'string'; }) : [];
-  item.photo = typeof item.photo === 'string' ? item.photo : data.photos.meal;
-  if (item.placePhoto !== undefined && !data.isSafeImage(item.placePhoto)) item.placePhoto = undefined;
-  item.extraPhotos = Array.isArray(item.extraPhotos) ? item.extraPhotos.filter(data.isSafeImage) : [];
-  if (Array.isArray(item.coordinates) && item.coordinates.length === 2
-    && item.coordinates.every(function (c) { return typeof c === 'number' && Number.isFinite(c); })
-    && Math.abs(item.coordinates[0]) <= 90 && Math.abs(item.coordinates[1]) <= 180) {
-    item.coordinates = [item.coordinates[0], item.coordinates[1]];
-  } else {
-    item.coordinates = [48.8535, 2.3392];
-  }
-  item.shared = Boolean(item.shared);
-  item.liked = Boolean(item.liked);
-  item.saved = Boolean(item.saved);
-  return data.isMemory(item) ? item : null;
-}
-
 function loadDiary() {
   let parsed = null;
   try {
@@ -89,26 +54,14 @@ function loadDiary() {
   }
   if (!parsed || typeof parsed !== 'object') return defaults();
 
-  const memories = Array.isArray(parsed.memories)
-    ? parsed.memories.filter(data.isMemory).concat(
-        // migrate repairable entries after the strict pass
-        parsed.memories.filter(function (m) { return !data.isMemory(m); })
-          .map(normalizeMemory).filter(Boolean)
-      )
-    : [];
-  // dedupe by id (first wins)
-  const seen = Object.create(null);
-  const deduped = [];
-  memories.forEach(function (memory) {
-    if (!seen[memory.id]) { seen[memory.id] = true; deduped.push(memory); }
-  });
+  const memories = memoryRepository.restore(parsed.memories);
 
   const profile = Object.assign({}, data.defaultProfile, parsed.profile && typeof parsed.profile === 'object' ? parsed.profile : {});
   const settings = settingsRepository.normalize(parsed.settings);
   const feedback = Array.isArray(parsed.feedback) ? parsed.feedback.filter(function (f) {
     return f && typeof f.message === 'string' && typeof f.date === 'string';
   }) : [];
-  return { memories: deduped, profile, settings, feedback, outbox: Array.isArray(parsed.outbox) ? parsed.outbox.filter(op=>op && typeof op.id==='string' && typeof op.recordId==='string' && ['flags','delete','update'].includes(op.kind)) : [], cloudHidden: Array.isArray(parsed.cloudHidden) ? parsed.cloudHidden.filter(id => typeof id === 'string') : [] };
+  return { memories, profile, settings, feedback, outbox: Array.isArray(parsed.outbox) ? parsed.outbox.filter(op=>op && typeof op.id==='string' && typeof op.recordId==='string' && ['flags','delete','update'].includes(op.kind)) : [], cloudHidden: Array.isArray(parsed.cloudHidden) ? parsed.cloudHidden.filter(id => typeof id === 'string') : [] };
 }
 
 function ensureLoaded() {
@@ -239,30 +192,13 @@ function updateSettings(changes) {
 function importMemories(memories) {
   identity.lease();
   ensureLoaded();
-  const knownIds = Object.create(null);
-  state.memories.forEach(function (memory) { knownIds[memory.id] = true; });
-  const additions = [];
-  (memories || []).forEach(function (source) {
-    if(state.memories.some(m=>m.importSourceId===source.id||m.id===source.id)||additions.some(m=>m.importSourceId===source.id))return;
-    const memory = privateCopy(source);
-    if (knownIds[memory.id]) return;
-    knownIds[memory.id] = true;
-    additions.push(memory);
-  });
-  if (additions.length) {
-    commit(Object.assign({},state,{memories:additions.concat(state.memories)}));
-  }
-  return additions.length;
+  const merged=memoryRepository.mergeImports(state.memories,(memories||[]).map(privateCopy));
+  if(merged.count)commit(Object.assign({},state,{memories:merged.memories}));
+  return merged.count;
 }
 
 function privateCopy(source) {
-  const memory=Object.assign({},source,{id:data.createId(),importSourceId:source.id,shared:false,liked:false,saved:false});
-  ['cloudId','revision','localChanges','pendingDelete','deleted','memberOpenids','coupleId','operationIds','operationReceipts'].forEach(k=>delete memory[k]);
-  // Backup ownership does not authorize reading private assets or dual votes.
-  ['ratings'].forEach(k=>delete memory[k]);
-  if(memory.ratingSource==='legacy-average'){memory.rating=0;memory.ratingSource='unrated';}
-  memory.photo=data.photos.meal;memory.noPhoto=true;memory.extraPhotos=[];delete memory.placePhoto;
-  return memory;
+  return memoryRepository.privateCopy(source,data.createId());
 }
 function saveFeedback(message) {
   identity.lease();
