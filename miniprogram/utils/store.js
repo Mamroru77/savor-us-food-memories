@@ -12,6 +12,7 @@ const localDate = require('./localDate');
 const data = require('./data');
 const i18n = require('./i18n');
 const profileRepository = require('./profileRepository');
+const settingsRepository = require('./settingsRepository');
 
 const STORAGE_KEY = 'savor-diary-v1';
 const DRAFT_KEY = 'savor-draft-v1';
@@ -103,9 +104,7 @@ function loadDiary() {
   });
 
   const profile = Object.assign({}, data.defaultProfile, parsed.profile && typeof parsed.profile === 'object' ? parsed.profile : {});
-  const settings = Object.assign({}, data.defaultSettings, parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {});
-  if (settings.theme !== 'dusk') settings.theme = 'pearl';
-  if (['system', 'zh-CN', 'en'].indexOf(settings.language) < 0) settings.language = 'system';
+  const settings = settingsRepository.normalize(parsed.settings);
   const feedback = Array.isArray(parsed.feedback) ? parsed.feedback.filter(function (f) {
     return f && typeof f.message === 'string' && typeof f.date === 'string';
   }) : [];
@@ -230,9 +229,8 @@ function updatePersonalization(pageHeadings, profile) {
 
 function updateSettings(changes) {
   ensureLoaded();
-  if(Object.keys(changes).some(k=>!['theme','language','reduceMotion'].includes(k)))identity.lease();
-  const settings=Object.assign({},state.settings,changes);
-  if(!['system','zh-CN','en'].includes(settings.language))settings.language='system';
+  if(settingsRepository.requiresLease(changes))identity.lease();
+  const settings=settingsRepository.merge(state.settings,changes);
   identity.saveDeviceSettings(settings);
   if(!identity.snapshot().locked)commit(Object.assign({},state,{settings}),settings.language);
   else {state.settings=settings;i18n.setLanguage(settings.language);listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});}
