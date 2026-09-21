@@ -11,8 +11,8 @@ The governing safety requirement is stronger than export-only recovery: after St
 The 2026-09-20 read-only audit assigns Stage 7 four responsibilities:
 
 - remove no-op APIs;
-- remove obsolete compatibility branches;
-- reduce duplicate compatibility-test paths;
+- remove temporary runtime compatibility layers and obsolete facades while retaining the persisted compatibility projection required for Stage 6 rollback;
+- remove duplicate test paths and mocks that exist only for deleted no-op APIs or facades, without a repository-wide test-harness rewrite;
 - perform storage-schema migration and rollback verification.
 
 The current code already has the following stable boundaries, which this stage reuses:
@@ -121,7 +121,9 @@ The cloud Profile payload and cloud-function protocol do not change.
 2. Profile repository normalizes the Profile and returns whether migration is needed.
 3. Store constructs the complete schema-2 diary while preserving unknown fields, memories, settings, feedback, cloud-hidden IDs, and outbox entries.
 4. Store attempts a copy-on-write persistence of the migrated diary before or during normal state publication.
-5. If the migration write fails, the old stored diary remains untouched. The app may continue reading the normalized in-memory state; a later normal durable commit retries the schema-2 write through the existing error path.
+5. If the migration write fails, the old stored diary remains untouched. The app may continue reading the normalized in-memory state; a later normal durable commit retries by building, persisting, and then publishing the complete schema-2 diary through the existing commit path.
+
+No normal write may persist only `schemaVersion`, `avatarAsset`, or another migrated fragment. Every durable Store action writes one complete normalized diary before publishing live state.
 
 No legacy/v1 key, quarantine entry, other owner partition, cloud record, or local file is deleted during migration.
 
