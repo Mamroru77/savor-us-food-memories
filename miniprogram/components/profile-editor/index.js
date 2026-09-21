@@ -126,7 +126,9 @@ Component({
       this.setData({ profileBio: event.detail.value });
     },
 
-    onAvatarChange() {
+    onAvatarChange(event) {
+      const tempPath = event && event.detail && event.detail.avatarUrl;
+      if (!tempPath || this._detached || !this.data.active || !this.data.show) return Promise.resolve();
       const that = this;
       const request = this._avatarRequest = (this._avatarRequest || 0) + 1;
       const active = () => !that._detached && that.data.active && that.data.show && request === that._avatarRequest;
@@ -141,9 +143,7 @@ Component({
         return Promise.resolve();
       }
       that.setData({ profileUploading: true, profileError: '' });
-      return photos.choosePhotos(1, function () {
-        if (active()) that.setData({ profileUploading: true });
-      }).then(async function (paths) {
+      return photos.persistPhoto(tempPath, false, owner).then(async function (avatar) {
         if (!that.data.show && that._avatarNativeOwner && that._avatarNativeOwner.request === request && that._avatarNativeOwner.suspended) {
           await new Promise(resolve => { that._avatarViewReady = resolve; });
         }
@@ -153,8 +153,7 @@ Component({
         } catch (error) {
           throw photos.logFailure(error, 'identity');
         }
-        if (active() && paths.length) {
-          const avatar = paths[0];
+        if (active() && avatar) {
           that.markFormEdit('profileAvatar');
           that.setData({ profileAvatar: avatar, profileUploading: false, imageErrors: {} });
         } else if (active()) {

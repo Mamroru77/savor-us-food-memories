@@ -120,17 +120,17 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     fs.unlinkSync(p);await assert.rejects(r.photos.persistPhoto(p),e=>e.stage==='stat');
   });
   await test('production Me + Sheet + i18n + identity: same-owner return previews, Save commits, reopen keeps it',async()=>{
-    const r=runtime({holdPick:true});await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();
-    const pending=profile.onAvatarChange();await r.ready();r.releasePick();await pending;
+    const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();
+    await profile.onAvatarChange({detail:{avatarUrl:r.source}});assert(!r.calls.includes('choose'));
     const avatar=profile.data.profileAvatar;assert(avatar.includes('/savor-photos/'));assert.equal(r.store.get().profile.avatar,'');
     profile.onProfileSave();assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
     me.onEditProfile();assert.equal(profile.data.profileAvatar,avatar);me.onImageError({currentTarget:{dataset:{source:avatar}}});assert(me.data.imageErrors[avatar]);me.onShow();assert.equal(me.data.profile.avatar,avatar);assert(!me.data.imageErrors[avatar]);assert(r.logs.some(x=>x.includes('me-preview IMAGE_LOAD_FAILED')));dispose();
   });
   await test('production Me closes explicitly without resurrecting on Store refresh',async()=>{
-    const r=runtime({holdPick:true});await r.ready();const {me,sheet,profile,dispose}=r.mount();const pending=profile.onAvatarChange();sheet.close();await r.ready();r.releasePick();await pending;assert.equal(me.data.sheetShow,false);assert.equal(me._nativeAvatarResume,null);assert.equal(r.store.get().profile.avatar,'');dispose();
+    const r=runtime({holdCopy:true});await r.ready();const {me,sheet,profile,dispose}=r.mount();const pending=profile.onAvatarChange({detail:{avatarUrl:r.source}});await tick();sheet.close();r.releaseCopy();await pending;assert.equal(me.data.sheetShow,false);assert.equal(me._nativeAvatarResume,null);assert.equal(r.store.get().profile.avatar,'');dispose();
   });
   await test('production storage failure reaches Sheet error, not a success toast or parent avatar',async()=>{
-    const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();await profile.onAvatarChange();let success=false;r.store.onToast(t=>{if(t)success=true;});r.failOnce();profile.onProfileSave();assert(profile.data.profileError);assert.equal(success,false);assert.equal(me.data.sheetShow,true);assert.equal(me.data.profile.avatar,'');assert.equal(r.store.get().profile.avatar,'');dispose();
+    const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();await profile.onAvatarChange({detail:{avatarUrl:r.source}});let success=false;r.store.onToast(t=>{if(t)success=true;});r.failOnce();profile.onProfileSave();assert(profile.data.profileError);assert.equal(success,false);assert.equal(me.data.sheetShow,true);assert.equal(me.data.profile.avatar,'');assert.equal(r.store.get().profile.avatar,'');dispose();
   });
   console.log(checks+' production-boundary checks passed. Host file bytes verified; native image rendering and real restart still require devices.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{

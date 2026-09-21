@@ -1,6 +1,7 @@
 .settings-form { display:flex; flex-direction:column; gap:35rpx; padding-bottom:10rpx; }
 .profile-input { min-height:92rpx; }
-.edit-avatar { width:195rpx; height:195rpx; position:relative; border-radius:50%; margin:8rpx auto 12rpx; }
+.edit-avatar { width:195rpx; height:195rpx; position:relative; border-radius:50%; margin:8rpx auto 12rpx; padding:0; background:transparent; line-height:normal; }
+.edit-avatar::after { border:0; }
 .edit-avatar-img { width:195rpx; height:195rpx; border-radius:50%; border:5rpx solid #fff; box-sizing:border-box; }
 .edit-avatar-badge { position:absolute; right:-8rpx; bottom:0; width:65rpx; height:65rpx; display:flex; align-items:center; justify-content:center; background:#eeefe7; border:5rpx solid #fff; border-radius:50%; box-sizing:border-box; }
 .theme-dusk-panel .edit-avatar-badge { background:#36373b; border-color:var(--glass-border, rgba(238,234,227,.12)); }

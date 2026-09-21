@@ -1,11 +1,11 @@
 <view class="profile-editor {{dusk ? 'theme-dusk-panel' : ''}}">
   <view class="settings-form">
-    <view class="edit-avatar" bindtap="onAvatarChange" aria-role="button" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+    <button class="edit-avatar" open-type="chooseAvatar" bindchooseavatar="onAvatarChange" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
       <image class="edit-avatar-img" src="{{imageErrors[(profileAvatar)] ? '/images/jamie.jpg' : (profileAvatar)}}" mode="aspectFill" data-source="{{profileAvatar}}" binderror="onImageError" />
       <view class="edit-avatar-badge">
         <s-icon name="camera" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
       </view>
-    </view>
+    </button>
     <view class="form-field">
       <text class="form-label">{{copy.sab42293e29}}</text>
       <input class="form-input {{profileError ? 'has-error' : ''}} profile-input {{focusedField === 'onProfileName-' ? 'is-focused' : ''}}" id="profile-name-field" value="{{profileName}}" placeholder="Jamie Lin" maxlength="32" bindinput="onProfileName" aria-label="{{copy.sab42293e29}}" placeholder-class="form-placeholder" data-focus-key="onProfileName-" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
