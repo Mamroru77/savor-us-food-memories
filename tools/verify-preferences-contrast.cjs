@@ -1,5 +1,5 @@
 const fs=require('fs'),assert=require('node:assert/strict');
-const wxss=fs.readFileSync('miniprogram/components/sheet/index.wxss','utf8');
+const wxss=fs.readFileSync('miniprogram/components/settings-editor/index.wxss','utf8');
 function hexToRgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255];}
 function lum(c){const ch=x=> x<=0.04045? x/12.92: Math.pow((x+0.055)/1.055,2.4);return 0.2126*ch(c[0])+0.7152*ch(c[1])+0.0722*ch(c[2]);}
 function contrast(a,b){return (Math.max(lum(a),lum(b))+0.05)/(Math.min(lum(a),lum(b))+0.05);}
@@ -20,4 +20,3 @@ for(const t of tests){
  console.log('PASS '+t.name+' contrast '+c.toFixed(2));
 }
 console.log('PASS Preferences cuisine-chip contrast remains readable in light and dark');
-

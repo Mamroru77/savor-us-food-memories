@@ -3,7 +3,8 @@
   "usingComponents": {
     "s-icon": "/components/icon/index",
     "memory-row": "/components/memory-row/index",
-    "profile-editor": "/components/profile-editor/index"
+    "profile-editor": "/components/profile-editor/index",
+    "settings-editor": "/components/settings-editor/index"
   },
   "styleIsolation": "apply-shared"
 }

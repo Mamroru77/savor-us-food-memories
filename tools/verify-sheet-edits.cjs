@@ -7,27 +7,28 @@ async function test(name,fn){try{await fn();count++;console.log('PASS '+name);}c
 function fixture(){
   let listener;
   const state={
-    settings:{theme:'pearl',reduceMotion:false,loveSent:true,notificationsRead:true},
+    settings:{theme:'pearl',language:'en',reduceMotion:false,reminders:true,privateByDefault:false,showLocations:true,dietary:'No restrictions',cuisines:[],loveSent:true,notificationsRead:true},
     profile:{name:'Saved',bio:'',avatar:'/images/jamie.jpg',partner:'fixture',togetherSince:'2026-01-01'},
     memories:Array.from({length:500},(_,i)=>({id:'fixture-'+i,notes:'x'.repeat(2000)})),
     outbox:[{privateNote:'not for the view'}],feedback:[],
     identity:{userId:'fixture',generation:1,locked:false,status:'verified'},
   };
   const identity={snapshot:()=>state.identity,lease:()=>({userId:'fixture',generation:state.identity.generation,namespace:'fixture'}),assertLease:token=>{if(!token||token.userId!=='fixture')throw Object.assign(Error('stale'),{code:'STALE_IDENTITY'});},resumeNative:async token=>token};
+  const updates=[];
   const deps={
     identity,
     identityCopy:()=>({verify:'Verify your account first'}),
     motionPresence:{update(){},dispose(){}},localDate:{today:()=> '2026-09-16'},
     i18n:{copy:()=>({}),options:()=>[],locale:()=> 'en',t:s=>s},
     uiFeedback:require('../miniprogram/utils/uiFeedback'),
-    store:{get:()=>state,subscribe:fn=>{listener=fn;return()=>{};},updateProfile:changes=>{state.profile={...state.profile,...changes};},notify(){}},
+    store:{get:()=>state,subscribe:fn=>{listener=fn;return()=>{};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){}},
     pageHeadings:{},data:{},
     photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code}),pruneOrphans(){},collectReferenced:()=>[]},
     avatar:{},
     memoryStats:{},metrics:{getMetrics:()=>({headerTop:60})},
   };
   deps.nativeFlow=loadNativeFlow(identity);
-  return {state,deps,emit:()=>listener&&listener(state)};
+  return {state,deps,updates,emit:()=>listener&&listener(state)};
 }
 
 function loadNativeFlow(identity){
@@ -62,6 +63,13 @@ function profileEditor(){
   return {...base,p,spec,patches,events,emit:()=>base.emit()};
 }
 
+function settingsEditor(type){
+  const base=fixture(),spec=loadComponent('miniprogram/components/settings-editor/index.js',base.deps),patches=[],events=[];
+  const p={...spec.methods,data:{...JSON.parse(JSON.stringify(spec.data)),active:true,show:true,type,dusk:false},setData(patch,cb){patches.push(patch);Object.assign(this.data,patch);if(cb)cb();},triggerEvent(name,detail){events.push({name,detail});}};
+  spec.lifetimes.attached.call(p);
+  return {...base,p,spec,patches,events,emit:()=>base.emit()};
+}
+
 function enterSheet(h,type='profile'){h.p.data.show=true;h.p.data.type=type;h.spec.observers['show, type, memoryId, filter'].call(h.p);}
 function enter(h){h.p.data.active=true;h.p.data.show=true;h.spec.observers['active, show'].call(h.p,true,true);}
 function leave(h){h.p.data.active=false;h.p.data.show=false;h.spec.observers['active, show'].call(h.p,false,false);}
@@ -80,6 +88,36 @@ function avatar(h,tempPath='temporary-avatar'){
   const sheetWxml=fs.readFileSync('miniprogram/components/sheet/index.wxml','utf8');
   const profileWxml=fs.readFileSync('miniprogram/components/profile-editor/index.wxml','utf8');
   const sheetJson=JSON.parse(fs.readFileSync('miniprogram/components/sheet/index.json','utf8'));
+  await test('sheet delegates settings views to SettingsEditor',()=>{
+    assert.equal(sheetJson.usingComponents['settings-editor'],'/components/settings-editor/index');
+    assert.match(sheetWxml,/<settings-editor\b/);
+    assert.doesNotMatch(sheetWxml,/bindchange="onDietaryChange"/);
+    assert.doesNotMatch(sheetWxml,/bindtap="onPrivateToggle"/);
+  });
+  await test('Preferences stays local until Save and survives Store refresh',()=>{
+    const h=settingsEditor('preferences');
+    h.p.onDietaryChange({detail:{value:'2'}});
+    h.p.onCuisineTap({currentTarget:{dataset:{value:'Japanese'}}});
+    h.state.settings.reminders=false;
+    h.emit();
+    assert.equal(h.p.data.dietary,'Vegan');
+    assert(h.p.data.cuisines.includes('Japanese'));
+    assert.equal(h.updates.length,0);
+    h.p.onPreferencesSave();
+    assert.deepEqual(h.updates,[{dietary:'Vegan',cuisines:['Japanese']}]);
+    assert(h.events.some(e=>e.name==='close'));
+  });
+  await test('Settings and Privacy still apply immediately',()=>{
+    const settings=settingsEditor('settings');
+    settings.p.onThemeTap({currentTarget:{dataset:{value:'dusk'}}});
+    settings.p.onRemindersToggle();
+    assert.deepEqual(settings.updates,[{theme:'dusk'},{reminders:false}]);
+    const privacy=settingsEditor('privacy');
+    privacy.p.onPrivateToggle();
+    privacy.p.onManageMemories();
+    assert.deepEqual(privacy.updates,[{privateByDefault:true}]);
+    assert.deepEqual(JSON.parse(JSON.stringify(privacy.events.at(-1))),{name:'sheetchange',detail:{type:'library',memoryId:'',filter:'all'}});
+  });
   await test('sheet delegates profile UI to ProfileEditor',()=>{
     assert.equal(sheetJson.usingComponents['profile-editor'],'/components/profile-editor/index');
     assert.match(sheetWxml,/<profile-editor\b/);

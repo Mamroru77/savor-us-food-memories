@@ -14,8 +14,6 @@ const stats = require('../../utils/memoryStats');
 const metrics = require('../../utils/metrics');
 const nativeFlow = require('../../utils/nativeFlow');
 
-const DIETARY_OPTIONS = ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free', 'Dairy-free'];
-const CUISINE_OPTIONS = ['French', 'Japanese', 'Italian', 'Chinese', 'Korean', 'Mediterranean', 'Mexican', 'Indian'];
 const WEEK_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 const FAQS = [
@@ -88,18 +86,6 @@ Component({
     partner: '',
     since: '',
     today: '',
-    // preferences form
-    dietary: 'No restrictions',
-    dietaryOptions: DIETARY_OPTIONS,
-    dietaryIndex: 0,
-    cuisines: [],
-    cuisineOptions: CUISINE_OPTIONS,
-    // settings + privacy mirrors
-    theme: 'pearl',
-    reminders: true,
-    reduceMotion: false,
-    privateByDefault: false,
-    showLocations: true,
     // weekly
     weeklyStats: null,
     weeklyBars: [],
@@ -216,6 +202,8 @@ Component({
       const id=event&&event.detail&&event.detail.id||'';
       this.setData({sheetScrollTarget:''},()=>this.setData({sheetScrollTarget:id}));
     },
+    onSettingsClose() { this.close(); },
+    onSettingsSheetChange(event) { this.triggerEvent('sheetchange', event.detail); },
     noop() { /* absorb taps inside the panel */ },
 
     goTab(event) {
@@ -246,8 +234,6 @@ Component({
       if (type === 'memory') this.refreshMemory(patch, state);
       if (type === 'library') this.refreshLibrary(patch, state);
       if (type === 'together') this.refreshTogether(patch, state);
-      if (type === 'preferences') this.refreshPreferences(patch, state);
-      if (type === 'settings' || type === 'privacy') this.refreshSettings(patch, state);
       if (type === 'weekly') this.refreshWeekly(patch, state);
       if (type === 'journey') this.refreshJourney(patch, state);
       if (type === 'notifications') this.refreshNotifications(patch, state);
@@ -508,59 +494,6 @@ Component({
       store.updateProfile({ partner: partner, togetherSince: since });
       store.notify(i18n.t('Your shared story is updated.'));
       this.close();
-    },
-
-    // ---------- preferences ----------
-    refreshPreferences(patch, state) {
-      patch.dietary = state.settings.dietary;
-      patch.dietaryOptions = DIETARY_OPTIONS.map(value => i18n.t(value));
-      patch.dietaryLabel = i18n.t(state.settings.dietary);
-      patch.cuisineOptions = CUISINE_OPTIONS.map(value => ({ value, label: i18n.t(value) }));
-      patch.dietaryIndex = Math.max(0, DIETARY_OPTIONS.indexOf(state.settings.dietary));
-      patch.cuisines = state.settings.cuisines.slice();
-    },
-    onDietaryChange(event) {
-      const index = Number(event.detail.value);
-      this.setData({ dietaryIndex: index, dietary: DIETARY_OPTIONS[index], dietaryLabel: i18n.t(DIETARY_OPTIONS[index]) });
-    },
-    onCuisineTap(event) {
-      const cuisine = event.currentTarget.dataset.value;
-      const cuisines = this.data.cuisines.slice();
-      const index = cuisines.indexOf(cuisine);
-      if (index >= 0) cuisines.splice(index, 1);
-      else cuisines.push(cuisine);
-      this.setData({ cuisines: cuisines });
-    },
-    onPreferencesSave() {
-      store.updateSettings({ dietary: this.data.dietary, cuisines: this.data.cuisines });
-      store.notify(i18n.t('Your tastes, remembered. Preferences saved.'));
-      this.close();
-    },
-
-    // ---------- settings / privacy ----------
-    refreshSettings(patch, state) {
-      patch.languageOptions = i18n.options();
-      patch.languageIndex = Math.max(0, patch.languageOptions.findIndex(option => option.value === state.settings.language));
-      patch.theme = state.settings.theme;
-      patch.reminders = state.settings.reminders;
-      patch.reduceMotion = state.settings.reduceMotion;
-      patch.privateByDefault = state.settings.privateByDefault;
-      patch.showLocations = state.settings.showLocations;
-    },
-    onLanguageChange(event) {
-      const option = i18n.options()[Number(event.detail.value)];
-      if (option) store.updateSettings({ language: option.value });
-    },
-    onThemeTap(event) {
-      store.updateSettings({ theme: event.currentTarget.dataset.value });
-      this.setData({ dusk: event.currentTarget.dataset.value === 'dusk' });
-    },
-    onRemindersToggle() { store.updateSettings({ reminders: !this.data.reminders }); },
-    onQuietToggle() { store.updateSettings({ reduceMotion: !this.data.reduceMotion }); },
-    onPrivateToggle() { store.updateSettings({ privateByDefault: !this.data.privateByDefault }); },
-    onLocationsToggle() { store.updateSettings({ showLocations: !this.data.showLocations }); },
-    onManageMemories() {
-      this.triggerEvent('sheetchange', { type: 'library', memoryId: '', filter: 'all' });
     },
 
     // ---------- weekly ----------
