@@ -82,11 +82,7 @@ Component({
     libraryQuery: '',
     libraryError: '',
     libraryRows: [],
-    // profile form
-    profileName: '', profileError:'', sheetScrollTarget:'',
-    profileBio: '',
-    profileAvatar: '',
-    profileUploading: false,
+    sheetScrollTarget:'',
     // together form
     partner: '',
     since: '',
@@ -160,7 +156,7 @@ Component({
           if(session.locked||session.userId!==this._avatarNativeOwner.userId){
             this.resetFormEdits();
             this._personalizing=false;
-            this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
+            this.setData({detail:null,libraryRows:[],libraryQuery:'',feedbackMessage:'',state:{},syncRows:[]});
             this.triggerEvent('close', {reason:'identity'});return;
           }
           this._identityGeneration=session.generation;
@@ -168,7 +164,7 @@ Component({
           this._identityGeneration=session.generation;
           this.resetFormEdits();
           this._personalizing=false;
-          this.setData({detail:null,libraryRows:[],libraryQuery:'',profileName:'',profileBio:'',profileAvatar:'',feedbackMessage:'',state:{},syncRows:[]});
+          this.setData({detail:null,libraryRows:[],libraryQuery:'',feedbackMessage:'',state:{},syncRows:[]});
           this.triggerEvent('close', {reason:'identity'});return;
         }
         if (this.data.show) this.refresh();
@@ -193,22 +189,10 @@ Component({
     onFieldBlur: uiFeedback.onFieldBlur,
     onImageError(event) {
       uiFeedback.onImageError.call(this,event);
-      if(this.data.displayType==='profile'&&this.data.profileAvatar&&event.currentTarget.dataset.source===this.data.profileAvatar){
-        photos.logFailure({code:'IMAGE_LOAD_FAILED'},'preview');
-        this.setData({profileError:i18n.t('Could not prepare the photo. Please select it again.')});
-      }
     },
     // ---------- shell ----------
-    finishAvatar(request) {
-      if(!this._avatarNativeOwner || this._avatarNativeOwner.request!==request)return;
-      this._avatarNativeOwner=null;
-      this.triggerEvent('nativeavatar',{phase:'end',request});
-    },
     resetFormEdits() {
-      if(this._avatarViewReady){this._avatarViewReady();this._avatarViewReady=null;}
-      if(this._avatarNativeOwner)this.finishAvatar(this._avatarNativeOwner.request);
-      this._formEdits={};this._avatarRequest=(this._avatarRequest||0)+1;
-      if(!this._detached)this.setData({profileUploading:false,profileError:''});
+      this._formEdits={};
     },
     markFormEdit(field) { (this._formEdits||(this._formEdits={}))[field]=true; },
     close() {
@@ -216,6 +200,21 @@ Component({
       this._personalizing = false;
       this.setData({focusedField:'',sheetScrollTarget:''});
       this.triggerEvent('close');
+    },
+    onProfileClose(event) {
+      const detail=event&&event.detail;
+      if(detail&&detail.reason==='identity')this.triggerEvent('close',detail);
+      else this.close();
+    },
+    onProfileNativeAvatar(event) {
+      const detail=event&&event.detail||{};
+      if(detail.phase==='start'&&detail.userId)this._avatarNativeOwner={userId:detail.userId,request:detail.request};
+      else if(detail.phase==='end'&&this._avatarNativeOwner&&detail.request===this._avatarNativeOwner.request)this._avatarNativeOwner=null;
+      this.triggerEvent('nativeavatar',detail);
+    },
+    onProfileScrollTarget(event) {
+      const id=event&&event.detail&&event.detail.id||'';
+      this.setData({sheetScrollTarget:''},()=>this.setData({sheetScrollTarget:id}));
     },
     noop() { /* absorb taps inside the panel */ },
 
@@ -246,7 +245,6 @@ Component({
       else this._personalizing = false;
       if (type === 'memory') this.refreshMemory(patch, state);
       if (type === 'library') this.refreshLibrary(patch, state);
-      if (type === 'profile') this.refreshProfile(patch, state);
       if (type === 'together') this.refreshTogether(patch, state);
       if (type === 'preferences') this.refreshPreferences(patch, state);
       if (type === 'settings' || type === 'privacy') this.refreshSettings(patch, state);
@@ -488,75 +486,6 @@ Component({
         this.setData({ libraryError: error.message === 'not-valid'
           ? i18n.t('This is not a valid Savor backup. Choose a JSON file exported from Savor.')
           : i18n.t('This file could not be read. Choose a Savor JSON backup.') });
-      }
-    },
-
-    // ---------- profile ----------
-    refreshProfile(patch, state) {
-      const edited=this._formEdits||{};
-      if(!edited.profileName)patch.profileName = state.profile.name;
-      if(!edited.profileBio)patch.profileBio = state.profile.bio;
-      if(!edited.profileAvatar)patch.profileAvatar = state.profile.avatar;
-      patch.profileUploading = !!this._avatarNativeOwner;
-    },
-    onProfileName(event) { this.markFormEdit('profileName');this.setData({ profileName: event.detail.value, profileError:'' }); },
-    onProfileBio(event) { this.markFormEdit('profileBio');this.setData({ profileBio: event.detail.value }); },
-    onAvatarChange() {
-      const that = this,request=this._avatarRequest=(this._avatarRequest||0)+1;
-      const active=()=>!that._detached&&that.data.show&&( !that.data.type || that.data.type==='profile')&&request===that._avatarRequest;
-      let owner;
-      try {
-        owner=identity.lease();
-        that._avatarNativeOwner={userId:owner.userId,request:request};
-        that.triggerEvent('nativeavatar',{phase:'start',userId:owner.userId,request:request});
-      } catch(error) {
-        photos.logFailure(error,'identity');
-        that.setData({profileUploading:false,profileError:require('../../utils/identityCopy')().verify});
-        return Promise.resolve();
-      }
-      that.setData({ profileUploading: true, profileError: '' });
-      return photos.choosePhotos(1, function(p){
-        if(active()) that.setData({ profileUploading: true });
-      }).then(async function (paths) {
-        if(!that.data.show&&that._avatarNativeOwner&&that._avatarNativeOwner.request===request&&that._avatarNativeOwner.suspended){
-          await new Promise(resolve=>{that._avatarViewReady=resolve;});
-        }
-        if(!active())return;
-        // Recheck at the UI boundary too; resumeNative does not start verification.
-        try { owner=await identity.resumeNative(owner); }
-        catch(error) { throw photos.logFailure(error,'identity'); }
-        if (active()&&paths.length) {
-          const avatar=paths[0];
-          that.markFormEdit('profileAvatar');
-          that.setData({ profileAvatar: avatar, profileUploading: false, imageErrors: {} });
-        }
-        else if(active()) that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
-      }).catch(function (err) {
-        const cancelled=photos.isCancelled(err);
-        const error=cancelled?null:photos.logFailure(err);
-        if(!active())return;
-        if(cancelled) { that.setData({ profileUploading: false }); return; }
-        const message=error.category==='identity'?require('../../utils/identityCopy')().verify:error.category==='filesystem'?'Could not save. Free some storage and try again.':'Could not prepare the photo. Please select it again.';
-        that.setData({ profileUploading: false, profileError: i18n.t(message) });
-      }).finally(function(){
-        that.finishAvatar(request);
-      });
-    },
-    onProfileSave() {
-      if(this.data.profileUploading || this._avatarNativeOwner)return;
-      if(this.data.profileAvatar&&this.data.imageErrors[this.data.profileAvatar]){
-        this.setData({profileError:i18n.t('Could not prepare the photo. Please select it again.')});return;
-      }
-      const name = this.data.profileName.trim();
-      if (!name) { this.setData({profileError:i18n.t('Your name cannot be empty.'),sheetScrollTarget:''},()=>this.setData({sheetScrollTarget:'profile-name-field'})); return; }
-      try {
-        store.updateProfile({ name: name, bio: this.data.profileBio.trim(), avatar: this.data.profileAvatar });
-        photos.pruneOrphans(photos.collectReferenced(store.get()));
-        store.notify(i18n.t('A little more you. Profile updated.'));
-        this.close();
-      } catch (error) {
-        const reported=photos.logFailure(error,'profile-save');
-        this.setData({ profileError: reported.category==='identity'?require('../../utils/identityCopy')().verify:i18n.t('Could not save. Free some storage and try again.') });
       }
     },
 

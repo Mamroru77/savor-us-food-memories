@@ -10,7 +10,7 @@ async function test(name,fn){await fn();checks++;console.log('PASS '+name);}
 const tick=()=>new Promise(setImmediate);
 function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'case-'))){
   const cache=new Map(),logs=[],calls=[],source=base+'/source.jpg',compressed=base+'/compressed.png';
-  let pageSpec,sheetSpec;
+  let pageSpec,sheetSpec,profileSpec;
   fs.writeFileSync(source,png); // Deliberately misleading suffix.
   fs.writeFileSync(compressed,jpg);
   let owner='a',holdPick,holdCopy,failStorage=false,failOnce=false;
@@ -38,17 +38,19 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     const file=path.resolve(relative);if(cache.has(file))return cache.get(file).exports;
     const module={exports:{}};cache.set(file,module);
     const requireLocal=name=>name.startsWith('.')?load(path.resolve(path.dirname(file),name+'.js')):require(name);
-    vm.runInNewContext(fs.readFileSync(file,'utf8'),{module,exports:module.exports,require:requireLocal,wx,console:logger,Promise,Date,Math,setTimeout,clearTimeout,Page:s=>{pageSpec=s;},Component:s=>{sheetSpec=s;}},{filename:file});
+    vm.runInNewContext(fs.readFileSync(file,'utf8'),{module,exports:module.exports,require:requireLocal,wx,console:logger,Promise,Date,Math,setTimeout,clearTimeout,Page:s=>{pageSpec=s;},Component:s=>{if(file.endsWith(path.normalize('components/profile-editor/index.js')))profileSpec=s;else sheetSpec=s;}},{filename:file});
     return module.exports;
   }
   const identity=load('miniprogram/utils/identity.js'),store=load('miniprogram/utils/store.js'),photos=load('miniprogram/utils/photos.js'),data=load('miniprogram/utils/data.js');
   function mount(){
-    load('miniprogram/pages/me/index.js');load('miniprogram/components/sheet/index.js');let sheet;
-    const me={...pageSpec,data:JSON.parse(JSON.stringify(pageSpec.data)),setData(patch,cb){Object.assign(this.data,patch);if(sheet&&(Object.hasOwn(patch,'sheetShow')||Object.hasOwn(patch,'sheetType'))){Object.assign(sheet.data,{show:this.data.sheetShow,type:this.data.sheetType});sheetSpec.observers['show, type, memoryId, filter'].call(sheet);}if(cb)cb();}};
+    load('miniprogram/pages/me/index.js');load('miniprogram/components/sheet/index.js');load('miniprogram/components/profile-editor/index.js');let sheet,profile;
+    const syncProfile=()=>{if(!profile||!sheet)return;const active=sheet.data.displayType==='profile',show=sheet.data.show;Object.assign(profile.data,{active,show,dusk:sheet.data.dusk});profileSpec.observers['active, show'].call(profile,active,show);};
+    const me={...pageSpec,data:JSON.parse(JSON.stringify(pageSpec.data)),setData(patch,cb){Object.assign(this.data,patch);if(sheet&&(Object.hasOwn(patch,'sheetShow')||Object.hasOwn(patch,'sheetType'))){Object.assign(sheet.data,{show:this.data.sheetShow,type:this.data.sheetType});sheetSpec.observers['show, type, memoryId, filter'].call(sheet);syncProfile();}if(cb)cb();}};
     me.onLoad();
-    sheet={...sheetSpec.methods,data:{...JSON.parse(JSON.stringify(sheetSpec.data)),show:false,type:''},setData(patch,cb){Object.assign(this.data,patch);if(cb)cb();},triggerEvent(name,detail){if(name==='nativeavatar')me.onNativeAvatar({detail});if(name==='close')me.onSheetClose({detail});}};
-    sheetSpec.lifetimes.attached.call(sheet);me.onShow();me.onEditProfile();
-    return {me,sheet,dispose(){sheetSpec.lifetimes.detached.call(sheet);me.onUnload();store.dismissToast();}};
+    sheet={...sheetSpec.methods,data:{...JSON.parse(JSON.stringify(sheetSpec.data)),show:false,type:''},setData(patch,cb){Object.assign(this.data,patch);syncProfile();if(cb)cb();},triggerEvent(name,detail){if(name==='nativeavatar')me.onNativeAvatar({detail});if(name==='close')me.onSheetClose({detail});}};
+    profile={...profileSpec.methods,data:{...JSON.parse(JSON.stringify(profileSpec.data)),active:false,show:false,dusk:false},setData(patch,cb){Object.assign(this.data,patch);if(cb)cb();},triggerEvent(name,detail){if(name==='nativeavatar')sheet.onProfileNativeAvatar({detail});if(name==='close')sheet.onProfileClose({detail});if(name==='scrolltarget')sheet.onProfileScrollTarget({detail});}};
+    sheetSpec.lifetimes.attached.call(sheet);profileSpec.lifetimes.attached.call(profile);me.onShow();me.onEditProfile();
+    return {me,sheet,profile,dispose(){profileSpec.lifetimes.detached.call(profile);sheetSpec.lifetimes.detached.call(sheet);me.onUnload();store.dismissToast();}};
   }
   return {mount,identity,store,photos,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
 }
@@ -118,17 +120,17 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     fs.unlinkSync(p);await assert.rejects(r.photos.persistPhoto(p),e=>e.stage==='stat');
   });
   await test('production Me + Sheet + i18n + identity: same-owner return previews, Save commits, reopen keeps it',async()=>{
-    const r=runtime({holdPick:true});await r.ready();r.store.updateProfile({name:'Saved'});const {me,sheet,dispose}=r.mount();
-    const pending=sheet.onAvatarChange();await r.ready();r.releasePick();await pending;
-    const avatar=sheet.data.profileAvatar;assert(avatar.includes('/savor-photos/'));assert.equal(r.store.get().profile.avatar,'');
-    sheet.onProfileSave();assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
-    me.onEditProfile();assert.equal(sheet.data.profileAvatar,avatar);me.onImageError({currentTarget:{dataset:{source:avatar}}});assert(me.data.imageErrors[avatar]);me.onShow();assert.equal(me.data.profile.avatar,avatar);assert(!me.data.imageErrors[avatar]);assert(r.logs.some(x=>x.includes('me-preview IMAGE_LOAD_FAILED')));dispose();
+    const r=runtime({holdPick:true});await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();
+    const pending=profile.onAvatarChange();await r.ready();r.releasePick();await pending;
+    const avatar=profile.data.profileAvatar;assert(avatar.includes('/savor-photos/'));assert.equal(r.store.get().profile.avatar,'');
+    profile.onProfileSave();assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
+    me.onEditProfile();assert.equal(profile.data.profileAvatar,avatar);me.onImageError({currentTarget:{dataset:{source:avatar}}});assert(me.data.imageErrors[avatar]);me.onShow();assert.equal(me.data.profile.avatar,avatar);assert(!me.data.imageErrors[avatar]);assert(r.logs.some(x=>x.includes('me-preview IMAGE_LOAD_FAILED')));dispose();
   });
   await test('production Me closes explicitly without resurrecting on Store refresh',async()=>{
-    const r=runtime({holdPick:true});await r.ready();const {me,sheet,dispose}=r.mount();const pending=sheet.onAvatarChange();sheet.close();await r.ready();r.releasePick();await pending;assert.equal(me.data.sheetShow,false);assert.equal(me._nativeAvatarResume,null);assert.equal(r.store.get().profile.avatar,'');dispose();
+    const r=runtime({holdPick:true});await r.ready();const {me,sheet,profile,dispose}=r.mount();const pending=profile.onAvatarChange();sheet.close();await r.ready();r.releasePick();await pending;assert.equal(me.data.sheetShow,false);assert.equal(me._nativeAvatarResume,null);assert.equal(r.store.get().profile.avatar,'');dispose();
   });
   await test('production storage failure reaches Sheet error, not a success toast or parent avatar',async()=>{
-    const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,sheet,dispose}=r.mount();await sheet.onAvatarChange();let success=false;r.store.onToast(t=>{if(t)success=true;});r.failOnce();sheet.onProfileSave();assert(sheet.data.profileError);assert.equal(success,false);assert.equal(me.data.sheetShow,true);assert.equal(me.data.profile.avatar,'');assert.equal(r.store.get().profile.avatar,'');dispose();
+    const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();await profile.onAvatarChange();let success=false;r.store.onToast(t=>{if(t)success=true;});r.failOnce();profile.onProfileSave();assert(profile.data.profileError);assert.equal(success,false);assert.equal(me.data.sheetShow,true);assert.equal(me.data.profile.avatar,'');assert.equal(r.store.get().profile.avatar,'');dispose();
   });
   console.log(checks+' production-boundary checks passed. Host file bytes verified; native image rendering and real restart still require devices.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{

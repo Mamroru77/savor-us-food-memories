@@ -164,29 +164,15 @@
       </block>
 
       <!-- ================= EDIT PROFILE ================= -->
-      <block wx:if="{{displayType === 'profile'}}">
-        <view class="settings-form">
-          <view class="edit-avatar" bindtap="onAvatarChange" aria-role="button" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <image class="edit-avatar-img" src="{{imageErrors[(profileAvatar)] ? '/images/jamie.jpg' : (profileAvatar)}}" mode="aspectFill"  data-source="{{profileAvatar}}" binderror="onImageError" />
-            <view class="edit-avatar-badge">
-              <s-icon name="camera" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
-            </view>
-          </view>
-          <view class="form-field">
-            <text class="form-label">{{copy.sab42293e29}}</text>
-            <input class="form-input {{profileError ? 'has-error' : ''}} profile-input {{focusedField === ('onProfileName-') ? 'is-focused' : ''}}" id="profile-name-field" value="{{profileName}}" placeholder="Jamie Lin" maxlength="32" bindinput="onProfileName"  aria-label="{{copy.sab42293e29}}" placeholder-class="form-placeholder" data-focus-key="{{'onProfileName-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
-            <text wx:if="{{profileError}}" class="form-error field-error">{{profileError}}</text>
-          </view>
-          <view class="form-field">
-            <text class="form-label">{{copy.saee3ef9e7d}}</text>
-            <input class="form-input profile-input {{focusedField === ('onProfileBio-') ? 'is-focused' : ''}}" value="{{profileBio}}" placeholder="{{copy.sb201ed876f}}" maxlength="55" bindinput="onProfileBio"  aria-label="{{copy.saee3ef9e7d}}" placeholder-class="form-placeholder" data-focus-key="{{'onProfileBio-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
-          </view>
-          <view class="primary-button {{profileUploading || !profileName ? 'ghosted' : ''}}" bindtap="onProfileSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon name="check" size="35" color="#ffffff" stroke="1.75" />
-            <text>{{profileUploading ? copy.sb89bb7bce2 : copy.sf597c0e820}}</text>
-          </view>
-        </view>
-      </block>
+      <profile-editor
+        wx:if="{{displayType === 'profile'}}"
+        active="{{displayType === 'profile'}}"
+        show="{{show}}"
+        dusk="{{dusk}}"
+        bind:close="onProfileClose"
+        bind:nativeavatar="onProfileNativeAvatar"
+        bind:scrolltarget="onProfileScrollTarget"
+      />
 
       <!-- ================= TOGETHER ================= -->
       <block wx:if="{{displayType === 'together'}}">

@@ -2,7 +2,8 @@
   "component": true,
   "usingComponents": {
     "s-icon": "/components/icon/index",
-    "memory-row": "/components/memory-row/index"
+    "memory-row": "/components/memory-row/index",
+    "profile-editor": "/components/profile-editor/index"
   },
   "styleIsolation": "apply-shared"
 }
