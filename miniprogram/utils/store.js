@@ -11,6 +11,7 @@ const localDate = require('./localDate');
 
 const data = require('./data');
 const i18n = require('./i18n');
+const profileRepository = require('./profileRepository');
 
 const STORAGE_KEY = 'savor-diary-v1';
 const DRAFT_KEY = 'savor-draft-v1';
@@ -207,7 +208,7 @@ function deleteMemory(id) {
 function updateProfile(changes) {
   identity.lease();
   ensureLoaded();
-  commit(Object.assign({},state,{profile:Object.assign({},state.profile,changes)}));
+  commit(profileRepository.save(state,changes));
 }
 
 // Transactional local preferences: do not show success or mutate live state
@@ -427,9 +428,7 @@ function mergeCloudRead(memories,token) {
 async function refreshCloudReadOnly(){identity.assertBusinessCloudAllowed();const token=identity.lease();const memories=await require('./cloudRecords').listRecords();return mergeCloudRead(memories,token);}
 function applyCloudProfile(profile,preferences,token){
  identity.assertLease(token);ensureLoaded();
- const p={name:profile.name,bio:profile.bio};if(profile.avatar)p.avatar=profile.avatar;
- const settings={...state.settings};['dietary','cuisines','privateByDefault','showLocations','reminders'].forEach(k=>{if(preferences[k]!==undefined)settings[k]=preferences[k];});
- commit({...state,profile:{...state.profile,...p},settings});
+ commit(profileRepository.applyCloud(state,profile,preferences));
 }
 function syncCloud() {
   try{identity.assertBusinessCloudAllowed();}catch(e){return Promise.reject(e);}

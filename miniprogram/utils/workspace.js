@@ -55,18 +55,9 @@ async function finishTask(task){
  return result;
 }
 async function exportTask(task){const token=identity.lease(),current=(await call('taskStatus',{taskId:task.id},token)).task;if(current.uploaded!==current.chunkCount)fail('CHUNKS_MISSING');const rows=[];for(let i=0;i<current.chunkCount;i++)rows.push(...(await call('getChunk',{taskId:task.id,index:i},token)).rows);return writeFile(JSON.stringify({kind:'savor-cloud-archive',formatVersion:1,manifest:current.manifest,rows},null,2),'json',token);}
-function profilePayload(){const s=require('./store').get();return {profile:{name:s.profile.name,bio:s.profile.bio,avatar:null},preferences:{dietary:s.settings.dietary,cuisines:s.settings.cuisines.slice(),privateByDefault:s.settings.privateByDefault,showLocations:s.settings.showLocations,reminders:s.settings.reminders}};}
-async function applyProfile(remote){
- const token=identity.lease();if(!remote||!remote.profile||!remote.preferences)fail('PROFILE_MISSING');
- // Keep a complete owner-local before-image; never restore old outbox/identity.
- writeFile(JSON.stringify(identity.exportCurrent()),'json',token);
- const p={name:remote.profile.name,bio:remote.profile.bio},a=remote.profile.avatar;
- if(a)p.avatar=(await avatar.restore(a,token)).localPath;
- identity.assertLease(token);require('./store').applyCloudProfile(p,remote.preferences,token);
-}
 async function chooseAvatar(){
  let token=identity.lease();const picked=await new Promise((resolve,reject)=>wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],success:resolve,fail:reject}));token=await identity.resumeNative(token);
  const src=picked.tempFiles&&picked.tempFiles[0]&&picked.tempFiles[0].tempFilePath;if(!src)fail('NO_AVATAR_SELECTED');
  return avatar.forCloud(await avatar.prepare(src,token,'album'),token);
 }
-module.exports={call,writeFile,localRows,parseArchive,createArchive,mutate,retry,preservePending,finishTask,exportTask,profilePayload,applyProfile,chooseAvatar};
+module.exports={call,writeFile,localRows,parseArchive,createArchive,mutate,retry,preservePending,finishTask,exportTask,chooseAvatar};

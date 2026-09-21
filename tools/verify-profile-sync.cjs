@@ -1,0 +1,91 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+global.wx={getFileSystemManager:()=>({})};
+
+const repository=require('../miniprogram/utils/profileRepository');
+const sync=require('../miniprogram/utils/profileSync');
+const workspace=require('../miniprogram/utils/workspace');
+const avatar=require('../miniprogram/utils/avatar');
+const store=require('../miniprogram/utils/store');
+const identity=require('../miniprogram/utils/identity');
+
+const token={userId:'u_owner',generation:1,namespace:'savor',partition:{}};
+const base=()=>({
+  memories:[{id:'keep'}],outbox:[{id:'pending'}],feedback:[],cloudHidden:[],
+  profile:{name:'Local',bio:'Local bio',avatar:'/local.jpg',partner:'Keep partner',togetherSince:'2024-01-01'},
+  settings:{theme:'dusk',language:'en',reduceMotion:true,dietary:'None',cuisines:['Thai'],privateByDefault:false,showLocations:true,reminders:true},
+});
+const remote={revision:3,profile:{name:'Cloud',bio:'Cloud bio',avatar:{base64:'old-cloud'}},preferences:{dietary:'Vegan',cuisines:['French'],privateByDefault:true,showLocations:false,reminders:false,theme:'pearl',language:'zh-CN'}};
+let checks=0;
+async function test(name,fn){await fn();checks++;console.log('PASS '+name);}
+function pageHarness(){
+ let pageSpec,pushArgs,applyArgs;
+ const file=path.join(__dirname,'../miniprogram/pages/workspace/index.js');
+ const profileSync={pull:async()=>remote,push:async(r,selected)=>{pushArgs={remote:r,selected};return {revision:4};},apply:async(r,options)=>{applyArgs={remote:r,options};return {revision:r.revision};}};
+ const deps={
+  '../../utils/secondaryUI':{},'../../utils/identity':{lease:()=>token,isCurrent:()=>true,workspaceIntent:()=>null,resumeNative:async()=>token},
+  '../../utils/workspace':{call:async action=>{if(action==='getProfile')throw Error('WORKSPACE_PROFILE_BYPASS');},chooseAvatar:async()=>({base64:'picked'})},
+  '../../utils/profileSync':profileSync,'../../utils/store':{},'../../utils/workspaceCopy':()=>({ready:'ready',noProfile:'none',revision:'rev',profileHint:'push?',profileConsent:'apply?',done:'done',selected:'selected'}),
+ };
+ vm.runInNewContext(fs.readFileSync(file,'utf8'),{Page:value=>{pageSpec=value;},require:name=>deps[name]||require(path.resolve(path.dirname(file),name)),wx:{},Date,Promise,setTimeout,clearTimeout});
+ const page={...pageSpec,data:{...pageSpec.data,locked:false},_hidden:false,_viewEpoch:0,setData(patch){Object.assign(this.data,patch);}};
+ page.run=fn=>fn(token,()=>true);page.alive=()=>true;page.confirm=async()=>true;
+ return {page,getPush:()=>pushArgs,getApply:()=>applyArgs};
+}
+
+(async()=>{
+  await test('repository keeps local fields and emits only the cloud profile contract',()=>{
+    const original=base(),saved=repository.save(original,{name:'Saved'}),payload=repository.payload(saved);
+    assert.equal(saved.profile.name,'Saved');assert.equal(saved.profile.partner,'Keep partner');assert.equal(original.profile.name,'Local');
+    assert.deepEqual(payload,{profile:{name:'Saved',bio:'Local bio',avatar:null},preferences:{dietary:'None',cuisines:['Thai'],privateByDefault:false,showLocations:true,reminders:true}});
+  });
+
+  let state=base(),pending=null,backup='',appliedAvatar='';
+  identity.lease=()=>token;identity.assertLease=value=>assert.equal(value,token);identity.exportCurrent=()=>({kind:'before-image'});
+  identity.workspaceIntent=()=>pending;identity.saveWorkspaceIntent=value=>{pending=value;};
+  store.get=()=>state;store.applyCloudProfile=(profile,preferences,owner)=>{identity.assertLease(owner);state=repository.applyCloud(state,profile,preferences);};
+  workspace.writeFile=value=>{backup=value;return '/backup.json';};
+  avatar.restore=async()=>({localPath:'/owner/avatar.png'});
+
+  await test('pull is read-only and returns the versioned remote profile',async()=>{
+    const before=JSON.stringify(state);workspace.call=async(action,args,owner)=>{assert.equal(action,'getProfile');assert.equal(owner,token);return {profile:remote};};
+    assert.equal(await sync.pull(token),remote);assert.equal(JSON.stringify(state),before);
+  });
+  await test('pull rejects a malformed remote profile before the UI can read it',async()=>{
+    const before=JSON.stringify(state);workspace.call=async()=>({});
+    await assert.rejects(sync.pull(token),error=>error.code==='PROFILE_RESPONSE_INVALID');
+    workspace.call=async()=>({profile:{revision:'3',profile:{name:'Cloud'},preferences:{cuisines:[]}}});
+    await assert.rejects(sync.pull(token),error=>error.code==='PROFILE_RESPONSE_INVALID');assert.equal(JSON.stringify(state),before);
+  });
+
+  await test('push owns the revision and whitelisted payload contract',async()=>{
+    let sent;workspace.mutate=async(action,args)=>{sent={action,args};return {revision:4};};
+    const result=await sync.push(remote,{base64:'new-cloud'});
+    assert.equal(result.revision,4);assert.deepEqual(sent,{action:'pushProfile',args:{payload:{profile:{name:'Local',bio:'Local bio',avatar:'new-cloud'},preferences:{dietary:'None',cuisines:['Thai'],privateByDefault:false,showLocations:true,reminders:true}},revision:3,consent:true}});
+  });
+
+  await test('deterministic push conflict clears the blocked intent without overwriting local data',async()=>{
+    const before=JSON.stringify(state);workspace.mutate=async()=>{pending={actorUserId:token.userId,action:'pushProfile'};throw Object.assign(new Error('PROFILE_CONFLICT'),{code:'PROFILE_CONFLICT'});};
+    await assert.rejects(sync.push(remote,null),error=>error.code==='PROFILE_CONFLICT');assert.equal(pending,null);assert.equal(JSON.stringify(state),before);
+  });
+
+  await test('cloud apply requires explicit consent and atomically preserves local-only fields',async()=>{
+    const cloud=JSON.parse(JSON.stringify(remote));await assert.rejects(sync.apply(cloud),error=>error.code==='PROFILE_APPLY_CONSENT_REQUIRED');assert.equal(backup,'');
+    avatar.restore=async()=>{appliedAvatar='/owner/avatar.png';return {localPath:appliedAvatar};};
+    const result=await sync.apply(cloud,{confirmed:true});
+    assert.equal(result.revision,3);assert.equal(JSON.parse(backup).kind,'before-image');assert.equal(state.profile.name,'Cloud');assert.equal(state.profile.avatar,appliedAvatar);assert.equal(state.profile.partner,'Keep partner');
+    assert.equal(state.settings.dietary,'Vegan');assert.equal(state.settings.theme,'dusk');assert.equal(state.settings.language,'en');assert.equal(state.memories[0].id,'keep');assert.equal(state.outbox[0].id,'pending');
+    cloud.preferences.cuisines.push('Mutated later');assert.deepEqual(state.settings.cuisines,['French']);
+  });
+
+  await test('Workspace page pulls through ProfileSync',async()=>{
+    const h=pageHarness();await h.page.pull();assert.equal(h.page._remote,remote);assert.equal(h.page.data.remote.revision,3);
+  });
+  await test('Workspace page pushes through ProfileSync',async()=>{
+    const h=pageHarness();h.page.data.profileRead=true;h.page._remote=remote;h.page._avatar={base64:'picked'};await h.page.push();assert.deepEqual(h.getPush(),{remote,selected:{base64:'picked'}});assert.equal(h.page._remote,null);
+  });
+  await test('Workspace page applies through explicit ProfileSync consent',async()=>{
+    const h=pageHarness();h.page._remote=remote;await h.page.apply();assert.equal(h.getApply().remote,remote);assert.equal(h.getApply().options.confirmed,true);assert.equal(h.page.data.message,'done');
+  });
+
+  console.log('\n'+checks+'/'+checks+' profile repository/sync checks passed.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
