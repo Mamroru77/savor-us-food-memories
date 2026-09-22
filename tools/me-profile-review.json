@@ -1,0 +1,14 @@
+{
+  "miniprogram/pages/me/index.wxml": {
+    "baseSha256": "311f7be86eb592003fa2689e7c802d349c3dbd547daaa0a92938fe117e22f744",
+    "sha256": "6067ab5f1ee6958d64484bbc9218dc355ddc66ec9777a57c08d836e87c6095b1",
+    "reason": "Reviewed Me identity/profile markup: inline verification and an explicit empty-avatar state are paired with the existing page logic, while the obsolete nativeavatar bridge was removed when lifecycle ownership moved to nativeFlow.",
+    "review": "docs/reviews/me-profile-state-20260922.md"
+  },
+  "miniprogram/pages/me/index.wxss": {
+    "baseSha256": "3e8e458dac2352384c3025b527970ea04e58d2320e67673477b2c2a494b7abc4",
+    "sha256": "dc58197e9b2ddddd1ac32e6c141b82e36127c62d072c43f86c4d7f6308645bd7",
+    "reason": "Reviewed styles paired with the Me inline identity and empty-avatar states; previously approved profile layout remains intact.",
+    "review": "docs/reviews/me-profile-state-20260922.md"
+  }
+}
