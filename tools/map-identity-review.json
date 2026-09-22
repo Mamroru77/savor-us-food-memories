@@ -1,0 +1,14 @@
+{
+  "miniprogram/pages/map/index.wxml": {
+    "baseSha256": "464c48ae3efc36197a54de494efaaddee5616023d4457d5241381437193c9db1",
+    "sha256": "cf92efbb3250d1378d88f72adcd551d2d44916ca651e619c61ceb0deced25ccf",
+    "reason": "Reviewed Map identity-state markup: the blocking gate became an inline status while locked Store state rebuilds the map from an empty identity partition; no production template change in this repair.",
+    "review": "docs/reviews/map-identity-state-20260922.md"
+  },
+  "miniprogram/pages/map/index.wxss": {
+    "baseSha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
+    "sha256": "78193d835eba8e7c753d7e3158010fdb7f575324334eb58226daacf63cd4a176",
+    "reason": "Reviewed styles paired with the Map inline identity status; prior map geometry, stack, and veil decisions remain intact.",
+    "review": "docs/reviews/map-identity-state-20260922.md"
+  }
+}
