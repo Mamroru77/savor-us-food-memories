@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 let count=0;
-function page(file,dependencies){let spec;vm.runInNewContext(fs.readFileSync(file,'utf8'),{Page:x=>spec=x,require:n=>dependencies[n.split('/').pop()]||{},wx:{},console,setTimeout,clearTimeout});return {...spec,data:{...spec.data},active:true,setData(p){Object.assign(this.data,p);}};}
+function page(file,dependencies){let spec;vm.runInNewContext(fs.readFileSync(file,'utf8'),{Page:x=>spec=x,require:n=>dependencies[n.split('/').pop()]||{},wx:{},console,setTimeout,clearTimeout,setInterval,clearInterval});return {...spec,data:{...spec.data},active:true,setData(p){Object.assign(this.data,p);}};}
 async function test(name,fn){await fn();console.log('PASS '+name);count++;}
 function map(options={}){let verified=options.verified!==false,frozen=!!options.frozen,verifies=0,syncs=0,toasts=0;const p=page('miniprogram/pages/map/index.js',{i18n:{copy:()=>({}),locale:()=> 'zh-CN',t:x=>x},identity:{isDiagnosisActive:()=>frozen,snapshot:()=>({locked:!verified,status:verified?'verified':'verifying'}),verify:async()=>{verifies++;if(options.verify)await options.verify();verified=true;}},store:{syncCloud:async()=>{syncs++;if(options.sync)await options.sync();},notify:()=>toasts++}});return {p,stats:()=>({verifies,syncs,toasts})};}
 (async()=>{
