@@ -23,7 +23,7 @@ async function inspect(localPath, owner) {
 async function prepare(tempPath, owner, source) {
   if (!['chooseAvatar', 'album', 'camera', 'cloud'].includes(source)) throw imageFailure('AVATAR_SOURCE_INVALID');
   const localPath = await photos.persistPhoto(tempPath, false, owner);
-  return { localPath, ...(await inspect(localPath, owner)), source, syncState: 'local', remoteRef: null };
+  return { formatVersion: 1, localPath, ...(await inspect(localPath, owner)), source, syncState: 'local', remoteRef: null };
 }
 
 async function forCloud(asset, owner) {
@@ -66,7 +66,7 @@ async function restore(remote, owner) {
   await photos.validatePhoto(localPath, owner);
   const details = await inspect(localPath, owner);
   if (details.mime !== remote.mime) throw imageFailure('AVATAR_FORMAT_MISMATCH');
-  return { localPath, digest: remote.digest, ...details, source: 'cloud', syncState: 'synced', remoteRef: remote.digest };
+  return { formatVersion: 1, localPath, digest: remote.digest, ...details, source: 'cloud', syncState: 'synced', remoteRef: remote.digest };
 }
 
 module.exports = { prepare, forCloud, restore };

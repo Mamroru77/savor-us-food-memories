@@ -35,8 +35,8 @@ async function apply(remote,options={}){
  if(options.confirmed!==true)fail('PROFILE_APPLY_CONSENT_REQUIRED');
  const current=revision(remote),token=identity.lease();
  workspace.writeFile(JSON.stringify(identity.exportCurrent()),'json',token);
- const profile={name:remote.profile.name,bio:remote.profile.bio},asset=remote.profile.avatar;
- if(asset)profile.avatar=(await avatar.restore(asset,token)).localPath;
+ const profile={name:remote.profile.name,bio:remote.profile.bio},remoteAsset=remote.profile.avatar;
+ if(remoteAsset)profile.avatarAsset=await avatar.restore(remoteAsset,token);
  identity.assertLease(token);store.applyCloudProfile(profile,remote.preferences,token);
  return {revision:current};
 }

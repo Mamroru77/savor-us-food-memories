@@ -67,6 +67,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   await test('avatar service prepares a canonical owner-local asset',async()=>{
     const r=runtime();await r.ready();assert(r.avatar,'avatar service missing');
     const asset=await r.avatar.prepare(r.source,r.identity.lease(),'chooseAvatar');
+    assert.equal(asset.formatVersion,1);
     assert(asset.localPath.startsWith(r.base+'/savor-photos/'+uid('a')+'/'));
     assert.deepEqual({mime:asset.mime,width:asset.width,height:asset.height,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{mime:'image/jpeg',width:1,height:1,source:'chooseAvatar',syncState:'local',remoteRef:null});
   });
@@ -84,6 +85,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   await test('avatar service restores a validated cloud asset into the owner photo store',async()=>{
     const r=runtime();await r.ready();assert.equal(typeof r.avatar.restore,'function');const digest='a'.repeat(64);
     const asset=await r.avatar.restore({digest,extension:'png',mime:'image/png',base64:png.toString('base64')},r.identity.lease());
+    assert.equal(asset.formatVersion,1);
     assert.equal(asset.localPath,r.base+'/savor-photos/'+uid('a')+'/avatar-'+digest+'.png');
     assert.deepEqual({digest:asset.digest,mime:asset.mime,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{digest,mime:'image/png',source:'cloud',syncState:'synced',remoteRef:digest});
     assert(fs.readFileSync(asset.localPath).equals(png));assert(r.calls.includes('write-sync'));assert(r.calls.includes('saved-info'));
@@ -153,8 +155,8 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     r.store.updateProfile({name:'Saved',avatar:p});assert.equal(notifications,1);
     assert.equal(JSON.parse(r.identity.getStorageSync('savor-diary-v1')).profile.avatar,p);
     const cold=runtime({},r.disk,r.base);await cold.ready();assert.equal(cold.store.get().profile.avatar,p);assert(cold.data.isSafeImage(p));assert.equal(await cold.photos.validatePhoto(p),p);
-    cold.setOwner('b');await cold.ready();assert.notEqual(cold.store.get().profile.avatar,p);
-    cold.setOwner('a');await cold.ready();assert.equal(cold.store.get().profile.avatar,p);
+    cold.setOwner('b');await cold.ready();assert.notEqual(cold.store.get().profile.avatar,p);assert.equal(cold.store.get().profile.avatarAsset,null);
+    cold.setOwner('a');await cold.ready();assert.equal(cold.store.get().profile.avatar,p);assert.equal(cold.store.get().profile.avatarAsset.localPath,p);
   });
   await test('Stage 6 diary migrates once and keeps rollback-readable projection plus unknown fields',async()=>{
     const r=runtime();await r.ready();
@@ -213,8 +215,8 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   await test('production Me + Sheet + i18n + identity: same-owner return previews, Save commits, reopen keeps it',async()=>{
     const r=runtime();await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();
     await profile.onAvatarChange({detail:{avatarUrl:r.source}});assert(!r.calls.includes('choose'));
-    const avatar=profile.data.profileAvatar;assert(avatar.includes('/savor-photos/'));assert.equal(r.store.get().profile.avatar,'');
-    profile.onProfileSave();assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
+    const avatar=profile.data.profileAvatar;assert(avatar.includes('/savor-photos/'));assert.equal(r.store.get().profile.avatar,'');assert.equal(r.store.get().profile.avatarAsset,null);
+    profile.onProfileSave();assert.equal(r.store.get().profile.avatar,avatar);assert.equal(r.store.get().profile.avatarAsset.localPath,avatar);assert.equal(r.store.get().profile.avatarAsset.formatVersion,1);assert.equal(r.store.get().profile.avatarAsset.source,'chooseAvatar');assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
     me.onEditProfile();assert.equal(profile.data.profileAvatar,avatar);me.onImageError({currentTarget:{dataset:{source:avatar}}});assert(me.data.imageErrors[avatar]);me.onShow();assert.equal(me.data.profile.avatar,avatar);assert(!me.data.imageErrors[avatar]);assert(r.logs.some(x=>x.includes('me-preview IMAGE_LOAD_FAILED')));dispose();
   });
   await test('production Me closes explicitly without resurrecting on Store refresh',async()=>{

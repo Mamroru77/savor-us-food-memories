@@ -88,6 +88,7 @@ Component({
     reset() {
       if (this._avatarFlow) this._avatarFlow.cancel();
       this._avatarFlow = null;
+      this._profileAvatarAsset = null;
       this._formEdits = {};
       if (!this._detached) this.setData({ profileUploading: false, profileError: '' });
     },
@@ -102,7 +103,10 @@ Component({
       const patch = { copy: i18n.copy(), profileUploading: !!this._avatarFlow && this._avatarFlow.active() };
       if (!edited.profileName) patch.profileName = state.profile.name;
       if (!edited.profileBio) patch.profileBio = state.profile.bio;
-      if (!edited.profileAvatar) patch.profileAvatar = state.profile.avatar;
+      if (!edited.profileAvatar) {
+        this._profileAvatarAsset = state.profile.avatarAsset;
+        patch.profileAvatar = state.profile.avatar;
+      }
       this.setData(patch);
     },
 
@@ -142,6 +146,7 @@ Component({
         const asset = result.value;
         if (active() && asset.localPath) {
           that.markFormEdit('profileAvatar');
+          that._profileAvatarAsset = asset;
           that.setData({ profileAvatar: asset.localPath, profileUploading: false, imageErrors: {} });
         } else if (active()) {
           that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
@@ -174,7 +179,7 @@ Component({
         return;
       }
       try {
-        store.updateProfile({ name, bio: this.data.profileBio.trim(), avatar: this.data.profileAvatar });
+        store.updateProfile({ name, bio: this.data.profileBio.trim(), avatarAsset: this._profileAvatarAsset });
         photos.pruneOrphans(photos.collectReferenced(store.get()));
         store.notify(i18n.t('A little more you. Profile updated.'));
         this.reset();

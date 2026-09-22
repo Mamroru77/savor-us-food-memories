@@ -8,7 +8,7 @@ function fixture(){
   let listener;
   const state={
     settings:{theme:'pearl',language:'en',reduceMotion:false,reminders:true,privateByDefault:false,showLocations:true,dietary:'No restrictions',cuisines:[],loveSent:true,notificationsRead:true},
-    profile:{name:'Saved',bio:'',avatar:'/images/jamie.jpg',partner:'fixture',togetherSince:'2026-01-01'},
+    profile:{name:'Saved',bio:'',avatar:'/images/jamie.jpg',avatarAsset:{formatVersion:1,localPath:'/images/jamie.jpg',digest:null,mime:'image/jpeg',width:1,height:1,source:'legacy',syncState:'local',remoteRef:null},partner:'fixture',togetherSince:'2026-01-01'},
     memories:Array.from({length:500},(_,i)=>({id:'fixture-'+i,notes:'x'.repeat(2000)})),
     outbox:[{privateNote:'not for the view'}],feedback:[],
     identity:{userId:'fixture',generation:1,locked:false,status:'verified'},
@@ -79,7 +79,7 @@ function avatar(h,tempPath='temporary-avatar'){
   let resolve,reject;
   const persisted=new Promise((a,b)=>{resolve=a;reject=b;});
   const calls=[];
-  h.deps.avatar.prepare=(source,owner,kind)=>{calls.push({source,userId:owner.userId,kind});return persisted.then(localPath=>({localPath}));};
+  h.deps.avatar.prepare=(source,owner,kind)=>{calls.push({source,userId:owner.userId,kind});return persisted.then(localPath=>({formatVersion:1,localPath,digest:null,mime:'image/jpeg',width:1,height:1,source:kind,syncState:'local',remoteRef:null}));};
   const completion=h.p.onAvatarChange({detail:{avatarUrl:tempPath}});
   return {resolve,reject,completion,calls};
 }
@@ -162,7 +162,7 @@ function avatar(h,tempPath='temporary-avatar'){
   await test('transient null preserves current request and profile display',async()=>{const shell=sheet();enterSheet(shell);const flow=shell.deps.nativeFlow.begin(shell.deps.identity.lease());shell.p.data.type=null;shell.spec.observers['show, type, memoryId, filter'].call(shell.p);assert.equal(shell.p.data.displayType,'profile');flow.cancel();const h=profileEditor();enter(h);const q=avatar(h);h.state.identity.status='verifying';hide(h);h.state.identity.status='verified';enter(h);q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');});
   await test('callback before property restoration waits for the suspended current editor',async()=>{const h=profileEditor();enter(h);const q=avatar(h);h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();hide(h);h.state.identity={userId:'fixture',generation:2,locked:false,status:'verified'};h.emit();q.resolve('current');await flush();assert.notEqual(h.p.data.profileAvatar,'current');enter(h);await flush();assert.equal(h.p.data.profileAvatar,'current');});
   await test('explicit close releases suspended avatar without restoring it',async()=>{const h=profileEditor();enter(h);const q=avatar(h);h.state.identity.status='verifying';hide(h);q.resolve('old');await flush();leave(h);enter(h);await flush();assert.notEqual(h.p.data.profileAvatar,'old');});
-  await test('preview load failure blocks Save; a new selection clears the error',async()=>{const h=profileEditor();enter(h);h.p.onImageError({currentTarget:{dataset:{source:h.p.data.profileAvatar}}});h.p.onProfileSave();assert(!h.events.some(e=>e.name==='close'));const q=avatar(h);q.resolve('new');await flush();assert.equal(Object.keys(h.p.data.imageErrors).length,0);h.p.onProfileSave();assert.equal(h.state.profile.avatar,'new');assert(h.events.some(e=>e.name==='close'));});
+  await test('preview load failure blocks Save; a new selection clears the error',async()=>{const h=profileEditor();enter(h);h.p.onImageError({currentTarget:{dataset:{source:h.p.data.profileAvatar}}});h.p.onProfileSave();assert(!h.events.some(e=>e.name==='close'));const q=avatar(h);q.resolve('new');await flush();assert.equal(Object.keys(h.p.data.imageErrors).length,0);h.p.onProfileSave();assert.equal(h.state.profile.avatarAsset.localPath,'new');assert(h.events.some(e=>e.name==='close'));});
   await test('non-cancel image/FS/identity/program errors leave original avatar and show feedback',async()=>{for(const category of ['image','filesystem','identity','program']){const h=profileEditor();enter(h);const q=avatar(h);q.reject({category,code:'TEST_FAILED',message:'sensitive path'});await flush();assert.equal(h.state.profile.avatar,'/images/jamie.jpg');assert(h.p.data.profileError);assert(!h.p.data.profileError.includes('sensitive'));h.p.refresh();assert(h.p.data.profileError);}});
   console.log(count+' synthetic checks passed; no real chooser or user data touched.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

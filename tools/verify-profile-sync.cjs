@@ -9,9 +9,11 @@ const store=require('../miniprogram/utils/store');
 const identity=require('../miniprogram/utils/identity');
 
 const token={userId:'u_owner',generation:1,namespace:'savor',partition:{}};
+const localAsset={formatVersion:1,localPath:'/owner/local.jpg',digest:null,mime:'image/jpeg',width:1,height:1,source:'chooseAvatar',syncState:'local',remoteRef:null};
+const appliedAsset={formatVersion:1,localPath:'/owner/avatar.png',digest:'a'.repeat(64),mime:'image/png',width:1,height:1,source:'cloud',syncState:'synced',remoteRef:'a'.repeat(64)};
 const base=()=>({
   memories:[{id:'keep'}],outbox:[{id:'pending'}],feedback:[],cloudHidden:[],
-  profile:{name:'Local',bio:'Local bio',avatar:'/local.jpg',partner:'Keep partner',togetherSince:'2024-01-01'},
+  profile:{name:'Local',bio:'Local bio',avatar:localAsset.localPath,avatarAsset:{...localAsset},partner:'Keep partner',togetherSince:'2024-01-01'},
   settings:{theme:'dusk',language:'en',reduceMotion:true,dietary:'None',cuisines:['Thai'],privateByDefault:false,showLocations:true,reminders:true},
 });
 const remote={revision:3,profile:{name:'Cloud',bio:'Cloud bio',avatar:{base64:'old-cloud'}},preferences:{dietary:'Vegan',cuisines:['French'],privateByDefault:true,showLocations:false,reminders:false,theme:'pearl',language:'zh-CN'}};
@@ -44,7 +46,7 @@ function pageHarness(){
   identity.workspaceIntent=()=>pending;identity.saveWorkspaceIntent=value=>{pending=value;};
   store.get=()=>state;store.applyCloudProfile=(profile,preferences,owner)=>{identity.assertLease(owner);state=repository.applyCloud(state,profile,preferences);};
   workspace.writeFile=value=>{backup=value;return '/backup.json';};
-  avatar.restore=async()=>({localPath:'/owner/avatar.png'});
+  avatar.restore=async()=>({...appliedAsset});
 
   await test('pull is read-only and returns the versioned remote profile',async()=>{
     const before=JSON.stringify(state);workspace.call=async(action,args,owner)=>{assert.equal(action,'getProfile');assert.equal(owner,token);return {profile:remote};};
@@ -70,11 +72,17 @@ function pageHarness(){
 
   await test('cloud apply requires explicit consent and atomically preserves local-only fields',async()=>{
     const cloud=JSON.parse(JSON.stringify(remote));await assert.rejects(sync.apply(cloud),error=>error.code==='PROFILE_APPLY_CONSENT_REQUIRED');assert.equal(backup,'');
-    avatar.restore=async()=>{appliedAvatar='/owner/avatar.png';return {localPath:appliedAvatar};};
+    avatar.restore=async()=>{appliedAvatar=appliedAsset.localPath;return {...appliedAsset};};
     const result=await sync.apply(cloud,{confirmed:true});
     assert.equal(result.revision,3);assert.equal(JSON.parse(backup).kind,'before-image');assert.equal(state.profile.name,'Cloud');assert.equal(state.profile.avatar,appliedAvatar);assert.equal(state.profile.partner,'Keep partner');
+    assert.deepEqual(state.profile.avatarAsset,appliedAsset);
     assert.equal(state.settings.dietary,'Vegan');assert.equal(state.settings.theme,'dusk');assert.equal(state.settings.language,'en');assert.equal(state.memories[0].id,'keep');assert.equal(state.outbox[0].id,'pending');
     cloud.preferences.cuisines.push('Mutated later');assert.deepEqual(state.settings.cuisines,['French']);
+    const withoutAvatar=JSON.parse(JSON.stringify(remote));withoutAvatar.profile.avatar=null;withoutAvatar.profile.name='Cloud text';withoutAvatar.profile.bio='Text only';withoutAvatar.preferences.dietary='Vegetarian';
+    avatar.restore=async()=>{throw Error('avatar.restore must not run for null');};
+    await sync.apply(withoutAvatar,{confirmed:true});
+    assert.equal(state.profile.name,'Cloud text');assert.equal(state.profile.bio,'Text only');assert.equal(state.settings.dietary,'Vegetarian');
+    assert.equal(state.profile.avatar,appliedAsset.localPath);assert.deepEqual(state.profile.avatarAsset,appliedAsset);
   });
 
   await test('Workspace page pulls through ProfileSync',async()=>{
