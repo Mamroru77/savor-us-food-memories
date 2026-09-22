@@ -42,6 +42,7 @@ async function call(action, args, token = identity.lease()) {
   return result;
 }
 function memoryToCloudRecord(m) {
+  if (!data.isMemory(m)) throw error('INVALID_RECORD', 'The memory record is invalid.');
   const record = {
     restaurantName: m.restaurant, note: m.notes, date: m.date, city: m.city,
     rating: m.rating, tags: m.tags.slice(), country: m.country, neighborhood: m.neighborhood,
