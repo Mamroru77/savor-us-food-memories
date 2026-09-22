@@ -529,11 +529,13 @@ function nativeTabs(initial=0){
   });
   await test('Settings language picker stores the requested option and renders localized titles', () => {
     let spec; global.Component = value => { spec = value; };
-    const file = path.join(mp, 'components/sheet/index.js'); delete require.cache[require.resolve(file)]; require(file);
+    let file = path.join(mp, 'components/sheet/index.js'); delete require.cache[require.resolve(file)]; require(file);
     const sheet = { ...spec.methods, data: { ...spec.data, type: 'settings', show: true }, setData(p) { Object.assign(this.data,p); } };
-    sheet.onLanguageChange({ detail: { value: 1 } }); sheet.refresh();
-    assert.equal(store.get().settings.language, 'zh-CN'); assert.equal(sheet.data.title, '细微之处'); assert.equal(sheet.data.languageIndex, 1);
-    sheet.onLanguageChange({ detail: { value: 2 } }); sheet.refresh(); assert.equal(sheet.data.title, 'The little details');
+    file = path.join(mp, 'components/settings-editor/index.js'); delete require.cache[require.resolve(file)]; require(file);
+    const editor = { ...spec.methods, data: { ...spec.data, active: true, show: true, type: 'settings' }, setData(p) { Object.assign(this.data,p); } };
+    editor.onLanguageChange({ detail: { value: 1 } }); editor.refresh(); sheet.refresh();
+    assert.equal(store.get().settings.language, 'zh-CN'); assert.equal(sheet.data.title, '细微之处'); assert.equal(editor.data.languageIndex, 1);
+    editor.onLanguageChange({ detail: { value: 2 } }); editor.refresh(); sheet.refresh(); assert.equal(sheet.data.title, 'The little details');
   });
   await test('dark palette text contrast remains readable and map veil does not intercept gestures', () => {
     const lum = hex => {
