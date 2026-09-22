@@ -9,15 +9,14 @@
           <text class="heading-title">{{pageHeading.title}}</text>
           <text class="heading-sub">{{pageHeading.subtitle}}</text>
         </view>
-        <view class="us-heading-actions">
-          <view class="us-manage-button" bindtap="onManageSpace" aria-role="button" aria-label="Manage shared space & wishlist" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="users" size="42" stroke="1.75" />
-          </view>
-          <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="{{copy.s23f3b65ad3}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="settings" size="42" stroke="1.75" />
-          </view>
+        <view class="us-settings" bindtap="onTogether" aria-role="button" aria-label="{{copy.s23f3b65ad3}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+          <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="settings" size="42" stroke="1.75" />
         </view>
       </view>
+
+      <button class="space-management secondary-button" bindtap="onManageSpace" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{locale === 'zh-CN' ? '管理双人空间与 Wishlist' : 'Manage shared space & wishlist'}}</button>
+
+      <view class="secondary-subtle" style="margin-top:16rpx">{{copy.s325a78d28f}}</view>
 
       <!-- together card -->
       <view class="together-card glass content-card">

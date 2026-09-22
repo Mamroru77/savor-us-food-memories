@@ -1,0 +1,14 @@
+{
+  "miniprogram/pages/us/index.wxml": {
+    "baseSha256": "3abe216ebf9f2a3e867d475ae51ea40812a98d5168eb08b201e83bd991e45adc",
+    "sha256": "003c8f20dda7746f5cde5c2920e954b1c6e1a51f42341aacea0a15c6633845ff",
+    "reason": "Reviewed Us identity/avatar states after restoring the previously approved visible shared-space entry and scope explanation that the historical bundled change had removed.",
+    "review": "docs/reviews/us-identity-state-20260922.md"
+  },
+  "miniprogram/pages/us/index.wxss": {
+    "baseSha256": "a021a8dba2129f3ea269521c4b84b38e341eecb1275de0f62d020aa92a73882e",
+    "sha256": "be9dfb4344b05dd822587ace1daa0ffe15802aafd8540bce4a50ab9a643bb579",
+    "reason": "Reviewed styles for inline identity and empty-avatar states after removing the unreviewed heading-icon replacement and restoring the approved settings geometry.",
+    "review": "docs/reviews/us-identity-state-20260922.md"
+  }
+}
