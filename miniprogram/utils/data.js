@@ -32,6 +32,7 @@ const defaultProfile = {
   name: '',
   bio: '',
   avatar: '',
+  avatarAsset: null,
   partner: '',
   togetherSince: '',
 };

@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-global.wx={getFileSystemManager:()=>({})};
+global.wx={env:{USER_DATA_PATH:'/owner'},getFileSystemManager:()=>({})};
 
 const repository=require('../miniprogram/utils/profileRepository');
 const sync=require('../miniprogram/utils/profileSync');
