@@ -344,7 +344,15 @@ section('T. import / export smoke test');
     const store = loadStoreInSandbox(sandbox);
     const dataMod = loadDataInSandbox(sandbox);
 
-    store.importMemories(dataMod.initialMemories);
+    const restoreFixture = Array.from({ length: 7 }, (_, index) => ({
+      id: `backup-${index + 1}`, restaurant: `Restaurant ${index + 1}`,
+      city: 'Paris', country: 'France', neighborhood: 'Test', notes: 'Backup fixture',
+      date: `2026-09-${String(index + 1).padStart(2, '0')}`, rating: 5, tags: ['Backup'],
+      photo: dataMod.photos.meal, extraPhotos: [], coordinates: [48.8566, 2.3522],
+      shared: false, liked: false, saved: false,
+    }));
+    check('T', 'restore fixture contains 7 valid memories', restoreFixture.length === 7 && restoreFixture.every(dataMod.isMemory), `found ${restoreFixture.length}`);
+    store.importMemories(restoreFixture);
     const exported = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), memories: store.get().memories }, null, 2);
     const parsed = JSON.parse(exported);
     check('T', 'export payload shape {version, exportedAt, memories}', parsed.version === 1 && Array.isArray(parsed.memories));
