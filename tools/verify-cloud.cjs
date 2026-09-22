@@ -124,6 +124,14 @@ function nativeTabs(initial=0){
     assert.equal(mapFrameReview.file, 'miniprogram/pages/map/index.wxml');
     assert.match(mapFrameReview.sha256, /^[a-f0-9]{64}$/);
     assert(mapFrameReview.reason && mapFrameReview.review && fs.existsSync(path.join(root, mapFrameReview.review)));
+    const addPageReviews = JSON.parse(fs.readFileSync(path.join(root, 'tools/add-page-review.json')));
+    assert.deepEqual(Object.keys(addPageReviews).sort(), ['miniprogram/pages/add/index.wxml', 'miniprogram/pages/add/index.wxss']);
+    for (const review of Object.values(addPageReviews)) {
+      assert.match(review.baseSha256, /^[a-f0-9]{64}$/);
+      assert.match(review.sha256, /^[a-f0-9]{64}$/);
+      assert.equal(review.review, 'docs/reviews/add-page-lifecycle-20260922.md');
+      assert(review.reason && fs.existsSync(path.join(root, review.review)));
+    }
     for (const [file, review] of Object.entries(refinements)) {
       assert(Object.hasOwn(manifest.sha256, file) && file.endsWith('.wxss'), 'refinements may only approve existing visual styles');
       assert.match(review.sha256, /^[a-f0-9]{64}$/);
@@ -167,6 +175,10 @@ function nativeTabs(initial=0){
       if (file === mapFrameReview.file) {
         assert.equal(mapFrameReview.baseSha256, expected, 'Map geometry review must name its frozen checkpoint');
         expected = mapFrameReview.sha256;
+      }
+      if (addPageReviews[file]) {
+        assert.equal(addPageReviews[file].baseSha256, expected, 'Add page review must chain to the active approved checkpoint');
+        expected = addPageReviews[file].sha256;
       }
       if (uxReviews[file]) {
         assert.equal(uxReviews[file].baseSha256, expected, 'UX review must chain to the frozen approved checkpoint');
