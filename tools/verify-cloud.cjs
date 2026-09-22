@@ -91,7 +91,12 @@ const identityPath=require.resolve(path.join(mp,'utils/identity'));
 require.cache[identityPath]={id:identityPath,filename:identityPath,loaded:true,exports:require('./identity-fixture.cjs').fixture(wx,()=> 'u_'+(owner==='owner-A'?'a':'b').repeat(48))};
 let store = require(path.join(mp, 'utils/store'));
 const service = require(path.join(mp, 'utils/cloudRecords'));
-const sample = () => ({ ...data.initialMemories[0], id: data.createId(), restaurant: 'Real dinner', extraPhotos: [], noPhoto: true });
+const sample = () => ({
+  id: data.createId(), restaurant: 'Real dinner', city: 'Kaohsiung', country: 'Taiwan', neighborhood: 'Lingya', notes: '', date: '2026-09-10',
+  rating: 4, tags: ['Dinner'], photo: data.photos.meal, noPhoto: true, extraPhotos: [], coordinates: [22.63, 120.3],
+  address: '高雄市苓雅區', locationName: 'Real dinner', locationSource: 'tencent-picker', coordinateSystem: 'gcj02', geoConfirmed: true,
+  shared: false, liked: false, saved: false,
+});
 const pickedLocation = { coordinates: [22.63, 120.3], address: '高雄市苓雅區', locationName: 'Real dinner', locationSource: 'tencent-picker', coordinateSystem: 'gcj02' };
 const draft = () => ({ ...store.freshDraft(), restaurant: 'Real dinner', location: pickedLocation });
 function page(name) {
@@ -299,7 +304,7 @@ function nativeTabs(initial=0){
   });
   await test('Case 1: no-photo Add save, cloud row, store and draft reset', async () => {
     const p = page('add'); store.saveDraft(draft()); p.onLoad(); p.onShow();
-    await p.onSave(); assert.equal(rows.size, 1); assert.equal(store.get().memories.length, 8);
+    await p.onSave(); assert.equal(rows.size, 1); assert.equal(store.get().memories.length, 1);
     assert.equal([...rows.values()][0].photos.length, 0); assert.equal(store.loadDraft().restaurant, ''); p.onUnload();
   });
   await test('Case 2: one local photo uploaded and fileID persisted', async () => {
@@ -348,7 +353,7 @@ function nativeTabs(initial=0){
     const before = JSON.stringify(store.get().memories); functionDown = true;
     await assert.rejects(store.syncCloud()); functionDown = false; assert.equal(JSON.stringify(store.get().memories), before);
   });
-  await test('Case 10: sync does not upload seven bundled samples', async () => {
+  await test('Case 10: sync does not fabricate or upload bundled samples', async () => {
     const before = addCalls; await store.syncCloud(); assert.equal(addCalls, before); assert.equal(store.get().memories.filter(m => !m.cloudId).length, 0);
   });
   await test('legacy integrated row maps without inventing two votes or a map location', () => {
@@ -544,11 +549,9 @@ function nativeTabs(initial=0){
     assert.equal(store.get().settings.language, 'zh-CN'); assert.equal(require(path.join(mp,'utils/i18n')).t('Save Memory'), '保存回忆');
     store.updateSettings({ language: 'en' });
   });
-  await test('saved-memory metric excludes samples, deduplicates records and respects shared scope', () => {
+  await test('saved-memory metric deduplicates records and respects shared scope', () => {
     const stats = require(path.join(mp, 'utils/memoryStats'));
-    const sampleId = data.initialMemories[0].id;
     const input = [
-      { id: sampleId, saved: true, shared: true },
       { id: 'real-cloud', cloudId: 'real-cloud', saved: true, shared: true },
       { id: 'real-private', saved: true, shared: false },
       { id: 'heart-only', liked: true, saved: false, shared: true },
@@ -558,7 +561,7 @@ function nativeTabs(initial=0){
     const before = JSON.stringify(input), writes = addCalls;
     assert.equal(stats.countSaved(input), 2); assert.equal(stats.countSaved(input, true), 1);
     assert.equal(stats.countSaved([]), 0); assert.equal(JSON.stringify(input), before); assert.equal(addCalls, writes);
-    assert.equal(stats.countSaved([{ id: sampleId, cloudId: sampleId, saved: true }]), 1);
+    assert.equal(stats.countSaved([{ id: 'local-saved', saved: true }]), 1);
   });
   await test('Me and Us bookmark counts react to store changes, without counting likes as bookmarks', () => {
     const stats = require(path.join(mp, 'utils/memoryStats'));
