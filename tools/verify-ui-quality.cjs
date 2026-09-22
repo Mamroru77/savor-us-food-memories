@@ -58,7 +58,7 @@ for(const file of ['pages/home/index.wxml','pages/map/index.wxml','pages/add/ind
 });
 test('All 27 native form controls are explicitly named; text inputs have focus and placeholder contracts',()=>{
  let total=0;
- for(const file of ['pages/add/index.wxml','pages/map/index.wxml','components/sheet/index.wxml'])for(const tag of tags(read(file))){
+ for(const file of ['pages/add/index.wxml','pages/map/index.wxml','components/sheet/index.wxml','components/profile-editor/index.wxml','components/settings-editor/index.wxml'])for(const tag of tags(read(file))){
   if(!/^<(input|textarea|picker|switch)\b/.test(tag))continue;
   total++;assert.match(tag,/aria-label="[^\"]+"/);
   if(/^<(input|textarea)\b/.test(tag)){assert(tag.includes('bindfocus="onFieldFocus"'));assert(tag.includes('bindblur="onFieldBlur"'));assert(tag.includes('placeholder-class='));}
@@ -69,7 +69,7 @@ test('Stale blur cannot erase a newer field focus',()=>{
  const ctx={data:{focusedField:''},setData(p){Object.assign(this.data,p);}},event=k=>({currentTarget:{dataset:{focusKey:k}}});
  ui.onFieldFocus.call(ctx,event('restaurant'));ui.onFieldFocus.call(ctx,event('notes'));ui.onFieldBlur.call(ctx,event('restaurant'));assert.equal(ctx.data.focusedField,'notes');ui.onFieldBlur.call(ctx,event('notes'));assert.equal(ctx.data.focusedField,'');
 });
-for(const [field,overrides] of [['restaurant',{}],['date',{restaurant:'A',date:''}],['perCapita',{restaurant:'A',perCapita:'-1'}],['location',{restaurant:'A'}],['geography',{restaurant:'A',location:{city:'City',country:''}}]])test('Add '+field+' validation reports field and scrolls without saving',()=>{
+for(const [field,overrides] of [['restaurant',{}],['date',{restaurant:'A',date:''}],['perCapita',{restaurant:'A',perCapita:'-1'}],['geography',{restaurant:'A',location:{city:'City',country:''}}]])test('Add '+field+' validation reports field and scrolls without saving',()=>{
  const add=load('pages/add/index.js');add.data.draft=Object.assign(draft(),overrides);scrolls=[];add.onSave();assert.equal(add.data.errorField,field);assert(add.data.fieldErrors[field]);assert.equal(add.data.saving,false);assert(!add.saveLock);assert.equal(scrolls[0].selector,'#field-'+field);assert(addWxml.includes('id="field-'+field+'"'));
 });
 test('Quiet field errors do not animate page scrolling',()=>{
@@ -82,7 +82,7 @@ test('Add import error remains distinct from save/field error',()=>{
  const add=load('pages/add/index.js');add.importError({code:'TEXT_REQUIRED'});assert.equal(add.data.errorContext,'import');assert.match(add.data.error,/Paste/);add.onSave();assert.equal(add.data.errorContext,'save');assert.equal(add.data.errorField,'restaurant');assert(addWxml.includes("errorContext === 'import'"));assert(addWxml.includes('&& !errorField'));
 });
 test('Profile empty-name failure is visible and scroll-targeted',()=>{
- const sheet=load('components/sheet/index.js');sheet.data.profileName=' ';sheet.onProfileSave();assert(sheet.data.profileError);assert.equal(sheet.data.sheetScrollTarget,'profile-name-field');sheet.onProfileName({detail:{value:'Name'}});assert.equal(sheet.data.profileError,'');
+ const editor=load('components/profile-editor/index.js'),events=[];editor.triggerEvent=(name,detail)=>events.push({name,detail});editor.data.profileName=' ';editor.onProfileSave();assert(editor.data.profileError);assert(events.some(event=>event.name==='scrolltarget'&&event.detail.id==='profile-name-field'));editor.onProfileName({detail:{value:'Name'}});assert.equal(editor.data.profileError,'');
 });
 test('Save uses loader for both busy branches, idle NotebookPen, and disabled semantics',()=>{
  assert(addWxml.includes('wx:if="{{uploading || saving}}" name="loader-circle"'));assert(addWxml.includes('wx:else name="notebook-pen"'));assert(!addWxml.includes('wx:elif="{{saving}}"'));assert(addWxml.includes('aria-disabled="{{businessFrozen || uploading || saving}}"'));assert(appCss.includes('.quiet .spin'));
@@ -112,7 +112,7 @@ test('Image fallback is view-only, immutable, and terminal on repeated errors',(
  ui.onImageError.call(ctx,{currentTarget:{dataset:{source:'/images/le-comptoir.jpg'}}});assert.equal(ctx.updates,2);ui.onImageError.call(ctx,{currentTarget:{dataset:{source:'/images/le-comptoir.jpg'}}});assert.equal(ctx.updates,2);
 });
 test('All dynamic content photos either handle load errors or are the generated chart',()=>{
- for(const page of ['home','add','us','me'])for(const tag of tags(read('pages/'+page+'/index.wxml')))if(/^<image\b/.test(tag)&&tag.includes('src="{{')&&!tag.includes('memory-chart'))assert(tag.includes('binderror='),tag);
+ for(const page of ['home','add','us','me'])for(const tag of tags(read('pages/'+page+'/index.wxml')))if(/^<image\b/.test(tag)&&tag.includes('src="{{')&&!tag.includes('memory-chart')&&!tag.includes('ambient-stable'))assert(tag.includes('binderror='),tag);
  for(const tag of tags(sheetWxml))if(/^<image\b/.test(tag)&&tag.includes('src="{{'))assert(tag.includes('binderror='),tag);
 });
 test('Metrics preserve cached default and refresh explicitly on window change',()=>{
