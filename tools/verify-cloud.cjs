@@ -146,6 +146,14 @@ function nativeTabs(initial=0){
       assert.equal(review.review, 'docs/reviews/ux-remediation-20260917.md');
       assert(review.reason && fs.existsSync(path.join(root, review.review)));
     }
+    const homeIdentityReviews = JSON.parse(fs.readFileSync(path.join(root, 'tools/home-identity-review.json')));
+    assert.deepEqual(Object.keys(homeIdentityReviews).sort(), ['miniprogram/pages/home/index.wxml', 'miniprogram/pages/home/index.wxss']);
+    for (const review of Object.values(homeIdentityReviews)) {
+      assert.match(review.baseSha256, /^[a-f0-9]{64}$/);
+      assert.match(review.sha256, /^[a-f0-9]{64}$/);
+      assert.equal(review.review, 'docs/reviews/home-identity-state-20260922.md');
+      assert(review.reason && fs.existsSync(path.join(root, review.review)));
+    }
     const stage6Reviews = JSON.parse(fs.readFileSync(path.join(root, 'tools/stage6-refactor-review.json')));
     const stage6Scope = [
       'miniprogram/components/settings-editor/index.wxml',
@@ -183,6 +191,10 @@ function nativeTabs(initial=0){
       if (uxReviews[file]) {
         assert.equal(uxReviews[file].baseSha256, expected, 'UX review must chain to the frozen approved checkpoint');
         expected = uxReviews[file].sha256;
+      }
+      if (homeIdentityReviews[file]) {
+        assert.equal(homeIdentityReviews[file].baseSha256, expected, 'Home identity review must chain to the active approved checkpoint');
+        expected = homeIdentityReviews[file].sha256;
       }
       if (stage6Reviews[file]) {
         assert.equal(stage6Reviews[file].baseSha256, expected, 'Stage 6 review must chain to the active checkpoint');

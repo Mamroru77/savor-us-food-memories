@@ -1,0 +1,14 @@
+{
+  "miniprogram/pages/home/index.wxml": {
+    "baseSha256": "d4252f1a986a47b3b83fe8d7c68e8c95f23bca55325bf45d7850efd26d29164b",
+    "sha256": "63f2b4a6ba4b520820632d00ac1f7ea4a78e0c38b1e9259b3cd3d10fd91a958d",
+    "reason": "Reviewed Home identity-state markup: the blocking gate became an inline status while the existing Store subscription immediately redacts stale-owner content; no production template change in this repair.",
+    "review": "docs/reviews/home-identity-state-20260922.md"
+  },
+  "miniprogram/pages/home/index.wxss": {
+    "baseSha256": "a9be695bf2427cd13066e910312a2adf878936d41721873fde6baa60bae381b3",
+    "sha256": "8d3342ae23b22bccdbeccc66d67d42f29f91accbd56051bd7b608481995be47a",
+    "reason": "Reviewed styles paired with the Home inline identity status; the previously approved Home layout and ambient styles remain intact.",
+    "review": "docs/reviews/home-identity-state-20260922.md"
+  }
+}
