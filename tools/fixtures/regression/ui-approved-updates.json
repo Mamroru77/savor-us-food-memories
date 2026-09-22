@@ -44,8 +44,8 @@
     "reason": "Concept-led round3: related page proportions, typography and spacing; no JS/WXML/business change."
   },
   "miniprogram/app.wxss": {
-    "sha256": "e9b86abfa9aaf04200ff2347512319db00039dc994c5adde87bc0dfe8a5bbcca",
-    "reason": "Concept-led visual round1: shared surface, restrained atmosphere, heading and secondary-page spacing tokens. No JS/WXML/Tab/Map geometry change."
+    "sha256": "c817ec8a6763ecd0b3625634c28505716b957bbd56def25ef41df551cb392a55",
+    "reason": "Release package cleanup removes duplicate embedded font bytes from CSS; utils/fonts.js remains the single bundled font loader for webview and native scopes. No visual tokens, layout, Tab or Map geometry change."
   },
   "miniprogram/components/memory-row/index.wxml": {
     "sha256": "fa51bcdd7883efffde26d52b00e9d91fb6b6ac626ae9c05572aca1f5d8d0c801",

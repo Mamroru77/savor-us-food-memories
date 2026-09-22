@@ -381,7 +381,13 @@ section('Package size');
   let total = 0;
   for (const file of listFiles(ROOT)) total += fs.statSync(file).size;
   const mb = total / (1024 * 1024);
-  check('SIZE', `package size ${mb.toFixed(2)} MB (main package limit 2 MB)`, mb < 2);
+  check('SIZE', `package size ${mb.toFixed(2)} MB (release target 1.5 MB)`, mb < 1.5);
+
+  const appCss = fs.readFileSync(path.join(ROOT, 'app.wxss'), 'utf8');
+  const fonts = fs.readFileSync(path.join(ROOT, 'utils', 'fonts.js'), 'utf8');
+  check('FONT', 'font payloads have one runtime owner', !appCss.includes('base64,') && !appCss.includes('@font-face'));
+  check('FONT', 'bundled fonts use the lossless WOFF container', !fonts.includes('font/ttf') && fonts.includes('font/woff'));
+  check('FONT', 'runtime font loading covers WebView and native rendering', fonts.includes("scopes: ['webview', 'native']"));
 }
 
 /* ---------------- dedicated verifiers ---------------- */
