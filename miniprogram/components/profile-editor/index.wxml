@@ -1,6 +1,6 @@
 <view class="profile-editor {{dusk ? 'theme-dusk-panel' : ''}}">
   <view class="settings-form">
-    <button class="edit-avatar" open-type="chooseAvatar" bindchooseavatar="onAvatarChange" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+    <button class="edit-avatar" open-type="chooseAvatar" bindtap="onAvatarRequest" bindchooseavatar="onAvatarChange" aria-label="{{copy.s01d39b33f0}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
       <image class="edit-avatar-img" src="{{imageErrors[(profileAvatar)] ? '/images/jamie.jpg' : (profileAvatar)}}" mode="aspectFill" data-source="{{profileAvatar}}" binderror="onImageError" />
       <view class="edit-avatar-badge">
         <s-icon name="camera" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />

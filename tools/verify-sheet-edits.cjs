@@ -80,6 +80,7 @@ function avatar(h,tempPath='temporary-avatar'){
   const persisted=new Promise((a,b)=>{resolve=a;reject=b;});
   const calls=[];
   h.deps.avatar.prepare=(source,owner,kind)=>{calls.push({source,userId:owner.userId,kind});return persisted.then(localPath=>({formatVersion:1,localPath,digest:null,mime:'image/jpeg',width:1,height:1,source:kind,syncState:'local',remoteRef:null}));};
+  h.p.onAvatarRequest();
   const completion=h.p.onAvatarChange({detail:{avatarUrl:tempPath}});
   return {resolve,reject,completion,calls};
 }
@@ -126,7 +127,42 @@ function avatar(h,tempPath='temporary-avatar'){
   });
   await test('ProfileEditor uses the dedicated chooseAvatar control',()=>{
     assert.match(profileWxml,/<button\b[^>]*open-type="chooseAvatar"[^>]*bindchooseavatar="onAvatarChange"/);
+    assert.match(profileWxml,/<button\b[^>]*open-type="chooseAvatar"[^>]*bindtap="onAvatarRequest"/);
     assert.doesNotMatch(profileWxml,/bindtap="onAvatarChange"/);
+  });
+  await test('chooseAvatar rejects a result when the owner changed while the native chooser was open',async()=>{
+    const h=profileEditor();enter(h);let prepares=0;
+    h.deps.identity.lease=()=>({userId:h.state.identity.userId,generation:h.state.identity.generation,namespace:h.state.identity.userId});
+    h.deps.identity.resumeNative=async owner=>{
+      if(owner.userId!==h.state.identity.userId||owner.generation!==h.state.identity.generation)throw Object.assign(Error('stale'),{code:'STALE_IDENTITY'});
+      return owner;
+    };
+    h.deps.avatar.prepare=async()=>{prepares++;return {localPath:'foreign'};};
+    h.p.onAvatarRequest();
+    h.state.identity={userId:'other',generation:2,locked:false,status:'verified'};
+    await h.p.onAvatarChange({detail:{avatarUrl:'wxfile://foreign'}});
+    assert.equal(prepares,0);
+    assert.equal(h.p.data.profileAvatar,'/images/jamie.jpg');
+    assert.equal(h.state.profile.avatar,'/images/jamie.jpg');
+  });
+  await test('chooseAvatar accepts the result after same-owner re-verification',async()=>{
+    const h=profileEditor();enter(h);let prepared=false;
+    h.deps.avatar.prepare=async()=>{prepared=true;return {localPath:'same-owner'};};
+    h.p.onAvatarRequest();
+    h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();
+    h.state.identity={userId:'fixture',generation:2,locked:false,status:'verified'};h.emit();
+    await h.p.onAvatarChange({detail:{avatarUrl:'wxfile://same-owner'}});
+    assert.equal(prepared,true);
+    assert.equal(h.p.data.profileAvatar,'same-owner');
+  });
+  await test('chooseAvatar drops a late native result after the editor closes',async()=>{
+    const h=profileEditor();enter(h);let prepares=0;
+    h.deps.avatar.prepare=async()=>{prepares++;return {localPath:'late'};};
+    h.p.onAvatarRequest();leave(h);
+    await h.p.onAvatarChange({detail:{avatarUrl:'wxfile://late'}});
+    assert.equal(prepares,0);
+    assert.equal(h.p.data.profileAvatar,'/images/jamie.jpg');
+    assert.equal(h.state.profile.avatar,'/images/jamie.jpg');
   });
   await test('sheet forwards ProfileEditor navigation events',()=>{
     const h=sheet();
@@ -148,16 +184,16 @@ function avatar(h,tempPath='temporary-avatar'){
   await test('chooseAvatar path is persisted before draft preview',async()=>{const h=profileEditor();enter(h);const q=avatar(h,'wxfile://temporary');q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.deepEqual(q.calls,[{source:'wxfile://temporary',userId:'fixture',kind:'chooseAvatar'}]);h.p.refresh();assert.equal(h.p.data.profileAvatar,'chosen');});
   await test('old avatar cannot overwrite a closed and reopened profile',async()=>{const h=profileEditor();enter(h);const q=avatar(h);leave(h);enter(h);q.resolve('old');await flush();assert.notEqual(h.p.data.profileAvatar,'old');});
   await test('avatar callback cannot cross inactive or detached boundary',async()=>{for(const detached of [false,true]){const h=profileEditor();enter(h);const q=avatar(h);if(detached)h.spec.lifetimes.detached.call(h.p);else leave(h);q.resolve('old');await flush();assert.notEqual(h.p.data.profileAvatar,'old');}});
-  await test('editor rechecks same-owner authorization around persistence without starting verification',async()=>{const h=profileEditor();enter(h);let resumes=0;h.deps.identity.resumeNative=async token=>{resumes++;return token;};const q=avatar(h);q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.equal(resumes,2);});
+  await test('editor rechecks same-owner authorization before and around persistence without starting verification',async()=>{const h=profileEditor();enter(h);let resumes=0;h.deps.identity.resumeNative=async token=>{resumes++;return token;};const q=avatar(h);q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');assert.equal(resumes,3);});
   await test('chooseAvatar cancellation leaves edited fields intact',async()=>{const h=profileEditor();enter(h);edit(h,'onProfileName','draft');const q=avatar(h);q.reject({errMsg:'chooseMedia:fail cancel'});await q.completion;assert.equal(h.p.data.profileName,'draft');assert.equal(h.p.data.profileUploading,false);assert.equal(h.state.profile.avatar,'/images/jamie.jpg');});
   await test('newer chooser wins even if old persistence completes last',async()=>{const h=profileEditor();enter(h);const a=avatar(h),b=avatar(h);b.resolve('new');await flush();a.resolve('old');await flush();assert.equal(h.p.data.profileAvatar,'new');});
-  await test('avatar persistence survives app re-verification for the same owner',async()=>{const h=profileEditor();enter(h);edit(h,'onProfileName','draft');const q=avatar(h);assert(h.deps.nativeFlow.snapshot());h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();hide(h);assert.equal(h.p.data.profileName,'draft');h.state.identity={userId:'fixture',generation:2,locked:false,status:'verified'};h.emit();enter(h);q.resolve('chosen-after-resume');await flush();assert.equal(h.p.data.profileAvatar,'chosen-after-resume');assert.equal(h.p.data.profileName,'draft');});
+  await test('avatar persistence survives app re-verification for the same owner',async()=>{const h=profileEditor();enter(h);edit(h,'onProfileName','draft');const q=avatar(h);await flush();assert(h.deps.nativeFlow.snapshot());h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();hide(h);assert.equal(h.p.data.profileName,'draft');h.state.identity={userId:'fixture',generation:2,locked:false,status:'verified'};h.emit();enter(h);q.resolve('chosen-after-resume');await flush();assert.equal(h.p.data.profileAvatar,'chosen-after-resume');assert.equal(h.p.data.profileName,'draft');});
   await test('avatar persistence is discarded after a different owner verifies',async()=>{const h=profileEditor();enter(h);const q=avatar(h);h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();h.state.identity={userId:'other',generation:2,locked:false,status:'verified'};h.emit();q.resolve('foreign');await flush();assert.notEqual(h.p.data.profileAvatar,'foreign');});
   await test('avatar selection only previews until Save, even when profile name is empty',async()=>{const h=profileEditor();h.state.profile.name='';enter(h);assert.equal(h.p.data.profileName,'');const q=avatar(h);q.resolve('/user/savor-photos/fixture/avatar.jpg');await flush();assert.equal(h.state.profile.avatar,'/images/jamie.jpg');assert.equal(h.p.data.profileAvatar,'/user/savor-photos/fixture/avatar.jpg');});
   await test('profile save failure stays open and reports the storage error',()=>{const h=profileEditor();enter(h);h.p.data.profileName='Saved';let notified=false;h.deps.store.notify=()=>{notified=true;};h.deps.store.updateProfile=()=>{throw Error('Storage unavailable. Free some space before saving; your input is still here.');};h.p.onProfileSave();assert(!h.events.some(e=>e.name==='close'));assert.equal(notified,false);assert.match(h.p.data.profileError,/Could not save/);});
   await test('empty profile name asks Sheet to reveal the name field',()=>{const h=profileEditor();enter(h);h.p.data.profileName='   ';h.p.onProfileSave();assert(h.events.some(e=>e.name==='scrolltarget'&&e.detail.id==='profile-name-field'));assert.match(h.p.data.profileError,/cannot be empty/);});
-  await test('refresh cannot enable Save while avatar persistence is pending',async()=>{const h=profileEditor();enter(h);const q=avatar(h);h.p.refresh();assert.equal(h.p.data.profileUploading,true);h.p.onProfileSave();assert(!h.events.some(e=>e.name==='close'));q.resolve('ready');await flush();});
-  await test('old completion never ends the newer native recovery',async()=>{const h=profileEditor();enter(h);const a=avatar(h),b=avatar(h),current=h.deps.nativeFlow.snapshot().id;a.resolve('old');await flush();assert.equal(h.deps.nativeFlow.snapshot().id,current);b.resolve('new');await flush();assert.equal(h.p.data.profileAvatar,'new');assert.equal(h.deps.nativeFlow.snapshot(),null);});
+  await test('refresh cannot enable Save while avatar persistence is pending',async()=>{const h=profileEditor();enter(h);const q=avatar(h);await flush();h.p.refresh();assert.equal(h.p.data.profileUploading,true);h.p.onProfileSave();assert(!h.events.some(e=>e.name==='close'));q.resolve('ready');await flush();});
+  await test('old completion never ends the newer native recovery',async()=>{const h=profileEditor();enter(h);const a=avatar(h),b=avatar(h);await flush();const current=h.deps.nativeFlow.snapshot().id;a.resolve('old');await flush();assert.equal(h.deps.nativeFlow.snapshot().id,current);b.resolve('new');await flush();assert.equal(h.p.data.profileAvatar,'new');assert.equal(h.deps.nativeFlow.snapshot(),null);});
   await test('switch away and back invalidates old avatar persistence',async()=>{const h=profileEditor();enter(h);const q=avatar(h);leave(h);enter(h);q.resolve('old');await flush();assert.notEqual(h.p.data.profileAvatar,'old');});
   await test('transient null preserves current request and profile display',async()=>{const shell=sheet();enterSheet(shell);const flow=shell.deps.nativeFlow.begin(shell.deps.identity.lease());shell.p.data.type=null;shell.spec.observers['show, type, memoryId, filter'].call(shell.p);assert.equal(shell.p.data.displayType,'profile');flow.cancel();const h=profileEditor();enter(h);const q=avatar(h);h.state.identity.status='verifying';hide(h);h.state.identity.status='verified';enter(h);q.resolve('chosen');await flush();assert.equal(h.p.data.profileAvatar,'chosen');});
   await test('callback before property restoration waits for the suspended current editor',async()=>{const h=profileEditor();enter(h);const q=avatar(h);h.state.identity={userId:'',generation:2,locked:true,status:'verifying'};h.emit();hide(h);h.state.identity={userId:'fixture',generation:2,locked:false,status:'verified'};h.emit();q.resolve('current');await flush();assert.notEqual(h.p.data.profileAvatar,'current');enter(h);await flush();assert.equal(h.p.data.profileAvatar,'current');});

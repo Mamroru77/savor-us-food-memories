@@ -28,9 +28,10 @@ Component({
   observers: {
     'active, show': function (active, show) {
       const flow = this._avatarFlow;
-      const preserving = !!flow && flow.active() && active && (show || identity.snapshot().status === 'verifying');
-      if (preserving && !show) flow.suspend();
-      if (preserving && show) flow.show();
+      const preserving = active && (show || identity.snapshot().status === 'verifying')
+        && ((!!flow && flow.active()) || !!this._avatarRequest);
+      if (preserving && flow && !show) flow.suspend();
+      if (preserving && flow && show) flow.show();
       if (!preserving && (!active || !show)) this.reset();
       if (active && show) this.refresh();
     },
@@ -41,12 +42,13 @@ Component({
       this.unsubscribe = store.subscribe(function (state) {
         const session = state.identity;
         const flow = this._avatarFlow;
-        if (flow && flow.active() && session) {
+        const owner = flow && flow.active() ? { userId: flow.userId } : this._avatarRequest && this._avatarRequest.owner;
+        if (owner && session) {
           if (session.locked && session.status === 'verifying') {
             this._identityGeneration = session.generation;
             return;
           }
-          if (session.locked || session.userId !== flow.userId) {
+          if (session.locked || session.userId !== owner.userId) {
             this.reset();
             this.setData({ profileName: '', profileBio: '', profileAvatar: '', profileError: '', imageErrors: {} });
             this.triggerEvent('close', { reason: 'identity' });
@@ -88,6 +90,7 @@ Component({
     reset() {
       if (this._avatarFlow) this._avatarFlow.cancel();
       this._avatarFlow = null;
+      this._avatarRequest = null;
       this._profileAvatarAsset = null;
       this._formEdits = {};
       if (!this._detached) this.setData({ profileUploading: false, profileError: '' });
@@ -120,46 +123,61 @@ Component({
       this.setData({ profileBio: event.detail.value });
     },
 
+    onAvatarRequest() {
+      if (this._detached || !this.data.active || !this.data.show) return;
+      try {
+        this._avatarRequest = { owner: identity.lease() };
+      } catch (error) {
+        this._avatarRequest = null;
+        photos.logFailure(error, 'identity');
+        this.setData({ profileError: identityCopy().verify });
+      }
+    },
+
     onAvatarChange(event) {
       const tempPath = event && event.detail && event.detail.avatarUrl;
-      if (!tempPath || this._detached || !this.data.active || !this.data.show) return Promise.resolve();
-      const that = this;
-      let flow, owner;
-      try {
-        owner = identity.lease();
-        flow = nativeFlow.begin(owner);
-        that._avatarFlow = flow;
-      } catch (error) {
-        photos.logFailure(error, 'identity');
-        that.setData({ profileUploading: false, profileError: identityCopy().verify });
+      const request = this._avatarRequest;
+      if (!tempPath || !request || this._detached || !this.data.active || !this.data.show) {
+        if (this._avatarRequest === request) this._avatarRequest = null;
         return Promise.resolve();
       }
-      const active = () => !that._detached && that.data.active && that.data.show && that._avatarFlow === flow && flow.active();
-      that.setData({ profileUploading: true, profileError: '' });
-      return flow.run(token => avatarService.prepare(tempPath, token, 'chooseAvatar')).then(function (result) {
-        if (!active() || result.status === 'cancelled') return;
-        if (result.status === 'stale-owner') {
-          photos.logFailure({ code: 'STALE_IDENTITY' }, 'identity');
-          that.setData({ profileError: identityCopy().verify });
-          return;
-        }
-        const asset = result.value;
-        if (active() && asset.localPath) {
-          that.markFormEdit('profileAvatar');
-          that._profileAvatarAsset = asset;
-          that.setData({ profileAvatar: asset.localPath, profileUploading: false, imageErrors: {} });
-        } else if (active()) {
-          that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
-        }
+      const that = this;
+      let flow;
+      const activeRequest = () => !that._detached && that.data.active && that._avatarRequest === request;
+      return identity.resumeNative(request.owner).then(function (owner) {
+        if (!activeRequest()) return;
+        that._avatarRequest = null;
+        flow = nativeFlow.begin(owner);
+        that._avatarFlow = flow;
+        if (!that.data.show) flow.suspend();
+        const active = () => !that._detached && that.data.active && that.data.show && that._avatarFlow === flow && flow.active();
+        that.setData({ profileUploading: true, profileError: '' });
+        return flow.run(token => avatarService.prepare(tempPath, token, 'chooseAvatar')).then(function (result) {
+          if (!active() || result.status === 'cancelled') return;
+          if (result.status === 'stale-owner') {
+            photos.logFailure({ code: 'STALE_IDENTITY' }, 'identity');
+            that.setData({ profileError: identityCopy().verify });
+            return;
+          }
+          const asset = result.value;
+          if (active() && asset.localPath) {
+            that.markFormEdit('profileAvatar');
+            that._profileAvatarAsset = asset;
+            that.setData({ profileAvatar: asset.localPath, profileUploading: false, imageErrors: {} });
+          } else if (active()) {
+            that.setData({ profileUploading: false, profileError: i18n.t('Could not prepare the photo. Please select it again.') });
+          }
+        });
       }).catch(function (error) {
         const reported = photos.logFailure(error);
-        if (!active()) return;
+        if (that._detached || !that.data.active || !that.data.show || (flow && that._avatarFlow !== flow)) return;
         const message = reported.category === 'identity' ? identityCopy().verify
           : reported.category === 'filesystem' ? 'Could not save. Free some storage and try again.'
           : 'Could not prepare the photo. Please select it again.';
         that.setData({ profileUploading: false, profileError: i18n.t(message) });
       }).finally(function () {
-        if (that._avatarFlow !== flow) return;
+        if (that._avatarRequest === request) that._avatarRequest = null;
+        if (!flow || that._avatarFlow !== flow) return;
         flow.finish();
         that._avatarFlow = null;
         if (!that._detached && that.data.active && that.data.show) that.setData({ profileUploading: false });
