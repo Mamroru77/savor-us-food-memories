@@ -10,7 +10,7 @@ function harness(name,locked=false){
  const service={call:action=>{calls.push(action);return new Promise((resolve,reject)=>pending.push({resolve,reject}));}};
  const report={build:(rows,year,options)=>{builds.push(year);return {year,details:!!(options&&options.details)};},draw:(ctx,data)=>draws.push({ctx,year:data.year})};
  const wx={setNavigationBarTitle(){},createSelectorQuery:()=>({in(){return this;},select(){return this;},fields(){return this;},exec(cb){queries.push(cb);}})};
- const deps={secondaryUI:secondary,identity,store,workspace:service,workspaceCopy:()=>({title:'tools',ready:'ready'}),annualReport:report,localDate:{today:()=> '2026-09-16',shift:()=> '2026-09-17'}};
+ const deps={secondaryUI:secondary,identity,store,workspaceClient:service,archiveService:{},avatar:{},profileSync:{},workspaceFiles:{},workspaceCopy:()=>({title:'tools',ready:'ready'}),annualReport:report,localDate:{today:()=> '2026-09-16',shift:()=> '2026-09-17'}};
  vm.runInNewContext(fs.readFileSync('miniprogram/pages/'+name+'/index.js','utf8'),{Page:s=>spec=s,require:p=>{const key=p.split('/').pop();if(!(key in deps))throw Error('Unexpected dependency '+p);return deps[key];},wx,Date,Promise,setTimeout,clearTimeout});
  const p={...spec,data:JSON.parse(JSON.stringify(spec.data)),setData(patch,cb){Object.assign(this.data,patch);if(cb)cb();}};
  return {p,calls,queries,draws,builds,pending,setLocked:v=>locked=v,emit:()=>listener(),off:()=>off};

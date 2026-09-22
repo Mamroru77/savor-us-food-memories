@@ -1,4 +1,4 @@
-const identity=require('./identity'),workspace=require('./workspace'),repository=require('./profileRepository'),store=require('./store'),avatar=require('./avatar');
+const identity=require('./identity'),client=require('./workspaceClient'),files=require('./workspaceFiles'),archive=require('./archiveService'),repository=require('./profileRepository'),store=require('./store'),avatar=require('./avatar');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 
 function checked(remote){
@@ -13,7 +13,7 @@ function revision(remote){
 }
 
 async function pull(token=identity.lease()){
- const response=await workspace.call('getProfile',{},token);
+ const response=await client.call('getProfile',{},token);
  if(!response||!Object.prototype.hasOwnProperty.call(response,'profile'))fail('PROFILE_RESPONSE_INVALID');
  return response.profile===null?null:checked(response.profile);
 }
@@ -22,7 +22,7 @@ async function push(remote,selected){
  const payload=repository.payload(store.get()),current=revision(remote);
  if(selected&&typeof selected.base64!=='string')fail('INVALID_AVATAR');
  payload.profile.avatar=selected?selected.base64:remote&&remote.profile.avatar&&remote.profile.avatar.base64||null;
- try{return await workspace.mutate('pushProfile',{payload,revision:current,consent:true});}
+ try{return await archive.mutate('pushProfile',{payload,revision:current,consent:true});}
  catch(error){
   if(['PROFILE_CONFLICT','OPERATION_CONFLICT'].includes(error.code)){
    const pending=identity.workspaceIntent();if(pending&&pending.action==='pushProfile')identity.saveWorkspaceIntent(null);
@@ -34,7 +34,7 @@ async function push(remote,selected){
 async function apply(remote,options={}){
  if(options.confirmed!==true)fail('PROFILE_APPLY_CONSENT_REQUIRED');
  const current=revision(remote),token=identity.lease();
- workspace.writeFile(JSON.stringify(identity.exportCurrent()),'json',token);
+ files.writeFile(JSON.stringify(identity.exportCurrent()),'json',token);
  const profile={name:remote.profile.name,bio:remote.profile.bio},remoteAsset=remote.profile.avatar;
  if(remoteAsset)profile.avatarAsset=await avatar.restore(remoteAsset,token);
  identity.assertLease(token);store.applyCloudProfile(profile,remote.preferences,token);

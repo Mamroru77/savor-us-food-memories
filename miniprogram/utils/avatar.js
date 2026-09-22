@@ -26,6 +26,15 @@ async function prepare(tempPath, owner, source) {
   return { formatVersion: 1, localPath, ...(await inspect(localPath, owner)), source, syncState: 'local', remoteRef: null };
 }
 
+async function chooseForCloud() {
+  let owner=identity.lease();
+  const picked=await new Promise((resolve,reject)=>wx.chooseMedia({count:1,mediaType:['image'],sourceType:['album','camera'],success:resolve,fail:reject}));
+  owner=await identity.resumeNative(owner);
+  const source=picked.tempFiles&&picked.tempFiles[0]&&picked.tempFiles[0].tempFilePath;
+  if(!source)throw failure('choose','NO_AVATAR_SELECTED','image');
+  return forCloud(await prepare(source,owner,'album'),owner);
+}
+
 async function forCloud(asset, owner) {
   const prefix = photos.photosDir(owner) + '/';
   if (!asset || typeof asset.localPath !== 'string' || !asset.localPath.startsWith(prefix) || asset.localPath.includes('..')) throw imageFailure('AVATAR_ASSET_INVALID');
@@ -69,4 +78,4 @@ async function restore(remote, owner) {
   return { formatVersion: 1, localPath, digest: remote.digest, ...details, source: 'cloud', syncState: 'synced', remoteRef: remote.digest };
 }
 
-module.exports = { prepare, forCloud, restore };
+module.exports = { prepare, chooseForCloud, forCloud, restore };

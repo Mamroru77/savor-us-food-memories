@@ -3,7 +3,9 @@ global.wx={env:{USER_DATA_PATH:'/owner'},getFileSystemManager:()=>({})};
 
 const repository=require('../miniprogram/utils/profileRepository');
 const sync=require('../miniprogram/utils/profileSync');
-const workspace=require('../miniprogram/utils/workspace');
+const client=require('../miniprogram/utils/workspaceClient');
+const files=require('../miniprogram/utils/workspaceFiles');
+const archive=require('../miniprogram/utils/archiveService');
 const avatar=require('../miniprogram/utils/avatar');
 const store=require('../miniprogram/utils/store');
 const identity=require('../miniprogram/utils/identity');
@@ -25,7 +27,8 @@ function pageHarness(){
  const profileSync={pull:async()=>remote,push:async(r,selected)=>{pushArgs={remote:r,selected};return {revision:4};},apply:async(r,options)=>{applyArgs={remote:r,options};return {revision:r.revision};}};
  const deps={
   '../../utils/secondaryUI':{},'../../utils/identity':{lease:()=>token,isCurrent:()=>true,workspaceIntent:()=>null,resumeNative:async()=>token},
-  '../../utils/workspace':{call:async action=>{if(action==='getProfile')throw Error('WORKSPACE_PROFILE_BYPASS');},chooseAvatar:async()=>({base64:'picked'})},
+  '../../utils/workspaceClient':{call:async action=>{if(action==='getProfile')throw Error('WORKSPACE_PROFILE_BYPASS');}},
+  '../../utils/archiveService':{},'../../utils/avatar':{chooseForCloud:async()=>({base64:'picked'})},
   '../../utils/profileSync':profileSync,'../../utils/store':{},'../../utils/workspaceCopy':()=>({ready:'ready',noProfile:'none',revision:'rev',profileHint:'push?',profileConsent:'apply?',done:'done',selected:'selected'}),
  };
  vm.runInNewContext(fs.readFileSync(file,'utf8'),{Page:value=>{pageSpec=value;},require:name=>deps[name]||require(path.resolve(path.dirname(file),name)),wx:{},Date,Promise,setTimeout,clearTimeout});
@@ -45,28 +48,28 @@ function pageHarness(){
   identity.lease=()=>token;identity.assertLease=value=>assert.equal(value,token);identity.exportCurrent=()=>({kind:'before-image'});
   identity.workspaceIntent=()=>pending;identity.saveWorkspaceIntent=value=>{pending=value;};
   store.get=()=>state;store.applyCloudProfile=(profile,preferences,owner)=>{identity.assertLease(owner);state=repository.applyCloud(state,profile,preferences);};
-  workspace.writeFile=value=>{backup=value;return '/backup.json';};
+  files.writeFile=value=>{backup=value;return '/backup.json';};
   avatar.restore=async()=>({...appliedAsset});
 
   await test('pull is read-only and returns the versioned remote profile',async()=>{
-    const before=JSON.stringify(state);workspace.call=async(action,args,owner)=>{assert.equal(action,'getProfile');assert.equal(owner,token);return {profile:remote};};
+    const before=JSON.stringify(state);client.call=async(action,args,owner)=>{assert.equal(action,'getProfile');assert.equal(owner,token);return {profile:remote};};
     assert.equal(await sync.pull(token),remote);assert.equal(JSON.stringify(state),before);
   });
   await test('pull rejects a malformed remote profile before the UI can read it',async()=>{
-    const before=JSON.stringify(state);workspace.call=async()=>({});
+    const before=JSON.stringify(state);client.call=async()=>({});
     await assert.rejects(sync.pull(token),error=>error.code==='PROFILE_RESPONSE_INVALID');
-    workspace.call=async()=>({profile:{revision:'3',profile:{name:'Cloud'},preferences:{cuisines:[]}}});
+    client.call=async()=>({profile:{revision:'3',profile:{name:'Cloud'},preferences:{cuisines:[]}}});
     await assert.rejects(sync.pull(token),error=>error.code==='PROFILE_RESPONSE_INVALID');assert.equal(JSON.stringify(state),before);
   });
 
   await test('push owns the revision and whitelisted payload contract',async()=>{
-    let sent;workspace.mutate=async(action,args)=>{sent={action,args};return {revision:4};};
+    let sent;archive.mutate=async(action,args)=>{sent={action,args};return {revision:4};};
     const result=await sync.push(remote,{base64:'new-cloud'});
     assert.equal(result.revision,4);assert.deepEqual(sent,{action:'pushProfile',args:{payload:{profile:{name:'Local',bio:'Local bio',avatar:'new-cloud'},preferences:{dietary:'None',cuisines:['Thai'],privateByDefault:false,showLocations:true,reminders:true}},revision:3,consent:true}});
   });
 
   await test('deterministic push conflict clears the blocked intent without overwriting local data',async()=>{
-    const before=JSON.stringify(state);workspace.mutate=async()=>{pending={actorUserId:token.userId,action:'pushProfile'};throw Object.assign(new Error('PROFILE_CONFLICT'),{code:'PROFILE_CONFLICT'});};
+    const before=JSON.stringify(state);archive.mutate=async()=>{pending={actorUserId:token.userId,action:'pushProfile'};throw Object.assign(new Error('PROFILE_CONFLICT'),{code:'PROFILE_CONFLICT'});};
     await assert.rejects(sync.push(remote,null),error=>error.code==='PROFILE_CONFLICT');assert.equal(pending,null);assert.equal(JSON.stringify(state),before);
   });
 

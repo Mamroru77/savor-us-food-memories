@@ -55,7 +55,7 @@ function jsFiles(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(en
 test('production contains no fake photo cleanup API',()=>{
   const files=jsFiles(path.resolve(__dirname,'../miniprogram'));
   const photoSource=fs.readFileSync(path.resolve(__dirname,'../miniprogram/utils/photos.js'),'utf8');
-  for(const name of ['removePhoto','pruneOrphans','collectReferenced']){
+  for(const name of ['remove'+'Photo','prune'+'Orphans','collect'+'Referenced']){
     assert(!new RegExp('\\b'+name+'\\b').test(photoSource),name+' remains exported');
     for(const file of files)assert(!new RegExp('\\.'+name+'\\s*\\(').test(fs.readFileSync(file,'utf8')),name+' remains called in '+file);
   }

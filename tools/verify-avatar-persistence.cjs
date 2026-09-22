@@ -45,7 +45,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   }
   const identity=load('miniprogram/utils/identity.js'),store=load('miniprogram/utils/store.js'),photos=load('miniprogram/utils/photos.js'),data=load('miniprogram/utils/data.js');
   let avatar;try{avatar=load('miniprogram/utils/avatar.js');}catch(error){if(error.code!=='ENOENT')throw error;}
-  const workspace=load('miniprogram/utils/workspace.js'),profileSync=load('miniprogram/utils/profileSync.js');
+  const workspaceClient=load('miniprogram/utils/workspaceClient.js'),workspaceFiles=load('miniprogram/utils/workspaceFiles.js'),archiveService=load('miniprogram/utils/archiveService.js'),profileSync=load('miniprogram/utils/profileSync.js');
   function mount(){
     load('miniprogram/pages/me/index.js');load('miniprogram/components/sheet/index.js');load('miniprogram/components/profile-editor/index.js');let sheet,profile;
     const syncProfile=()=>{if(!profile||!sheet)return;const active=sheet.data.displayType==='profile',show=sheet.data.show;Object.assign(profile.data,{active,show,dusk:sheet.data.dusk});profileSpec.observers['active, show'].call(profile,active,show);};
@@ -61,7 +61,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     const page={...pageSpec,data:JSON.parse(JSON.stringify(pageSpec.data)),setData(patch){Object.assign(this.data,patch);}};
     page.data.locked=false;page._hidden=false;page._viewEpoch=0;return page;
   }
-  return {mount,mountWorkspace,identity,store,photos,avatar,workspace,profileSync,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
+  return {mount,mountWorkspace,identity,store,photos,avatar,workspaceClient,workspaceFiles,archiveService,profileSync,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
 }
 (async()=>{
   await test('avatar service prepares a canonical owner-local asset',async()=>{
@@ -90,14 +90,14 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     assert.deepEqual({digest:asset.digest,mime:asset.mime,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{digest,mime:'image/png',source:'cloud',syncState:'synced',remoteRef:digest});
     assert(fs.readFileSync(asset.localPath).equals(png));assert(r.calls.includes('write-sync'));assert(r.calls.includes('saved-info'));
   });
-  await test('production Workspace chooser returns the unified asset and cloud payload',async()=>{
-    const r=runtime();await r.ready();const selected=await r.workspace.chooseAvatar();
+  await test('production avatar chooser returns the unified asset and cloud payload',async()=>{
+    const r=runtime();await r.ready();const selected=await r.avatar.chooseForCloud();
     assert(selected&&selected.asset);assert(selected.asset.localPath.includes('/savor-photos/'+uid('a')+'/'));
     assert.equal(selected.asset.source,'album');assert.equal(selected.asset.syncState,'pending');assert(Buffer.from(selected.base64,'base64').equals(jpg));
   });
   await test('production Workspace page pushes only the service cloud payload',async()=>{
     const r=runtime();await r.ready();const page=r.mountWorkspace();await page.avatar();const selected=page._avatar;assert(selected&&selected.asset);
-    let pushed;r.workspace.mutate=async(action,args)=>{pushed=args.payload.profile.avatar;return {revision:1};};page.confirm=async()=>true;page.data.profileRead=true;page._remote=null;
+    let pushed;r.archiveService.mutate=async(action,args)=>{pushed=args.payload.profile.avatar;return {revision:1};};page.confirm=async()=>true;page.data.profileRead=true;page._remote=null;
     await page.push();assert.equal(typeof pushed,'string');assert.equal(pushed,selected.base64);
   });
   await test('production Workspace apply restores cloud avatar through the owner photo store',async()=>{

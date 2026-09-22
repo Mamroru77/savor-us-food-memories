@@ -1,5 +1,5 @@
 const secondaryUI=require('../../utils/secondaryUI');
-const identity=require('../../utils/identity'),store=require('../../utils/store'),report=require('../../utils/annualReport'),files=require('../../utils/workspace');
+const identity=require('../../utils/identity'),store=require('../../utils/store'),report=require('../../utils/annualReport'),files=require('../../utils/workspaceFiles');
 Page({
  onFieldFocus:secondaryUI.onFieldFocus,onFieldBlur:secondaryUI.onFieldBlur,
  data:{locked:true,years:[],year:'',report:null,details:false,message:'',dusk:false,busy:false},

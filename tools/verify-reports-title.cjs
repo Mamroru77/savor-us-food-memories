@@ -9,7 +9,7 @@ for(const locale of ['zh-CN','en'])for(const theme of ['pearl','dusk'])for(const
  const i18n={locale:()=>locale,t:text=>{const row=catalog.find(x=>x.en===text);return row?(locale==='en'?row.en:row.zh):text;}};
  const module={exports:{}},deps={i18n,uiFeedback:{},store:{get:()=>state}};
  vm.runInNewContext(fs.readFileSync('miniprogram/utils/secondaryUI.js','utf8'),{module,require:p=>deps[p.split('/').pop()],wx});
- const pages={secondaryUI:module.exports,identity,store:deps.store,annualReport:{build:(rows,year)=>{builds.push(rows);return {year}},draw(){}},workspace:{}};
+ const pages={secondaryUI:module.exports,identity,store:deps.store,annualReport:{build:(rows,year)=>{builds.push(rows);return {year}},draw(){}},workspaceFiles:{}};
  vm.runInNewContext(fs.readFileSync('miniprogram/pages/reports/index.js','utf8'),{Page:p=>spec=p,require:p=>{const key=p.split('/').pop();assert(key in pages,'Unexpected Reports dependency '+key);return pages[key]},wx,Date});
  const p={...spec,data:{...spec.data},setData(patch,cb){Object.assign(this.data,patch);if(cb)cb();}};
  p.onLoad();assert.equal(builds.length,0);p.onShow();assert.equal(builds.length,2);assert.equal(queries.length,1);
