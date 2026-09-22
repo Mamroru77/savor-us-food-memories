@@ -21,7 +21,7 @@ function load(file,extra={}){
  vm.runInNewContext(read(file),{Page:s=>spec=s,Component:s=>spec=s,require:n=>({...stubs,...extra})[n.split('/').pop()]||{},wx:{pageScrollTo:o=>scrolls.push(o)},console,setTimeout,clearTimeout},{filename:file});
  return {spec,...(spec.methods||spec),data:JSON.parse(JSON.stringify(spec.data)),setData(p,cb){Object.assign(this.data,p);if(cb)cb();}};
 }
-const sheetCss=read('components/sheet/index.wxss'),sheetWxml=read('components/sheet/index.wxml'),addWxml=read('pages/add/index.wxml'),appCss=read('app.wxss');
+const sheetCss=read('components/sheet/index.wxss'),sheetWxml=read('components/sheet/index.wxml'),settingsWxml=read('components/settings-editor/index.wxml'),addWxml=read('pages/add/index.wxml'),appCss=read('app.wxss');
 for(const n of [0,1,5,20,100])test('Library retains all '+n+' synthetic records',()=>{
  const sheet=load('components/sheet/index.js'),patch={};sheet.data.filter='all';
  sheet.refreshLibrary(patch,{memories:Array.from({length:n},(_,i)=>({id:String(i),restaurant:'Place '+i,date:'2026-09-12',tags:[],city:'City'}))});
@@ -138,7 +138,7 @@ test('Native horizontal detail scroller has explicit width and height without ma
  assert(sheetWxml.includes('detail.images.length * 90 + (detail.images.length - 1) * 15'));assert(sheetCss.includes('height:90rpx; margin-top:20rpx; white-space:nowrap'));assert.equal(9*90+8*15,930);
 });
 test('Existing theme/cuisine checks are retained rather than duplicated',()=>{
- assert.equal((sheetWxml.match(/class="theme-option-check"/g)||[]).length,1);assert(sheetWxml.includes('aria-pressed="{{theme === item}}"'));assert(sheetWxml.includes('aria-pressed="{{cuisines.indexOf(item.value) >= 0}}"'));
+ assert.equal((settingsWxml.match(/class="theme-option-check"/g)||[]).length,1);assert(settingsWxml.includes('aria-pressed="{{theme === item}}"'));assert(settingsWxml.includes('aria-pressed="{{cuisines.indexOf(item.value) >= 0}}"'));
 });
 test('Memory Row retains its divider strategy while image and text sizing is refined',()=>{
  const css=read('components/memory-row/index.wxss');

@@ -275,11 +275,11 @@ function nativeTabs(initial=0){
       p.spec.observers['memory, locale'].call(p,null);assert.equal(p.data.location,'');assert.equal(p.data.photoSrc,data.photos.meal);
     }finally{service.resolvePhotoUrls=original;}
   });
-  await test('memory row local and unsafe images never request cloud URLs; sheet uses class selector',async()=>{
+  await test('memory row local and unsafe images never request cloud URLs; settings editor uses class selector',async()=>{
     const original=service.resolvePhotoUrls;let calls=0;service.resolvePhotoUrls=async()=>{calls++;};
     try{const p=memoryRow();await p.loadPhoto(data.photos.meal);await p.loadPhoto('javascript:alert(1)');assert.equal(calls,0);assert.equal(p.data.photoSrc,data.photos.meal);}finally{service.resolvePhotoUrls=original;}
     assert(!fs.readFileSync(path.join(mp,'components/sheet/index.wxss'),'utf8').includes('.theme-option s-icon'));
-    assert(fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8').includes('class="theme-option-check"'));
+    assert(fs.readFileSync(path.join(mp,'components/settings-editor/index.wxml'),'utf8').includes('class="theme-option-check"'));
   });
   await test('Cloud init preserves env and shell survives unavailable CloudBase', async () => {
     let app; global.App = x => { app = x; }; require(path.join(mp, 'app.js'));
