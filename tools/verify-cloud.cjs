@@ -438,10 +438,12 @@ function nativeTabs(initial=0){
     const p = page('add'); store.saveDraft(draft()); p.onLoad(); p.onShow(); await p.onChooseRestaurantLocation(); await p.onSave(); p.onUnload();
     const saved = store.get().memories[0]; assert(locations.confirmed(saved)); assert.equal(saved.address, '高雄市苓雅區');
   });
-  await test('new Add refuses city-centre placeholder and retains draft', async () => {
+  await test('new Add accepts an optional location without persisting placeholder coordinates', async () => {
     const d = draft(); delete d.location; d.restaurant = 'Never mapped restaurant'; store.saveDraft(d);
     const p = page('add'); p.onLoad(); p.onShow(); const before = rows.size; await p.onSave();
-    assert.equal(rows.size, before); assert.equal(p.data.error, require(path.join(mp, 'utils/i18n')).t('Please confirm the restaurant in Tencent Maps before saving. A city centre is not a restaurant location.')); assert.equal(p.data.saving, false); p.onUnload();
+    const saved=store.get().memories[0],record=rows.get(saved.cloudId);
+    assert.equal(rows.size, before+1);assert.equal(saved.locationUnknown,true);assert.equal(record.coordinates,undefined);
+    assert.equal(p.data.error,'');assert.equal(p.data.saving,false);assert.equal(store.loadDraft().restaurant,'');p.onUnload();
   });
   await test('cloud location update is owner-authorized and survives list', async () => {
     const id = store.get().memories.find(m => m.cloudId).id;
