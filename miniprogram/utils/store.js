@@ -20,6 +20,7 @@ const STORAGE_KEY = 'savor-diary-v1';
 const DRAFT_KEY = 'savor-draft-v1';
 
 const state = {
+  schemaVersion: 2,
   memories: [],
   profile: Object.assign({}, data.defaultProfile),
   settings: Object.assign({}, data.defaultSettings),
@@ -37,11 +38,28 @@ let currentToast = null;
 
 function defaults() {
   return {
+    schemaVersion: 2,
     memories: [],
     profile: Object.assign({}, data.defaultProfile),
     settings: Object.assign({}, data.defaultSettings),
     feedback: [],
   };
+}
+
+function normalizeDiary(value) {
+  const parsed=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+  const migrated=profileRepository.migrate(parsed.profile,data.defaultProfile);
+  const diary={
+    ...parsed,
+    schemaVersion:2,
+    memories:memoryRepository.restore(parsed.memories),
+    profile:migrated.profile,
+    settings:settingsRepository.normalize(parsed.settings),
+    feedback:Array.isArray(parsed.feedback)?parsed.feedback.filter(f=>f&&typeof f.message==='string'&&typeof f.date==='string'):[],
+    outbox:Array.isArray(parsed.outbox)?parsed.outbox.filter(op=>op&&typeof op.id==='string'&&typeof op.recordId==='string'&&['flags','delete','update'].includes(op.kind)):[],
+    cloudHidden:Array.isArray(parsed.cloudHidden)?parsed.cloudHidden.filter(id=>typeof id==='string'):[],
+  };
+  return {diary,changed:parsed.schemaVersion!==2||migrated.changed||JSON.stringify(diary)!==JSON.stringify(parsed)};
 }
 
 function loadDiary() {
@@ -53,27 +71,18 @@ function loadDiary() {
   } catch (error) {
     throw error; // corrupt account cache remains untouched
   }
-  if (!parsed || typeof parsed !== 'object') return defaults();
-
-  const memories = memoryRepository.restore(parsed.memories);
-
-  const profile = Object.assign({}, data.defaultProfile, parsed.profile && typeof parsed.profile === 'object' ? parsed.profile : {});
-  const settings = settingsRepository.normalize(parsed.settings);
-  const feedback = Array.isArray(parsed.feedback) ? parsed.feedback.filter(function (f) {
-    return f && typeof f.message === 'string' && typeof f.date === 'string';
-  }) : [];
-  return { memories, profile, settings, feedback, outbox: Array.isArray(parsed.outbox) ? parsed.outbox.filter(op=>op && typeof op.id==='string' && typeof op.recordId==='string' && ['flags','delete','update'].includes(op.kind)) : [], cloudHidden: Array.isArray(parsed.cloudHidden) ? parsed.cloudHidden.filter(id => typeof id === 'string') : [] };
+  const result=normalizeDiary(parsed||defaults());
+  if(result.changed){try{identity.setStorageSync(STORAGE_KEY,JSON.stringify(result.diary));}catch(error){/* old bytes remain; normal commit retries */}}
+  return result.diary;
 }
 
 function ensureLoaded() {
   if (!loaded) {
     const loadedState = loadDiary();
+    Object.keys(state).forEach(key=>delete state[key]);
+    Object.assign(state,loadedState);
     state.memories = loadedState.memories.map(m => ['tencent-picker','tencent-search'].includes(m.locationSource) && m.geoConfirmed !== true ? Object.assign({},m,{city:'',country:''}) : m);
-    state.profile = loadedState.profile;
     state.settings = Object.assign({},loadedState.settings,identity.deviceSettings());
-    state.feedback = loadedState.feedback;
-    state.cloudHidden = loadedState.cloudHidden || [];
-    state.outbox = loadedState.outbox || [];
     if(!networkBound&&wx.onNetworkStatusChange){networkBound=true;wx.onNetworkStatusChange(r=>{if(r.isConnected){identity.verify().then(()=>syncCloud()).catch(()=>{});}});}
     loaded = true;
     state.identity=identity.snapshot();
@@ -175,10 +184,7 @@ function updatePersonalization(pageHeadings, profile) {
   const nextProfile = Object.assign({}, state.profile, { name, bio: headings.clean(profile.bio, 55) });
   const nextSettings = Object.assign({}, state.settings, { pageHeadings: headings.normalize(pageHeadings) });
   const next = Object.assign({}, state, { profile: nextProfile, settings: nextSettings });
-  identity.setStorageSync(STORAGE_KEY, JSON.stringify(next));
-  state.profile = nextProfile;
-  state.settings = nextSettings;
-  listeners.slice().forEach(function (listener) { try { listener(state); } catch (error) {} });
+  commit(next);
 }
 
 function updateSettings(changes) {
@@ -213,8 +219,9 @@ const resolvingRecords=new Set();
 function canResolve(code) {return syncRepository.canResolve(code);}
 function commit(next, language) {
   identity.lease();
-  identity.setStorageSync(STORAGE_KEY,JSON.stringify(next));
-  Object.assign(state,next);
+  const diary=normalizeDiary(next).diary;
+  identity.setStorageSync(STORAGE_KEY,JSON.stringify(diary));
+  Object.assign(state,diary);
   if(language!==undefined)i18n.setLanguage(language);
   listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
 }

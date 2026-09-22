@@ -13,7 +13,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   let pageSpec,sheetSpec,profileSpec;
   fs.writeFileSync(source,png); // Deliberately misleading suffix.
   fs.writeFileSync(compressed,jpg);
-  let owner='a',holdPick,holdCopy,failStorage=false,failOnce=false;
+  let owner='a',holdPick,holdCopy,failStorage=false,failOnce=false,storageWrites=0;
   const apiError=()=>({errMsg:'native failed /private/owner/image-data',errCode:1001});
   const FS={
     accessSync:p=>fs.accessSync(p),
@@ -28,7 +28,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
   const wx={
     env:{USER_DATA_PATH:base},getFileSystemManager:()=>FS,getSystemInfoSync:()=>({platform:options.platform||'ios',language:'en'}),
     getStorageSync:k=>disk.get(k)||'',removeStorageSync:k=>disk.delete(k),
-    setStorageSync(k,v){if(failStorage||failOnce){failOnce=false;throw apiError();}disk.set(k,v);},
+    setStorageSync(k,v){storageWrites++;if(options.failStorageAtCall===storageWrites||failStorage||failOnce){failOnce=false;throw apiError();}disk.set(k,v);},
     chooseMedia(o){calls.push('choose');if(options.cancel){o.fail({errMsg:'chooseMedia:fail cancel'});return;}if(options.chooseFails){o.fail(apiError());return;}const run=()=>o.success({tempFiles:[{tempFilePath:source,size:options.original?3000000:10}]});if(options.holdPick)holdPick=run;else run();},
     chooseImage(o){calls.push('chooseImage');o.success({tempFilePaths:[source]});},
     compressImage(o){calls.push('compress');if(options.programError)throw new TypeError('private details');if(options.compressFails){o.fail(apiError());return;}o.success({tempFilePath:compressed});},
@@ -155,6 +155,44 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     const cold=runtime({},r.disk,r.base);await cold.ready();assert.equal(cold.store.get().profile.avatar,p);assert(cold.data.isSafeImage(p));assert.equal(await cold.photos.validatePhoto(p),p);
     cold.setOwner('b');await cold.ready();assert.notEqual(cold.store.get().profile.avatar,p);
     cold.setOwner('a');await cold.ready();assert.equal(cold.store.get().profile.avatar,p);
+  });
+  await test('Stage 6 diary migrates once and keeps rollback-readable projection plus unknown fields',async()=>{
+    const r=runtime();await r.ready();
+    const stage6={profile:{...r.data.defaultProfile,avatar:'/images/jamie.jpg',futureProfile:'keep'},memories:[],settings:{futureSetting:true},feedback:[],outbox:[],futureDiary:{keep:true}};
+    r.identity.setStorageSync('savor-diary-v1',JSON.stringify(stage6));
+    const cold=runtime({},r.disk,r.base);await cold.ready();
+    const current=cold.store.get(),persisted=JSON.parse(cold.identity.getStorageSync('savor-diary-v1'));
+    assert.equal(current.schemaVersion,2);assert.equal(persisted.schemaVersion,2);
+    assert.equal(persisted.profile.avatar,'/images/jamie.jpg');
+    assert.equal(persisted.profile.avatarAsset.localPath,'/images/jamie.jpg');
+    assert.deepEqual(persisted.futureDiary,{keep:true});assert.equal(persisted.profile.futureProfile,'keep');
+    assert.equal(Object.assign({},cold.data.defaultProfile,persisted.profile).avatar,'/images/jamie.jpg');
+    cold.setOwner('b');await cold.ready();assert.equal(cold.store.get().futureDiary,undefined);
+    cold.store.updateProfile({name:'Owner B'});
+    cold.setOwner('a');await cold.ready();assert.equal(cold.store.get().futureDiary.keep,true);
+  });
+  await test('Stage 6 avatar change wins when Stage 7 is entered again',async()=>{
+    const r=runtime();await r.ready();r.store.updateProfile({avatar:'/images/jamie.jpg'});
+    const stage6=JSON.parse(r.identity.getStorageSync('savor-diary-v1'));
+    stage6.profile.avatar='/images/alex.jpg';
+    r.identity.setStorageSync('savor-diary-v1',JSON.stringify(stage6));
+    const upgraded=runtime({},r.disk,r.base);await upgraded.ready();
+    assert.equal(upgraded.store.get().profile.avatar,'/images/alex.jpg');
+    assert.equal(upgraded.store.get().profile.avatarAsset.localPath,'/images/alex.jpg');
+    assert.equal(upgraded.store.get().profile.avatarAsset.source,'legacy');
+  });
+  await test('failed eager migration keeps old bytes and next commit writes one complete schema 2 diary',async()=>{
+    const seed=runtime();await seed.ready();
+    const stage6={profile:{...seed.data.defaultProfile,avatar:'/images/jamie.jpg'},memories:[],settings:{...seed.data.defaultSettings},feedback:[],outbox:[],futureDiary:'keep'};
+    seed.identity.setStorageSync('savor-diary-v1',JSON.stringify(stage6));
+    const before=seed.identity.getStorageSync('savor-diary-v1');
+    const cold=runtime({failStorageAtCall:1},seed.disk,seed.base);await cold.ready();
+    assert.equal(cold.identity.getStorageSync('savor-diary-v1'),before);
+    assert.equal(cold.store.get().profile.avatarAsset.localPath,'/images/jamie.jpg');
+    cold.store.updateProfile({name:'After retry'});
+    const saved=JSON.parse(cold.identity.getStorageSync('savor-diary-v1'));
+    assert.equal(saved.schemaVersion,2);assert.equal(saved.profile.name,'After retry');
+    assert.equal(saved.profile.avatarAsset.localPath,saved.profile.avatar);assert.equal(saved.futureDiary,'keep');
   });
   await test('failed Store write is atomic: no listener, no queue/draft loss and no second commit',async()=>{
     const r=runtime();await r.ready();const state=r.store.get();state.outbox=[{id:'pending',actorUserId:uid('a'),recordId:'meal',kind:'flags'}];r.store.updateProfile({name:'Before'});
