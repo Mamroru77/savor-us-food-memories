@@ -735,7 +735,7 @@ function nativeTabs(initial=0){
     assert.deepEqual(geo.metadata('江苏省苏州市太仓市太仓大道').city,'苏州市');
     assert.equal(geo.metadata('上海市黄浦区').city,'上海市'); assert.equal(geo.metadata('台湾高雄市苓雅區').city,'高雄市');
     assert.equal(geo.metadata('10 Some Street').geoConfirmed,false);
-    const stale=service.cloudRecordToMemory({...service.memoryToCloudRecord(sample()),...pickedLocation,_id:'stale-paris',city:'Paris',country:'France'});
+    const stale=service.cloudRecordToMemory({...service.memoryToCloudRecord(sample()),...pickedLocation,_id:'stale-paris',city:'Paris',country:'France',geoConfirmed:false});
     assert.equal(stale.city,''); assert.equal(stale.country,'');
     const fresh=service.cloudRecordToMemory({...service.memoryToCloudRecord(sample()),...pickedLocation,...geo.metadata(pickedLocation.address),_id:'fresh-geo'});
     assert.equal(fresh.city,'高雄市'); assert(fresh.geoConfirmed);
