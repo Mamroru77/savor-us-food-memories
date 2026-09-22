@@ -246,7 +246,6 @@ Page({
     if(this.saveLock || this.data.uploading || this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) return;
     const index=Number(event.currentTarget.dataset.index), list=this.data.draft.photos;
     this.changeDraft('photos',list.filter((_,i)=>i!==index));
-    photos.pruneOrphans(photos.collectReferenced(store.get()).concat(this.data.draft.photos));
   },
   onBusinessField(event) { this.changeDraft(event.currentTarget.dataset.field,event.detail.value); },
   onGeoField(event) { const pick=Object.assign({},this.data.draft.location); pick[event.currentTarget.dataset.field]=event.detail.value.trim(); pick.geoConfirmed=!!pick.city&&!!pick.country; pick.geoSource='user-confirmed'; this.changeDraft('location',pick); },

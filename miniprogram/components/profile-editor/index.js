@@ -180,7 +180,6 @@ Component({
       }
       try {
         store.updateProfile({ name, bio: this.data.profileBio.trim(), avatarAsset: this._profileAvatarAsset });
-        photos.pruneOrphans(photos.collectReferenced(store.get()));
         store.notify(i18n.t('A little more you. Profile updated.'));
         this.reset();
         this.triggerEvent('close');

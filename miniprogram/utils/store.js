@@ -3,7 +3,7 @@ const localDate = require('./localDate');
 // Diary store — CommonJS singleton port of the web baseline (src/store.tsx).
 // Storage keys, defaults, validation, migration and dedupe semantics are
 // preserved; localStorage is replaced by wx storage with a corrupt-data
-// fallback, and photo files are cleaned up on delete (utils/photos).
+// fallback.
 //
 // NOTE: the custom tab bar must never require this module. Pages push
 // theme state into the tab bar via this.getTabBar().setData(...) so a
@@ -157,8 +157,6 @@ function updateMemory(id, changes) {
   commit(Object.assign({},state,{memories}));
 }
 
-// `collectFiles` (optional) lets the caller clean orphan photos after the
-// state change; photos module handles the actual deletion.
 function deleteMemory(id) {
   identity.lease();
   ensureLoaded();
@@ -328,7 +326,6 @@ async function saveEdit(memory,draft) {
   identity.assertLease(token);
   if(state.outbox.some(x=>x.id===op.id)) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
   await confirmCompletedEdit(base.cloudId,op.id);
-  try {const p=require('./photos');p.pruneOrphans(p.collectReferenced(state));} catch(e) {}
   return {pending:false};
 }
 

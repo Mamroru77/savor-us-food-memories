@@ -171,26 +171,6 @@ function data_createId() {
   return 'ph-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
 
-function removePhoto(path) { return; }
-function pruneOrphans(keepPaths) { return; }
-
-function collectReferenced(state) {
-  const refs = [];
-  (state.memories || []).concat((state.outbox||[]).reduce((all,op)=>all.concat([op.base,op.memory].filter(Boolean)),[])).forEach(function (memory) {
-    [memory.photo, memory.placePhoto].concat(memory.extraPhotos || []).forEach(function (path) {
-      if (isUserPhoto(path)) refs.push(path);
-    });
-  });
-  const avatar = state.profile && state.profile.avatar;
-  if (isUserPhoto(avatar)) refs.push(avatar);
-  try {
-    const raw = identity.getStorageSync('savor-draft-v1');
-    const draft = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    (draft && draft.photos || []).forEach(path => { if (isUserPhoto(path)) refs.push(path); });
-  } catch (error) {}
-  return refs;
-}
-
 module.exports = {
   validatePhoto,
   isCancelled,
@@ -199,7 +179,4 @@ module.exports = {
   isUserPhoto,
   choosePhotos,
   persistPhoto,
-  removePhoto,
-  pruneOrphans,
-  collectReferenced,
 };

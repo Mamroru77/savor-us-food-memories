@@ -9,7 +9,6 @@ const uiFeedback = require('../../utils/uiFeedback');
 const store = require('../../utils/store');
 const headings = require('../../utils/pageHeadings');
 const data = require('../../utils/data');
-const photos = require('../../utils/photos');
 const stats = require('../../utils/memoryStats');
 const metrics = require('../../utils/metrics');
 const nativeFlow = require('../../utils/nativeFlow');
@@ -369,7 +368,6 @@ Component({
       const memory = this.data.detail && this.data.detail.memory;
       if (!memory) return;
       try {store.deleteMemory(memory.id);} catch(e) {store.notify(i18n.t('Could not save. Free some storage and try again.'));return;}
-      photos.pruneOrphans(photos.collectReferenced(store.get()));
       this.close();
       store.notify(i18n.t('Memory removed from your diary.'));
     },

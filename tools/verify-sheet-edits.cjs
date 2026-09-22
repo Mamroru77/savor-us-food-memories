@@ -23,7 +23,7 @@ function fixture(){
     uiFeedback:require('../miniprogram/utils/uiFeedback'),
     store:{get:()=>state,subscribe:fn=>{listener=fn;return()=>{};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){}},
     pageHeadings:{},data:{},
-    photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code}),pruneOrphans(){},collectReferenced:()=>[]},
+    photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code})},
     avatar:{},
     memoryStats:{},metrics:{getMetrics:()=>({headerTop:60})},
   };

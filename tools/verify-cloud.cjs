@@ -780,11 +780,6 @@ function nativeTabs(initial=0){
     const draft=store.beginEdit(memory);await store.createCloudMemory({...memory,notes:'Edited'},draft);assert(draft.editOperationId);
     const revision=rows.get(memory.id).revision;store.saveDraft(draft);await store.createCloudMemory({...memory,notes:'Must not write again'},draft);assert.equal(rows.get(memory.id).revision,revision);assert.equal(rows.get(memory.id).note,'Edited');
   });
-  await test('pending mutation snapshots keep local photos referenced during delete and retry', () => {
-    const photos=require(path.join(mp,'utils/photos'));
-    const refs=photos.collectReferenced({memories:[],profile:{},outbox:[{base:{photo:photos.photosDir()+'/base.jpg',extraPhotos:[]},memory:{photo:photos.photosDir()+'/new.jpg',extraPhotos:[]}}]});
-    assert(refs.includes(photos.photosDir()+'/base.jpg'));assert(refs.includes(photos.photosDir()+'/new.jpg'));
-  });
   await test('negative and invalid costs fail server validation rather than becoming silent zero values', async () => {
     for(const cost of [-1,'not-money',1000001]) {const result=await main({action:'add',data:{...service.memoryToCloudRecord(sample()),perCapita:cost}});assert.equal(result.code,'INVALID_PER_CAPITA');}
   });

@@ -50,4 +50,15 @@ const sync=require('../miniprogram/utils/syncRepository');
 test('sync overlay projects only editable fields, flags, and deletes',()=>{const base={id:'r',restaurant:'Old',liked:false,revision:2,createdBy:'owner'},value=sync.overlay(base,[{recordId:'r',kind:'flags',patch:{liked:true,createdBy:'forged'}},{recordId:'r',kind:'update',memory:{restaurant:'New',createdBy:'forged'}}]);assert.equal(value.restaurant,'New');assert.equal(value.liked,true);assert.equal(value.createdBy,'owner');assert.equal(sync.overlay(base,[{recordId:'r',kind:'delete'}]).pendingDelete,true);});
 test('cloud merge excludes hidden and stale rows while retaining overlays',()=>{const local=[{id:'newer',cloudId:'newer',date:'2026-01-02',revision:3,restaurant:'Local',liked:true},{id:'overlay',cloudId:'overlay',date:'2026-01-03',revision:1,restaurant:'Server',liked:false},{id:'local',date:'2026-01-01',restaurant:'Local only'}],remote=[{id:'newer',cloudId:'newer',date:'2026-01-04',revision:2,restaurant:'Stale'},{id:'overlay',cloudId:'overlay',date:'2026-01-03',revision:1,restaurant:'Server',liked:false},{id:'hidden',cloudId:'hidden',date:'2026-01-05',revision:1,restaurant:'Hidden'}];remote.deletedIds=[];const result=sync.mergeCloud(local,remote,['hidden'],[{recordId:'overlay',kind:'flags',patch:{liked:true}}]);assert.equal(result.find(x=>x.id==='newer').restaurant,'Local');assert.equal(result.find(x=>x.id==='overlay').liked,true);assert(!result.some(x=>x.id==='hidden'));assert.equal(result.at(-1).id,'local');});
 
+const fs=require('node:fs'),path=require('node:path');
+function jsFiles(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?jsFiles(path.join(dir,entry.name)):entry.name.endsWith('.js')?[path.join(dir,entry.name)]:[]);}
+test('production contains no fake photo cleanup API',()=>{
+  const files=jsFiles(path.resolve(__dirname,'../miniprogram'));
+  const photoSource=fs.readFileSync(path.resolve(__dirname,'../miniprogram/utils/photos.js'),'utf8');
+  for(const name of ['removePhoto','pruneOrphans','collectReferenced']){
+    assert(!new RegExp('\\b'+name+'\\b').test(photoSource),name+' remains exported');
+    for(const file of files)assert(!new RegExp('\\.'+name+'\\s*\\(').test(fs.readFileSync(file,'utf8')),name+' remains called in '+file);
+  }
+});
+
 console.log(count+' Store repository checks passed.');
