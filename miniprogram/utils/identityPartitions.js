@@ -7,6 +7,10 @@ const {createChunkStorage} = require('./chunkStorage');
 const clone = value => JSON.parse(JSON.stringify(value));
 function fail(code) { throw Object.assign(new Error(code), {code}); }
 function namespacePrefix(namespace) { return 'savor-identity-v2:' + encodeURIComponent(namespace); }
+// The storage boundary's own missing contract: a key that was never written, or was cleared, reads
+// back as '' | null | undefined (the same predicate chunkStorage applies on every read). Anything
+// else is a present value, even when it is not the value this build writes.
+function absent(value) { return value === '' || value === null || value === undefined; }
 function partitionKey(userId, namespace=config.storageNamespace) { return namespacePrefix(namespace)+':'+userId; }
 function createPartitions(storage, options={}) {
   const namespace=options.namespace || config.storageNamespace;
@@ -61,13 +65,20 @@ function createPartitions(storage, options={}) {
     if(!result || result.success!==true || result.protocolVersion!==1 || !/^u_[a-f0-9]{48}$/.test(result.userId))fail('IDENTITY_INVALID');
     const establishedKey=partitionKey(result.userId,namespace)+':established';
     let partition=readPartition(result.userId);
-    if(!partition && storage.getStorageSync(establishedKey))fail('CACHE_MISSING');
+    if(!partition && !absent(storage.getStorageSync(establishedKey)))fail('CACHE_MISSING');
     if(!partition){
       const old=legacy();ensureQuarantine(old);
       partition=old && Object.prototype.hasOwnProperty.call(old.partitions,result.userId)?clone(old.partitions[result.userId]):{diary:null,draft:null,outbox:[]};
       persist(result.userId,partition);
     } else {
-      if(!blobs.read(prefix+':quarantine'))fail('CACHE_MISSING');
+      if(!blobs.read(prefix+':quarantine')){
+        // Partitions written before the quarantine/established scheme existed are valid but carry no
+        // quarantine blob, so a missing quarantine alone is not evidence of loss. That historical
+        // shape is confirmed by the ABSENCE of the established marker, never by "a value other than
+        // '2'": once any marker is on record the scheme was already in force, so a lost quarantine is
+        // evidence of loss and the partition stays fail-closed.
+        if(!absent(storage.getStorageSync(establishedKey)))fail('CACHE_MISSING');
+      }
       ensureQuarantine(null);
     }
     validate(partition,result.userId);
