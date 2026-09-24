@@ -19,3 +19,7 @@ Thumbs.db
 
 # Raw runtime evidence, screenshots, previews and local backups
 /reports/
+
+# Local agent session state and scratch artifacts (anchored: docs/superpowers/ is tracked)
+/.workbuddy-ai/
+/.superpowers/
