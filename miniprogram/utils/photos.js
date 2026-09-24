@@ -48,7 +48,7 @@ function callApi(target, method, options, stage) {
     } catch (e) { reject(failure(stage, e)); }
   });
 }
-async function pick(method, count, token) {
+async function pick(method, count, token, waitVisible) {
   let result;
   try {
     result = await new Promise((resolve, reject) => {
@@ -59,14 +59,24 @@ async function pick(method, count, token) {
     if (isCancelled(e)) throw Object.assign(new Error('PHOTO_CANCELLED'), {code:'PHOTO_CANCELLED'});
     throw failure('choose', e);
   }
+  // A system chooser hides the mini program, so App.onShow re-verifies identity while this
+  // callback is in flight. Resuming here immediately would hand persistence the pre-verification
+  // lease, which the next epoch invalidates (STALE_IDENTITY). Wait until the owning page is
+  // visible again, then resume: the same owner continues on the fresh lease, a different owner
+  // is rejected. The gate is owned by the caller (one waiter per native request).
+  if (waitVisible) await waitVisible();
   try { token = await identity.resumeNative(token); } catch (e) { throw failure('identity', e); }
   const files = method === 'chooseImage'
     ? (result.tempFilePaths || []).map(tempFilePath => ({tempFilePath, sizeType:'original'}))
     : result.tempFiles || [];
   return {files, token};
 }
+// `opts` may be the legacy progress callback, or {waitVisible} for a page that owns a native
+// chooser round trip. A caller-level wait is not enough: the chooser callback lands inside this
+// function, before the caller regains control.
 async function choosePhotos(count, opts, onProgress) {
-  if (typeof opts === 'function') onProgress = opts;
+  if (typeof opts === 'function') { onProgress = opts; opts = null; }
+  const waitVisible = opts && opts.waitVisible;
   let token;
   try { token = identity.lease(); } catch (e) { throw logFailure(failure('identity', e)); }
   try {
@@ -76,15 +86,15 @@ async function choosePhotos(count, opts, onProgress) {
     const method = imageFirst || !wx.chooseMedia ? 'chooseImage' : 'chooseMedia';
     let selection;
     // Only chooser failures may open an alternate chooser, never persistence or identity errors.
-    try { selection = await pick(method, count, token); }
+    try { selection = await pick(method, count, token, waitVisible); }
     catch (e) {
       if (isCancelled(e) || e.stage !== 'choose' || e.category === 'program') throw e;
       logFailure(e);
       const fallback = method==='chooseImage' ? 'chooseMedia' : 'chooseImage';
       if (!wx[fallback]) throw e;
-      selection = await pick(fallback, count, token);
+      selection = await pick(fallback, count, token, waitVisible);
     }
-    if(!selection.files.length && method==='chooseMedia' && wx.chooseImage)selection=await pick('chooseImage',count,selection.token);
+    if(!selection.files.length && method==='chooseMedia' && wx.chooseImage)selection=await pick('chooseImage',count,selection.token,waitVisible);
     token = selection.token;
     if (!selection.files.length) throw failure('choose', {code:'NO_PHOTO_SELECTED'});
     const results = [];
@@ -111,7 +121,9 @@ async function imageInfo(source, token, stage) {
   assertOwner(token);
   const info = await callApi(wx, 'getImageInfo', {src:source}, stage);
   assertOwner(token);
-  if (!info || !(info.width > 0 && info.height > 0)) throw failure(stage, {code:'IMAGE_UNREADABLE'});
+  if (!info || !(info.width > 0 && info.height > 0)) {
+    throw failure(stage, {code:'IMAGE_UNREADABLE'});
+  }
   // Actual decoded format, not the temporary filename or a JPEG assumption.
   const extension = {jpeg:'jpg', jpg:'jpg', png:'png', gif:'gif', webp:'webp'}[info.type];
   if (!extension) throw failure(stage, {code:'IMAGE_FORMAT_UNSUPPORTED'});
@@ -154,7 +166,9 @@ async function persistPhoto(tempPath, keepOriginal, token) {
 async function copyIn(source, token) {
   const extension = await imageInfo(source, token, 'source');
   const target = photosDir(token) + '/' + data_createId() + '.' + extension;
-  try { await callApi(FS, 'copyFile', {srcPath:source, destPath:target}, 'copy'); }
+  try {
+    await callApi(FS, 'copyFile', {srcPath:source, destPath:target}, 'copy');
+  }
   catch (e) {
     if (e.category !== 'filesystem') throw e;
     logFailure(e);

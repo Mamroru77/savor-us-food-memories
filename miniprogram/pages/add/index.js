@@ -73,6 +73,7 @@ Page({
   onUnload() {
     this.disposed = true;
     this.releaseNativeImportShow();
+    this.releaseNativePhotoShow();
     if (this.unsubscribe) this.unsubscribe();
   },
 
@@ -105,6 +106,7 @@ Page({
     if (tabBar) tabBar.showSelection(2, this._tabAppearance);
     this.syncContext(state);
     this.releaseNativeImportShow();
+    this.releaseNativePhotoShow();
   },
 
   onHide() { this.active = false; },
@@ -189,8 +191,14 @@ Page({
     let token;
     try { token=identity.lease(); } catch (e) { this.setData({ uploading:false, error: e.message }); return; }
     const that = this;
+    // One native chooser round trip per request. A system chooser hides the mini program, so
+    // App.onShow re-verifies identity before this page is visible again: the picker callback must
+    // not start persistence, and only the newest request may hand a photo to the draft.
+    const serial = this.nativePhotoSerial = (this.nativePhotoSerial || 0) + 1;
+    const visibleAgain = new Promise(resolve => { this._nativePhotoShow = {serial, resolve}; });
+    const waitVisible = () => (!this.active && this._nativePhotoShow && this._nativePhotoShow.serial === serial) ? visibleAgain : Promise.resolve();
     this.setData({ uploading: true, uploadProgress: 0, uploadTotal: count, uploadCurrent: 0, originalMode: false, error: '', errorContext:'save',errorField:'',fieldErrors:{} });
-    photos.choosePhotos(count, function(p){
+    photos.choosePhotos(count, { waitVisible }, function(p){
       that.setData({
         uploadProgress: p.percent || 0,
         uploadCurrent: p.current || 0,
@@ -201,7 +209,14 @@ Page({
       that.setData({ uploadProgress: 100, uploadCurrent: paths.length, uploadTotal: paths.length });
       await new Promise(r=>setTimeout(r, 300));
 
-      try { token=await identity.resumeNative(token); } catch (e) {}
+      let resumed = true;
+      try { token=await identity.resumeNative(token); } catch (e) { resumed = false; }
+      // A superseded request, an unloaded page, a failed resume or a different owner never
+      // inherits this selection; nothing is written for another owner's draft.
+      if (serial !== that.nativePhotoSerial || that.disposed || !resumed || !identity.isCurrent(token)) {
+        if (!that.disposed && serial === that.nativePhotoSerial) that.setData({ uploading: false });
+        return;
+      }
       if (!paths || !paths.length) {
         that.setData({ uploading: false, error: i18n.t('Could not prepare the photo. Please select it again.') });
         return;
@@ -213,10 +228,6 @@ Page({
       } else {
         next = draft.photos.concat(paths).slice(0, 9);
       }
-      if (that.disposed) {
-        store.saveDraft(Object.assign({}, draft, { photos: next }));
-        return;
-      }
       const newDraft = Object.assign({}, draft, { photos: next });
       delete newDraft.cloudAttempt;
       if(!store.saveDraft(newDraft)) {
@@ -227,6 +238,7 @@ Page({
       that.syncContext(store.get());
       setTimeout(()=>{ if(!that.data.uploading) that.setData({uploadProgress:0, uploadTotal:0, uploadCurrent:0}); }, 800);
     }).catch(function (error) {
+      if (serial !== that.nativePhotoSerial) return; // a newer request owns the upload UI now
       if (that.disposed) {
         that.setData({ uploading: false });
         return;
@@ -416,6 +428,13 @@ Page({
   releaseNativeImportShow() {
     const waiting = this._nativeImportShow;
     this._nativeImportShow = null;
+    if (waiting) waiting.resolve();
+  },
+  // The photo picker and the location chooser are independent native operations: each owns its
+  // own waiter and request serial, so releasing one never resumes the other.
+  releaseNativePhotoShow() {
+    const waiting = this._nativePhotoShow;
+    this._nativePhotoShow = null;
     if (waiting) waiting.resolve();
   },
 

@@ -1,7 +1,11 @@
-// Production Add + i18n page projection. Fixture-only native callbacks; no files/cloud writes.
+// Production Add + i18n page projection (fixture store) and, further down, the production
+// Add photo pipeline (real photos.js + identity.js + Store, simulated native layer).
+// No cloud call and no real Save/upload is executed by the import section.
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const os=require('node:os'),pathMod=require('node:path');
+const photoRoots=[];
 let passed=0;
-const flush=async()=>{for(let i=0;i<16;i++)await Promise.resolve();};
+const flush=async()=>{for(let i=0;i<64;i++)await Promise.resolve();};
 function harness(){
  let spec,choose,modal,writes=0,owner='fixture-a',generation=1,locked=false,verifyPromise,resolveVerify;
  const saved={actorUserId:owner,restaurant:'fixture existing',notes:'kept',photos:[],tags:[],rating:0,date:'2026-09-16',city:''};
@@ -34,5 +38,152 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
  await test('unloaded or hidden Add is not reopened by a native result',async()=>{for(const unloaded of [false,true]){const h=harness();const task=h.p.onImportNativePick();h.startVerification();h.finishVerification();if(unloaded)h.p.disposed=true;else h.p.active=false;h.choose().reject({cancelled:true});await task;assert.equal(h.p.data.importCandidate,null);assert.equal(h.scrolls.length,0);assert.equal(h.writes(),0);}});
  await test('picker error preserves the scene and is not confused with a successful selection',async()=>{const h=harness();const task=h.p.onImportNativePick();h.choose().reject({message:'fixture picker unavailable'});await task;assert.equal(h.p.data.error,'fixture picker unavailable');assert.equal(h.p.data.importCandidate.name,'fixture shop');assert.equal(h.modal(),undefined);assert.equal(h.writes(),0);});
  await test('date picker remains native and has no cancel-to-reset binding',()=>{const wxml=fs.readFileSync('miniprogram/pages/add/index.wxml','utf8');assert.match(wxml,/<picker[^>]*mode="date"[^>]*bindchange="onDate"/);assert(!/bindcancel="[^"]*reset/i.test(wxml));});
- console.log(passed+' Add native-return checks passed; real Save/upload were not executed.');
-})().catch(e=>{console.error(e);process.exitCode=1;});
+
+ // ---------------------------------------------------------------------------
+ // Add photo native-return. Real Add page + real photos.js + real identity.js + real
+ // Store; only the native layer (chooser / compression / decode / file system / cloud
+ // transport) is simulated, because the defect is an ordering contract between the
+ // native chooser callback and the App.onShow re-verification.
+ // ---------------------------------------------------------------------------
+ const imageFixtures=require('./fixtures/shared-media-images.json');
+ function photoHarness(options={}){
+  const base=fs.mkdtempSync(pathMod.join(os.tmpdir(),'savor-add-photo-'));photoRoots.push(base);
+  const source=base+'/picker-source.jpg',compressed=base+'/picker-compressed.jpg';
+  fs.writeFileSync(source,Buffer.from(imageFixtures.jpegWithMetadata,'base64'));fs.writeFileSync(compressed,fs.readFileSync(source));
+  const disk=new Map(),modules=new Map(),calls=[],logs=[],delays=[],pickGates=[];
+  const uid=letter=>'u_'+letter.repeat(48);
+  let spec,owner='a',pickReleased=false,copyGate=null,copyReleased=false,draftWrites=0,lastVerify=null;
+  const FS={
+   accessSync:p=>fs.accessSync(p),
+   mkdirSync(p,recursive){fs.mkdirSync(p,{recursive});},
+   statSync(p){const stat=fs.statSync(p);return {size:stat.size};},
+   copyFile(o){calls.push('copy');const run=()=>{try{fs.copyFileSync(o.srcPath,o.destPath);}catch(error){o.fail(error);return;}o.success({});};if(options.holdCopy&&!copyReleased)copyGate=run;else run();},
+   readFile(o){calls.push('read');try{o.success({data:fs.readFileSync(o.filePath)});}catch(error){o.fail(error);}},
+   writeFile(o){calls.push('write');try{fs.writeFileSync(o.filePath,o.data);o.success({});}catch(error){o.fail(error);}},
+  };
+  const wx={
+   env:{USER_DATA_PATH:base},getFileSystemManager:()=>FS,
+   getSystemInfoSync:()=>({platform:'ios',language:'en',statusBarHeight:20,windowWidth:375}),
+   getWindowInfo:()=>({statusBarHeight:20,windowWidth:375}),getAppBaseInfo:()=>({language:'en'}),
+   getMenuButtonBoundingClientRect:()=>({top:44,height:32,left:280,width:87,bottom:76}),
+   onNetworkStatusChange(){},
+   getStorageSync:key=>disk.has(key)?disk.get(key):'',
+   setStorageSync(key,value){disk.set(key,value);},
+   removeStorageSync:key=>{disk.delete(key);},
+   getStorageInfoSync:()=>({keys:Array.from(disk.keys())}),
+   showModal(){},pageScrollTo(){},previewImage(){},setNavigationBarColor(){},switchTab(){},
+   chooseMedia(o){calls.push('chooseMedia');const run=()=>{if(options.cancel){o.fail({errMsg:'chooseMedia:fail cancel'});return;}o.success({tempFiles:[{tempFilePath:source,size:10,sizeType:'compressed'}]});};if(options.holdPick&&!pickReleased)pickGates.push(run);else run();},
+   chooseImage(o){calls.push('chooseImage');o.success({tempFilePaths:[source]});},
+   compressImage(o){calls.push('compress');o.success({tempFilePath:compressed});},
+   getImageInfo(o){calls.push('info');o.success({width:1,height:1,type:'jpeg'});},
+   cloud:{init(){},async callFunction({name}){return {result:name==='account'?{success:true,protocolVersion:1,userId:uid(owner)}:{success:true,identityProtocol:1,userId:uid(owner)}};}},
+  };
+  const logger={error:(...args)=>logs.push(args.join(' ')),warn:(...args)=>logs.push(args.join(' ')),log(){}};
+  // The 300ms hand-off delay is real production code; deferring it only lets a test place an
+  // identity change inside the same window the device races with.
+  function vmSetTimeout(fn,ms){if(options.deferDelays!==false&&ms>=250){delays.push(fn);return 0;}return setTimeout(fn,ms);}
+  function load(relative){
+   const file=pathMod.resolve(relative);if(modules.has(file))return modules.get(file).exports;
+   const module={exports:{}};modules.set(file,module);
+   const requireLocal=name=>name.startsWith('.')?load(pathMod.resolve(pathMod.dirname(file),name+'.js')):require(name);
+   vm.runInNewContext(fs.readFileSync(file,'utf8'),{module,exports:module.exports,require:requireLocal,wx,console:logger,Promise,Date,Math,JSON,setTimeout:vmSetTimeout,clearTimeout,setInterval,clearInterval,Page:value=>{spec=value;},Component:()=>{},App:()=>{}},{filename:file});
+   return module.exports;
+  }
+  const identity=load('miniprogram/utils/identity.js'),store=load('miniprogram/utils/store.js'),photos=load('miniprogram/utils/photos.js');
+  const saveDraft=store.saveDraft.bind(store);
+  store.saveDraft=function(draft){draftWrites++;return saveDraft(draft);};
+  load('miniprogram/pages/add/index.js');
+  const page={...spec,data:JSON.parse(JSON.stringify(spec.data)),active:true,saveLock:false,disposed:false,setData(patch,cb){Object.assign(this.data,patch);if(cb)cb();}};
+  page.onLoad();
+  const persistedDraft=()=>{try{const raw=identity.getStorageSync('savor-draft-v1');return raw?JSON.parse(raw):null;}catch(error){return null;}};
+  return {
+   p:page,identity,store,photos,calls,
+   avatarLogs:()=>logs.filter(line=>line.includes('[avatar]')),
+   draftWrites:()=>draftWrites,
+   photoCount:()=>{const draft=persistedDraft();return draft&&Array.isArray(draft.photos)?draft.photos.length:0;},
+   ready(){owner='a';lastVerify=identity.verify();return lastVerify;},
+   appShow(letter){owner=letter;lastVerify=identity.verify();return lastVerify;},
+   settle:()=>lastVerify,
+   releasePick(){pickReleased=true;const run=pickGates.shift();if(run)run();},
+   releaseCopy(){copyReleased=true;const run=copyGate;copyGate=null;if(run)run();},
+   runDelays(limit=12){let n=0;while(delays.length&&n++<limit){const fn=delays.shift();try{fn();}catch(error){logs.push('delay '+error.message);}}},
+  };
+ }
+ const photoFailures=[];
+ async function photoTest(name,fn){try{await fn();passed++;console.log('PASS '+name);}catch(error){photoFailures.push(name);console.error('FAIL '+name);console.error('  '+(error&&error.message||error));}}
+ async function photoRace(options={}){const h=photoHarness(options);await h.ready();h.p.onReplacePhoto();h.p.onHide();h.releasePick();await flush();return h;}
+
+ await photoTest('photo: a hidden chooser result must not start persistence before App.onShow re-verification',async()=>{
+  const h=await photoRace({holdPick:true,holdCopy:true});
+  const started=h.calls.filter(call=>['compress','info','copy'].includes(call));
+  if(started.length)console.error('  RED evidence: persistence entered before verification ['+started.join(',')+'] log='+JSON.stringify(h.avatarLogs()));
+  assert.deepEqual(started,[],'the picker callback persisted before App.onShow re-verified identity');
+  assert.equal(h.draftWrites(),0);
+  h.releaseCopy();h.appShow('a');h.p.onShow();await h.settle();await flush();h.runDelays();await flush();
+  assert.equal(h.photoCount(),1);
+ });
+ await photoTest('photo: the same owner verified after the picker returns resumes persistence and adds one photo',async()=>{
+  const h=await photoRace({holdPick:true,holdCopy:true});
+  h.appShow('a');h.p.onShow();await h.settle();await flush();h.releaseCopy();await flush();h.runDelays();await flush();
+  if(h.photoCount()!==1)console.error('  RED evidence: photos='+h.photoCount()+' draftWrites='+h.draftWrites()+' log='+JSON.stringify(h.avatarLogs()));
+  assert.equal(h.photoCount(),1,'the selected photo must be added exactly once');
+  assert.equal(h.draftWrites(),1);
+  assert.equal(h.p.data.uploading,false);
+  assert.equal(h.p.data.error,'');
+ });
+ await photoTest('photo: a different owner verified after the picker returns discards the selection before any local write',async()=>{
+  const h=await photoRace({holdPick:true,holdCopy:true});
+  h.appShow('b');h.p.onShow();await h.settle();await flush();h.releaseCopy();await flush();h.runDelays();await flush();
+  assert.equal(h.calls.filter(call=>call==='copy').length,0,'a foreign owner must never inherit the selected photo');
+  assert.equal(h.draftWrites(),0);
+  assert.equal(h.photoCount(),0);
+  assert.equal(h.p.data.uploading,false);
+ });
+ await photoTest('photo: a selection already handed to the page is never written into a different owner draft',async()=>{
+  const h=photoHarness();
+  await h.ready();
+  h.p.onReplacePhoto();await flush();
+  assert(h.calls.includes('copy'),'the same-owner photo must still be persisted locally');
+  h.appShow('b');await h.settle();await flush();h.runDelays();await flush();
+  assert.equal(h.draftWrites(),0,'a stale selection leaked into the next owner draft');
+  assert.equal(h.photoCount(),0);
+ });
+ await photoTest('photo: cancel clears uploading without a draft write or an error',async()=>{
+  const h=await photoRace({holdPick:true,cancel:true});
+  assert.equal(h.p.data.uploading,false);
+  assert.equal(h.p.data.error,'');
+  assert.equal(h.draftWrites(),0);
+  h.appShow('a');h.p.onShow();await h.settle();await flush();
+  assert.equal(h.p.data.uploading,false);
+  assert.equal(h.p.data.error,'');
+  assert.equal(h.photoCount(),0);
+ });
+ await photoTest('photo: a late picker result after unload is discarded instead of writing the draft',async()=>{
+  const h=photoHarness({holdPick:true});
+  await h.ready();
+  h.p.onReplacePhoto();h.p.onHide();h.p.onUnload();h.releasePick();await flush();
+  h.appShow('a');await h.settle();await flush();h.runDelays();await flush();
+  assert.equal(h.draftWrites(),0,'an unloaded page wrote its stale draft snapshot');
+  assert.equal(h.photoCount(),0);
+ });
+ await photoTest('photo: a newer request supersedes an older in-flight picker result',async()=>{
+  const h=photoHarness({holdPick:true});
+  await h.ready();
+  h.p.onReplacePhoto();h.p.onHide();
+  h.appShow('a');h.p.onShow();await h.settle();await flush();
+  h.p.pickPhotos(1,false);
+  h.releasePick();await flush();h.runDelays();await flush();
+  assert.equal(h.draftWrites(),0,'the superseded picker result was applied');
+  h.releasePick();await flush();h.runDelays();await flush();
+  assert.equal(h.draftWrites(),1);
+  assert.equal(h.photoCount(),1);
+ });
+ if(photoFailures.length)throw new Error(photoFailures.length+' Add photo native-return check(s) failed: '+photoFailures.join(' | '));
+ console.log(passed+' Add native-return checks passed, including the real photos.js/identity.js/Store photo pipeline; no real Save or cloud upload was executed.');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{
+ for(const root of photoRoots){
+  const resolved=pathMod.resolve(root),temp=pathMod.resolve(os.tmpdir());
+  if(pathMod.dirname(resolved)!==temp||!pathMod.basename(resolved).startsWith('savor-add-photo-'))throw Error('Unsafe cleanup');
+  fs.rmSync(resolved,{recursive:true,force:true});
+ }
+});
