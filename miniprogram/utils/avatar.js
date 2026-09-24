@@ -23,7 +23,38 @@ async function inspect(localPath, owner) {
 async function prepare(tempPath, owner, source) {
   if (!['chooseAvatar', 'album', 'camera', 'cloud'].includes(source)) throw imageFailure('AVATAR_SOURCE_INVALID');
   const localPath = await photos.persistPhoto(tempPath, false, owner);
-  return { formatVersion: 1, localPath, ...(await inspect(localPath, owner)), source, syncState: 'local', remoteRef: null };
+  const details = await inspect(localPath, owner);
+  return { formatVersion: 1, localPath, ...details, source, syncState: 'local', remoteRef: null };
+}
+
+// Custom-avatar entry. The WeChat chooseAvatar button returns its own small derivative (a
+// 132x132 file on device), which is far below the size the profile photo renders at, so a custom
+// photo must come from the system chooser instead. `sizeType:['original']` keeps the selected
+// file's real pixels; persistPhoto() may re-encode it but never downscales it. The owner is
+// captured before the native UI opens and re-authorized by the caller's native flow after it
+// returns, so this function never persists anything and never invents an owner.
+// The WeChat chooser does not report whether album or camera was used, so the request's primary
+// source ('album') is the recorded source; profileRepository accepts both album and camera.
+async function chooseLocal(owner) {
+  identity.assertLease(owner);
+  let picked;
+  try {
+    picked = await new Promise((resolve, reject) => wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['original'],
+      success: resolve,
+      fail: reject,
+    }));
+  } catch (error) {
+    // Backing out of the system chooser is not a failure: no result, no error, no asset.
+    if (photos.isCancelled(error)) return '';
+    throw failure('choose', 'AVATAR_CHOOSE_FAILED', 'image');
+  }
+  const source = picked && picked.tempFiles && picked.tempFiles[0] && picked.tempFiles[0].tempFilePath;
+  if (!source) throw failure('choose', 'NO_AVATAR_SELECTED', 'image');
+  return source;
 }
 
 async function chooseForCloud() {
@@ -78,4 +109,4 @@ async function restore(remote, owner) {
   return { formatVersion: 1, localPath, digest: remote.digest, ...details, source: 'cloud', syncState: 'synced', remoteRef: remote.digest };
 }
 
-module.exports = { prepare, chooseForCloud, forCloud, restore };
+module.exports = { prepare, chooseLocal, chooseForCloud, forCloud, restore };

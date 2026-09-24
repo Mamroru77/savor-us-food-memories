@@ -9,17 +9,23 @@ let checks=0;
 async function test(name,fn){await fn();checks++;console.log('PASS '+name);}
 const tick=()=>new Promise(setImmediate);
 function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'case-'))){
-  const cache=new Map(),logs=[],calls=[],source=base+'/source.jpg',compressed=base+'/compressed.png';
+  const cache=new Map(),logs=[],calls=[],mediaCalls=[],compressCalls=[],compressionOutputs=new Set(),dimensions=new Map();
+  const source=base+'/source.jpg',compressed=base+'/compressed.png',original=base+'/original.jpg',derivative=base+'/wechat-avatar-132.jpg';
   let pageSpec,sheetSpec,profileSpec;
   fs.writeFileSync(source,png); // Deliberately misleading suffix.
   fs.writeFileSync(compressed,jpg);
+  // Device evidence: the WeChat chooseAvatar button returns a 132x132 derivative. The custom
+  // entry must hand avatarService.prepare the original file instead, so this harness models
+  // decoded dimensions per path and propagates them through copy/compress.
+  fs.writeFileSync(original,jpg);dimensions.set(original,{width:options.originalWidth||1600,height:options.originalHeight||1200});
+  fs.writeFileSync(derivative,jpg);dimensions.set(derivative,{width:132,height:132});
   let owner='a',holdPick,holdCopy,failStorage=false,failOnce=false,storageWrites=0;
   const apiError=()=>({errMsg:'native failed /private/owner/image-data',errCode:1001});
   const FS={
     accessSync:p=>fs.accessSync(p),
     mkdirSync(p,recursive){if(options.mkdirFails)throw apiError();fs.mkdirSync(p,{recursive});},
     statSync(p){if(options.statFails)throw apiError();return options.zeroStat?{size:0}:fs.statSync(p);},
-    copyFile(o){calls.push('copy');const run=()=>{if(options.copyFails){o.fail(apiError());return;}try{fs.copyFileSync(o.srcPath,o.destPath);}catch(e){o.fail(e);return;}o.success();};if(options.holdCopy)holdCopy=run;else run();},
+    copyFile(o){calls.push('copy');const run=()=>{if(options.copyFails){o.fail(apiError());return;}try{fs.copyFileSync(o.srcPath,o.destPath);}catch(e){o.fail(e);return;}const dim=dimensions.get(o.srcPath);if(dim)dimensions.set(o.destPath,dim);o.success();};if(options.holdCopy)holdCopy=run;else run();},
     readFile(o){calls.push('read');if(options.readFails){o.fail(apiError());return;}try{o.success({data:fs.readFileSync(o.filePath)});}catch(e){o.fail(e);}},
     writeFile(o){calls.push('write');if(options.writeFails){o.fail(apiError());return;}try{fs.writeFileSync(o.filePath,o.data);o.success();}catch(e){o.fail(e);}},
     readFileSync(p,encoding){calls.push('read-sync');return fs.readFileSync(p,encoding);},
@@ -29,10 +35,10 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     env:{USER_DATA_PATH:base},getFileSystemManager:()=>FS,getSystemInfoSync:()=>({platform:options.platform||'ios',language:'en'}),
     getStorageSync:k=>disk.get(k)||'',removeStorageSync:k=>disk.delete(k),
     setStorageSync(k,v){storageWrites++;if(options.failStorageAtCall===storageWrites||failStorage||failOnce){failOnce=false;throw apiError();}disk.set(k,v);},
-    chooseMedia(o){calls.push('choose');if(options.cancel){o.fail({errMsg:'chooseMedia:fail cancel'});return;}if(options.chooseFails){o.fail(apiError());return;}const run=()=>o.success({tempFiles:[{tempFilePath:source,size:options.original?3000000:10}]});if(options.holdPick)holdPick=run;else run();},
+    chooseMedia(o){calls.push('choose');mediaCalls.push({count:o.count,mediaType:o.mediaType,sourceType:o.sourceType,sizeType:o.sizeType});if(options.cancel){o.fail({errMsg:'chooseMedia:fail cancel'});return;}if(options.chooseFails){o.fail(apiError());return;}const file=options.avatarOriginal?original:source;const run=()=>o.success({tempFiles:[{tempFilePath:file,size:options.original?3000000:10}]});if(options.holdPick)holdPick=run;else run();},
     chooseImage(o){calls.push('chooseImage');o.success({tempFilePaths:[source]});},
-    compressImage(o){calls.push('compress');if(options.programError)throw new TypeError('private details');if(options.compressFails){o.fail(apiError());return;}o.success({tempFilePath:compressed});},
-    getImageInfo(o){calls.push(o.src===source||o.src===compressed?'source-info':'saved-info');if(options.decodeFails&&o.src.includes('/savor-photos/')){o.fail(apiError());return;}let bytes;try{bytes=fs.readFileSync(o.src);}catch(e){o.fail(e);return;}if(options.unknownFormat){o.success({width:1,height:1,type:'unknown'});return;}if(options.cloudOutputType&&o.src===compressed){o.success({width:1,height:1,type:options.cloudOutputType});return;}const type=bytes.equals(png)?'png':bytes.equals(jpg)?'jpeg':null;if(!type){o.fail(apiError());return;}o.success({width:1,height:1,type});},
+    compressImage(o){calls.push('compress');const record={src:o.src,quality:o.quality};if(o.compressedWidth!==undefined)record.compressedWidth=o.compressedWidth;if(o.compressedHeight!==undefined)record.compressedHeight=o.compressedHeight;compressCalls.push(record);if(options.programError)throw new TypeError('private details');if(options.compressFails){o.fail(apiError());return;}const dest=o.src+'.compressed.jpg';try{fs.writeFileSync(dest,jpg);}catch(e){o.fail(e);return;}compressionOutputs.add(dest);const from=dimensions.get(o.src)||{width:1,height:1};dimensions.set(dest,{width:o.compressedWidth||from.width,height:o.compressedHeight||from.height});o.success({tempFilePath:dest});},
+    getImageInfo(o){calls.push(o.src.startsWith(base+'/savor-photos/')?'saved-info':'source-info');if(options.decodeFails&&o.src.includes('/savor-photos/')){o.fail(apiError());return;}let bytes;try{bytes=fs.readFileSync(o.src);}catch(e){o.fail(e);return;}if(options.unknownFormat){o.success({width:1,height:1,type:'unknown'});return;}if(options.cloudOutputType&&compressionOutputs.has(o.src)){o.success({width:1,height:1,type:options.cloudOutputType});return;}const type=bytes.equals(png)?'png':bytes.equals(jpg)?'jpeg':null;if(!type){o.fail(apiError());return;}const size=dimensions.get(o.src)||{width:1,height:1};o.success({width:size.width,height:size.height,type});},
     cloud:{init(){},async callFunction({name}){return {result:name==='account'?{success:true,protocolVersion:1,userId:uid(owner)}:{success:true,identityProtocol:1,userId:uid(owner)}};}},
   };
   const logger={error:(...args)=>logs.push(args.join(' ')),warn:(...args)=>logs.push(args.join(' ')),log(){}};
@@ -61,7 +67,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     const page={...pageSpec,data:JSON.parse(JSON.stringify(pageSpec.data)),setData(patch){Object.assign(this.data,patch);}};
     page.data.locked=false;page._hidden=false;page._viewEpoch=0;return page;
   }
-  return {mount,mountWorkspace,identity,store,photos,avatar,workspaceClient,workspaceFiles,archiveService,profileSync,data,disk,base,logs,calls,FS,wx,source,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
+  return {mount,mountWorkspace,identity,store,photos,avatar,workspaceClient,workspaceFiles,archiveService,profileSync,data,disk,base,logs,calls,FS,wx,source,original,derivative,mediaCalls,compressCalls,ready:()=>identity.verify(),setOwner:v=>{owner=v;},releasePick:()=>holdPick(),releaseCopy:()=>holdCopy(),failStorage:v=>{failStorage=v;},failOnce:()=>{failOnce=true;}};
 }
 (async()=>{
   await test('avatar service prepares a canonical owner-local asset',async()=>{
@@ -94,6 +100,55 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     const r=runtime();await r.ready();const selected=await r.avatar.chooseForCloud();
     assert(selected&&selected.asset);assert(selected.asset.localPath.includes('/savor-photos/'+uid('a')+'/'));
     assert.equal(selected.asset.source,'album');assert.equal(selected.asset.syncState,'pending');assert(Buffer.from(selected.base64,'base64').equals(jpg));
+  });
+  // --- custom avatar entry: device evidence ---
+  // On device the WeChat chooseAvatar button returned AVATAR_SOURCE_IMAGE_INFO width=132 height=132
+  // for a custom album photo: that button hands back its own small derivative, which cannot fill
+  // the profile photo at Retina size. The custom entry must therefore ask the system chooser for
+  // the original file and keep those pixels, while the WeChat-avatar entry keeps using chooseAvatar.
+  await test('custom avatar entry asks the system chooser for the original file',async()=>{
+    const r=runtime({avatarOriginal:true});await r.ready();assert.equal(typeof r.avatar.chooseLocal,'function','custom avatar chooser missing');
+    const owner=r.identity.lease(),source=await r.avatar.chooseLocal(owner);
+    assert.equal(source,r.original);
+    // The chooser arguments are literals built inside the VM realm, so normalize before comparing.
+    assert.deepEqual(JSON.parse(JSON.stringify(r.mediaCalls.at(-1))),{count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['original']});
+  });
+  await test('custom avatar keeps the original pixels instead of a 132px derivative',async()=>{
+    const r=runtime({avatarOriginal:true});await r.ready();const owner=r.identity.lease();
+    const asset=await r.avatar.prepare(await r.avatar.chooseLocal(owner),owner,'album');
+    assert.deepEqual({width:asset.width,height:asset.height},{width:1600,height:1200});
+    assert.deepEqual({formatVersion:asset.formatVersion,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{formatVersion:1,source:'album',syncState:'local',remoteRef:null});
+    // Re-encoding is allowed; downscaling is not. persistPhoto must not request a smaller frame.
+    for(const call of r.compressCalls)assert.equal(call.compressedWidth,undefined);
+    assert(fs.readFileSync(asset.localPath).equals(jpg));
+  });
+  await test('custom avatar cancellation is silent and creates no asset',async()=>{
+    const r=runtime({cancel:true});await r.ready();
+    assert.equal(await r.avatar.chooseLocal(r.identity.lease()),'');
+    assert.equal(r.logs.length,0);assert(!r.calls.includes('copy'));
+  });
+  await test('the Add photo chooser contract is untouched by the custom avatar entry',async()=>{
+    const r=runtime({avatarOriginal:true});await r.ready();const owner=r.identity.lease();
+    await r.avatar.prepare(await r.avatar.chooseLocal(owner),owner,'album');
+    assert.deepEqual(JSON.parse(JSON.stringify(r.mediaCalls.at(-1).sizeType)),['original']);
+    const [p]=await r.photos.choosePhotos(1);
+    assert(p.startsWith(r.base+'/savor-photos/'+uid('a')+'/'));
+    assert.deepEqual(JSON.parse(JSON.stringify(r.mediaCalls.at(-1))),{count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['original','compressed']});
+    assert(!r.calls.includes('chooseImage'));
+  });
+  await test('production Me + Sheet: the custom avatar entry converges on the same prepare and Save path',async()=>{
+    const r=runtime({avatarOriginal:true});await r.ready();r.store.updateProfile({name:'Saved'});const {me,profile,dispose}=r.mount();
+    await profile.onAvatarCustomRequest();
+    const avatar=profile.data.profileAvatar;
+    assert(avatar.includes('/savor-photos/'+uid('a')+'/'),'the custom entry must persist through the owner photo store');
+    assert.deepEqual(JSON.parse(JSON.stringify(r.mediaCalls.at(-1).sizeType)),['original']);
+    assert.equal(r.store.get().profile.avatar,'','selection only previews until Save');
+    assert.equal(r.store.get().profile.avatarAsset,null);
+    profile.onProfileSave();
+    assert.equal(r.store.get().profile.avatar,avatar);
+    assert.deepEqual({source:r.store.get().profile.avatarAsset.source,width:r.store.get().profile.avatarAsset.width,height:r.store.get().profile.avatarAsset.height},{source:'album',width:1600,height:1200});
+    assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
+    dispose();
   });
   await test('production Workspace page pushes only the service cloud payload',async()=>{
     const r=runtime();await r.ready();const page=r.mountWorkspace();await page.avatar();const selected=page._avatar;assert(selected&&selected.asset);

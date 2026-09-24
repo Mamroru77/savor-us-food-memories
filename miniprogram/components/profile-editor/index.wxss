@@ -5,3 +5,5 @@
 .edit-avatar-img { width:195rpx; height:195rpx; border-radius:50%; border:5rpx solid #fff; box-sizing:border-box; }
 .edit-avatar-badge { position:absolute; right:-8rpx; bottom:0; width:65rpx; height:65rpx; display:flex; align-items:center; justify-content:center; background:#eeefe7; border:5rpx solid #fff; border-radius:50%; box-sizing:border-box; }
 .theme-dusk-panel .edit-avatar-badge { background:#36373b; border-color:var(--glass-border, rgba(238,234,227,.12)); }
+.edit-avatar-custom { align-self:center; margin:0 auto 6rpx; padding:14rpx 28rpx; border-radius:999rpx; background:#eeefe7; color:#1b1c1a; font-size:24rpx; line-height:1.2; text-align:center; }
+.theme-dusk-panel .edit-avatar-custom { background:#36373b; color:#d7d1c7; }

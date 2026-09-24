@@ -31,14 +31,20 @@ function copy() {
 function options() {
   return [ { value: 'system', label: t('Follow system') }, { value: 'zh-CN', label: '简体中文' }, { value: 'en', label: 'English' } ];
 }
-function syncPage(page, state, selected) {
+function syncPage(page, state, selected, options) {
   const session=state.identity;
   if(session){
     const changed=page._identityGeneration!==undefined&&page._identityGeneration!==session.generation;
     page._identityGeneration=session.generation;
     const patch={identityReady:!session.locked};
     if(changed){
-      Object.assign(patch,{sheetShow:false,sheetType:'',sheetMemoryId:'',sheetFilter:'',imageErrors:{},focusedField:''});
+      Object.assign(patch,{imageErrors:{},focusedField:''});
+      // A system chooser (album, camera) hides the mini program, so App.onShow re-verifies
+      // identity while a page may still be holding a native round trip. Callers that own such a
+      // round trip ask to keep the sheet binding intact; otherwise the sheet hides, its mounted
+      // block unmounts, the editor detaches and the pending native result is destroyed.
+      // The caller decides — this module never inspects the native flow.
+      if(!(options&&options.preserveSheet===true))Object.assign(patch,{sheetShow:false,sheetType:'',sheetMemoryId:'',sheetFilter:''});
       if(selected===2){Object.assign(patch,{draft:require('./store').loadDraft(),knownPlace:null,importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',error:'',tag:'',saving:false,uploading:false});page.lookupSerial=(page.lookupSerial||0)+1;page.saveLock=false;}
       if(selected===1){page.markerGeneration=(page.markerGeneration||0)+1;if(page.pinRenderer)page.pinRenderer.dispose();page.pinRenderer=null;Object.assign(patch,{mapDrawers:[],markers:[],clusterOpen:false,stackPositionsReady:false});}
     }

@@ -6,6 +6,7 @@
         <s-icon name="camera" size="30" color="{{dusk ? '#d7d1c7' : '#1b1c1a'}}" stroke="1.75" />
       </view>
     </button>
+    <view class="edit-avatar-custom" bindtap="onAvatarCustomRequest" aria-role="button" aria-label="{{copy.s9b62114683}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s9b62114683}}</view>
     <view class="form-field">
       <text class="form-label">{{copy.sab42293e29}}</text>
       <input class="form-input {{profileError ? 'has-error' : ''}} profile-input {{focusedField === 'onProfileName-' ? 'is-focused' : ''}}" id="profile-name-field" value="{{profileName}}" placeholder="Jamie Lin" maxlength="32" bindinput="onProfileName" aria-label="{{copy.sab42293e29}}" placeholder-class="form-placeholder" data-focus-key="onProfileName-" bindfocus="onFieldFocus" bindblur="onFieldBlur" />

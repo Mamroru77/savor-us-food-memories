@@ -93,7 +93,15 @@ Page({
         nativeFlow.cancel(native.id);
       }
     }
-    i18n.syncPage(this, state, 4);
+    // A system chooser (album, camera) hides the mini program, so App.onShow re-verifies identity
+    // while the profile sheet still holds the avatar request. The page-level sync must not tear
+    // that binding down inside the window: the sheet would unmount, ProfileEditor would detach,
+    // and the request plus its native flow would be destroyed before bindchooseavatar lands.
+    // Only a live native flow on the profile sheet is preserved; every other identity change
+    // keeps the original safe behaviour of closing the sheet. The owner is still unknown while
+    // verifying, so this is an optimistic window — a different owner closes it on the next emit.
+    const preserveSheet=!!native&&!!session&&session.status==='verifying'&&this.data.sheetShow&&this.data.sheetType==='profile';
+    i18n.syncPage(this, state, 4, {preserveSheet});
     const summary = memoryStats.summary(state.memories);
     const isAvatarChanged = this.data.profile && this.data.profile.avatar !== state.profile.avatar;
     const patch={

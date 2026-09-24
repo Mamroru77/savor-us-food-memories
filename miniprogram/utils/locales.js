@@ -2594,5 +2594,10 @@ module.exports = [
     "key": "sa65210588a",
     "en": "Show all mapped memories",
     "zh": "全览已定位的回忆"
+  },
+  {
+    "key": "s9b62114683",
+    "en": "Choose from album or camera",
+    "zh": "从相册或相机选择"
   }
 ];
