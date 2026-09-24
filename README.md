@@ -12,11 +12,11 @@
 | 项目 | 状态 |
 | --- | --- |
 | 真机问题 | **7 项全部 CLOSED**（身份分区迁移、Add 原生返回竞态、头像与高清自定义头像链路） |
-| 发布线 | `v1.0.0` 已打标签并推送（annotated，指向 RC5 提交 `b2509c4`；`v1.0.0-r5` 指向同一提交） |
+| 发布线 | `v1.0.0` 已打标签并推送（annotated，指向 RC5 提交 `b2509c4`；`v1.0.0-r5` 指向同一提交）；[GitHub Release v1.0.0](https://github.com/Mamroru77/savor-us-food-memories/releases/tag/v1.0.0) 已创建并标记为 Latest |
 | 微信审核 | **已提交审核，当前审核中**（项目所有者确认，2026-09-24 于微信公众平台提交；本仓库无法独立取证） |
 | 静态验证 | `npm run verify` **355/355**；`npm run verify:all` **退出码 0** |
 | 包体积 | **1.48 MB**（门禁：`miniprogram/` < 1.5 MB） |
-| 尚未执行 | 云函数本轮**无代码改动**故未部署；`v1.0.0` 尚未创建 GitHub Release（远端现有 Release 仅 `v1.0.0-r4`） |
+| 尚未执行 | 云函数本轮**无代码改动**故未部署（最近一次云函数提交为 2026-09-16） |
 
 完整收尾记录（提交清单、验证矩阵、真机取证、Git 集成）见 [Release Closure 2026-09-24](docs/reviews/release-closure-20260924.md)。
 
@@ -116,7 +116,7 @@ npm run build:icons     # 修改图标源后生成资源
 - 标签：`v1.0.0` 与 `v1.0.0-r5` 均指向 RC5 提交 `b2509c4`（**不是**其后的文档提交）；更早的 `v1.0.0-r4` 保持不变。
 - 微信侧：体验版上传（版本号 `1.0.0`）之后**已提交审核，当前审核中**（项目所有者确认），尚未正式发布。
 - 云函数：本轮 6 个提交对 `cloudfunctions/` **零改动**（最近一次云函数提交为 2026-09-16），因此未执行部署。
-- GitHub Release：远端现有 Release 为 `v1.0.0-r4`（2026-09-19），`v1.0.0` 标签尚未创建 Release。
+- GitHub Release：[`v1.0.0`](https://github.com/Mamroru77/savor-us-food-memories/releases/tag/v1.0.0) 已创建（Latest，挂到已存在的 `v1.0.0` 标签，未新建 tag）；更早的 `v1.0.0-r4`（2026-09-19）保留。
 - 收尾期间冻结功能重构：如需改动，先补回归再动生产代码。
 
 ## 真机验收

@@ -148,8 +148,8 @@ REMOTE_MATCHES_LOCAL = YES
   因此本仓库与本地工具链**无法独立取证**。**尚未正式发布。**
 - **云函数：未部署，且本轮没有可部署对象。** `b8dbed5..c74309f` 对 `cloudfunctions/` **零改动**
   （最近一次云函数提交为 2026-09-16 的 `f037748`）⇒ 本轮不存在待部署的云函数变更。
-- **GitHub Release：`v1.0.0` 尚未创建。** 远端 `releases` 当前只有 1 条，为 `v1.0.0-r4`
-  （2026-09-19 创建并发布，作者 `Mamroru77`，target `integrated-with-cloud`）；
-  `v1.0.0` 标签已推送但**没有对应 Release**。
+- **GitHub Release：`v1.0.0` 已创建。** 2026-09-24 于 GitHub 创建 Release（**挂到已存在的 `v1.0.0` 标签，
+  未新建或移动 tag**；非 draft、非 prerelease，已标记为 **Latest**），说明文本取自本文结论摘要并链回本目录的
+  3 篇 RCA。此前远端仅有 `v1.0.0-r4`（2026-09-19 创建并发布，作者 `Mamroru77`，target `integrated-with-cloud`），现已保留。
 - 分支 `integrated-with-cloud` 在其后新增两个 **docs-only** 提交并 fast-forward 推送：
   `8400351`（README 丰富）、`cf2dfc2`（docs 导航索引补齐）；**tag 未移动**。
