@@ -2,7 +2,7 @@
 
 长期维护文档 · 日期：2026-09-24
 范围：`miniprogram/utils/photos.js` + `miniprogram/pages/add/index.js`
-来源：本仓库 `docs/reviews/add-photo-native-return-fix-20260923.md`（TDD RED → 最小修复 → GREEN）。
+来源：本仓库 2026-09-23 的 Add 照片 native-return 阶段性原稿（TDD RED → 最小修复 → GREEN）；该原稿已移入本地归档，未纳入版本库。
 
 > 本文只写原始报告与真机证据实际支持的结论。
 
@@ -139,7 +139,7 @@ Me 头像链路用的是 `nativeFlow` 的 suspend/show 可见性契约，**与�
 
 **证据来源区分**：这**不是**某一份独立 trace artifact 的结论 ——
 本仓库该阶段的原始原稿只把 A–E 列为真机复测步骤，**未回填逐项设备日志**；
-因此本文把它标记为「**项目所有者验收**」，与「设备日志证据」（如 `add-photo-native-return-fix-20260923.md`
+因此本文把它标记为「**项目所有者验收**」，与「设备日志证据」（如 2026-09-23 阶段性原稿
 中 RED 阶段那条逐字一致的 `[avatar] identity STALE_IDENTITY` 日志）**分开陈述**，不互相冒充。
 
 下表为所有者验收覆盖的场景与判定标准：
