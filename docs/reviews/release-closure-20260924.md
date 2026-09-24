@@ -136,3 +136,20 @@ REMOTE_MATCHES_LOCAL = YES
   marker existence contract、数据保全保证、真机迁移证明
 - [`./add-native-return-fix.md`](./add-native-return-fix.md) — Add 照片 native-return 竞态、
   生命周期合同、为什么不动 identity
+
+---
+
+## 状态更新（2026-09-24 晚 · 后续核查追加）
+
+> 本节为**追加**内容，不改写上文。上文「未 deploy / 未提交审核」描述的是收尾当时的事实。
+
+- **微信审核：已提交，审核中。** 项目所有者在体验版上传（版本号 `1.0.0`）之后，于微信公众平台
+  提交了审核。来源为**项目所有者确认**；提交审核发生在微信公众平台，**不在开发者工具 CLI 能力内**，
+  因此本仓库与本地工具链**无法独立取证**。**尚未正式发布。**
+- **云函数：未部署，且本轮没有可部署对象。** `b8dbed5..c74309f` 对 `cloudfunctions/` **零改动**
+  （最近一次云函数提交为 2026-09-16 的 `f037748`）⇒ 本轮不存在待部署的云函数变更。
+- **GitHub Release：`v1.0.0` 尚未创建。** 远端 `releases` 当前只有 1 条，为 `v1.0.0-r4`
+  （2026-09-19 创建并发布，作者 `Mamroru77`，target `integrated-with-cloud`）；
+  `v1.0.0` 标签已推送但**没有对应 Release**。
+- 分支 `integrated-with-cloud` 在其后新增两个 **docs-only** 提交并 fast-forward 推送：
+  `8400351`（README 丰富）、`cf2dfc2`（docs 导航索引补齐）；**tag 未移动**。
