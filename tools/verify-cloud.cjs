@@ -302,6 +302,115 @@ function nativeTabs(initial=0){
     const photos = require(path.join(mp, 'utils/photos'));
     const paths = await photos.choosePhotos(1); assert(paths[0].startsWith('/user/savor-photos/'));
   });
+  // A stored photo keeps its own bytes, so the copy that is actually uploaded is what
+  // has to fit the upload window. The budget is a BYTE budget: a high-quality or noisy
+  // image can be several megabytes at a modest resolution, and an oversized upload is
+  // what makes the cloud call time out.
+  //
+  // Drives the real upload step against a fake file system. `sizes` maps a local path to
+  // its byte size (null means "stat fails"); each compressImage result is recorded with
+  // the byte size given by `shrunkBytes` (a number, or a function of the attempt number).
+  async function uploadScenario(options, run) {
+    const sizes = Object.assign({}, options.sizes);
+    const compressed = [], uploaded = [];
+    const savedInfo = wx.getImageInfo;
+    wx.getImageInfo = options.getImageInfo;
+    const getFsm = wx.getFileSystemManager, compress = wx.compressImage, uploadFile = wx.cloud.uploadFile;
+    const fsm = getFsm();
+    const realStat = fsm.statSync;
+    fsm.statSync = p => { const size = sizes[p]; if (size === undefined) return realStat(p); if (size === null) throw new Error('ENOENT'); return {size}; };
+    wx.getFileSystemManager = () => fsm;
+    wx.compressImage = o => {
+      compressed.push(o);
+      if (options.compressFails) { o.fail({errMsg: 'compressImage:fail'}); return; }
+      const target = 'wxfile://tmp_shrunk_' + compressed.length + '.jpg';
+      sizes[target] = typeof options.shrunkBytes === 'function' ? options.shrunkBytes(compressed.length) : options.shrunkBytes;
+      o.success({tempFilePath: target});
+    };
+    wx.cloud.uploadFile = o => { uploaded.push(o.filePath); return Promise.resolve({fileID: 'cloud://cloud1-d9gqm52id66c0bcda.bucket/dining/shrunk/0.jpg'}); };
+    try { await run(compressed, uploaded); }
+    finally {
+      if (savedInfo === undefined) delete wx.getImageInfo; else wx.getImageInfo = savedInfo;
+      wx.getFileSystemManager = getFsm; wx.compressImage = compress; wx.cloud.uploadFile = uploadFile;
+    }
+  }
+  // Drives the real upload step for one local photo without creating a cloud record.
+  const uploadOne = () => {
+    const token = require(path.join(mp, 'utils/identity')).lease();
+    const attempt = {actorUserId: token.userId, id: 'upload-shrink-probe', uploads: {}};
+    return service.uploadPhotos(['/user/savor-photos/large.jpg'], attempt, () => {}, token);
+  };
+  const LOCAL = '/user/savor-photos/large.jpg';
+  const MB = 1024 * 1024;
+  await test('a photo that is small in pixels but large in bytes is still shrunk', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 3 * MB}, shrunkBytes: 1 * MB, getImageInfo: o => o.success({width: 1200, height: 900, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 1, '3 MB must be shrunk even though 1200x900 is under the edge cap');
+        assert.deepEqual(uploaded, ['wxfile://tmp_shrunk_1.jpg'], 'the upload must use the smaller copy');
+      });
+  });
+  await test('a shrunk copy that still exceeds the budget is retried smaller', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 5 * MB}, shrunkBytes: n => n === 1 ? 3 * MB : 1 * MB, getImageInfo: o => o.success({width: 4000, height: 3000, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 2, 'a 3 MB result is still over budget and must be retried smaller');
+        assert(compressed[1].compressedWidth < compressed[0].compressedWidth, 'the retry must target a smaller edge');
+        assert.deepEqual(uploaded, ['wxfile://tmp_shrunk_2.jpg']);
+      });
+  });
+  await test('an oversized photo is never uploaded when it cannot be shrunk', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 5 * MB}, compressFails: true, getImageInfo: o => o.success({width: 4000, height: 3000, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await assert.rejects(uploadOne(), e => e.code === 'UPLOAD_FAILED');
+        assert.deepEqual(uploaded, [], 'a 5 MB original must never reach the upload call');
+      });
+  });
+  await test('an oversized photo whose size cannot be read is shrunk rather than trusted', async () => {
+    await uploadScenario({sizes: {[LOCAL]: null}, shrunkBytes: 1 * MB, getImageInfo: o => o.success({width: 4000, height: 3000, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 1, 'an unreadable size must not be assumed to fit');
+        assert.deepEqual(uploaded, ['wxfile://tmp_shrunk_1.jpg']);
+      });
+  });
+  await test('a photo that already fits the byte budget is uploaded as it is', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 1 * MB}, shrunkBytes: 1 * MB, getImageInfo: o => o.success({width: 4000, height: 3000, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 0, 'a photo that provably fits must not be re-encoded');
+        assert.deepEqual(uploaded, [LOCAL]);
+      });
+  });
+  // Normalization must never enlarge a photo. A frame that is already smaller than the
+  // current rung keeps its own dimensions on that rung and only loses encoded bytes; a
+  // later rung may only make it smaller. Landscape and portrait are both covered.
+  const noUpscale = (calls, width, height) => calls.forEach((call, index) => {
+    assert(call.compressedWidth <= width && call.compressedHeight <= height,
+      'call ' + (index + 1) + ' upscaled: ' + call.compressedWidth + 'x' + call.compressedHeight + ' exceeds ' + width + 'x' + height);
+  });
+  await test('a landscape photo smaller than the first rung is never upscaled', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 3 * MB}, shrunkBytes: n => n === 1 ? 3 * MB : 1 * MB, getImageInfo: o => o.success({width: 1200, height: 900, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 2, 'the first re-encode still exceeds the budget, so the next rung must run');
+        assert.deepEqual([compressed[0].compressedWidth, compressed[0].compressedHeight], [1200, 900], 'the 1600 rung must keep 1200x900, never upscale to 1600x1200');
+        assert.deepEqual([compressed[1].compressedWidth, compressed[1].compressedHeight], [1080, 810], 'the next rung only shrinks it');
+        noUpscale(compressed, 1200, 900);
+        assert.deepEqual(uploaded, ['wxfile://tmp_shrunk_2.jpg']);
+      });
+  });
+  await test('a portrait photo smaller than the first rung is never upscaled', async () => {
+    await uploadScenario({sizes: {[LOCAL]: 3 * MB}, shrunkBytes: n => n === 1 ? 3 * MB : 1 * MB, getImageInfo: o => o.success({width: 900, height: 1200, type: 'jpeg'})},
+      async (compressed, uploaded) => {
+        await uploadOne();
+        assert.equal(compressed.length, 2, 'the first re-encode still exceeds the budget, so the next rung must run');
+        assert.deepEqual([compressed[0].compressedWidth, compressed[0].compressedHeight], [900, 1200], 'the 1600 rung must keep 900x1200, never upscale to 1200x1600');
+        assert.deepEqual([compressed[1].compressedWidth, compressed[1].compressedHeight], [810, 1080], 'the next rung only shrinks it');
+        noUpscale(compressed, 900, 1200);
+        assert.deepEqual(uploaded, ['wxfile://tmp_shrunk_2.jpg']);
+      });
+  });
   await test('Case 1: no-photo Add save, cloud row, store and draft reset', async () => {
     const p = page('add'); store.saveDraft(draft()); p.onLoad(); p.onShow();
     await p.onSave(); assert.equal(rows.size, 1); assert.equal(store.get().memories.length, 1);
@@ -437,6 +546,37 @@ function nativeTabs(initial=0){
     const picked = await locations.choose(); assert(locations.confirmed(picked));
     const p = page('add'); store.saveDraft(draft()); p.onLoad(); p.onShow(); await p.onChooseRestaurantLocation(); await p.onSave(); p.onUnload();
     const saved = store.get().memories[0]; assert(locations.confirmed(saved)); assert.equal(saved.address, '高雄市苓雅區');
+  });
+  // Picking a shop on the Tencent map names the memory when the user has not typed
+  // a restaurant yet. The POI name must be applied without discarding the pick.
+  await test('picking a map location fills an empty restaurant name from the POI', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    assert.equal(p.data.draft.restaurant, '', 'the restaurant field starts empty');
+    await p.onChooseRestaurantLocation();
+    assert.equal(p.data.draft.restaurant, 'Real dinner', 'the POI name names the memory');
+    assert.deepEqual(p.data.draft.location.coordinates, [22.63, 120.3], 'the picked location survives the fill');
+    assert.equal(p.data.draft.location.locationName, 'Real dinner');
+    p.onUnload();
+  });
+  await test('a restaurant name the user typed is never overwritten by a later POI pick', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '我的餐厅'}});
+    await p.onChooseRestaurantLocation();
+    assert.equal(p.data.draft.restaurant, '我的餐厅', 'a typed name is the user\'s decision, not a fallback');
+    assert.deepEqual(p.data.draft.location.coordinates, [22.63, 120.3]);
+    p.onUnload();
+  });
+  await test('naming the memory from a POI keeps the dining types the user already chose', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onDraftDiningType({currentTarget: {dataset: {value: '火锅'}}});
+    assert.deepEqual(p.data.draft.diningTypes, ['火锅'], 'the dining type is set before the pick');
+    await p.onChooseRestaurantLocation();
+    assert.equal(p.data.draft.restaurant, 'Real dinner');
+    assert.deepEqual(p.data.draft.diningTypes, ['火锅'], 'auto-naming must not clear user-chosen dining types');
+    p.onUnload();
   });
   await test('new Add accepts an optional location without persisting placeholder coordinates', async () => {
     const d = draft(); delete d.location; d.restaurant = 'Never mapped restaurant'; store.saveDraft(d);

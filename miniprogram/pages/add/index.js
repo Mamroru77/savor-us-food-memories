@@ -143,7 +143,7 @@ Page({
     });
   },
 
-  changeDraft(key, value) {
+  changeDraft(key, value, options) {
     if (this.saveLock) return;
     if(this.data.draft.editOperationId) {store.notify(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.')); return;}
     if (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) {
@@ -152,7 +152,11 @@ Page({
     }
     const draft = Object.assign({}, this.data.draft);
     delete draft.cloudAttempt;
-    if (key === 'restaurant') { delete draft.location; delete draft.sourcePlatform; delete draft.sourceUrl; delete draft.diningMode; delete draft.importAddressHint;delete draft.importAreaText;delete draft.platformRating;delete draft.platformAveragePriceCny;delete draft.diningTypes;delete draft.sourceCategory;delete draft.categorySource; }
+    // Typing a restaurant name switches the memory to a different place, so the picked
+    // location and everything derived from it are dropped. Naming the place that was
+    // just picked is not a switch: keepRelated preserves the pick and the dining types
+    // the user already chose.
+    if (key === 'restaurant' && !(options && options.keepRelated)) { delete draft.location; delete draft.sourcePlatform; delete draft.sourceUrl; delete draft.diningMode; delete draft.importAddressHint;delete draft.importAreaText;delete draft.platformRating;delete draft.platformAveragePriceCny;delete draft.diningTypes;delete draft.sourceCategory;delete draft.categorySource; }
     draft[key] = value;
     if(key==='cuisine'||key==='diningTypes')draft.categorySource='user-confirmed';
     this.setData({ draft: draft, fieldErrors:{},errorField:'',error:'' });
@@ -394,6 +398,10 @@ Page({
     return locations.choose(this.data.draft.location).then(async pick => {
       token=await identity.resumeNative(token);
       if (this.disposed) return;
+      // The POI name names the memory when the user has not typed one. It is written
+      // before the pick because the restaurant branch of changeDraft clears the
+      // location; keepRelated keeps the fresh pick and the chosen dining types.
+      if (!this.data.draft.restaurant.trim() && pick.locationName) this.changeDraft('restaurant', pick.locationName, {keepRelated: true});
       this.changeDraft('location', pick);
       this.setData({ error: '' });
     }).catch(error => {

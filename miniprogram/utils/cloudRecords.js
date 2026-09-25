@@ -97,6 +97,52 @@ async function resolvePhotoUrls(ids) {
   }
   return ids.map(id => urls[id] || id);
 }
+// A stored photo keeps its own bytes, so the copy that is actually uploaded is what has
+// to fit the upload window. The budget is measured in BYTES, not pixels: a high-quality
+// or noisy image can be several megabytes at a modest resolution, and an oversized
+// upload is what makes the cloud call time out. The original is uploaded only when it is
+// proven to fit; otherwise it is re-encoded at progressively smaller long edges and each
+// result is measured again. Nothing oversized ever reaches the upload call, and nothing
+// is lost silently: when no attempt fits, the save fails with a message the user can act
+// on instead of stalling in a timeout.
+const MAX_CLOUD_PHOTO_BYTES = 2 * 1024 * 1024;
+const UPLOAD_EDGE_LADDER = [1600, 1080];
+function localBytes(path) {
+  try {
+    const stat = wx.getFileSystemManager().statSync(path);
+    return stat && Number.isFinite(stat.size) && stat.size > 0 ? stat.size : null;
+  } catch (e) { return null; }
+}
+async function shrinkForUpload(path, token) {
+  identity.assertLease(token);
+  const original = localBytes(path);
+  if (original !== null && original <= MAX_CLOUD_PHOTO_BYTES) return path;
+  let info = null;
+  try { info = await new Promise((resolve, reject) => wx.getImageInfo({src: path, success: resolve, fail: reject})); }
+  catch (e) { info = null; }
+  const width = info && info.width > 0 ? info.width : 0;
+  const height = info && info.height > 0 ? info.height : 0;
+  // With no readable frame there is nothing to scale towards, so a single re-encode is
+  // the only attempt worth making.
+  const rungs = width && height ? UPLOAD_EDGE_LADDER : [null];
+  for (const edge of rungs) {
+    identity.assertLease(token);
+    const options = {src: path, quality: 80};
+    if (edge !== null) {
+      const scale = Math.min(1, edge / Math.max(width, height));
+      options.compressedWidth = Math.max(1, Math.round(width * scale));
+      options.compressedHeight = Math.max(1, Math.round(height * scale));
+    }
+    let shrunk;
+    try { shrunk = await new Promise((resolve, reject) => wx.compressImage(Object.assign({success: resolve, fail: reject}, options))); }
+    catch (e) { identity.assertLease(token); continue; }
+    identity.assertLease(token);
+    if (!shrunk || !data.isSafeImage(shrunk.tempFilePath)) continue;
+    const bytes = localBytes(shrunk.tempFilePath);
+    if (bytes !== null && bytes <= MAX_CLOUD_PHOTO_BYTES) return shrunk.tempFilePath;
+  }
+  throw error('UPLOAD_FAILED', 'This photo is too large to upload. Choose a smaller photo and try again.');
+}
 async function uploadPhotos(paths, attempt, persistAttempt, token) {
   identity.assertBusinessCloudAllowed();
   identity.assertLease(token);
@@ -109,9 +155,12 @@ async function uploadPhotos(paths, attempt, persistAttempt, token) {
     if (data.isCloudImage(path) || /^\/images\//.test(path) || /^https:\/\//.test(path)) { result.push(path); continue; }
     if (attempt.uploads[path]) { result.push(attempt.uploads[path]); continue; }
     if (!data.isSafeImage(path)) throw error('INVALID_PHOTO', i18n.t('This photo is no longer available. Please select it again.'));
+    // Deliberately outside the upload try: a stale lease must surface as STALE_IDENTITY
+    // rather than being reported as an upload failure.
+    const filePath = await shrinkForUpload(path, token);
     try {
       const uploaded = await Promise.race([
-        wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: path }),
+        wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: filePath }),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('UPLOAD_TIMEOUT')), 20000))
       ]);
       identity.assertLease(token);

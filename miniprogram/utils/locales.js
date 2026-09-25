@@ -2619,5 +2619,10 @@ module.exports = [
     "key": "sc8ff73b0a1",
     "en": "New memory",
     "zh": "新回忆"
+  },
+  {
+    "key": "s31b6222625",
+    "en": "This photo is too large to upload. Choose a smaller photo and try again.",
+    "zh": "照片过大，无法上传。请选择较小的照片后重试。"
   }
 ];
