@@ -17,20 +17,21 @@ function fixture(){
   };
   const identity={snapshot:()=>state.identity,lease:()=>({userId:'fixture',generation:state.identity.generation,namespace:'fixture'}),assertLease:token=>{if(!token||token.userId!=='fixture')throw Object.assign(Error('stale'),{code:'STALE_IDENTITY'});},resumeNative:async token=>token};
   const updates=[];
+  const modalCalls=[];
   const deps={
     identity,
     identityCopy:()=>({verify:'Verify your account first'}),
     motionPresence:{update(){},dispose(){}},localDate:{today:()=> '2026-09-16'},
-    i18n:{copy:()=>({}),options:()=>[],locale:()=> 'en',t:s=>s},
+    i18n:{copy:()=>({}),options:()=>[],locale:()=> 'en',t:s=>s,modal:options=>{modalCalls.push(options);}},
     uiFeedback:require('../miniprogram/utils/uiFeedback'),
-    store:{get:()=>state,subscribe:fn=>{listeners.push(fn);return()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){}},
+    store:{get:()=>state,subscribe:fn=>{listeners.push(fn);return()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){},canResolve:()=>false},
     pageHeadings:{},data:{},
     photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code})},
     avatar:{},
     memoryStats:{},metrics:{getMetrics:()=>({headerTop:60})},
   };
   deps.nativeFlow=loadNativeFlow(identity);
-  return {state,deps,updates,emit:()=>listeners.slice().forEach(fn=>fn(state))};
+  return {state,deps,updates,modalCalls,emit:()=>listeners.slice().forEach(fn=>fn(state))};
 }
 
 function loadNativeFlow(identity){
@@ -857,6 +858,41 @@ function meProfile(){
     other.deps.nativeFlow.begin(other.deps.identity.lease());
     other.state.identity={userId:'',generation:2,locked:true,status:'verifying'};other.emit();
     assert.equal(other.me.data.sheetShow,false,'only the profile sheet may be preserved');
+  });
+
+  await test('sync status offers keeping a locally edited record whose cloud copy was deleted',async()=>{
+    const h=sheet();
+    h.p.data.type='sync';
+    const memory={id:'rec-deleted',cloudId:'rec-deleted',restaurant:'Deleted dinner',revision:1};
+    h.state.outbox=[{id:'op-keep',recordId:'rec-deleted',kind:'update',error:'DELETED',message:'This record was deleted.',base:memory,memory:{...memory,restaurant:'My kept edit'}}];
+    h.deps.store.canResolve=code=>code==='DELETED';
+    h.deps.store.keepLocalEdit=id=>{h.kept=id;return Promise.resolve();};
+    h.p.refresh();
+    const row=h.p.data.syncRows[0];
+    assert.equal(row.keepable,true,'a tombstoned edit must offer a way to keep the local content');
+    assert.equal(row.conflict,true,'the tombstone still needs an explicit decision');
+    assert.equal(row.status,'Needs review');
+    assert.equal(row.message,'This record was deleted.');
+    assert.equal(typeof h.p.onKeepEdit,'function');
+    h.p.onKeepEdit({currentTarget:{dataset:{id:'rec-deleted'}}});
+    assert.equal(h.modalCalls.length,1);
+    assert.equal(h.modalCalls[0].title,'Keep my edit');
+    h.modalCalls[0].success({confirm:true});
+    await flush();
+    assert.equal(h.kept,'rec-deleted','confirming keeps the edit instead of discarding it');
+
+    // The keep action is specific to a tombstone: a live conflict is never
+    // duplicated into a new record, and an in-flight create is not a decision.
+    h.state.outbox=[{id:'op-conflict',recordId:'rec-conflict',kind:'update',error:'CONFLICT',message:'The cloud record changed.',base:memory,memory}];
+    h.deps.store.canResolve=code=>code==='CONFLICT'||code==='DELETED';
+    h.p.refresh();
+    assert.equal(h.p.data.syncRows[0].keepable,false,'a live conflict must not be duplicated');
+    h.state.outbox=[{id:'op-recreate',recordId:'rec-deleted',kind:'recreate',base:memory,memory:{...memory,restaurant:'My kept edit'}}];
+    h.deps.store.canResolve=()=>false;
+    h.p.refresh();
+    assert.equal(h.p.data.syncRows[0].keepable,false,'an in-flight create is not a decision');
+    assert.equal(h.p.data.syncRows[0].kind,'New memory','the queued create is labelled as a new memory');
+    assert.equal(h.p.data.syncRows[0].status,'Pending');
   });
 
   console.log(count+' synthetic checks passed; no real chooser or user data touched.');

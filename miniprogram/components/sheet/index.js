@@ -224,7 +224,7 @@ Component({
       }
       // Only these leaves are referenced by the template; business methods keep using Store.
       patch.state = {profile:{avatar:state.profile.avatar},settings:{loveSent:state.settings.loveSent,notificationsRead:state.settings.notificationsRead}};
-      if(type==='sync') patch.syncRows=(state.outbox||[]).map(op=>({id:op.id,recordId:op.recordId,restaurant:op.base&&op.base.restaurant||op.recordId,kind:i18n.t(op.kind==='delete'?'Delete':op.kind==='update'?'Update':'Flags'),status:i18n.t(op.error==='CONFLICT'?'Conflict':store.canResolve(op.error)?'Needs review':'Pending'),message:i18n.t(op.message||''),conflict:store.canResolve(op.error)}));
+      if(type==='sync') patch.syncRows=(state.outbox||[]).map(op=>({id:op.id,recordId:op.recordId,restaurant:op.base&&op.base.restaurant||op.recordId,kind:i18n.t(op.kind==='delete'?'Delete':op.kind==='update'?'Update':op.kind==='recreate'?'New memory':'Flags'),status:i18n.t(op.error==='CONFLICT'?'Conflict':store.canResolve(op.error)?'Needs review':'Pending'),message:i18n.t(op.message||''),conflict:store.canResolve(op.error),keepable:op.kind==='update'&&op.error==='DELETED'}));
       patch.dusk = state.settings.theme === 'dusk';
       patch.quiet = !!state.settings.reduceMotion;
 
@@ -302,6 +302,9 @@ Component({
     onSyncRetry() { return store.syncCloud().catch(e=>store.notify(e.message)); },
     onUseCloud(event) {
       i18n.modal({title:'Use cloud version',content:'Discard local pending changes for this record and use the cloud version?',success:r=>{if(r.confirm) store.useCloudVersion(event.currentTarget.dataset.id).catch(e=>store.notify(i18n.t(e.message)));}});
+    },
+    onKeepEdit(event) {
+      i18n.modal({title:'Keep my edit',content:'The cloud copy was deleted. Save your local changes as a new memory?',success:r=>{if(r.confirm) store.keepLocalEdit(event.currentTarget.dataset.id).catch(e=>store.notify(i18n.t(e.message)));}});
     },
     onEditMemory() {
       const memory=this.data.detail && this.data.detail.memory; if(!memory) return;

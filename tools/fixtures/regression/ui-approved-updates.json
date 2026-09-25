@@ -4,8 +4,8 @@
     "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
   },
   "miniprogram/components/sheet/index.wxml": {
-    "sha256": "b37c16516476611031e67e076e970b07b9cda2cec00c37a9bb193ac79bdc5428",
-    "reason": "2026-09-16 user-authorized sequential P0/P1: conditional identity gates, scoped secondary Nocturne/control consistency, existing entrances only. Preserve five tabs, Map geometry, Home/Add business flows. Rendered acceptance pending."
+    "sha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
+    "reason": "2026-09-25 用户授权的墓碑记录修复：为「云端已删除」的待处理修改新增「保留我的修改」按钮，复用既有 secondary-button 与 i18n copy 槽位；未改布局、样式、Tab、Map 几何或其他入口。原生验收待执行。"
   },
   "miniprogram/components/sheet/index.wxss": {
     "sha256": "96cdb3d0ac4a017802e238766e7fbfabf01abe672cd85f2dd5cbfd468c900ebf",
@@ -176,12 +176,12 @@
     "reason": "Official async node query lifecycle: superseded/cleared report render callbacks cannot redraw or replace the latest canvas. No sharing, export, identity, persisted data or palette changes."
   },
   "miniprogram/utils/locales.js": {
-    "sha256": "edc24265e7e3f4552b48b1374261ce90ff4fa2edae11a512ea086f4c0a08cd3e",
-    "reason": "User-authorized sequential audit: localize two existing Me entries through the existing TSV build. No menu order, icons, routes, Tab behavior, preferences or private content changes."
+    "sha256": "76f184c8ba4ce2f9ee782bef31c15ab4a31e461139594347a269924f2d999cc4",
+    "reason": "2026-09-25 用户授权的墓碑记录修复：经既有 TSV 构建追加四条文案（保留我的修改、另存确认、无法保留错误、新回忆）。未改菜单顺序、图标、路由、Tab 行为或既有文案。"
   },
   "miniprogram/components/sheet/index.js": {
-    "sha256": "7f698743706957c388fe5b3d8fcb0d68b419d02c261b9ff6da1199e9e1be474c",
-    "reason": "Preserve unsaved form fields and guard stale avatar results; no change to identity recovery or persistence."
+    "sha256": "eb844c42c0739dc23917425b37cb9d2b3a661cda4678a457b875dece60d3fee9",
+    "reason": "2026-09-25 用户授权的墓碑记录修复：同步状态新增 keepable 行标志与 onKeepEdit 处理，recreate 行显示为「新回忆」。未改身份恢复、租约或持久化语义。"
   },
   "miniprogram/styles/visual-tokens.wxss": {
     "sha256": "d259392ff5b37ecc062f7882e3789ba93f8f840b854e7f2d25a6bf1deba8e28e",

@@ -56,7 +56,7 @@ function normalizeDiary(value) {
     profile:migrated.profile,
     settings:settingsRepository.normalize(parsed.settings),
     feedback:Array.isArray(parsed.feedback)?parsed.feedback.filter(f=>f&&typeof f.message==='string'&&typeof f.date==='string'):[],
-    outbox:Array.isArray(parsed.outbox)?parsed.outbox.filter(op=>op&&typeof op.id==='string'&&typeof op.recordId==='string'&&['flags','delete','update'].includes(op.kind)):[],
+    outbox:Array.isArray(parsed.outbox)?parsed.outbox.filter(op=>op&&typeof op.id==='string'&&typeof op.recordId==='string'&&['flags','delete','update','recreate'].includes(op.kind)):[],
     cloudHidden:Array.isArray(parsed.cloudHidden)?parsed.cloudHidden.filter(id=>typeof id==='string'):[],
   };
   return {diary,changed:parsed.schemaVersion!==2||migrated.changed||JSON.stringify(diary)!==JSON.stringify(parsed)};
@@ -245,8 +245,20 @@ function flushOutbox() {
       if(!op) break; attempted.add(op.id);
       if(blocked.has(op.recordId) || canResolve(op.error)) {blocked.add(op.recordId);continue;}
       try {
-        if(!op.base || !Number.isInteger(op.revision) || op.revision<0 || !op.uploads || typeof op.uploads!=='object' || Array.isArray(op.uploads) || (op.kind==='update' && !data.isMemory(op.memory))) {const e=new Error(i18n.t('The local pending change is invalid. Review it in Sync status.'));e.code='INVALID_LOCAL_STATE';throw e;}
-        const saved=await require('./cloudRecords').mutate(op,()=>{identity.assertLease(token);identity.setStorageSync(STORAGE_KEY,JSON.stringify(state));});
+        if(!op.base || !Number.isInteger(op.revision) || op.revision<0 || !op.uploads || typeof op.uploads!=='object' || Array.isArray(op.uploads) || (['update','recreate'].includes(op.kind) && !data.isMemory(op.memory))) {const e=new Error(i18n.t('The local pending change is invalid. Review it in Sync status.'));e.code='INVALID_LOCAL_STATE';throw e;}
+        const persist=()=>{identity.assertLease(token);identity.setStorageSync(STORAGE_KEY,JSON.stringify(state));};
+        // A kept edit becomes a new cloud record: the queued operation id is the
+        // create request id, so a lost reply can only ever create it once.
+        if(op.kind==='recreate') {
+          const saved=await require('./cloudRecords').addRecord(op,persist);
+          identity.assertLease(token);
+          const outbox=state.outbox.filter(x=>x.id!==op.id && x.recordId!==op.recordId);
+          let memories=state.memories.filter(m=>m.id!==op.recordId && m.id!==saved.id);
+          if(!saved.deleted) { const m=syncRepository.overlay(saved,outbox); if(!m.pendingDelete) memories.unshift(m); }
+          commit(Object.assign({},state,{outbox,memories,cloudHidden:Array.from(new Set(state.cloudHidden.concat(op.recordId)))}));
+          continue;
+        }
+        const saved=await require('./cloudRecords').mutate(op,persist);
         identity.assertLease(token);
         const ownSuccessor=saved.operationRevision===op.revision+1 && saved.operationRevision===saved.revision;
         const outbox=state.outbox.filter(x=>x.id!==op.id).map(x=>x.recordId===op.recordId && ownSuccessor && x.revision===op.revision?Object.assign({},x,{revision:saved.operationRevision}):x);
@@ -282,6 +294,27 @@ async function useCloudVersion(recordId) {
   if(saved&&!saved.deleted) memories.unshift(saved);
   commit(Object.assign({},state,{outbox,memories}));
   if(loadDraft().editingId===recordId) clearDraft();
+  } finally {resolvingRecords.delete(recordId);}
+}
+// A deleted cloud record can never be updated or resurrected, so the only exit
+// that preserves the user's edit is to save it as a new memory. The queued
+// operation keeps the content on this device until that create is acknowledged.
+async function keepLocalEdit(recordId) {
+  const token=identity.lease();
+  if(mutationFlight) await mutationFlight;
+  identity.assertLease(token);
+  if(resolvingRecords.has(recordId)) throw new Error(i18n.t('Sync in progress. Please try again.'));
+  const op=state.outbox.find(o=>o.recordId===recordId && o.kind==='update' && o.error==='DELETED' && data.isMemory(o.memory));
+  if(!op) throw new Error(i18n.t('This edit cannot be kept as a new memory.'));
+  resolvingRecords.add(recordId);
+  try {
+    const recreate=Object.assign({},op,{kind:'recreate',patch:{},submitted:false,uploads:Object.assign({},op.uploads)});
+    delete recreate.error; delete recreate.message;
+    commit(Object.assign({},state,{outbox:state.outbox.filter(o=>o.recordId!==recordId).concat([recreate])}));
+    await flushOutbox();
+    identity.assertLease(token);
+    if(state.outbox.some(o=>o.id===recreate.id)) throw new Error(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.'));
+    if(loadDraft().editingId===recordId) clearDraft();
   } finally {resolvingRecords.delete(recordId);}
 }
 function beginEdit(memory) {
@@ -333,9 +366,20 @@ async function saveEdit(memory,draft) {
 let syncFlight = null;
 let saveFlight = null;
 // Explicit read-only refresh must NOT flush legacy/private outboxes.
+// The record an open editor is bound to is protected from a cloud tombstone:
+// the draft is the only copy of work the user has not saved, so it is resolved
+// from durable storage rather than from page state. Only a well-formed draft
+// whose base still names the edited record, owned by the current account,
+// counts; anything else must never keep a tombstoned record alive.
+function editedRecordIds() {
+  const draft = loadDraft();
+  if (!draft.editingId || !draft.editBase || draft.editBase.id !== draft.editingId) return [];
+  if (draft.actorUserId !== identity.snapshot().userId) return [];
+  return [draft.editingId];
+}
 function mergeCloudRead(memories,token) {
   identity.assertLease(token);
-  const merged=syncRepository.mergeCloud(state.memories,memories,state.cloudHidden,state.outbox);
+  const merged=syncRepository.mergeCloud(state.memories,memories,state.cloudHidden,state.outbox,editedRecordIds());
   commit(Object.assign({},state,{memories:merged}));
   return state.memories;
 }
@@ -455,7 +499,7 @@ identity.subscribe(()=>{
   ensureLoaded();state.identity=identity.snapshot();
   dismissToast();listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
 });
-module.exports = { refreshCloudReadOnly, applyCloudProfile, privateCopy, canResolve, flushOutbox, useCloudVersion, beginEdit,
+module.exports = { refreshCloudReadOnly, applyCloudProfile, privateCopy, canResolve, flushOutbox, useCloudVersion, keepLocalEdit, beginEdit,
   setMemoryLocation,
   STORAGE_KEY,
   DRAFT_KEY,

@@ -823,6 +823,205 @@ function nativeTabs(initial=0){
     const list=await service.listRecords();assert(!list.some(m=>m.id===memory.id));assert(list.deletedIds.includes(memory.id));
     const reply=await main({action:'update',id:memory.id,revision:2,operationId:'resurrect-attempt-01',data:{restaurantName:'Resurrect'}});assert.equal(reply.code,'DELETED');
   });
+  // An edit saved against a tombstoned cloud record fails closed with DELETED.
+  // The local edit is the only remaining copy, so it must survive every later
+  // merge until the user explicitly decides what to do with it.
+  async function tombstonedEdit(requestId,name) {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:requestId+'-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    await main({action:'delete',id:memory.id,revision:1,operationId:requestId+'-other-device-delete'});
+    const draft=store.beginEdit(memory);
+    await assert.rejects(store.createCloudMemory({...memory,restaurant:name,notes:name+' note'},draft));
+    assert.equal(store.get().outbox.find(o=>o.recordId===memory.id).error,'DELETED');
+    return memory;
+  }
+  await test('a cloud tombstone never discards local work that still has an unresolved operation', async () => {
+    const memory=await tombstonedEdit('tombstone-protect','Tombstone survivor');
+    assert.equal(store.get().memories.find(m=>m.id===memory.id).restaurant,'Tombstone survivor');
+    await store.syncCloud();
+    const kept=store.get().memories.find(m=>m.id===memory.id);
+    assert(kept,'a tombstone must not delete a local record that still holds queued work');
+    assert.equal(kept.restaurant,'Tombstone survivor');assert.equal(kept.notes,'Tombstone survivor note');
+    assert(store.get().outbox.some(o=>o.recordId===memory.id),'the undecided operation stays queued');
+  });
+  // A tombstone can also land while the user has the editor open. The draft is
+  // then the only copy of their unfinished work, so the record the draft is
+  // bound to must survive every merge until the user decides what to do.
+  // A. The tombstone lands before the editor is opened: nothing is pending, so
+  //    the local copy follows the cloud and disappears.
+  await test('A: a tombstone that lands before any edit still deletes the record normally', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'tomb-a-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    await main({action:'delete',id:memory.id,revision:1,operationId:'tomb-a-delete'});
+    await store.syncCloud();
+    assert(!store.get().memories.some(m=>m.id===memory.id),'no draft and no queued work: the tombstone wins');
+    assert(!store.get().outbox.some(o=>o.recordId===memory.id),'nothing is queued for a record the user never touched');
+  });
+  // B. The tombstone lands after beginEdit but before save. Losing the record
+  //    here also loses the only copy of the edit the user is still writing.
+  await test('B: a tombstone cannot remove the record an open edit draft is bound to', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'tomb-b-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    const draft=store.beginEdit(memory);
+    await main({action:'delete',id:memory.id,revision:1,operationId:'tomb-b-delete'});
+    await store.syncCloud();
+    const held=store.get().memories.find(m=>m.id===memory.id);
+    assert(held,'a tombstone must not remove the record the open editor is bound to');
+    assert.equal(held.restaurant,'Real dinner','the untouched local copy is kept exactly as it was');
+    assert.equal(store.loadDraft().editingId,memory.id,'the durable draft is still the recovery path');
+    const updated={...memory,restaurant:'Mid-edit keep',notes:'Mid-edit note'};
+    await assert.rejects(store.createCloudMemory(updated,draft));
+    assert.equal(store.get().outbox.find(o=>o.recordId===memory.id).error,'DELETED');
+    const visible=store.get().memories.find(m=>m.id===memory.id);
+    assert(visible,'the edited record stays in the diary while the operation is undecided');
+    assert.equal(visible.restaurant,'Mid-edit keep','the queued edit is what the user sees');
+    assert.equal(visible.notes,'Mid-edit note');
+    await store.keepLocalEdit(memory.id);
+    const saved=store.get().memories.find(m=>m.restaurant==='Mid-edit keep');
+    assert(saved&&saved.cloudId&&saved.cloudId!==memory.id,'the recovery exit still keeps the edit as a new cloud record');
+    assert.equal(rows.get(saved.cloudId).note,'Mid-edit note');
+    assert.equal(rows.get(memory.id).deleted,true,'the tombstone itself is never resurrected');
+    store.clearDraft();
+  });
+  // C. The tombstone lands after the save was queued: the outbox already
+  //    protects the record, so closing the editor must not re-expose it.
+  await test('C: a queued save protects the record even after the draft is closed', async () => {
+    const memory=await tombstonedEdit('tomb-c','Post-save survivor');
+    store.clearDraft();
+    assert(!store.loadDraft().editingId,'the editor is closed and no draft remains');
+    await store.syncCloud();
+    assert(store.get().memories.some(m=>m.id===memory.id),'the queued operation alone still protects the record');
+    assert.equal(store.get().outbox.find(o=>o.recordId===memory.id).error,'DELETED','the undecided operation stays queued');
+  });
+  // D. An ordinary remote delete with no draft and no queued work deletes normally.
+  await test('D: a plain remote delete without a draft or outbox still deletes the record', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'tomb-d-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    await main({action:'delete',id:memory.id,revision:1,operationId:'tomb-d-delete'});
+    await store.refreshCloudReadOnly();
+    assert(!store.get().memories.some(m=>m.id===memory.id),'a read-only refresh deletes it too');
+  });
+  // E. Editing one record must never protect a different tombstoned record.
+  await test('E: editing one record never protects a different tombstoned record', async () => {
+    store.clearDraft();
+    const first=await main({action:'add',requestId:'tomb-e-base-a',data:service.memoryToCloudRecord(sample())});
+    const a=service.cloudRecordToMemory(first.record);store.addMemory(a);
+    const second=await main({action:'add',requestId:'tomb-e-base-b',data:service.memoryToCloudRecord(sample())});
+    const b=service.cloudRecordToMemory(second.record);store.addMemory(b);
+    store.beginEdit(b);
+    await main({action:'delete',id:a.id,revision:1,operationId:'tomb-e-delete-a'});
+    await store.syncCloud();
+    assert(!store.get().memories.some(m=>m.id===a.id),'the unrelated tombstoned record is still deleted');
+    assert(store.get().memories.some(m=>m.id===b.id),'the record being edited is untouched');
+    store.clearDraft();
+  });
+  // F. Only a valid draft owned by the current account protects a record.
+  await test('F: a stale or foreign draft never protects a tombstoned record', async () => {
+    store.clearDraft();
+    const foreign=await main({action:'add',requestId:'tomb-f-foreign',data:service.memoryToCloudRecord(sample())});
+    const p=service.cloudRecordToMemory(foreign.record);store.addMemory(p);
+    wx.setStorageSync(store.DRAFT_KEY,JSON.stringify({...store.beginEdit(p),actorUserId:'u_'+'b'.repeat(48)}));
+    await main({action:'delete',id:p.id,revision:1,operationId:'tomb-f-delete-foreign'});
+    await store.syncCloud();
+    assert(!store.get().memories.some(m=>m.id===p.id),'another account\'s draft must not keep this record');
+    const stale=await main({action:'add',requestId:'tomb-f-stale',data:service.memoryToCloudRecord(sample())});
+    const q=service.cloudRecordToMemory(stale.record);store.addMemory(q);
+    wx.setStorageSync(store.DRAFT_KEY,JSON.stringify({...store.beginEdit(q),editBase:{...q,id:'retired-record'}}));
+    await main({action:'delete',id:q.id,revision:1,operationId:'tomb-f-delete-stale'});
+    await store.syncCloud();
+    assert(!store.get().memories.some(m=>m.id===q.id),'a draft whose base no longer matches must not keep the record');
+    store.clearDraft();
+  });
+  // G. The protection is read from durable storage, so a cold start behaves the same.
+  await test('G: the draft protects the record after a cold start', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'tomb-g-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    store.beginEdit(memory);
+    // Another device deletes the record while this process is gone.
+    await main({action:'delete',id:memory.id,revision:1,operationId:'tomb-g-delete'});
+    // Cold start: every in-process object is discarded, only storage bytes remain.
+    delete require.cache[require.resolve(path.join(mp,'utils/store'))];
+    store=require(path.join(mp,'utils/store'));
+    assert.equal(store.loadDraft().editingId,memory.id,'the draft survives the restart');
+    await store.syncCloud();
+    assert(store.get().memories.some(m=>m.id===memory.id),'the first sync after a restart still protects the edited record');
+    store.clearDraft();
+  });
+  // A queued create keeps its edited content visible across a later read-only refresh.
+  await test('a queued create keeps the edited content visible when the cloud is still unreachable', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'recreate-fidelity-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    const draft=store.beginEdit(memory);
+    await main({action:'delete',id:memory.id,revision:1,operationId:'recreate-fidelity-tombstone'});
+    await store.syncCloud();
+    await assert.rejects(store.createCloudMemory({...memory,restaurant:'Recreate fidelity',notes:'Edited note'},draft));
+    functionDown=true;await assert.rejects(store.keepLocalEdit(memory.id));functionDown=false;
+    await store.refreshCloudReadOnly();
+    const pending=store.get().memories.find(m=>m.id===memory.id);
+    assert(pending,'a queued create must keep its content visible');
+    assert.equal(pending.restaurant,'Recreate fidelity','the queued create, not the retired original, is the visible content');
+    assert.equal(pending.notes,'Edited note');
+    await store.flushOutbox();
+    const saved=store.get().memories.find(m=>m.restaurant==='Recreate fidelity');
+    assert(saved&&saved.cloudId&&saved.cloudId!==memory.id);
+    assert.equal(rows.get(saved.cloudId).note,'Edited note');
+    store.clearDraft();
+  });
+  await test('an edit blocked by a cloud tombstone can be kept as a new cloud record', async () => {
+    const memory=await tombstonedEdit('keep-edit','Kept dinner');
+    const before=rows.size;
+    await store.keepLocalEdit(memory.id);
+    assert(!store.get().outbox.some(o=>o.recordId===memory.id),'the retired operation is dropped');
+    const kept=store.get().memories.find(m=>m.restaurant==='Kept dinner');
+    assert(kept,'the kept edit must survive as a memory');
+    assert(kept.cloudId&&kept.cloudId!==memory.id,'the kept edit is a new cloud record, never a resurrection');
+    assert.equal(rows.get(memory.id).deleted,true,'the tombstone itself is untouched');
+    assert.equal(rows.get(kept.cloudId).restaurantName,'Kept dinner');
+    assert.equal(rows.get(kept.cloudId).note,'Kept dinner note');
+    assert.equal(rows.size,before+1,'exactly one new cloud record is created');
+    assert(store.get().cloudHidden.includes(memory.id));
+    assert(!store.get().memories.some(m=>m.id===memory.id),'the retired local copy is gone');
+    await store.syncCloud();
+    assert.equal(store.get().memories.filter(m=>m.restaurant==='Kept dinner').length,1,'a later sync never duplicates the kept memory');
+    assert.equal(store.get().memories.find(m=>m.restaurant==='Kept dinner').id,kept.id,'the kept memory keeps its identity');
+    assert(!store.get().memories.some(m=>m.id===memory.id),'the retired tombstone never comes back');
+    store.clearDraft();
+  });
+  await test('keeping an edit after a lost reply reuses one create request and never duplicates the memory', async () => {
+    const memory=await tombstonedEdit('keep-edit-idempotent','Idempotent keep');
+    const before=rows.size;
+    lostReply=true;
+    await assert.rejects(store.keepLocalEdit(memory.id));
+    const op=store.get().outbox.find(o=>o.kind==='recreate');
+    assert(op&&op.submitted,'the create intent survives a lost reply');
+    assert.equal(op.recordId,memory.id,'the create intent still names the retired record');
+    assert.equal(rows.size,before+1,'the server committed the create');
+    lostReply=false;
+    await store.flushOutbox();
+    assert.equal(rows.size,before+1,'a retry reuses the same request id and creates nothing new');
+    assert.equal(store.get().memories.filter(m=>m.restaurant==='Idempotent keep').length,1);
+    assert(!store.get().outbox.some(o=>o.recordId===memory.id));
+    store.clearDraft();
+  });
+  await test('keeping an edit is refused while the cloud copy still exists', async () => {
+    store.clearDraft();
+    const created=await main({action:'add',requestId:'keep-edit-guard-base',data:service.memoryToCloudRecord(sample())});
+    const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
+    await main({action:'flags',id:memory.id,revision:1,operationId:'keep-edit-guard-remote',data:{liked:true}});
+    const draft=store.beginEdit(memory);
+    await assert.rejects(store.createCloudMemory({...memory,restaurant:'Conflicting edit'},draft));
+    assert.equal(store.get().outbox.find(o=>o.recordId===memory.id).error,'CONFLICT');
+    const before=rows.size;
+    await assert.rejects(store.keepLocalEdit(memory.id));
+    assert.equal(rows.size,before,'a live conflict is never duplicated into a new record');
+    await store.useCloudVersion(memory.id);store.clearDraft();
+  });
   await test('geographic correction replaces stale metadata and respects the mutation revision', async () => {
     const created=await main({action:'add',requestId:'geo-mutation-base',data:service.memoryToCloudRecord(sample())});const memory=service.cloudRecordToMemory(created.record);store.addMemory(memory);
     const location={...pickedLocation,...require(path.join(mp,'utils/locations')).metadata('江苏省苏州市太仓市太仓大道'),address:'江苏省苏州市太仓市太仓大道'};

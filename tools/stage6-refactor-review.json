@@ -1,9 +1,9 @@
 {
   "miniprogram/components/sheet/index.wxml": {
-    "baseSha256": "7b757d302bfc8c6400d210defe10a5a82f97a6353267796b9d4ec145d2bba42c",
-    "sha256": "30a3974c26f061c0e12ca366e7feda61e13ae888fba9d45b728ec8585387b423",
+    "baseSha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
+    "sha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
     "review": "docs/superpowers/specs/2026-09-21-stage6-modular-boundaries-design.md",
-    "reason": "Stage 6 moves Preferences, Settings, and Privacy into the reviewed SettingsEditor boundary without changing their content or Sheet navigation."
+    "reason": "Stage 6 moves Preferences, Settings, and Privacy into the reviewed SettingsEditor boundary without changing their content or Sheet navigation. Chained 2026-09-25: one user-authorized Sync-status button for a cloud-deleted record; Sheet navigation and all moved settings markup unchanged."
   },
   "miniprogram/components/sheet/index.wxss": {
     "baseSha256": "98e1fa0cf519ba5bed0fa2a27ada91455a4610058968dcbcca5254674aed3e23",

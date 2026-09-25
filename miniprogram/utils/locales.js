@@ -2599,5 +2599,25 @@ module.exports = [
     "key": "s9b62114683",
     "en": "Choose from album or camera",
     "zh": "从相册或相机选择"
+  },
+  {
+    "key": "s2a4562a00e",
+    "en": "Keep my edit",
+    "zh": "保留我的修改"
+  },
+  {
+    "key": "see0370da80",
+    "en": "The cloud copy was deleted. Save your local changes as a new memory?",
+    "zh": "云端副本已被删除。要把本机修改另存为一条新的回忆吗？"
+  },
+  {
+    "key": "s371a7a6ef9",
+    "en": "This edit cannot be kept as a new memory.",
+    "zh": "这条修改无法另存为新回忆。"
+  },
+  {
+    "key": "sc8ff73b0a1",
+    "en": "New memory",
+    "zh": "新回忆"
   }
 ];

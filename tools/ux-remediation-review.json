@@ -1,9 +1,9 @@
 {
   "miniprogram/components/sheet/index.wxml": {
-    "baseSha256": "b37c16516476611031e67e076e970b07b9cda2cec00c37a9bb193ac79bdc5428",
-    "sha256": "7b757d302bfc8c6400d210defe10a5a82f97a6353267796b9d4ec145d2bba42c",
+    "baseSha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
+    "sha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
     "review": "docs/reviews/ux-remediation-20260917.md",
-    "reason": "E collection-only label and explicit cross-account access boundary; existing events/private content intact; R4 reviewed raw Memory restaurant identity / queue-dependent retry hierarchy or removal of prohibited whole-map dark veil; all existing business bindings retained."
+    "reason": "E collection-only label and explicit cross-account access boundary; existing events/private content intact; R4 reviewed raw Memory restaurant identity / queue-dependent retry hierarchy or removal of prohibited whole-map dark veil; all existing business bindings retained. Chained 2026-09-25: one user-authorized Sync-status button for a cloud-deleted record; retry hierarchy and all existing bindings retained."
   },
   "miniprogram/pages/home/index.wxml": {
     "baseSha256": "a369416c6b85c27119dccd13387d456714af94269442a7c7f195c9fc6c544998",
