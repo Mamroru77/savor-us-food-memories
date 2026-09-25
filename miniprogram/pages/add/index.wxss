@@ -283,6 +283,11 @@
 .close-add { width:88rpx; height:88rpx; flex-shrink:0; position:relative; background:transparent; margin-left:-15rpx; margin-right:-15rpx; margin-top:-8rpx; }
 .close-add::before { content:""; position:absolute; width:58rpx; height:62rpx; border-radius:50%; background:rgba(255,255,255,.25); }
 .close-add s-icon { position:relative; }
+/* Quick clear: the close button's tap target and material, pushed to the far end of the
+   heading. Only rendered when the draft holds something (see draftClearable). */
+.clear-draft { width:88rpx; height:88rpx; flex-shrink:0; position:relative; background:transparent; margin-left:auto; margin-right:-15rpx; margin-top:-8rpx; display:flex; align-items:center; justify-content:center; }
+.clear-draft::before { content:""; position:absolute; width:58rpx; height:62rpx; border-radius:50%; background:rgba(255,255,255,.25); }
+.clear-draft s-icon { position:relative; }
 .add-heading-copy { min-width:0; }
 .add-subtitle { white-space:normal; overflow-wrap:break-word; }
 .input-wrap .form-input { padding-right:98rpx; }
@@ -302,6 +307,7 @@
 .date-input { min-height:88rpx; height:auto; padding-top:17rpx; padding-bottom:17rpx; }
 .dusk .close-add { background:transparent; }
 .dusk .close-add::before { background:rgba(234,234,234,.12); }
+.dusk .clear-draft::before { background:rgba(234,234,234,.12); }
 
 
 .rating-clear, .add-tag, .tag-confirm { min-width:88rpx; min-height:88rpx; box-sizing:border-box; display:flex; align-items:center; justify-content:center; }

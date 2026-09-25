@@ -7,7 +7,7 @@
   },
   "miniprogram/pages/map/index.wxss": {
     "baseSha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
-    "sha256": "78193d835eba8e7c753d7e3158010fdb7f575324334eb58226daacf63cd4a176",
+    "sha256": "fa77efd61d741fa8efecd188d26500e52a5a8dfe9d4742310faca2cff3185691",
     "reason": "Reviewed styles paired with the Map inline identity status; prior map geometry, stack, and veil decisions remain intact.",
     "review": "docs/reviews/map-identity-state-20260922.md"
   }

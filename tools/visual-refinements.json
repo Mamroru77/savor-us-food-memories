@@ -1,7 +1,7 @@
 {
   "miniprogram/pages/add/index.wxss": {
-    "baseSha256": "50b8933b8922953b619c53fed0ad11d5c1781b38702ae0fc74ded4bd4116e0db",
-    "sha256": "40b3d376d13cc9209f2acf0ca91df540643e98e0d14092725903fb9fd649e497",
+    "baseSha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
+    "sha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
     "reason": "R7 reviewed Add end spacing: retain shared safe-area spacer, remove duplicate page clearance; no application JS/WXML change.",
     "review": "docs/reviews/visual-refinement-20260916.md"
   },
@@ -18,7 +18,7 @@
     "review": "docs/mcp-r5-byte-review-20260919.md"
   },
   "miniprogram/pages/map/index.wxss": {
-    "baseSha256": "b3ba98ea8b9448881606c16b5c6adb013855cf2c9087038b5e7c89585a6f5435",
+    "baseSha256": "fa77efd61d741fa8efecd188d26500e52a5a8dfe9d4742310faca2cff3185691",
     "sha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
     "reason": "Reviewed R4 minimal style change only: raw restaurant identity in existing Memory flow, or removal of prohibited whole-map dark veil. Native acceptance separate. Exact disk bytes include final LF.",
     "review": "docs/mcp-r5-byte-review-20260919.md"

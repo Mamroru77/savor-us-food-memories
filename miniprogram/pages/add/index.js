@@ -44,6 +44,10 @@ Page({
     originalMode: false,
     saveProgress: 0,
     saveProgressText: '',
+    // Quick-clear feedback: the morph pair plus a short-lived local flag. Neither is
+    // persisted; the flag only swallows taps while Eraser -> Check -> Eraser runs.
+    clearingDraft: false,
+    clearIcon: {name: 'eraser', fromName: 'eraser', key: 0},
   },
 
   onLoad() {
@@ -72,6 +76,7 @@ Page({
 
   onUnload() {
     this.disposed = true;
+    if (this.clearFeedbackTimer) { clearTimeout(this.clearFeedbackTimer); this.clearFeedbackTimer = null; }
     this.releaseNativeImportShow();
     this.releaseNativePhotoShow();
     if (this.unsubscribe) this.unsubscribe();
@@ -139,8 +144,28 @@ Page({
       suggestedTags: suggestedTags.slice(0, 4),
       dusk: state.settings.theme === 'dusk',
       quiet: state.settings.reduceMotion,
+      draftClearable: this.draftHasContent(),
       formTypes:categories.TYPES.map(name=>({name,label:i18n.t(name),selected:(Array.isArray(draft.diningTypes)?draft.diningTypes:[]).includes(name)})),
     });
+  },
+
+  // A quick clear is only worth offering when the draft actually holds something. While an
+  // existing memory is being edited the draft carries that edit, so abandoning it is a
+  // different action with its own exits and the button stays away.
+  draftHasContent() {
+    const draft = this.data.draft;
+    if (!draft || draft.editBase) return false;
+    return Boolean((draft.restaurant && draft.restaurant.trim())
+      || (draft.notes && draft.notes.trim())
+      || (draft.cuisine && draft.cuisine.trim())
+      || (draft.dishes && String(draft.dishes).trim())
+      || (draft.city && draft.city.trim())
+      || (draft.country && draft.country.trim())
+      || draft.location
+      || draft.rating
+      || (draft.perCapita !== '' && draft.perCapita !== null && draft.perCapita !== undefined)
+      || (Array.isArray(draft.tags) && draft.tags.length)
+      || (Array.isArray(draft.photos) && draft.photos.length));
   },
 
   changeDraft(key, value, options) {
@@ -152,11 +177,11 @@ Page({
     }
     const draft = Object.assign({}, this.data.draft);
     delete draft.cloudAttempt;
-    // Typing a restaurant name switches the memory to a different place, so the picked
-    // location and everything derived from it are dropped. Naming the place that was
-    // just picked is not a switch: keepRelated preserves the pick and the dining types
-    // the user already chose.
-    if (key === 'restaurant' && !(options && options.keepRelated)) { delete draft.location; delete draft.sourcePlatform; delete draft.sourceUrl; delete draft.diningMode; delete draft.importAddressHint;delete draft.importAreaText;delete draft.platformRating;delete draft.platformAveragePriceCny;delete draft.diningTypes;delete draft.sourceCategory;delete draft.categorySource; }
+    // The restaurant text and the picked map location are two independent fields: editing
+    // the name must never discard the location the user chose. Everything else derived from
+    // the previous name is still dropped when the name changes; keepRelated preserves it for
+    // the POI auto-naming that happens on the same pick.
+    if (key === 'restaurant' && !(options && options.keepRelated)) { delete draft.sourcePlatform; delete draft.sourceUrl; delete draft.diningMode; delete draft.importAddressHint;delete draft.importAreaText;delete draft.platformRating;delete draft.platformAveragePriceCny;delete draft.diningTypes;delete draft.sourceCategory;delete draft.categorySource; }
     draft[key] = value;
     if(key==='cuisine'||key==='diningTypes')draft.categorySource='user-confirmed';
     this.setData({ draft: draft, fieldErrors:{},errorField:'',error:'' });
@@ -398,9 +423,9 @@ Page({
     return locations.choose(this.data.draft.location).then(async pick => {
       token=await identity.resumeNative(token);
       if (this.disposed) return;
-      // The POI name names the memory when the user has not typed one. It is written
-      // before the pick because the restaurant branch of changeDraft clears the
-      // location; keepRelated keeps the fresh pick and the chosen dining types.
+      // The POI name only ever seeds the memory: it is applied on the pick where the user
+      // has not typed a name yet, and never again afterwards. keepRelated keeps the dining
+      // types the user already chose while the name is seeded.
       if (!this.data.draft.restaurant.trim() && pick.locationName) this.changeDraft('restaurant', pick.locationName, {keepRelated: true});
       this.changeDraft('location', pick);
       this.setData({ error: '' });
@@ -579,5 +604,39 @@ Page({
   onClose() {
     wx.switchTab({ url: '/pages/home/index' });
     store.notify(i18n.t('Your draft is here whenever you are ready.'));
+  },
+
+  // One tap empties the draft: this is the quick-clear affordance, so there is no
+  // confirmation step. The business action runs on the tap itself — the Eraser -> Check
+  // morph only reports it — and a tap arriving mid-feedback is swallowed by the local
+  // clearingDraft flag. changeDraft's guards apply so an in-flight save is never
+  // discarded, and the draft is re-read from storage so a failed write can never show a
+  // cleared form over stale bytes.
+  onClearDraft() {
+    if (this.data.clearingDraft) return;
+    if (this.saveLock || this.data.uploading || this.locating) return;
+    if (this.data.draft.editOperationId) { store.notify(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.')); return; }
+    if (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) { store.notify(i18n.t('The previous save needs confirmation. Tap Save again before editing.')); return; }
+    store.clearDraft();
+    this.setData({
+      draft: store.loadDraft(),
+      error: '', errorContext: '', errorField: '', fieldErrors: {},
+      importOpen: false, importText: '', importCandidate: null,
+      showTagInput: false, tag: '',
+      clearingDraft: true,
+      clearIcon: {name: 'check', fromName: 'eraser', key: (this.data.clearIcon.key || 0) + 1},
+    });
+    this.syncContext(store.get());
+    // Only the timer flips the feedback back. Reduce-motion still gets both states, just
+    // without the morph timeline (the component's own quiet path).
+    if (this.clearFeedbackTimer) clearTimeout(this.clearFeedbackTimer);
+    this.clearFeedbackTimer = setTimeout(() => {
+      this.clearFeedbackTimer = null;
+      if (this.disposed) return;
+      this.setData({
+        clearingDraft: false,
+        clearIcon: {name: 'eraser', fromName: 'check', key: (this.data.clearIcon.key || 0) + 1},
+      });
+    }, 640);
   },
 });

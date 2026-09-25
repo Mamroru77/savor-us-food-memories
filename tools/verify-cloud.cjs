@@ -578,6 +578,210 @@ function nativeTabs(initial=0){
     assert.deepEqual(p.data.draft.diningTypes, ['火锅'], 'auto-naming must not clear user-chosen dining types');
     p.onUnload();
   });
+  // The restaurant text and the picked map location are two independent fields. Editing the
+  // name must never discard the location the user chose; only a new map pick, an explicit
+  // clear, or a fresh draft may change it.
+  async function pickOnMap(instance, poi) {
+    const original = wx.chooseLocation;
+    wx.chooseLocation = o => o.success(Object.assign({latitude: 22.63, longitude: 120.3, address: '高雄市苓雅區'}, poi));
+    try { await instance.onChooseRestaurantLocation(); }
+    finally { wx.chooseLocation = original; }
+  }
+  const deepCopy = value => JSON.parse(JSON.stringify(value));
+  await test('editing the restaurant name after a map pick keeps the picked location', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    assert.equal(p.data.draft.restaurant, '鼎泰丰 高雄店', 'the POI name names the memory');
+    const picked = deepCopy(p.data.draft.location);
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    assert.equal(p.data.draft.restaurant, '鼎泰丰');
+    assert(p.data.draft.location, 'editing the name must not discard the picked location');
+    assert.equal(p.data.draft.location.locationName, '鼎泰丰 高雄店');
+    assert.deepEqual(p.data.draft.location.coordinates, picked.coordinates);
+    p.onUnload();
+  });
+  await test('editing the restaurant name leaves the whole location object untouched', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    const picked = deepCopy(p.data.draft.location);
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    assert.deepEqual(p.data.draft.location, picked, 'every location field must survive a restaurant edit');
+    p.onUnload();
+  });
+  await test('repeated restaurant edits never move the picked location', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    const picked = deepCopy(p.data.draft.location);
+    for (const value of ['鼎泰丰', '鼎泰丰（巨蛋店）', '鼎泰丰']) p.onRestaurant({detail: {value}});
+    assert.equal(p.data.draft.restaurant, '鼎泰丰');
+    assert.deepEqual(p.data.draft.location, picked);
+    p.onUnload();
+  });
+  await test('picking a new place on the map still replaces the location', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    await pickOnMap(p, {name: '鼎泰丰 巨蛋店', latitude: 22.66, longitude: 120.3});
+    assert.equal(p.data.draft.location.locationName, '鼎泰丰 巨蛋店', 'a new map pick must still take effect');
+    assert.deepEqual(p.data.draft.location.coordinates, [22.66, 120.3]);
+    assert.equal(p.data.draft.restaurant, '鼎泰丰', 'a later pick must not overwrite the name the user typed');
+    p.onUnload();
+  });
+  await test('editing the name without any picked location does not invent one', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    assert.equal(p.data.draft.restaurant, '');
+    p.onRestaurant({detail: {value: '我自己的餐厅'}});
+    assert.equal(p.data.draft.restaurant, '我自己的餐厅');
+    assert(!p.data.draft.location, 'preserving a location must never create one');
+    p.onUnload();
+  });
+  // A quick clear: one tap empties the draft, with no confirmation step. It is only offered
+  // when there is something to clear, and never while an existing memory is being edited
+  // (abandoning an edit is a different action with its own exits).
+  await test('a fresh draft offers no quick clear', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    assert.equal(p.data.draftClearable, false, 'nothing to clear means no button');
+    p.onUnload();
+  });
+  await test('typed content offers the quick clear', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    assert.equal(p.data.draftClearable, true);
+    p.onUnload();
+  });
+  await test('a picked map location alone offers the quick clear', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    assert.equal(p.data.draftClearable, true, 'the auto-filled name and the pick are content');
+    p.onUnload();
+  });
+  await test('the quick clear empties the form, the stored draft and the map pick', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    await pickOnMap(p, {name: '鼎泰丰 高雄店'});
+    p.onNotes({detail: {value: '好吃'}});
+    p.onClearDraft();
+    assert.equal(p.data.draft.restaurant, '', 'the name is cleared');
+    assert.equal(p.data.draft.notes, '', 'the notes are cleared');
+    assert(!p.data.draft.location, 'the picked location is cleared too');
+    assert.equal(store.loadDraft().restaurant, '', 'the stored draft is cleared');
+    assert.equal(p.data.draftClearable, false, 'there is nothing left to clear');
+    p.onUnload();
+  });
+  await test('an existing memory being edited offers no quick clear', async () => {
+    store.clearDraft();
+    const memory = Object.assign(sample(), {id: 'quick-clear-edit-target', cloudId: 'quick-clear-edit-target', revision: 1});
+    store.beginEdit(memory);
+    const p = page('add'); p.onLoad(); p.onShow();
+    assert.equal(p.data.draft.editBase.id, memory.id, 'the page is editing an existing memory');
+    assert.equal(p.data.draftClearable, false, 'clearing an edit is a different action');
+    store.clearDraft();
+    p.onUnload();
+  });
+  // The quick clear reports itself with the Morphicons Eraser -> Check pair on the
+  // 'snappy' spring. The business action runs on the tap, never on an animation callback.
+  const withClearSpy = async run => {
+    const original = store.clearDraft; let calls = 0;
+    store.clearDraft = function () { calls++; return original.apply(store, arguments); };
+    try { await run(); } finally { store.clearDraft = original; }
+    return calls;
+  };
+  await test('the quick clear runs exactly once and reports Eraser -> Check', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    assert.equal(p.data.clearIcon.name, 'eraser', 'the resting state is Eraser');
+    const calls = await withClearSpy(async () => { p.onClearDraft(); });
+    assert.equal(calls, 1, 'clearDraft runs exactly once');
+    assert.equal(p.data.clearIcon.name, 'check', 'the feedback state is Check');
+    assert.equal(p.data.clearIcon.fromName, 'eraser', 'the morph starts from Eraser');
+    assert.equal(p.data.draft.restaurant, '', 'the business action already ran');
+    p.onUnload();
+  });
+  await test('the feedback returns to Eraser and re-arms the button', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    p.onClearDraft();
+    assert.equal(p.data.clearIcon.name, 'check');
+    await new Promise(resolve => setTimeout(resolve, 700));
+    assert.equal(p.data.clearIcon.name, 'eraser', 'the feedback ends on Eraser');
+    assert.equal(p.data.clearIcon.fromName, 'check', 'morphing back from Check');
+    assert.equal(p.data.clearingDraft, false, 'the button is tappable again');
+    p.onUnload();
+  });
+  await test('a rapid double tap still clears exactly once', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    const calls = await withClearSpy(async () => { p.onClearDraft(); p.onClearDraft(); p.onClearDraft(); });
+    assert.equal(calls, 1, 'the feedback window swallows the repeat taps');
+    p.onUnload();
+  });
+  await test('a pending save, upload, submitted attempt or queued edit never clears or morphs', async () => {
+    store.clearDraft();
+    const p = page('add'); p.onLoad(); p.onShow();
+    p.onRestaurant({detail: {value: '鼎泰丰'}});
+    const before = JSON.stringify(p.data.clearIcon);
+    const cases = [
+      ['saving', () => { p.saveLock = true; }, () => { p.saveLock = false; }],
+      ['uploading', () => { p.setData({uploading: true}); }, () => { p.setData({uploading: false}); }],
+      ['submitted attempt', () => { p.setData({draft: Object.assign({}, p.data.draft, {cloudAttempt: {submitted: true}})}); }, () => { p.setData({draft: Object.assign({}, p.data.draft, {cloudAttempt: null})}); }],
+      ['queued edit', () => { p.setData({draft: Object.assign({}, p.data.draft, {editOperationId: 'op-1'})}); }, () => { p.setData({draft: Object.assign({}, p.data.draft, {editOperationId: ''})}); }],
+    ];
+    for (const [name, arm, disarm] of cases) {
+      arm();
+      const calls = await withClearSpy(async () => { p.onClearDraft(); });
+      assert.equal(calls, 0, name + ' must not clear the draft');
+      assert.equal(JSON.stringify(p.data.clearIcon), before, name + ' must not start the morph');
+      assert.equal(p.data.draft.restaurant, '鼎泰丰', name + ' must keep the draft');
+      disarm();
+    }
+    p.onUnload();
+  });
+  await test('reduce motion clears the draft without waiting for any animation', async () => {
+    store.clearDraft();
+    store.updateSettings({reduceMotion: true});
+    try {
+      const p = page('add'); p.onLoad(); p.onShow();
+      assert.equal(p.data.quiet, true, 'the page is in reduce motion');
+      p.onRestaurant({detail: {value: '鼎泰丰'}});
+      const calls = await withClearSpy(async () => { p.onClearDraft(); });
+      assert.equal(calls, 1);
+      assert.equal(p.data.draft.restaurant, '', 'the draft is already cleared on the tap itself');
+      assert.equal(p.data.clearIcon.name, 'check', 'the state switches immediately, with no timeline to wait for');
+      p.onUnload();
+    } finally { store.updateSettings({reduceMotion: false}); }
+  });
+  await test('the quick clear drives the vendored Morphicons spring and never hand-writes a path', () => {
+    const source = fs.readFileSync(path.join(mp, 'components/morph-icon/index.js'), 'utf8');
+    assert.match(source, /spring:\{type:String,value:''\}/, 'the component exposes a spring property');
+    assert.match(source, /require\('\.\.\/\.\.\/vendor\/morphicons-core'\)/, 'the spring comes from the vendored Morphicons core');
+    assert.match(source, /SPRING_PRESETS\[name\]/, 'the preset is looked up by name');
+    assert.match(source, /s\.config\(preset\.k,preset\.c\)/, 'the preset drives the integrator');
+    const core = require(path.join(mp, 'vendor/morphicons-core'));
+    assert.deepEqual(core.SPRING_PRESETS.snappy, {k: 420, c: 30}, 'snappy is the preset the quick clear names');
+    const template = fs.readFileSync(path.join(mp, 'pages/add/index.wxml'), 'utf8');
+    assert.match(template, /<s-morph[^>]*spring="snappy"/, 'the Add quick clear drives the morph with snappy');
+    assert.match(template, /name="\{\{clearIcon\.name\}\}"[^>]*from-name="\{\{clearIcon\.fromName\}\}"/, 'Eraser -> Check is driven by page state');
+    assert.equal(JSON.parse(fs.readFileSync(path.join(mp, 'pages/add/index.json'), 'utf8')).usingComponents['s-morph'], '/components/morph-icon/index');
+    const nodes = require(path.join(mp, 'utils/lucideMorphNodes'));
+    assert(nodes.eraser, 'the eraser node is generated');
+    const eraser = require(path.join(mp, 'images/icons/lucide/SOURCES.json')).find(s => s.name === 'eraser');
+    assert.equal(eraser.url, 'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/eraser.svg');
+    assert.equal(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(mp, 'images/icons/lucide/eraser.svg'))).digest('hex'), eraser.sha256,
+      'the eraser geometry is the unmodified official SVG, never a hand-written path');
+    const {c} = svgMorph({quiet: true, spring: 'snappy', name: 'check', fromName: 'eraser', entryKey: 1});
+    assert.equal(c.data.painting, false, 'reduce motion never starts the morph timeline');
+  });
   await test('new Add accepts an optional location without persisting placeholder coordinates', async () => {
     const d = draft(); delete d.location; d.restaurant = 'Never mapped restaurant'; store.saveDraft(d);
     const p = page('add'); p.onLoad(); p.onShow(); const before = rows.size; await p.onSave();
@@ -631,6 +835,24 @@ function nativeTabs(initial=0){
     assert.match(css, /\.place-card\s*\{[^}]*height: 340rpx/);
     assert.match(css, /\.place-open\s*\{[^}]*height: 270rpx/);
     assert.match(css, /\.place-location-actions\s*\{[^}]*height:65rpx/);
+  });
+  // Collapsing the place card is a drawer push/pull. The bookmark button must travel with
+  // the card on the same timing instead of being swallowed by the card's overflow clip.
+  await test('the bookmark button shares the card drawer transition instead of being clipped', () => {
+    const css = fs.readFileSync(path.join(mp, 'pages/map/index.wxss'), 'utf8');
+    const compact = value => value.replace(/\s+/g, '');
+    const timing = compact('320ms cubic-bezier(.333333,0,.666667,1)');
+    const bookmark = css.match(/\.bookmark-place\s*\{[^}]*\}/)[0];
+    const transition = compact(bookmark.match(/transition:\s*([^;}]*)/)[1]);
+    assert(transition.includes(compact('transform ' + timing)) && transition.includes(compact('opacity ' + timing)),
+      'the bookmark must animate on the card drawer timing');
+    const collapsed = css.match(/\.place-card\.card-is-collapsed \.bookmark-place\s*\{[^}]*\}/);
+    assert(collapsed, 'the collapsed card must define the bookmark end state');
+    const bottom = bookmark.match(/bottom:\s*(-?\d+)rpx/)[1];
+    assert(collapsed[0].includes('transform:translateY(' + bottom + 'rpx)'),
+      'the bookmark is pushed down by exactly its bottom offset, so it ends flush with the card and is never clipped');
+    assert(collapsed[0].includes('opacity:0'), 'and fades out together with the card');
+    assert(/\.quiet \.bookmark-place\s*\{[^}]*transition:none/.test(css), 'reduced motion disables it');
   });
   await test('locale catalog covers every bound UI key in both languages', () => {
     const catalog = require(path.join(mp, 'utils/locales'));

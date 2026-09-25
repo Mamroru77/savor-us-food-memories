@@ -1,13 +1,13 @@
 {
   "miniprogram/pages/add/index.wxml": {
-    "baseSha256": "6a384681dd12c04e3f69672458b959dd205d802d667c5e901d8d23ca6acd39ab",
-    "sha256": "ce6c63d613740344855cdd5750ae05246ea1df3339b862522254f4af8d250423",
+    "baseSha256": "d2ca2d2965db3a936a700213775fcc54cd9d68387623f67aa18422d2a399f41c",
+    "sha256": "d2ca2d2965db3a936a700213775fcc54cd9d68387623f67aa18422d2a399f41c",
     "reason": "Reviewed coordinated Add lifecycle markup: inline identity status, stable ambient image, and upload/save progress are backed by the existing Add JS/WXSS and behavior checks; no template change in this repair.",
     "review": "docs/reviews/add-page-lifecycle-20260922.md"
   },
   "miniprogram/pages/add/index.wxss": {
-    "baseSha256": "40b3d376d13cc9209f2acf0ca91df540643e98e0d14092725903fb9fd649e497",
-    "sha256": "596fc6100792e6ae81f2b8d8c2f63c4e5f8a76d0b2d0384a21455629f6e99548",
+    "baseSha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
+    "sha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
     "reason": "Reviewed styles paired with the Add lifecycle markup: identity status, stable ambient/photo presentation, and upload/save progress; the prior reviewed end-spacing rule remains intact.",
     "review": "docs/reviews/add-page-lifecycle-20260922.md"
   }

@@ -2624,5 +2624,10 @@ module.exports = [
     "key": "s31b6222625",
     "en": "This photo is too large to upload. Choose a smaller photo and try again.",
     "zh": "照片过大，无法上传。请选择较小的照片后重试。"
+  },
+  {
+    "key": "sba27c76d65",
+    "en": "Clear draft",
+    "zh": "清除草稿"
   }
 ];

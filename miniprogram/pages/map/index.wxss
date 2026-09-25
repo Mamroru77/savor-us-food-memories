@@ -203,6 +203,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 320ms cubic-bezier(.333333,0,.666667,1), opacity 320ms cubic-bezier(.333333,0,.666667,1);
 }
 
 .map-empty {
@@ -281,6 +282,11 @@
 /* Both card states stay mounted: no wx:if teardown during the transition. */
 .place-card { overflow:hidden; transform-origin:bottom left; transition:height 320ms cubic-bezier(.333333,0,.666667,1),border-radius 320ms cubic-bezier(.333333,0,.666667,1),opacity 320ms cubic-bezier(.333333,0,.666667,1); }
 .place-card.card-is-collapsed { height:80rpx; border-radius:30rpx; opacity:0; pointer-events:none; }
+/* The bookmark is part of the drawer, not a passenger: it travels on the card's own
+   timing and is pushed down by exactly its bottom offset, so it ends flush with the
+   collapsed card instead of being swallowed by the card's overflow clip. */
+.place-card.card-is-collapsed .bookmark-place { transform:translateY(94rpx); opacity:0; pointer-events:none; }
+.quiet .bookmark-place { transition:none; }
 .place-expand { opacity:0; transform:translateY(24rpx) scale(.96); pointer-events:none; transition:transform 320ms cubic-bezier(.333333,0,.666667,1),opacity 320ms cubic-bezier(.333333,0,.666667,1); }
 .place-expand.strip-is-visible { opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
 .quiet .place-card,.quiet .place-expand { transition:none; }

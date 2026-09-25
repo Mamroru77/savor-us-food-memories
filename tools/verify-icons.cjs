@@ -6,7 +6,7 @@ const root=path.join(__dirname,'..'),mp=path.join(root,'miniprogram'),dir=path.j
 const sources=JSON.parse(fs.readFileSync(path.join(dir,'SOURCES.json'))),nodes=require(path.join(mp,'utils/lucideMorphNodes'));
 const {icons,iconSvg}=require(path.join(mp,'utils/icons')),aliases=require('./icon-aliases.json');
 const parse=s=>[...s.matchAll(/<(path|line|rect|circle|ellipse|polyline|polygon)\s+([^>]+)\/>/g)].map(m=>[m[1],Object.fromEntries([...m[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(a=>[a[1],a[2]]))]);
-assert.equal(sources.length,48);assert.equal(Object.keys(nodes).length,48);assert.equal(Object.keys(aliases).length,28);
+assert.equal(sources.length,49);assert.equal(Object.keys(nodes).length,49);assert.equal(Object.keys(aliases).length,28);
 assert.deepEqual(sources.map(s=>s.name).sort(),Object.keys(nodes).sort());
 assert(fs.readFileSync(path.join(dir,'LICENSE.txt'),'utf8').includes('ISC'));
 for(const source of sources){
@@ -34,7 +34,7 @@ for(const f of listFiles(mp).filter(f=>/\.(wxml|wxss|js)$/.test(f))){
   if(stroke)assert.equal(stroke[1],'1.75',f);
  }
 }
-assert.equal(count,80); // Includes reviewed identity-loading and avatar-fallback states.
+assert.equal(count,80); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized).
 const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8');
 const settings=fs.readFileSync(path.join(mp,'components/settings-editor/index.wxml'),'utf8');
 assert.match(settings,/class="preference-tip">\s*<s-icon name="lightbulb"/);
@@ -66,4 +66,4 @@ for(const item of pixelReport.stampPixelChecks){
 const generated=['miniprogram/utils/icons.js','miniprogram/utils/lucideMorphNodes.js','tools/_gen/icons.json'];const before=generated.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
 const run=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'build-icons.cjs')],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
 generated.forEach((f,i)=>assert.equal(fs.readFileSync(path.join(root,f),'utf8'),before[i],'generator drift: '+f));
-console.log('ICON VERIFICATION PASSED: 48 official SVGs, 28 compatibility aliases, 80 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');
+console.log('ICON VERIFICATION PASSED: 49 official SVGs, 28 compatibility aliases, 80 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');

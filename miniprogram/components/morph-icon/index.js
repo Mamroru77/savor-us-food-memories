@@ -1,10 +1,16 @@
 const {frameSvg}=require('../../utils/morphSvg');
 const {iconSvg}=require('../../utils/icons');
+const {SPRING_PRESETS,Spring}=require('../../vendor/morphicons-core');
 let engine=null;
 let diagnosticSerial=0;
+// Morphicons' own spring presets. A caller that names one gets a per-frame integrated
+// curve and a timeline that ends when the spring settles; callers that name nothing keep
+// the previous fixed-duration smoothstep exactly as before.
+function springFor(name){const preset=name?SPRING_PRESETS[name]:null;if(!preset)return null;const s=new Spring();s.config(preset.k,preset.c);s.x=0;s.v=0;s.start(1);return s;}
+function springStep(spring,dt){const settled=spring.step(dt)===true;return {ease:Math.max(0,Math.min(1,spring.x)),settled};}
 try{engine=require('../../utils/morphEngine');}catch(e){/* Static SVG fallback remains available. */}
 Component({
-  properties:{presentation:{type:Object,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
+  properties:{presentation:{type:Object,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},spring:{type:String,value:''},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
   data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]},
   observers:{presentation:function(command){if(command)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
     if(this._acceptedCommand||this.data.presentation)return;
@@ -187,7 +193,7 @@ Component({
     startSvg(state,planMs){
       const generation=this._generation;
       const duration=Math.max(160,Math.min(1200,Number(this.data.duration)||380));
-      const m={generation,entryKey:this.data.entryKey,duration,elapsed:0,frames:0,queuedAt:Date.now(),visibleAt:null,loaded:false,committed:false,started:false};
+      const m={generation,entryKey:this.data.entryKey,duration,elapsed:0,frames:0,queuedAt:Date.now(),visibleAt:null,loaded:false,committed:false,started:false,spring:springFor(this.data.spring),springSettled:false};
       this._svgMotion=m;this._frameMetrics={frames:0,encodeTotalMs:0,encodeMaxMs:0,commitTotalMs:0,commitMaxMs:0,intervalMaxMs:0};this.recordRender('motion-created');
       const valid=()=>this._alive&&!this._hidden&&this._svgReady&&this._generation===generation&&this._svgMotion===m;
       const finish=()=>{
@@ -200,12 +206,14 @@ Component({
       const send=first=>{
         if(!valid())return;
         try{
-          const t=m.elapsed/duration,ease=t*t*(3-2*t);
+          let ease;
+          if(m.spring){const r=springStep(m.spring,1/60);ease=r.ease;m.springSettled=r.settled;}
+          else{const t=m.elapsed/duration;ease=t*t*(3-2*t);}
           this._current=engine.copy(engine.frame(state,ease));m.frames++;
           this.paint(this._current,()=>{
             if(!valid())return;
             if(first){m.committed=true;this.beginSvg();}
-            else if(m.elapsed>=duration)finish();
+            else if((m.spring?m.springSettled:m.elapsed>=duration)||m.frames>60)finish();
             else m.next();
           },first);
         }catch(e){this.canvasError();}
@@ -305,14 +313,17 @@ Component({
         this._settledName=null;if(this.data.renderer!=='svg')this.setData({painting:true});
         const planning=Date.now(),state=engine.plan(this._current,this.data.name),planMs=Date.now()-planning,started=Date.now();
         if(this.data.renderer==='svg'){this.startSvg(state,planMs);return;}
-        let frames=0,cpuMax=0,last=started;const intervals=[];
+        let frames=0,cpuMax=0,last=started,springSettled=false;const intervals=[],spring=springFor(this.data.spring);
         const step=()=>{
           this._raf=null;this._timer=null;if(!this._alive||this._hidden||(!this._ctx&&!this._svgReady)||generation!==this._generation)return;
           try{
-            const now=Date.now(),t=frames===0?0:Math.min(1,(now-started)/380),ease=t*t*(3-2*t);intervals.push(now-last);last=now;
+            const now=Date.now(),t=frames===0?0:Math.min(1,(now-started)/380);
+            let ease=t*t*(3-2*t);
+            if(spring){const r=springStep(spring,1/60);ease=r.ease;springSettled=r.settled;}
+            intervals.push(now-last);last=now;
             // Copy the currently drawn geometry so reversal starts here, not at an endpoint.
             this._current=engine.copy(engine.frame(state,ease));this.paint(this._current);frames++;cpuMax=Math.max(cpuMax,Date.now()-now);
-            if(t<1)this.schedule(step);else{
+            if(spring?!springSettled&&frames<=60:t<1)this.schedule(step);else{
               this._current=engine.copy(engine.sample(state.name));this._settledName=state.name;this._svgFlight=null;this._displayed=null;this.clearSurface();this.setData({settledEntryKey:entryKey,staticName:state.name,painting:false,frameSrc:''});
               const sorted=intervals.slice(1).sort((a,b)=>a-b);
               this.triggerEvent('report',{mode:'complete',name:state.name,frames,durationMs:Date.now()-started,planMs,cpuMaxMs:cpuMax,p95IntervalMs:sorted[Math.floor((sorted.length-1)*.95)]||0,scheduler:this.data.renderer==='svg'?'svg-timer':this._rafStalled?'timer-fallback':this._canvas.requestAnimationFrame?'canvas-rAF':'timer'});

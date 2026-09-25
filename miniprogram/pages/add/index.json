@@ -1,6 +1,7 @@
 {
   "usingComponents": {
     "s-icon": "/components/icon/index",
+    "s-morph": "/components/morph-icon/index",
     "s-toast": "/components/toast/index",
     "s-identity-gate": "/components/identity-gate/index"
   }
