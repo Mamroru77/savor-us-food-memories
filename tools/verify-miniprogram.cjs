@@ -11,7 +11,7 @@ const vm = require('vm');
 const { spawnSync } = require('child_process');
 const {
   listFiles, stripStringsAndComments, extractRequires, buildRequireGraph, usingComponentPaths,
-  resolveComponentRef, checkWxmlBalance,
+  resolveComponentRef, checkWxmlBalance, PACKAGE_BUDGET,
 } = require('./lib/checks.cjs');
 
 const ROOT = path.resolve(process.argv[2] || path.join(__dirname, '..', 'miniprogram'));
@@ -381,7 +381,15 @@ section('Package size');
   let total = 0;
   for (const file of listFiles(ROOT)) total += fs.statSync(file).size;
   const mb = total / (1024 * 1024);
-  check('SIZE', `package size ${mb.toFixed(2)} MB (release target 1.5 MB)`, mb < 1.5);
+  // Project policy (tools/lib/checks.cjs): warn from 1.70 MiB, fail from 1.90 MiB. The WeChat
+  // platform limit for a single main package / single subpackage is 2 MB (official); 1.90 MiB is
+  // this project's own safety margin and is deliberately NOT claimed to be a WeChat limit.
+  if (mb >= PACKAGE_BUDGET.SOFT_WARNING_MIB) {
+    console.warn(`  ! [SIZE] ${mb.toFixed(2)} MiB is at or above the project soft warning ${PACKAGE_BUDGET.SOFT_WARNING_MIB} MiB`
+      + ` (project hard limit ${PACKAGE_BUDGET.PROJECT_HARD_LIMIT_MIB} MiB; WeChat platform limit ${PACKAGE_BUDGET.WECHAT_PLATFORM_LIMIT_MB} MB).`
+      + ' Not a failure — review before adding more weight.');
+  }
+  check('SIZE', `package size ${mb.toFixed(2)} MiB (project soft warning ${PACKAGE_BUDGET.SOFT_WARNING_MIB} MiB, project hard limit ${PACKAGE_BUDGET.PROJECT_HARD_LIMIT_MIB} MiB, WeChat platform limit ${PACKAGE_BUDGET.WECHAT_PLATFORM_LIMIT_MB} MB)`, mb < PACKAGE_BUDGET.PROJECT_HARD_LIMIT_MIB);
 
   const appCss = fs.readFileSync(path.join(ROOT, 'app.wxss'), 'utf8');
   const fonts = fs.readFileSync(path.join(ROOT, 'utils', 'fonts.js'), 'utf8');

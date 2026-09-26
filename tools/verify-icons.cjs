@@ -3,7 +3,7 @@
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto');
 const {listFiles}=require('./lib/checks.cjs');
 const root=path.join(__dirname,'..'),mp=path.join(root,'miniprogram'),dir=path.join(mp,'images/icons/lucide');
-const sources=JSON.parse(fs.readFileSync(path.join(dir,'SOURCES.json'))),nodes=require(path.join(mp,'utils/lucideMorphNodes'));
+const sources=JSON.parse(fs.readFileSync(path.join(root,'tools/assets/icons/lucide','SOURCES.json'))),nodes=require(path.join(mp,'utils/lucideMorphNodes'));
 const {icons,iconSvg}=require(path.join(mp,'utils/icons')),aliases=require('./icon-aliases.json');
 const parse=s=>[...s.matchAll(/<(path|line|rect|circle|ellipse|polyline|polygon)\s+([^>]+)\/>/g)].map(m=>[m[1],Object.fromEntries([...m[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(a=>[a[1],a[2]]))]);
 assert.equal(sources.length,49);assert.equal(Object.keys(nodes).length,49);assert.equal(Object.keys(aliases).length,28);
@@ -54,7 +54,7 @@ for(const state of ['normal','selected'])for(const kind of ['frame','fallback'])
  const png=fs.readFileSync(path.join(mp,'images/markers',name+'.png'));assert.equal(png.readUInt32BE(16),768);assert.equal(png.readUInt32BE(20),858);
 }
 for(const direction of ['up','down'])for(const suffix of ['', '-dusk']){
- const svg=fs.readFileSync(path.join(mp,'images/markers','stack-button-'+direction+suffix+'.svg'),'utf8');const group=svg.match(/<g\s+([^>]*data-lucide="([^"]+)"[^>]*)>([\s\S]*?)<\/g>/);
+ const svg=fs.readFileSync(path.join(root,'tools/assets/markers','stack-button-'+direction+suffix+'.svg'),'utf8');const group=svg.match(/<g\s+([^>]*data-lucide="([^"]+)"[^>]*)>([\s\S]*?)<\/g>/);
  assert(group);assert.equal(group[2],'chevron-'+direction);assert.deepEqual(parse(group[3]),nodes[group[2]]);assert.match(group[1],/stroke-width="1.75"/);
 }
 const pixelReport=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/regression/icon-unification-validation.json')));

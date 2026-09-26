@@ -15,7 +15,7 @@
 | 发布线 | `v1.0.0` 已打标签并推送（annotated，指向 RC5 提交 `b2509c4`；`v1.0.0-r5` 指向同一提交）；[GitHub Release v1.0.0](https://github.com/Mamroru77/savor-us-food-memories/releases/tag/v1.0.0) 已创建并标记为 Latest |
 | 微信审核 | **已提交审核，当前审核中**（项目所有者确认，2026-09-24 于微信公众平台提交；本仓库无法独立取证） |
 | 静态验证 | `npm run verify` **355/355**；`npm run verify:all` **退出码 0** |
-| 包体积 | **1.48 MB**（门禁：`miniprogram/` < 1.5 MB） |
+| 包体积 | **1,554,703 B = 1.482680 MiB**（项目软警告 1.70 MiB；项目硬上限 1.90 MiB；微信平台限制 2 MB） |
 | 尚未执行 | 云函数本轮**无代码改动**故未部署（最近一次云函数提交为 2026-09-16） |
 
 完整收尾记录（提交清单、验证矩阵、真机取证、Git 集成）见 [Release Closure 2026-09-24](docs/reviews/release-closure-20260924.md)。
@@ -44,6 +44,7 @@
 ├── miniprogram/              # 当前小程序：页面、组件、样式、工具与资产
 ├── cloudfunctions/           # 当前云函数；本次整理不部署云端
 ├── tools/                    # 验证、生成与诊断工具
+│   ├── assets/               # 构建输入（图标溯源、marker SVG），不进主包
 │   ├── lib/                  # 共享校验库、词表与冻结闸门
 │   └── fixtures/regression/  # 必需的历史回归基准（16 个原始文件）
 ├── docs/
@@ -86,7 +87,7 @@ cd savor-us-food-memories
 本地回归工具只使用 Node.js 内置模块，根 `package.json` 不声明第三方依赖；请准备带 npm 的受支持 Node.js 版本。云函数依赖另行管理。
 
 ```bash
-npm run verify:all   # 全量门禁：31 条顶层命令，其中 verify:r2 再展开 16 条
+npm run verify:all   # 全量门禁：34 条顶层命令，其中 verify:r2 再展开 16 条
 npm run verify       # 静态主检查，当前 355/355
 ```
 
@@ -96,19 +97,36 @@ npm run verify       # 静态主检查，当前 355/355
 | --- | --- |
 | 身份与运行边界 | `verify:identity`、`verify:store-boundaries`、`verify:workspace` |
 | 头像与未保存编辑 | `verify:avatar`、`verify:sheet-edits`、`verify:profile-sync` |
-| 原生返回与页面生命周期 | `verify:add-native-return`、`verify:native-flow`、`verify:page-lifecycle`、`verify:memory-return` |
+| 原生返回与页面生命周期 | `verify:add-native-return`、`verify:add-identity-fence`、`verify:native-flow`、`verify:page-lifecycle`、`verify:memory-return` |
+| 照片上传批次与失败分层 | `verify:photo-batch-upload`、`verify:cloud` |
 | 地图、二级页与视觉语言 | `verify:map-motion`、`verify:map-save`、`verify:secondary-ui`、`verify:visual-language` |
 | 云契约与业务模拟 | `verify:cloud`、`verify:spaces`、`verify:media` |
 | 资产、结构 | `verify:assets`、`verify:icons`、`verify:structure` |
+| 包体预算与构建资产边界 | `verify:package-budget` |
 
 资产生成命令会写入文件，只在需要时执行：
 
 ```bash
 npm run build:locales   # 在 tools/lib/locale-translations.tsv 追加词条后生成语言资源
 npm run build:icons     # 修改图标源后生成资源
+python tools/build-map-icons.py   # 可选：由 tools/assets/ 的 SVG 重生成 miniprogram/images/markers/ 的 PNG（需 Python + cairosvg + 系统 Cairo；不在 verify:all 内）
 ```
 
 `verify:structure` 会校验 README 与文档导航中的本地链接是否可达，并断言回归基准仍为 16 个原始文件。回归通过不代表已完成微信真机、双账号权限或线上云端验收。
+
+### 包体预算策略
+
+字体以 bundled（内联 WOFF）方式随包发布，不依赖任何外部字体域名。预算策略只有一处定义
+（`tools/lib/checks.cjs` 的 `PACKAGE_BUDGET`），由 `verify` 与 `verify:package-budget` 共用：
+
+| 阈值 | 值 | 行为 |
+| --- | --- | --- |
+| `SOFT_WARNING_MIB` | **1.70 MiB** | 输出 warning，`verify` **不失败** |
+| `PROJECT_HARD_LIMIT_MIB` | **1.90 MiB** | `verify` **失败** |
+| 微信平台官方限制 | **2 MB**（单个主包 / 单个分包） | 平台硬限制 |
+
+尺寸按 `miniprogram/` 全部文件的字节数 / 1048576 计算。**1.90 MiB 是本项目自留的安全余量，不是微信官方限制**；
+微信官方限制是 2 MB。构建输入（图标溯源、marker SVG）位于 `tools/assets/`，不进主包，由 `verify:package-budget` 强制。
 
 ## 发布与冻结基线
 

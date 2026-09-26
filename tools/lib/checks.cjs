@@ -181,6 +181,20 @@ function checkWxmlBalance(source, label) {
   return { balanced: problems.length === 0, problems };
 }
 
+// Package budget policy (single source of truth for every gate that measures miniprogram/).
+//
+// The WeChat platform limit for a single main package / single subpackage is 2 MB (official).
+// The two numbers below are THIS PROJECT's own policy, not WeChat limits: the hard limit leaves
+// ~0.1 MiB of headroom below the platform ceiling so an upload can never fail on size, and the
+// soft warning is the point at which a human should look before adding more weight.
+// Sizes are measured as bytes / 1048576, so the unit here is MiB.
+const PACKAGE_BUDGET = Object.freeze({
+  SOFT_WARNING_MIB: 1.7,
+  PROJECT_HARD_LIMIT_MIB: 1.9,
+  WECHAT_PLATFORM_LIMIT_MB: 2,
+  NOTE: 'WeChat single main package / single subpackage limit is 2 MB (official). 1.90 MiB is this project\'s own safety margin, not a WeChat limit.',
+});
+
 module.exports = {
   listFiles,
   stripJsComments,
@@ -191,4 +205,5 @@ module.exports = {
   usingComponentPaths,
   resolveComponentRef,
   checkWxmlBalance,
+  PACKAGE_BUDGET,
 };

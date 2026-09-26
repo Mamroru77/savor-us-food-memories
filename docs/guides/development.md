@@ -26,10 +26,18 @@
 | 设计稿与独立 HTML / SVG 预览 | `docs/design/` |
 | 历史方案及阶段说明 | `docs/history/` |
 | 回归读取的历史基准 | `tools/fixtures/regression/` |
+| 构建输入（图标溯源、marker SVG），不进主包 | `tools/assets/` |
 | 原生运行记录、截图、备份 | `reports/`，仅本地 |
 | 早期远端交接包 | `archive/legacy-handoff/` |
 
 除明确可点击的相对链接外，文档中的代码路径按仓库根目录理解。历史报告中的本机路径与证据路径是历史记录，可能只在原工作机上存在。
+
+## 重新生成 marker / stamp PNG（可选，不属于验证）
+
+`python tools/build-map-icons.py` 是 **asset regeneration tool**：它不在 `npm run verify:all` 中，日常验证与提交**不需要**本机具备 Cairo 环境。
+只有改动 `tools/assets/markers/*.svg`、`docs/design/landmark-*.svg` 或 `miniprogram/images/icons/lucide/*.svg` 时才需要重跑。
+依赖：Python 3 + `cairosvg`（含 Pillow）；`cairosvg` 还需要**系统级 Cairo runtime**（Windows 上是 `libcairo-2.dll`）。
+它从 `tools/assets/markers/` 读 SVG，并把 PNG 写回 `miniprogram/images/markers/`。
 
 ## 提交前
 

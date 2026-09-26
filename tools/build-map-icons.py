@@ -2,6 +2,9 @@
 """Offline native PNG exports. Developer-only: pip install cairosvg pillow.
 SVG sources remain editable; visible inner glyphs are official Lucide data.
 Brand/container paths and original map geometry are intentionally not icons.
+
+Build inputs live under tools/assets/ (outside the mini program package, R2);
+only the rasterised PNGs are written into miniprogram/images/markers/.
 """
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -10,6 +13,8 @@ import sys
 BUTTONS_ONLY="--buttons-only" in sys.argv
 ROOT=Path(__file__).resolve().parents[1]
 ICONS=ROOT/'miniprogram/images/icons/lucide'
+MARKERS=ROOT/'miniprogram/images/markers'
+BUTTON_SVG=ROOT/'tools/assets/markers'
 NS='{http://www.w3.org/2000/svg}'
 ET.register_namespace('',NS[1:-1])
 def sync(p):
@@ -25,11 +30,11 @@ for state in ([] if BUTTONS_ONLY else ['normal','selected']):
  for kind in ['frame','fallback']:
   name=f'landmark-{state}-{kind}'
   source=sync(ROOT/'docs/design'/f'{name}.svg')
-  cairosvg.svg2png(bytestring=source,write_to=str(ROOT/'miniprogram/images/markers'/f'{name}.png'),output_width=768,output_height=858)
+  cairosvg.svg2png(bytestring=source,write_to=str(MARKERS/f'{name}.png'),output_width=768,output_height=858)
 for direction in ['up','down']:
  for suffix in ['', '-dusk']:
-  p=ROOT/f'miniprogram/images/markers/stack-button-{direction}{suffix}.svg'
-  cairosvg.svg2png(bytestring=sync(p),write_to=str(p.with_suffix('.png')),output_width=96,output_height=96)
+  p=BUTTON_SVG/f'stack-button-{direction}{suffix}.svg'
+  cairosvg.svg2png(bytestring=sync(p),write_to=str(MARKERS/f'stack-button-{direction}{suffix}.png'),output_width=96,output_height=96)
 for direction in ([] if BUTTONS_ONLY else ['left','right']):
  p=ICONS/f'chevron-{direction}.svg';tree=ET.parse(p);svg=tree.getroot()
  svg.set('stroke','#34483c');svg.set('stroke-width','1.75')

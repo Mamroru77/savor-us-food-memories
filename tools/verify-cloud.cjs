@@ -778,7 +778,7 @@ function nativeTabs(initial=0){
     assert.equal(JSON.parse(fs.readFileSync(path.join(mp, 'pages/add/index.json'), 'utf8')).usingComponents['s-morph'], '/components/morph-icon/index');
     const nodes = require(path.join(mp, 'utils/lucideMorphNodes'));
     assert(nodes.eraser, 'the eraser node is generated');
-    const eraser = require(path.join(mp, 'images/icons/lucide/SOURCES.json')).find(s => s.name === 'eraser');
+    const eraser = require(path.join(root, 'tools/assets/icons/lucide/SOURCES.json')).find(s => s.name === 'eraser');
     assert.equal(eraser.url, 'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/eraser.svg');
     assert.equal(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(mp, 'images/icons/lucide/eraser.svg'))).digest('hex'), eraser.sha256,
       'the eraser geometry is the unmodified official SVG, never a hand-written path');
@@ -2047,7 +2047,7 @@ function nativeTabs(initial=0){
   await test('native arrows are bundled high-resolution exports of rounded SVG geometry',()=>{
     const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
     for(const direction of ['up','down']){
-      const svg=fs.readFileSync(path.join(mp,'images/markers/stack-button-'+direction+'.svg'),'utf8');
+      const svg=fs.readFileSync(path.join(root,'tools/assets/markers/stack-button-'+direction+'.svg'),'utf8');
       const png=fs.readFileSync(path.join(mp,'images/markers/stack-button-'+direction+'.png'));
       assert(svg.includes('stroke-linecap="round"'));assert.equal(png.readUInt32BE(16),96);assert.equal(png.readUInt32BE(20),96);
       assert(w.includes('/images/markers/stack-button-'+direction+'.png'));
@@ -2351,7 +2351,7 @@ function nativeTabs(initial=0){
     const stack=require(path.join(mp,'utils/mapStack'));
     for(const width of [375,390,430]){const b=stack.buttonGeometry(width);assert(Math.abs(b.left+b.size/2-44)<1e-9);assert(Math.abs(b.top+b.size/2-16)<1e-9);assert(Math.abs(b.size*28/32-56*width/750)<1e-9);assert(Math.abs(b.size*14/32-28*width/750)<1e-9);assert(b.hitWidth>=44);assert.equal(b.hitHeight,40);assert.equal(b.hitTop+b.hitHeight,36);}
     assert.equal(stack.buttonGeometry(1024).size,stack.buttonGeometry(430).size);
-    for(const direction of ['up','down'])for(const suffix of ['', '-dusk']){const base=path.join(mp,'images/markers/stack-button-'+direction+suffix);const svg=fs.readFileSync(base+'.svg','utf8'),png=fs.readFileSync(base+'.png');assert(svg.includes('width="28" height="28" rx="12"'));assert(svg.includes('translate(9 9)'));assert(svg.includes(suffix?'#eeeae3':'#273b31'));assert.equal(png.readUInt32BE(16),96);assert.equal(png.readUInt32BE(20),96);}
+    for(const direction of ['up','down'])for(const suffix of ['', '-dusk']){const svgBase=path.join(root,'tools/assets/markers/stack-button-'+direction+suffix),pngBase=path.join(mp,'images/markers/stack-button-'+direction+suffix);const svg=fs.readFileSync(svgBase+'.svg','utf8'),png=fs.readFileSync(pngBase+'.png');assert(svg.includes('width="28" height="28" rx="12"'));assert(svg.includes('translate(9 9)'));assert(svg.includes(suffix?'#eeeae3':'#273b31'));assert.equal(png.readUInt32BE(16),96);assert.equal(png.readUInt32BE(20),96);}
   });
   await test('native stack pressed feedback clears on release, gesture and hide',()=>{
     const p=page('map');p.data.stackPositionsReady=true;p.onStackPress({currentTarget:{dataset:{rootId:'pressed-root'}}});assert.equal(p.data.pressedStackRoot,'pressed-root');p.onStackRelease();assert.equal(p.data.pressedStackRoot,'');p.onStackPress({currentTarget:{dataset:{rootId:'pressed-root'}}});p.onMapRegionChange({detail:{type:'begin'}});assert.equal(p.data.pressedStackRoot,'');p.data.stackPositionsReady=true;p.onStackPress({currentTarget:{dataset:{rootId:'pressed-root'}}});p.onHide();assert.equal(p.data.pressedStackRoot,'');
