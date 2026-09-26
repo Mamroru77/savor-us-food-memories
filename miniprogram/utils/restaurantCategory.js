@@ -1,4 +1,5 @@
 // Small conservative taxonomy: explicit source text is separate from name-only suggestions.
+const diningTypeText = require('./diningTypeText');
 const TYPES=['火锅','自助餐','烧烤','小吃','面馆','咖啡馆','甜品','酒馆'];
 function classify(text) {
   const raw=String(text||'');
@@ -22,7 +23,13 @@ function compareBranch(expected,actual) {
   // Equality is a textual clue, never automatic proof of physical identity.
   return normalize(expected)===normalize(actual)?'same-name':'review-name';
 }
+// Display label for a stored memory. TYPES is the canonical taxonomy and stays the only source for
+// classify(); a memory's diningTypes, however, may also carry user-created resident names, so the
+// label resolves every valid stored string instead of only built-ins. Hiding an option, deleting a
+// custom option or syncing preferences must never erase a name that is already stored: summary reads
+// the memory alone and never consults settings.
 function summary(memory) {
-  return Array.from(new Set([typeof memory.cuisine==='string'?memory.cuisine:''].concat(Array.isArray(memory.diningTypes)?memory.diningTypes.filter(t=>TYPES.includes(t)):[]).filter(Boolean))).join(' · ');
+  const stored = diningTypeText.normalizeStoredTypes(memory && memory.diningTypes);
+  return Array.from(new Set([typeof memory.cuisine==='string'?memory.cuisine:''].concat(stored).filter(Boolean))).join(' · ');
 }
 module.exports={TYPES,classify,explicit,suggestion,compareBranch,summary};

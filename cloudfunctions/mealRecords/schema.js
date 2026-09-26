@@ -10,6 +10,23 @@ function image(v) {
   return typeof v === 'string' && v.length <= 500 && !v.split('/').some(p => p === '..' || p === '.')
     && (cloudFile.test(v) || /^\/images\/[A-Za-z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v) || /^https:\/\/[^\s]+$/.test(v));
 }
+// Dining types accept the canonical built-ins AND user-created names. restaurantCategory.TYPES is the
+// client-side taxonomy for classify()/auto-categorisation, never an allowlist for what a stored memory
+// may contain. Malformed or over-long values are ignored rather than truncated, so a saved name is
+// never silently rewritten into a different one. Kept identical in mealRecords and workspace;
+// tools/verify-dining-type-schema.cjs locks that.
+const DINING_TYPE_COUNT = 6;
+const DINING_TYPE_LIMIT = 20;
+function diningType(value) {
+  if (typeof value !== 'string') return '';
+  const name = value.trim();
+  if (!name || name.length > DINING_TYPE_LIMIT) return '';
+  return name;
+}
+function diningTypes(value) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.slice(0, DINING_TYPE_COUNT).map(diningType).filter(Boolean)));
+}
 function normalizeRecord(input, openid) {
   const list = (v, n, length) => Array.isArray(v) ? v.slice(0, n).map(x => text(x, length)).filter(Boolean) : [];
   if(input.perCapita!==undefined && input.perCapita!=='' && input.perCapita!==null && (!['number','string'].includes(typeof input.perCapita) || !Number.isFinite(Number(input.perCapita)) || Number(input.perCapita)<0 || Number(input.perCapita)>1000000)) throw new Error('INVALID_PER_CAPITA');
@@ -27,7 +44,7 @@ function normalizeRecord(input, openid) {
     shared: input.shared === true, liked: input.liked === true, saved: input.saved === true,
     createdBy: openid, memberOpenids: [openid], coupleId: ''
   };
-  record.diningTypes = Array.from(new Set(list(input.diningTypes,6,20).filter(t=>['火锅','自助餐','烧烤','小吃','面馆','咖啡馆','甜品','酒馆'].includes(t))));
+  record.diningTypes = diningTypes(input.diningTypes);
   record.importAddressHint=text(input.importAddressHint,150);
   record.importAreaText=text(input.importAreaText,80);
   record.platformRating=typeof input.platformRating==='number'&&Number.isFinite(input.platformRating)&&input.platformRating>=0&&input.platformRating<=5?input.platformRating:null;

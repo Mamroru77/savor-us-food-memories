@@ -14,8 +14,8 @@
 | 真机问题 | **7 项全部 CLOSED**（身份分区迁移、Add 原生返回竞态、头像与高清自定义头像链路） |
 | 发布线 | `v1.0.0` 已打标签并推送（annotated，指向 RC5 提交 `b2509c4`；`v1.0.0-r5` 指向同一提交）；[GitHub Release v1.0.0](https://github.com/Mamroru77/savor-us-food-memories/releases/tag/v1.0.0) 已创建并标记为 Latest |
 | 微信审核 | **已提交审核，当前审核中**（项目所有者确认，2026-09-24 于微信公众平台提交；本仓库无法独立取证） |
-| 静态验证 | `npm run verify` **355/355**；`npm run verify:all` **退出码 0** |
-| 包体积 | **1,554,703 B = 1.482680 MiB**（项目软警告 1.70 MiB；项目硬上限 1.90 MiB；微信平台限制 2 MB） |
+| 静态验证 | `npm run verify` **357/357**；`npm run verify:all` **退出码 0** |
+| 包体积 | **1,571,061 B = 1.498281 MiB**（项目软警告 1.70 MiB；项目硬上限 1.90 MiB；微信平台限制 2 MB） |
 | 尚未执行 | 云函数本轮**无代码改动**故未部署（最近一次云函数提交为 2026-09-16） |
 
 完整收尾记录（提交清单、验证矩阵、真机取证、Git 集成）见 [Release Closure 2026-09-24](docs/reviews/release-closure-20260924.md)。
@@ -87,8 +87,8 @@ cd savor-us-food-memories
 本地回归工具只使用 Node.js 内置模块，根 `package.json` 不声明第三方依赖；请准备带 npm 的受支持 Node.js 版本。云函数依赖另行管理。
 
 ```bash
-npm run verify:all   # 全量门禁：34 条顶层命令，其中 verify:r2 再展开 16 条
-npm run verify       # 静态主检查，当前 355/355
+npm run verify:all   # 全量门禁：36 条顶层命令，其中 verify:r2 再展开 16 条
+npm run verify       # 静态主检查，当前 357/357
 ```
 
 按关注点速查：
@@ -103,6 +103,7 @@ npm run verify       # 静态主检查，当前 355/355
 | 云契约与业务模拟 | `verify:cloud`、`verify:spaces`、`verify:media` |
 | 资产、结构 | `verify:assets`、`verify:icons`、`verify:structure` |
 | 包体预算与构建资产边界 | `verify:package-budget` |
+| 餐饮类型常驻选项 | `verify:dining-types`、`verify:dining-type-schema` |
 
 资产生成命令会写入文件，只在需要时执行：
 

@@ -8,7 +8,7 @@ let passed=0;
 // A suite that never reaches its summary (a pending await that never settles, so the event loop
 // drains) would otherwise exit 0 and look green inside verify:all. Fail loudly instead.
 let completed=false;
-process.on('beforeExit',()=>{if(!completed){console.error('verify-add-native-return did not reach its summary: a pending await never settled');process.exitCode=1;}});
+process.on('beforeExit',()=>{if(!completed){console.error('verify-add-native-return did not reach its summary (aborted early, or a pending await never settled)');process.exitCode=1;}});
 const flush=async()=>{for(let i=0;i<64;i++)await Promise.resolve();};
 function harness(){
  let spec,choose,modal,writes=0,owner='fixture-a',generation=1,locked=false,verifyPromise,resolveVerify;
@@ -21,7 +21,7 @@ function harness(){
  const scrolls=[];const wx={pageScrollTo:o=>scrolls.push(o.scrollTop),setNavigationBarColor(){},showModal:o=>modal=o};
  const i18nModule={exports:{}};
  vm.runInNewContext(fs.readFileSync('miniprogram/utils/i18n.js','utf8'),{module:i18nModule,require:p=>p==='./locales'?[]:p==='./pageHeadings'?{resolve:()=>({})}:p==='./store'?store:identity,wx});
- const deps={identity,identityCopy:()=>({}),localDate:{today:()=> '2026-09-17'},i18n:i18nModule.exports,uiFeedback:{},store,data:{},photos:{},metrics:{getMetrics:()=>({headerTop:60})},locations:{choose:()=>new Promise((resolve,reject)=>choose={resolve,reject}),confirmed:()=>true},shareImport:{},restaurantCategory:{TYPES:[],compareBranch:()=> 'same-name'},cloudRecords:{},importPolicy:{enabled:()=>false,cloudPlaceSearchEnabled:false}};
+ const deps={identity,identityCopy:()=>({}),localDate:{today:()=> '2026-09-17'},i18n:i18nModule.exports,uiFeedback:{},store,data:{},photos:{},metrics:{getMetrics:()=>({headerTop:60})},locations:{choose:()=>new Promise((resolve,reject)=>choose={resolve,reject}),confirmed:()=>true},shareImport:{},restaurantCategory:{TYPES:[],compareBranch:()=> 'same-name'},diningTypeOptions:{options:()=>({visible:[]}),normalizeCustom:()=>[],normalizeHidden:()=>[]},cloudRecords:{},importPolicy:{enabled:()=>false,cloudPlaceSearchEnabled:false}};
  vm.runInNewContext(fs.readFileSync('miniprogram/pages/add/index.js','utf8'),{Page:p=>spec=p,require:p=>deps[p.split('/').pop()],wx,Promise});
  const p={...spec,data:JSON.parse(JSON.stringify(spec.data)),active:true,saveLock:false,disposed:false,setData(x,cb){Object.assign(this.data,x);if(cb)cb();}};
  p.data.draft=store.loadDraft();p.syncContext(state);p.data.importOpen=true;p.data.importText='fixture shop';p.data.importCity='fixture city';p.data.importCandidate={name:'fixture shop',diningTypes:[],categorySuggestion:{}};p._nativeScrollTop=500;

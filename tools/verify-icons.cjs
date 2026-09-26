@@ -34,7 +34,7 @@ for(const f of listFiles(mp).filter(f=>/\.(wxml|wxss|js)$/.test(f))){
   if(stroke)assert.equal(stroke[1],'1.75',f);
  }
 }
-assert.equal(count,80); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized).
+assert.equal(count,85); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized). 2026-09-26 user-authorized: the Add dining-type manager adds five icons (+ chip, hide x, restore +, custom remove x, confirm check).
 const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8');
 const settings=fs.readFileSync(path.join(mp,'components/settings-editor/index.wxml'),'utf8');
 assert.match(settings,/class="preference-tip">\s*<s-icon name="lightbulb"/);
@@ -66,4 +66,4 @@ for(const item of pixelReport.stampPixelChecks){
 const generated=['miniprogram/utils/icons.js','miniprogram/utils/lucideMorphNodes.js','tools/_gen/icons.json'];const before=generated.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
 const run=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'build-icons.cjs')],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
 generated.forEach((f,i)=>assert.equal(fs.readFileSync(path.join(root,f),'utf8'),before[i],'generator drift: '+f));
-console.log('ICON VERIFICATION PASSED: 49 official SVGs, 28 compatibility aliases, 80 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');
+console.log('ICON VERIFICATION PASSED: 49 official SVGs, 28 compatibility aliases, 85 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');

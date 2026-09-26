@@ -1872,8 +1872,24 @@ function nativeTabs(initial=0){
   });
   await test('new classification fields are bounded and not authorization fields', () => {
     const schema=require(path.join(root,'cloudfunctions/mealRecords/schema'));
-    const clean=schema.normalizeRecord({...service.memoryToCloudRecord(sample()),diningTypes:['火锅','火锅','evil'],sourceCategory:'x'.repeat(200),categorySource:'verified-owner',createdBy:'forged'},'owner-A');
-    assert.deepEqual(clean.diningTypes,['火锅']);assert.equal(clean.sourceCategory.length,120);assert.equal(clean.categorySource,'');assert.equal(clean.createdBy,'owner-A');
+    // A short, valid string is a legitimate dining type now (built-ins are no longer an allowlist), so
+    // 'evil' is kept while the genuinely malformed values are still dropped.
+    const clean=schema.normalizeRecord({...service.memoryToCloudRecord(sample()),diningTypes:['火锅','火锅','evil','x'.repeat(21),123,null],sourceCategory:'x'.repeat(200),categorySource:'verified-owner',createdBy:'forged'},'owner-A');
+    assert.deepEqual(clean.diningTypes,['火锅','evil']);assert.equal(clean.sourceCategory.length,120);assert.equal(clean.categorySource,'');assert.equal(clean.createdBy,'owner-A');
+  });
+  await test('a custom dining type survives save, cloud normalisation, reload and reopen', async () => {
+    const custom=Object.assign(sample(),{diningTypes:['酒馆','测试'],noPhoto:true});
+    assert.deepEqual(service.memoryToCloudRecord(custom).diningTypes,['酒馆','测试'],'the client payload must carry both names');
+    const attempt={actorUserId:'u_'+'a'.repeat(48),id:data.createId(),memory:custom,uploads:{}};
+    const saved=await service.addRecord(attempt,()=>{});
+    assert.deepEqual(saved.diningTypes,['酒馆','测试'],'the cloud response must keep both names');
+    assert.deepEqual([...rows.values()].find(r=>r._id===saved.id).diningTypes,['酒馆','测试'],'the stored row must keep both names');
+    const reloaded=(await service.listRecords()).find(m=>m.id===saved.id);
+    assert.deepEqual(reloaded.diningTypes,['酒馆','测试'],'a fresh cloud list must keep both names');
+    const editing=store.beginEdit(reloaded);
+    assert.deepEqual(editing.diningTypes,['酒馆','测试'],'reopening the editor must keep both names selected');
+    store.clearDraft();
+    assert.equal(cat.summary(reloaded),'酒馆 · 测试','the map category label must show both');
   });
   await test('lookup transport rejects redirects and oversized responses without following external URLs', async () => {
     const {EventEmitter}=require('node:events');

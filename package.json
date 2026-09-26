@@ -9,7 +9,7 @@
     "verify:assets": "node tools/verify-assets.cjs",
     "verify:cloud": "node tools/verify-cloud.cjs",
     "verify:store-boundaries": "node tools/verify-store-repositories.cjs",
-    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:store-boundaries && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:avatar && npm run verify:profile-sync && npm run verify:native-flow && npm run verify:workspace && npm run verify:audit && npm run verify:map-save && npm run verify:secondary-ui && npm run verify:map-motion && npm run verify:page-lifecycle && npm run verify:menu-copy && npm run verify:audit-stages && npm run verify:sheet-edits && npm run verify:visual-language && npm run verify:structure && npm run verify:memory-return && npm run verify:add-native-return && npm run verify:add-identity-fence && npm run verify:photo-batch-upload && npm run verify:package-budget && npm run verify:map-empty && npm run verify:map-viewport && npm run verify:r2",
+    "verify:all": "npm run verify && npm run verify:tabbar && npm run verify:assets && npm run verify:icons && npm run verify:cloud && npm run verify:store-boundaries && npm run verify:handoff && npm run verify:ui && npm run verify:capture && npm run verify:identity && npm run verify:spaces && npm run verify:media && npm run verify:avatar && npm run verify:profile-sync && npm run verify:native-flow && npm run verify:workspace && npm run verify:audit && npm run verify:map-save && npm run verify:secondary-ui && npm run verify:map-motion && npm run verify:page-lifecycle && npm run verify:menu-copy && npm run verify:audit-stages && npm run verify:sheet-edits && npm run verify:visual-language && npm run verify:structure && npm run verify:memory-return && npm run verify:add-native-return && npm run verify:add-identity-fence && npm run verify:photo-batch-upload && npm run verify:package-budget && npm run verify:dining-types && npm run verify:dining-type-schema && npm run verify:map-empty && npm run verify:map-viewport && npm run verify:r2",
     "build:locales": "node tools/build-locales.cjs",
     "build:icons": "node tools/build-icons.cjs",
     "verify:icons": "node tools/verify-icons.cjs",
@@ -56,6 +56,8 @@
     "verify:memory-preview-sources": "node tools/verify-memory-preview-sources.cjs",
     "verify:r4-local-refinements": "node tools/verify-r4-local-refinements.cjs",
     "verify:map-veil-review": "node tools/verify-map-veil-review.cjs",
-    "verify:preferences-contrast": "node tools/verify-preferences-contrast.cjs"
+    "verify:preferences-contrast": "node tools/verify-preferences-contrast.cjs",
+    "verify:dining-types": "node tools/verify-dining-types.cjs",
+    "verify:dining-type-schema": "node tools/verify-dining-type-schema.cjs"
   }
 }

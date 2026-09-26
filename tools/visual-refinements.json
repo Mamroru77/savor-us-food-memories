@@ -1,7 +1,7 @@
 {
   "miniprogram/pages/add/index.wxss": {
-    "baseSha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
-    "sha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",
+    "baseSha256": "cfa2af3955b8f41e9e70a824b4710c84b2af9118b5e398f5c5991ac49ba8f606",
+    "sha256": "cfa2af3955b8f41e9e70a824b4710c84b2af9118b5e398f5c5991ac49ba8f606",
     "reason": "R7 reviewed Add end spacing: retain shared safe-area spacer, remove duplicate page clearance; no application JS/WXML change.",
     "review": "docs/reviews/visual-refinement-20260916.md"
   },

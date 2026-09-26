@@ -527,3 +527,17 @@ Clear draft	清除草稿
 Photo {indexes} could not be processed. Reselect or remove it and try again.	第 {indexes} 张照片无法处理，请重新选择或移除后重试。
 Some photos could not be prepared. Reselect them and try again.	部分照片无法处理，请重新选择后重试。
 This photo could not be prepared for upload. Reselect it and try again.	这张照片无法处理，请重新选择后重试。
+Built-in	系统
+Mine	我的
+Add type	添加类型
+Type name	类型名称
+Done	完成
+Enter a type name.	请输入类型名称。
+This type already exists.	该类型已存在。
+Keep it within {max} characters.	请控制在 {max} 个字符以内。
+You can keep up to {max} dining types.	最多可保留 {max} 个餐饮类型。
+Hide this type	隐藏该类型
+Restore this type	恢复该类型
+Remove this type	删除该类型
+Add a dining type	添加餐饮类型
+Manage dining types	管理餐饮类型

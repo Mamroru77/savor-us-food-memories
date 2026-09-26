@@ -2644,5 +2644,75 @@ module.exports = [
     "key": "s9442ed7b63",
     "en": "This photo could not be prepared for upload. Reselect it and try again.",
     "zh": "这张照片无法处理，请重新选择后重试。"
+  },
+  {
+    "key": "s20f409cc87",
+    "en": "Built-in",
+    "zh": "系统"
+  },
+  {
+    "key": "sd42af7968b",
+    "en": "Mine",
+    "zh": "我的"
+  },
+  {
+    "key": "s937e2dfc44",
+    "en": "Add type",
+    "zh": "添加类型"
+  },
+  {
+    "key": "s8affe505da",
+    "en": "Type name",
+    "zh": "类型名称"
+  },
+  {
+    "key": "se9b450d14b",
+    "en": "Done",
+    "zh": "完成"
+  },
+  {
+    "key": "s17006960e1",
+    "en": "Enter a type name.",
+    "zh": "请输入类型名称。"
+  },
+  {
+    "key": "s847374a37f",
+    "en": "This type already exists.",
+    "zh": "该类型已存在。"
+  },
+  {
+    "key": "s1e9fa5cb3f",
+    "en": "Keep it within {max} characters.",
+    "zh": "请控制在 {max} 个字符以内。"
+  },
+  {
+    "key": "s30232aaa4e",
+    "en": "You can keep up to {max} dining types.",
+    "zh": "最多可保留 {max} 个餐饮类型。"
+  },
+  {
+    "key": "sb6f5e039b3",
+    "en": "Hide this type",
+    "zh": "隐藏该类型"
+  },
+  {
+    "key": "sd475c54aa7",
+    "en": "Restore this type",
+    "zh": "恢复该类型"
+  },
+  {
+    "key": "s9b6c5bbedb",
+    "en": "Remove this type",
+    "zh": "删除该类型"
+  },
+  {
+    "key": "s84753ca8df",
+    "en": "Add a dining type",
+    "zh": "添加餐饮类型"
+  },
+  {
+    "key": "sff69a056db",
+    "en": "Manage dining types",
+    "zh": "管理餐饮类型"
   }
 ];

@@ -300,6 +300,21 @@
 .photo-strip-remove { width:88rpx; height:88rpx; background:transparent; align-items:flex-start; justify-content:flex-end; }
 .photo-remove-glyph { display:flex; align-items:center; justify-content:center; width:48rpx; height:48rpx; border-radius:50%; background:#000a; }
 .category-type, .suggested-tag { min-height:88rpx; box-sizing:border-box; display:inline-flex; align-items:center; }
+/* Resident dining-type manager: reuses this page's chip, input and glass language; no new card or page. */
+.dining-type-add { padding:12rpx 20rpx; border-style:dashed; }
+.dining-type-manager { padding:28rpx; border-radius:24rpx; margin:0 0 28rpx; }
+.dining-type-manager .form-label { display:block; }
+.dining-type-manager .category-type-list { margin:12rpx 0 18rpx; }
+.dining-type-manager .category-type { padding-right:0; }
+.dining-type-manager .category-type > text { padding-right:6rpx; }
+.category-type-remove { width:88rpx; height:88rpx; display:flex; align-items:center; justify-content:center; }
+.category-type.is-hidden { opacity:.55; border-style:dashed; }
+/* A custom name may be long: the picker chip wraps, the manager chip ellipsises so its 88rpx remove
+   control stays reachable. Built-in names are short, so their rendering is unchanged. */
+.category-type { max-width:100%; }
+.dining-type-manager .category-type > text { max-width:360rpx; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dining-type-input { display:flex; align-items:center; gap:12rpx; }
+.dining-type-input .form-input { flex:1 1 auto; min-width:0; }
 .category-type.is-selected { text-decoration:underline; text-underline-offset:8rpx; }
 
 

@@ -48,6 +48,10 @@ const defaultSettings = {
   theme: 'pearl',
   loveSent: false,
   notificationsRead: false,
+  // Add-page resident dining types. Built-ins stay in restaurantCategory.TYPES; hiding only removes
+  // a name from the manual picker, and custom names never enter the taxonomy.
+  customDiningTypes: [],
+  hiddenDiningTypes: [],
 };
 
 const screenInfo = {

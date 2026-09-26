@@ -56,14 +56,14 @@ for(const file of ['pages/home/index.wxml','pages/map/index.wxml','pages/add/ind
  }
  assert.equal(stack.length,0,stack.join(','));
 });
-test('All 27 native form controls are explicitly named; text inputs have focus and placeholder contracts',()=>{
+test('All 28 native form controls are explicitly named; text inputs have focus and placeholder contracts',()=>{
  let total=0;
  for(const file of ['pages/add/index.wxml','pages/map/index.wxml','components/sheet/index.wxml','components/profile-editor/index.wxml','components/settings-editor/index.wxml'])for(const tag of tags(read(file))){
   if(!/^<(input|textarea|picker|switch)\b/.test(tag))continue;
   total++;assert.match(tag,/aria-label="[^\"]+"/);
   if(/^<(input|textarea)\b/.test(tag)){assert(tag.includes('bindfocus="onFieldFocus"'));assert(tag.includes('bindblur="onFieldBlur"'));assert(tag.includes('placeholder-class='));}
  }
- assert.equal(total,27);
+ assert.equal(total,28);
 });
 test('Stale blur cannot erase a newer field focus',()=>{
  const ctx={data:{focusedField:''},setData(p){Object.assign(this.data,p);}},event=k=>({currentTarget:{dataset:{focusKey:k}}});

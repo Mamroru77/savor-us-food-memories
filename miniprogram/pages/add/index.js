@@ -13,6 +13,7 @@ const metrics = require('../../utils/metrics');
 const locations = require('../../utils/locations');
 const shareImport = require('../../utils/shareImport');
 const categories = require('../../utils/restaurantCategory');
+const diningTypeOptions = require('../../utils/diningTypeOptions');
 const cloudRecords = require('../../utils/cloudRecords');
 const importPolicy = require('../../utils/importPolicy');
 
@@ -48,6 +49,14 @@ Page({
     // persisted; the flag only swallows taps while Eraser -> Check -> Eraser runs.
     clearingDraft: false,
     clearIcon: {name: 'eraser', fromName: 'eraser', key: 0},
+    // Resident dining types: the picker offers built-ins minus the hidden ones plus the custom
+    // names. Managing that list never edits the current draft.
+    diningTypeManagerOpen: false,
+    diningTypeInputOpen: false,
+    diningTypeInput: '',
+    diningTypeError: '',
+    managedBuiltins: [],
+    managedCustom: [],
   },
 
   onLoad() {
@@ -171,8 +180,27 @@ Page({
       dusk: state.settings.theme === 'dusk',
       quiet: state.settings.reduceMotion,
       draftClearable: this.draftHasContent(),
-      formTypes:categories.TYPES.map(name=>({name,label:i18n.t(name),selected:(Array.isArray(draft.diningTypes)?draft.diningTypes:[]).includes(name)})),
+      formTypes:this.diningTypeRows(state.settings, draft),
+      managedBuiltins:this.managedBuiltinRows(state.settings),
+      managedCustom:this.managedCustomRows(state.settings),
     });
+  },
+
+  // The picker shows the resident options: built-ins minus the hidden ones, plus the custom names.
+  // A value that is already on the draft stays selected even after its option is hidden or removed —
+  // the draft is the user's data, the option list is only what the picker offers next.
+  diningTypeRows(settings, draft) {
+    const selected = Array.isArray(draft.diningTypes) ? draft.diningTypes : [];
+    return diningTypeOptions.options(settings).visible.map(name => ({name, label: i18n.t(name), selected: selected.includes(name)}));
+  },
+  // The manager lists every built-in (hidden ones included, so they can be restored) and the custom
+  // names. restaurantCategory.TYPES is never mutated.
+  managedBuiltinRows(settings) {
+    const hidden = diningTypeOptions.normalizeHidden(settings && settings.hiddenDiningTypes);
+    return categories.TYPES.map(name => ({name, label: i18n.t(name), hidden: hidden.includes(name)}));
+  },
+  managedCustomRows(settings) {
+    return diningTypeOptions.normalizeCustom(settings && settings.customDiningTypes).map(name => ({name, label: name}));
   },
 
   // A quick clear is only worth offering when the draft actually holds something. While an
@@ -527,9 +555,52 @@ Page({
     if(this.data.importCandidate)this.updateImportCandidate(Object.assign({},this.data.importCandidate,{cuisine:e.detail.value,categorySource:'user-confirmed'}));
   },
   onDraftDiningType(e) {
-    const type=e.currentTarget.dataset.value;if(!categories.TYPES.includes(type))return;
+    if (this.identityFence()) return;
+    const type=e.currentTarget.dataset.value;
+    if(!diningTypeOptions.options(store.get().settings).visible.includes(type))return;
     const list=(Array.isArray(this.data.draft.diningTypes)?this.data.draft.diningTypes:[]).slice(),index=list.indexOf(type);if(index>=0)list.splice(index,1);else if(list.length<6)list.push(type);
     this.changeDraft('diningTypes',list);
+  },
+
+  // ---- resident dining types: the picker's option list, never the draft's content ----
+  diningTypeErrorText(reason) {
+    if (reason === 'DUPLICATE') return i18n.t('This type already exists.');
+    if (reason === 'TOO_LONG') return i18n.t('Keep it within {max} characters.', {max: diningTypeOptions.MAX_ITEM_LENGTH});
+    if (reason === 'LIMIT') return i18n.t('You can keep up to {max} dining types.', {max: diningTypeOptions.MAX_CUSTOM});
+    return i18n.t('Enter a type name.');
+  },
+  saveDiningTypes(changes) {
+    try { store.updateSettings(changes); this.setData({diningTypeError: ''}); return true; }
+    catch (error) { this.setData({diningTypeError: i18n.t('Could not save this preference. Please try again.')}); return false; }
+  },
+  onDiningTypeManager() {
+    if (this.identityFence()) return;
+    this.setData({diningTypeManagerOpen: !this.data.diningTypeManagerOpen, diningTypeInputOpen: false, diningTypeInput: '', diningTypeError: ''});
+  },
+  onDiningTypeInput(e) { if (this.identityFence()) return; this.setData({diningTypeInput: e.detail.value, diningTypeError: ''}); },
+  onAddDiningType() { if (this.identityFence()) return; this.setData({diningTypeInputOpen: true, diningTypeInput: '', diningTypeError: ''}); },
+  onDiningTypeInputCancel() { if (this.identityFence()) return; this.setData({diningTypeInputOpen: false, diningTypeInput: '', diningTypeError: ''}); },
+  // Adding a resident option only makes it available; it never selects it on the current draft.
+  onDiningTypeConfirm() {
+    if (this.identityFence()) return;
+    const result = diningTypeOptions.addCustom(store.get().settings, this.data.diningTypeInput);
+    if (!result.ok) { this.setData({diningTypeError: this.diningTypeErrorText(result.reason)}); return; }
+    if (!this.saveDiningTypes({customDiningTypes: result.custom})) return;
+    this.setData({diningTypeInputOpen: false, diningTypeInput: ''});
+  },
+  // Hiding and removing only change future options. The current draft, every stored memory and
+  // restaurantCategory.TYPES keep their values; a hidden built-in can be restored later.
+  onHideDiningType(e) {
+    if (this.identityFence()) return;
+    this.saveDiningTypes({hiddenDiningTypes: diningTypeOptions.hideBuiltin(store.get().settings, e.currentTarget.dataset.value)});
+  },
+  onRestoreDiningType(e) {
+    if (this.identityFence()) return;
+    this.saveDiningTypes({hiddenDiningTypes: diningTypeOptions.restoreBuiltin(store.get().settings, e.currentTarget.dataset.value)});
+  },
+  onRemoveDiningType(e) {
+    if (this.identityFence()) return;
+    this.saveDiningTypes({customDiningTypes: diningTypeOptions.removeCustom(store.get().settings, e.currentTarget.dataset.value)});
   },
   onImportType(e) {
     if (this.identityFence()) return; 
