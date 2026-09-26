@@ -113,6 +113,12 @@ function localBytes(path) {
     return stat && Number.isFinite(stat.size) && stat.size > 0 ? stat.size : null;
   } catch (e) { return null; }
 }
+// Safe per-photo classification. The user-facing message stays a single sentence; these codes
+// only exist so a failure can be attributed to a layer without leaking a path or a secret.
+const PHOTO_PREPARE_CODES = ['PHOTO_TOO_LARGE', 'COMPRESS_FAILED', 'IMAGE_UNREADABLE', 'IMAGE_FORMAT_UNSUPPORTED', 'INVALID_PHOTO'];
+function safePhotoCode(value, fallback) {
+  return PHOTO_PREPARE_CODES.includes(value) ? value : fallback;
+}
 async function shrinkForUpload(path, token) {
   identity.assertLease(token);
   const original = localBytes(path);
@@ -124,7 +130,9 @@ async function shrinkForUpload(path, token) {
   const height = info && info.height > 0 ? info.height : 0;
   // With no readable frame there is nothing to scale towards, so a single re-encode is
   // the only attempt worth making.
-  const rungs = width && height ? UPLOAD_EDGE_LADDER : [null];
+  const readable = Boolean(width && height);
+  const rungs = readable ? UPLOAD_EDGE_LADDER : [null];
+  let produced = false;
   for (const edge of rungs) {
     identity.assertLease(token);
     const options = {src: path, quality: 80};
@@ -138,10 +146,26 @@ async function shrinkForUpload(path, token) {
     catch (e) { identity.assertLease(token); continue; }
     identity.assertLease(token);
     if (!shrunk || !data.isSafeImage(shrunk.tempFilePath)) continue;
+    produced = true;
     const bytes = localBytes(shrunk.tempFilePath);
     if (bytes !== null && bytes <= MAX_CLOUD_PHOTO_BYTES) return shrunk.tempFilePath;
   }
-  throw error('UPLOAD_FAILED', 'This photo is too large to upload. Choose a smaller photo and try again.');
+  // Three distinct prepare failures, one user-facing sentence each. Never fall back to the
+  // original: that is what let an oversized upload reach the call and time out.
+  if (!readable) throw error('IMAGE_UNREADABLE', i18n.t('This photo could not be prepared for upload. Reselect it and try again.'));
+  if (!produced) throw error('COMPRESS_FAILED', i18n.t('This photo could not be prepared for upload. Reselect it and try again.'));
+  throw error('PHOTO_TOO_LARGE', i18n.t('This photo is too large to upload. Choose a smaller photo and try again.'));
+}
+// One unprocessable photo must never stop the ones after it. Every photo is attempted, each
+// success is cached in attempt.uploads and persisted, and the batch fails ONCE at the end
+// naming the positions that failed. This is not a partial submission: mealRecords.add/update
+// only runs when the whole batch is ready, so the user can remove or reselect the named photo
+// and retry without re-uploading anything that already succeeded.
+function photoBatchFailure(failures) {
+  const indexes = failures.map(f => f.index).join(', ');
+  const e = error('UPLOAD_FAILED', i18n.t('Photo {indexes} could not be processed. Reselect or remove it and try again.', {indexes}));
+  e.failures = failures;
+  return e;
 }
 async function uploadPhotos(paths, attempt, persistAttempt, token) {
   identity.assertBusinessCloudAllowed();
@@ -149,15 +173,23 @@ async function uploadPhotos(paths, attempt, persistAttempt, token) {
   if(attempt.actorUserId!==token.userId)throw error('OUTBOX_IDENTITY_MISMATCH','原操作身份不匹配，已阻止发送。');
   initCloud();
   const result = [];
+  const failures = [];
   for (let index = 0; index < paths.length; index++) {
     identity.assertLease(token);
     const path = paths[index];
+    const position = index + 1;
     if (data.isCloudImage(path) || /^\/images\//.test(path) || /^https:\/\//.test(path)) { result.push(path); continue; }
     if (attempt.uploads[path]) { result.push(attempt.uploads[path]); continue; }
-    if (!data.isSafeImage(path)) throw error('INVALID_PHOTO', i18n.t('This photo is no longer available. Please select it again.'));
+    if (!data.isSafeImage(path)) { failures.push({index:position,stage:'prepare',code:'INVALID_PHOTO',uploadInvoked:false}); continue; }
     // Deliberately outside the upload try: a stale lease must surface as STALE_IDENTITY
-    // rather than being reported as an upload failure.
-    const filePath = await shrinkForUpload(path, token);
+    // rather than being reported as a photo failure, and it must still abort the batch.
+    let filePath;
+    try { filePath = await shrinkForUpload(path, token); }
+    catch (e) {
+      if (e && e.code === 'STALE_IDENTITY') throw e;
+      failures.push({index:position,stage:'prepare',code:safePhotoCode(e && e.code,'PHOTO_PREPARE_FAILED'),uploadInvoked:false});
+      continue;
+    }
     try {
       const uploaded = await Promise.race([
         wx.cloud.uploadFile({ cloudPath: 'dining/' + token.userId + '/' + attempt.id + '/' + Object.keys(attempt.uploads).length + '.jpg', filePath: filePath }),
@@ -169,10 +201,10 @@ async function uploadPhotos(paths, attempt, persistAttempt, token) {
       try { persistAttempt(); } catch(e) {}
       result.push(uploaded.fileID);
     } catch (e) {
-      if (String(e.message).includes('TIMEOUT')) throw error('UPLOAD_FAILED', i18n.t('Photo upload timed out. Try smaller photos.'), e);
-      throw error('UPLOAD_FAILED', i18n.t('Photo upload failed. No incomplete meal was submitted. Your draft is kept; please retry.'), e);
+      failures.push({index:position,stage:'upload',code:String(e.message).includes('TIMEOUT')?'UPLOAD_TIMEOUT':'UPLOAD_REJECTED',uploadInvoked:true});
     }
   }
+  if (failures.length) throw photoBatchFailure(failures);
   return result;
 }
 async function addRecord(attempt, persistAttempt) {

@@ -1,8 +1,8 @@
 {
   "miniprogram/pages/add/index.wxml": {
-    "baseSha256": "d2ca2d2965db3a936a700213775fcc54cd9d68387623f67aa18422d2a399f41c",
-    "sha256": "d2ca2d2965db3a936a700213775fcc54cd9d68387623f67aa18422d2a399f41c",
-    "reason": "Reviewed coordinated Add lifecycle markup: inline identity status, stable ambient image, and upload/save progress are backed by the existing Add JS/WXSS and behavior checks; no template change in this repair.",
+    "baseSha256": "047a97dd4304144229eb69be1ed38c79343b42809da7f4c00a1afcc8e5fe9c00",
+    "sha256": "047a97dd4304144229eb69be1ed38c79343b42809da7f4c00a1afcc8e5fe9c00",
+    "reason": "Reviewed coordinated Add lifecycle markup: inline identity status, stable ambient image, and upload/save progress are backed by the existing Add JS/WXSS and behavior checks. 2026-09-26 round 2 (user-authorized): the same markup now also carries the identity fence on every business input/textarea/picker/switch, so the verification window cannot accept an edit the unlock rehydrate would discard; no layout, style or copy change.",
     "review": "docs/reviews/add-page-lifecycle-20260922.md"
   },
   "miniprogram/pages/add/index.wxss": {

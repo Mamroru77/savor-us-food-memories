@@ -2629,5 +2629,20 @@ module.exports = [
     "key": "sba27c76d65",
     "en": "Clear draft",
     "zh": "清除草稿"
+  },
+  {
+    "key": "se9037ebea6",
+    "en": "Photo {indexes} could not be processed. Reselect or remove it and try again.",
+    "zh": "第 {indexes} 张照片无法处理，请重新选择或移除后重试。"
+  },
+  {
+    "key": "s8bec60edff",
+    "en": "Some photos could not be prepared. Reselect them and try again.",
+    "zh": "部分照片无法处理，请重新选择后重试。"
+  },
+  {
+    "key": "s9442ed7b63",
+    "en": "This photo could not be prepared for upload. Reselect it and try again.",
+    "zh": "这张照片无法处理，请重新选择后重试。"
   }
 ];

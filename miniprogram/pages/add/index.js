@@ -101,8 +101,12 @@ Page({
     this.setData({ headerTop: metrics.getMetrics(true).headerTop });
     this.setData({today:localDate.today(),cloudPlaceSearchEnabled:importPolicy.enabled()});
     this.active = true;
-    if (!this.saveLock) this.setData({ draft: store.loadDraft() });
     const state = store.get();
+    // Never re-read the draft from a locked storage boundary: that read cannot see this
+    // owner's partition, so it would fabricate a fresh draft and overwrite the projection
+    // the user is looking at. Keep it; syncContext rehydrates from the verified partition
+    // the moment verification lands.
+    if (!this.saveLock && !(state.identity && state.identity.locked)) this.setData({ draft: store.loadDraft() });
     this._tabAppearance = {
       dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion,
       labels: ['Home', 'Map', 'Add', 'Us', 'Me'].map(label => i18n.t(label)), addLabel: i18n.t('Add a memory'),
@@ -118,15 +122,37 @@ Page({
 
   onPageScroll(event) { this._nativeScrollTop = event.scrollTop; },
 
+  // The verification window is a short fence, not a blank page: the owner of this draft is
+  // not established yet, so no business mutation may be accepted. Accepting one would show
+  // the user a value the unlock rehydrate then discards. The form stays visible and readable;
+  // every mutation entry point becomes inert, and the business inputs are disabled in WXML.
+  identityFence() { return this.data.identityReady === false; },
+
+  // The 万能导入 editor lives only in page memory, so a confirmed owner change must clear it here
+  // instead of relying on a storage re-read. Never called for a transient locked window.
+  clearImportEditor() {
+    this.resetImportLookup();
+    this.setData({importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',importSearching:false,importSearchDone:false,importSourceIndex:0});
+  },
+
   syncContext(state) {
     const wasReady = this.data.identityReady;
-    i18n.syncPage(this, state, 2);
-    // Verification already redacted the old projection. Rehydrate only after
-    // unlock; a same-generation verified notification is not a new account reset.
+    // Rehydrate BEFORE the view is told the identity is ready. Verification already kept the
+    // old projection alive, so a verified owner must never be paired with the previous owner's
+    // draft — not even inside one synchronous batch. A same-generation verified notification is
+    // not a new account reset; a locked session never rehydrates.
     if (wasReady === false && state.identity && !state.identity.locked && !this.saveLock) {
       this.setData({draft:store.loadDraft()});
     }
+    i18n.syncPage(this, state, 2);
     this.setData({businessFrozen:identity.isDiagnosisActive(),identityLabels:identityCopy()});
+    // A CONFIRMED owner change discards the previous owner's in-memory editor state. The draft is
+    // re-read from the new partition above; the 万能导入 editor has no durable copy of its own, so
+    // it is cleared here. A transient locked/verifying window is not a confirmed change: it keeps
+    // whatever the user was looking at and clears nothing.
+    const owner = state.identity && state.identity.userId;
+    if (owner && this._verifiedOwner && this._verifiedOwner !== owner) this.clearImportEditor();
+    if (owner) this._verifiedOwner = owner;
     const draft = this.data.draft;
     const knownPlace = state.memories.find(function (memory) {
       return memory.restaurant.toLowerCase() === draft.restaurant.trim().toLowerCase();
@@ -169,6 +195,7 @@ Page({
   },
 
   changeDraft(key, value, options) {
+    if (this.identityFence()) return;
     if (this.saveLock) return;
     if(this.data.draft.editOperationId) {store.notify(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.')); return;}
     if (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) {
@@ -217,6 +244,7 @@ Page({
     this.changeDraft('photos', draft.photos.slice(0, -1));
   },
   pickPhotos(count, replace) {
+    if (this.identityFence()) return;
     let token;
     try { token=identity.lease(); } catch (e) { this.setData({ uploading:false, error: e.message }); return; }
     const that = this;
@@ -265,6 +293,8 @@ Page({
       }
       that.setData({ uploading: false, uploadProgress: 100, draft: newDraft, fieldErrors:{},errorField:'',error:'' });
       that.syncContext(store.get());
+      // The chooser can drop an unreadable original; never let a partial selection look complete.
+      if (paths.failures && paths.failures.length) store.notify(i18n.t('Some photos could not be prepared. Reselect them and try again.'));
       setTimeout(()=>{ if(!that.data.uploading) that.setData({uploadProgress:0, uploadTotal:0, uploadCurrent:0}); }, 800);
     }).catch(function (error) {
       if (serial !== that.nativePhotoSerial) return; // a newer request owns the upload UI now
@@ -333,6 +363,7 @@ Page({
 
   // ---------- save ----------
   onSave() {
+    if (this.identityFence()) return;
     if(identity.isDiagnosisActive()){this.setData({error:identityCopy().frozen,errorContext:'save',errorField:''});return;}
     let token;try{token=identity.lease();}catch(e){this.setData({error:e.message,errorContext:'save',errorField:''});return;}
     if (this.saveLock || this.data.uploading) return;
@@ -414,6 +445,7 @@ Page({
   },
 
   onChooseRestaurantLocation() {
+    if (this.identityFence()) return;
     let token=identity.lease();
     if (this.saveLock || this.locating) return;
     if (this.data.draft.cloudAttempt && this.data.draft.cloudAttempt.submitted) {
@@ -440,17 +472,19 @@ Page({
     return this.saveLock || this.data.uploading || this.locating || d.editingId || d.editOperationId || d.cloudAttempt;
   },
   onUniversalImport() {
+    if (this.identityFence()) return;
     if (this.importBlocked()) { store.notify(i18n.t('Finish the current save or edit before importing another restaurant.')); return; }
     this.setData({ importOpen: !this.data.importOpen, error: '', errorContext:'import',errorField:'',fieldErrors:{} });
   },
-  onImportCancel() { this.resetImportLookup();this.setData({ importOpen: false, importText: '', importCandidate: null, error: '' }); },
-  onImportText(e) { this.resetImportLookup();this.setData({ importText: e.detail.value, importCandidate: null, error: '' }); },
-  onImportSource(e) { this.resetImportLookup();this.setData({ importSourceIndex: Number(e.detail.value), importCandidate: null, error: '' }); },
+  onImportCancel() { if (this.identityFence()) return; this.resetImportLookup();this.setData({ importOpen: false, importText: '', importCandidate: null, error: '' }); },
+  onImportText(e) { if (this.identityFence()) return; this.resetImportLookup();this.setData({ importText: e.detail.value, importCandidate: null, error: '' }); },
+  onImportSource(e) { if (this.identityFence()) return; this.resetImportLookup();this.setData({ importSourceIndex: Number(e.detail.value), importCandidate: null, error: '' }); },
   importError(error) {
     const messages = { TEXT_REQUIRED: 'Paste some share text first.', TEXT_TOO_LONG: 'Share text is too long (maximum 6000 characters).', ONE_SHOP_ONLY: 'Import one shop at a time.', SOURCE_REQUIRED: 'Check the selected source platform.', SOURCE_MISMATCH: 'Check the selected source platform.', NAME_REQUIRED: 'Enter a restaurant name up to 70 characters.', NAME_TOO_LONG: 'Enter a restaurant name up to 70 characters.', DRAFT_LOCKED: 'Finish the current save or edit before importing another restaurant.' };
     this.setData({ errorContext:'import', error: i18n.t(messages[error.code] || 'Could not persist the draft. Existing inputs are kept.') });
   },
   onImportParse() {
+    if (this.identityFence()) return; 
     if (this.importBlocked()) return;
     this.resetImportLookup();
     try {
@@ -482,12 +516,14 @@ Page({
     this.setData({importCandidate:candidate,importTypes:categories.TYPES.map(name=>({name,label:i18n.t(name),selected:(candidate.diningTypes||[]).includes(name)}))});
   },
   onImportName(e) {
+    if (this.identityFence()) return; 
     if(!this.data.importCandidate||e.detail.value===this.data.importCandidate.name)return;
     this.resetImportLookup();
     this.updateImportCandidate(Object.assign({},this.data.importCandidate,{name:e.detail.value,confirmedLocation:null,address:'',areaText:'',platformRating:null,platformAveragePriceCny:null,sourceUrl:'',cuisine:'',diningTypes:[],sourceCategory:'',categorySource:'',categorySuggestion:categories.suggestion(e.detail.value)}));
   },
-  onImportCity(e) {this.resetImportLookup();this.setData({importCity:e.detail.value});},
+  onImportCity(e) { if (this.identityFence()) return; this.resetImportLookup();this.setData({importCity:e.detail.value});},
   onImportCuisine(e) {
+    if (this.identityFence()) return; 
     if(this.data.importCandidate)this.updateImportCandidate(Object.assign({},this.data.importCandidate,{cuisine:e.detail.value,categorySource:'user-confirmed'}));
   },
   onDraftDiningType(e) {
@@ -496,15 +532,18 @@ Page({
     this.changeDraft('diningTypes',list);
   },
   onImportType(e) {
+    if (this.identityFence()) return; 
     const c=this.data.importCandidate,t=e.currentTarget.dataset.value;if(!c||!categories.TYPES.includes(t))return;
     const list=(c.diningTypes||[]).slice(),index=list.indexOf(t);if(index>=0)list.splice(index,1);else if(list.length<6)list.push(t);
     this.updateImportCandidate(Object.assign({},c,{diningTypes:list,categorySource:'user-confirmed'}));
   },
   onAcceptCategorySuggestion() {
+    if (this.identityFence()) return; 
     const c=this.data.importCandidate;if(!c)return;
     this.updateImportCandidate(Object.assign({},c,{cuisine:c.cuisine||c.categorySuggestion.cuisine,diningTypes:Array.from(new Set((c.diningTypes||[]).concat(c.categorySuggestion.diningTypes||[]))).slice(0,6),categorySource:'user-confirmed'}));
   },
   onCloudSearchToggle(e) {
+    if (this.identityFence()) return; 
     const enable=e.detail.value===true;
     this.searchPreferenceSerial=(this.searchPreferenceSerial||0)+1;
     const serial=this.searchPreferenceSerial;
@@ -520,6 +559,7 @@ Page({
     i18n.modal({title:'Enable Tencent branch location search?',content:'This only searches Tencent Maps for a branch location, not the merchant share page or its images. Requests use Tencent and CloudBase quotas only when you tap Search.',success:r=>{if(r.confirm)apply();else if(!this.disposed&&serial===this.searchPreferenceSerial)this.setData({cloudPlaceSearchEnabled:importPolicy.enabled()});}});
   },
   async onImportSearch() {
+    if (this.identityFence()) return; 
     if (!require('../../utils/importPolicy').cloudPlaceSearchEnabled) return this.onImportNativePick();
     if(this.importBlocked()||this.data.importSearching||!this.data.importCandidate)return;
     const c=this.data.importCandidate,id=this.lookupSerial=(this.lookupSerial||0)+1;
@@ -532,11 +572,13 @@ Page({
     finally{if(!this.disposed&&id===this.lookupSerial)this.setData({importSearching:false});}
   },
   onImportMatch(e) {
+    if (this.identityFence()) return; 
     const p=this.data.importMatches[Number(e.currentTarget.dataset.index)];if(!p)return;
     const pick=locations.fromSearchPoi(p);if(!pick)return;
     this.confirmImportLocation(pick,p.categoryText);
   },
   async onImportNativePick() {
+    if (this.identityFence()) return; 
     if(this.importBlocked()||!this.data.importCandidate)return;
     let token = identity.lease();
     const c = this.data.importCandidate;
@@ -582,6 +624,7 @@ Page({
     }});
   },
   onImportApply() {
+    if (this.identityFence()) return;
     if (this.importBlocked()) { this.importError({code:'DRAFT_LOCKED'}); return; }
     const original = this.data.draft, candidate = this.data.importCandidate;
     let next;
@@ -613,6 +656,7 @@ Page({
   // discarded, and the draft is re-read from storage so a failed write can never show a
   // cleared form over stale bytes.
   onClearDraft() {
+    if (this.identityFence()) return;
     if (this.data.clearingDraft) return;
     if (this.saveLock || this.data.uploading || this.locating) return;
     if (this.data.draft.editOperationId) { store.notify(i18n.t('Changes are kept on this device. Open Sync status in Me to retry or resolve conflicts.')); return; }

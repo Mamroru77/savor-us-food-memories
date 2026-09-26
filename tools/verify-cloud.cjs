@@ -434,7 +434,10 @@ function nativeTabs(initial=0){
     const m = sample(); m.noPhoto = false; m.photo = '/user/savor-photos/p1.jpg'; m.extraPhotos = ['/user/savor-photos/p2.jpg'];
     const d = draft(), beforeRows = rows.size, beforeUploads = uploadCount;
     uploadFailure = uploadCount + 2;
-    await assert.rejects(store.createCloudMemory(m, d), /Photo upload failed/);
+    // The batch fails once, naming the photo that failed and the stage it failed at.
+    await assert.rejects(store.createCloudMemory(m, d), e => e.code === 'UPLOAD_FAILED'
+      && Array.isArray(e.failures) && e.failures.length === 1
+      && e.failures[0].index === 2 && e.failures[0].stage === 'upload' && e.failures[0].uploadInvoked === true);
     assert.equal(rows.size, beforeRows); assert.equal(Object.keys(store.loadDraft().cloudAttempt.uploads).length, 1);
     uploadFailure = 0; await store.createCloudMemory(m, store.loadDraft()); assert.equal(uploadCount - beforeUploads, 3);
   });

@@ -45,7 +45,17 @@ function syncPage(page, state, selected, options) {
       // block unmounts, the editor detaches and the pending native result is destroyed.
       // The caller decides — this module never inspects the native flow.
       if(!(options&&options.preserveSheet===true))Object.assign(patch,{sheetShow:false,sheetType:'',sheetMemoryId:'',sheetFilter:''});
-      if(selected===2){Object.assign(patch,{draft:require('./store').loadDraft(),knownPlace:null,importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',error:'',tag:'',saving:false,uploading:false});page.lookupSerial=(page.lookupSerial||0)+1;page.saveLock=false;}
+      if(selected===2){
+        // A locked session cannot read this owner's partition, so store.loadDraft() would
+        // fabricate a freshDraft() and overwrite the projection the user is looking at.
+        // "Cannot read" is not "there is nothing": a transient locked window must never discard
+        // business input (the draft, the 万能导入 editor, the pending tag). A CONFIRMED owner
+        // change clears them from the page instead, where the new owner is actually known.
+        const add={knownPlace:null,error:'',saving:false,uploading:false};
+        if(!session.locked)Object.assign(add,{draft:require('./store').loadDraft(),importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',tag:''});
+        Object.assign(patch,add);
+        page.lookupSerial=(page.lookupSerial||0)+1;page.saveLock=false;
+      }
       if(selected===1){page.markerGeneration=(page.markerGeneration||0)+1;if(page.pinRenderer)page.pinRenderer.dispose();page.pinRenderer=null;Object.assign(patch,{mapDrawers:[],markers:[],clusterOpen:false,stackPositionsReady:false});}
     }
     page.setData(patch,()=>{if(changed&&selected===1&&!session.locked&&page.onReady){page.markerCanvas=null;page.onReady();}});

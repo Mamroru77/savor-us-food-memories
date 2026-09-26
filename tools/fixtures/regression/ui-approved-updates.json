@@ -20,8 +20,8 @@
     "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
   },
   "miniprogram/pages/add/index.wxml": {
-    "sha256": "d2ca2d2965db3a936a700213775fcc54cd9d68387623f67aa18422d2a399f41c",
-    "reason": "2026-09-16 user-authorized screenshot repair: bounded wider Toast, unambiguous rating label, one inline save error; no Map/Tab geometry redesign. Native phone acceptance pending. 2026-09-25 user-authorized: Add page quick-clear draft button in the heading; Map bookmark now shares the card drawer transition. 2026-09-25 user-authorized: the quick-clear button now renders the Morphicons eraser -> check pair."
+    "sha256": "047a97dd4304144229eb69be1ed38c79343b42809da7f4c00a1afcc8e5fe9c00",
+    "reason": "2026-09-16 user-authorized screenshot repair: bounded wider Toast, unambiguous rating label, one inline save error; no Map/Tab geometry redesign. Native phone acceptance pending. 2026-09-25 user-authorized: Add page quick-clear draft button in the heading; Map bookmark now shares the card drawer transition. 2026-09-25 user-authorized: the quick-clear button now renders the Morphicons eraser -> check pair. 2026-09-26 user-authorized round 2: every business input/textarea/picker/switch now also carries the identity fence (!identityReady) so the verification window cannot accept an edit it would discard."
   },
   "miniprogram/pages/add/index.wxss": {
     "sha256": "1b59837c3cf72ee34a3cc7dfaa49239d9a5e7ff9c9cebd6cdf3b06735bc05dde",

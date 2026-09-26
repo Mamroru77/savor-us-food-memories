@@ -86,7 +86,9 @@ test('Profile empty-name failure is visible and scroll-targeted',()=>{
 });
 test('Save uses loader for both busy branches, idle NotebookPen, and disabled semantics',()=>{
  assert(addWxml.includes('wx:if="{{uploading || saving}}" name="loader-circle"'));assert(addWxml.includes('wx:else name="notebook-pen"'));assert(!addWxml.includes('wx:elif="{{saving}}"'));assert(addWxml.includes('aria-disabled="{{businessFrozen || uploading || saving}}"'));assert(appCss.includes('.quiet .spin'));
- for(const tag of tags(addWxml))if(/^<(input|textarea|picker|switch)\b/.test(tag))assert(tag.includes('disabled="{{saving || uploading}}"'));
+ // Every business input must also honour the identity fence: while the owner is unverified a
+ // typed value could never be persisted, so the field must not accept one in the first place.
+ for(const tag of tags(addWxml))if(/^<(input|textarea|picker|switch)\b/.test(tag))assert(tag.includes('disabled="{{saving || uploading || !identityReady}}"'),'business input without the identity fence: '+tag);
 });
 test('Message-only Toast has no misleading success icon and store contract stays message-only',()=>{
  assert(!read('components/toast/index.wxml').includes('name="check"'));assert(read('components/toast/index.wxml').includes('toast.message'));assert(read('utils/store.js').includes('4200'));

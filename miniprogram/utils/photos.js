@@ -17,6 +17,15 @@ function logFailure(error, stage) {
   console.error('[avatar]', e.stage, e.code);
   return e;
 }
+// Safe attribution for a photo that could not be prepared. failure() already guarantees a
+// path-free stage/code pair; anything unexpected collapses to a generic pair rather than
+// letting a native message through.
+const SAFE_FAILURE_STAGES = ['choose', 'source', 'compress', 'decode', 'preview', 'me-preview', 'mkdir', 'copy', 'read', 'write', 'stat'];
+function safeFailure(error) {
+  const stage = SAFE_FAILURE_STAGES.includes(error && error.stage) ? error.stage : 'source';
+  const code = error && typeof error.code === 'string' && /^[A-Z][A-Z0-9_]{1,60}$/.test(error.code) ? error.code : 'SOURCE_FAILED';
+  return { stage, code };
+}
 function isCancelled(error) {
   return !!error && (error.code === 'PHOTO_CANCELLED'
     || /^choose(?:Media|Image):fail cancel(?:\b|$)/i.test(error.errMsg || ''));
@@ -98,6 +107,7 @@ async function choosePhotos(count, opts, onProgress) {
     token = selection.token;
     if (!selection.files.length) throw failure('choose', {code:'NO_PHOTO_SELECTED'});
     const results = [];
+    const failures = [];
     let lastError;
     for (let i = 0; i < selection.files.length; i++) {
       assertOwner(token);
@@ -107,10 +117,16 @@ async function choosePhotos(count, opts, onProgress) {
       catch (e) {
         if (e.category === 'identity' || e.category === 'program') throw e;
         lastError = logFailure(e);
+        failures.push(Object.assign({index:i+1}, safeFailure(lastError)));
       }
     }
     assertOwner(token);
     if (!results.length) throw lastError;
+    // A selection that silently loses a photo is worse than one that reports it: the caller can
+    // compare `selected` against the returned length and tell the user which position failed.
+    // Attached to the array so the existing array-shaped callers (avatar, space) are unchanged.
+    results.failures = failures;
+    results.selected = selection.files.length;
     return results;
   } catch (e) {
     if (isCancelled(e)) throw e;

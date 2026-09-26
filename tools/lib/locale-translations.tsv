@@ -524,3 +524,6 @@ This edit cannot be kept as a new memory.	这条修改无法另存为新回忆�
 New memory	新回忆
 This photo is too large to upload. Choose a smaller photo and try again.	照片过大，无法上传。请选择较小的照片后重试。
 Clear draft	清除草稿
+Photo {indexes} could not be processed. Reselect or remove it and try again.	第 {indexes} 张照片无法处理，请重新选择或移除后重试。
+Some photos could not be prepared. Reselect them and try again.	部分照片无法处理，请重新选择后重试。
+This photo could not be prepared for upload. Reselect it and try again.	这张照片无法处理，请重新选择后重试。
