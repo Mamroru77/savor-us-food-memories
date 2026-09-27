@@ -113,13 +113,21 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     // The chooser arguments are literals built inside the VM realm, so normalize before comparing.
     assert.deepEqual(JSON.parse(JSON.stringify(r.mediaCalls.at(-1))),{count:1,mediaType:['image'],sourceType:['album','camera'],sizeType:['original']});
   });
-  await test('custom avatar keeps the original pixels instead of a 132px derivative',async()=>{
+  await test('custom avatar keeps real pixels (bounded at 1024) instead of a 132px derivative',async()=>{
     const r=runtime({avatarOriginal:true});await r.ready();const owner=r.identity.lease();
     const asset=await r.avatar.prepare(await r.avatar.chooseLocal(owner),owner,'album');
-    assert.deepEqual({width:asset.width,height:asset.height},{width:1600,height:1200});
+    // The intent of this test is unchanged: the chooseAvatar button's 132x132 derivative must
+    // never become the avatar. What changed is that the durable copy is now bounded, so a
+    // camera original can no longer be persisted at full size.
+    assert.deepEqual({width:asset.width,height:asset.height},{width:1024,height:768});
+    assert.ok(Math.max(asset.width,asset.height)<=1024,'the durable avatar must be bounded at 1024');
+    assert.ok(Math.max(asset.width,asset.height)>132,'the 132px derivative must not be used');
     assert.deepEqual({formatVersion:asset.formatVersion,source:asset.source,syncState:asset.syncState,remoteRef:asset.remoteRef},{formatVersion:1,source:'album',syncState:'local',remoteRef:null});
-    // Re-encoding is allowed; downscaling is not. persistPhoto must not request a smaller frame.
-    for(const call of r.compressCalls)assert.equal(call.compressedWidth,undefined);
+    // Exactly one resize, read from the ORIGINAL frame, and never an upscale.
+    const resized=r.compressCalls.filter(call=>call.compressedWidth!==undefined);
+    assert.equal(resized.length,1,'an oversized avatar must be resized exactly once');
+    assert.equal(resized[0].src,r.original,'the resize must read the original file, not the derivative');
+    assert.ok(resized[0].compressedWidth<=1024&&resized[0].compressedHeight<=1024,'the requested frame must be bounded');
     assert(fs.readFileSync(asset.localPath).equals(jpg));
   });
   await test('custom avatar cancellation is silent and creates no asset',async()=>{
@@ -146,7 +154,7 @@ function runtime(options={},disk=new Map(),base=fs.mkdtempSync(path.join(root,'c
     assert.equal(r.store.get().profile.avatarAsset,null);
     profile.onProfileSave();
     assert.equal(r.store.get().profile.avatar,avatar);
-    assert.deepEqual({source:r.store.get().profile.avatarAsset.source,width:r.store.get().profile.avatarAsset.width,height:r.store.get().profile.avatarAsset.height},{source:'album',width:1600,height:1200});
+    assert.deepEqual({source:r.store.get().profile.avatarAsset.source,width:r.store.get().profile.avatarAsset.width,height:r.store.get().profile.avatarAsset.height},{source:'album',width:1024,height:768});
     assert.equal(me.data.profile.avatar,avatar);assert.equal(me.data.sheetShow,false);
     dispose();
   });

@@ -5,7 +5,7 @@ function harness({failFirst=false,holdExport=false,failExportFirst=false,failDec
  const wx={getImageInfo(o){counts.info++;if(failFirst&&counts.info===1)o.fail();else o.success({path:'synthetic-photo'});},
   canvasToTempFilePath(o){counts.export++;exports.push(o);if(failExportFirst&&counts.export===1)o.fail();else if(!holdExport)o.success({tempFilePath:'synthetic-composite-'+counts.export});},
   getFileSystemManager:()=>({unlinkSync:path=>removed.push(path)})};
- vm.runInNewContext(fs.readFileSync('miniprogram/utils/mapMarkers.js','utf8'),{module,require:p=>{assert.equal(p==='./data'||p==='./mapTrace',true,'unexpected require '+p);return p==='./data'?{isSafeImage:()=>true,isCloudImage:()=>false}:require('../miniprogram/utils/mapTrace');},wx,setTimeout,clearTimeout});
+ vm.runInNewContext(fs.readFileSync('miniprogram/utils/mapMarkers.js','utf8'),{module,require:p=>{assert.equal(p==='./data'||p==='./mapTrace'||p==='./photoTrace',true,'unexpected require '+p);return p==='./data'?{isSafeImage:()=>true,isCloudImage:()=>false}:p==='./photoTrace'?require('../miniprogram/utils/photoTrace'):require('../miniprogram/utils/mapTrace');},wx,setTimeout,clearTimeout});
  const ctx=new Proxy({},{get:()=>()=>{}}),canvas={getContext:()=>ctx,createImage(){const img={width:200,height:200};Object.defineProperty(img,'src',{set(){counts.decode++;queueMicrotask(()=>{if(failDecodeFirst&&counts.decode===1)img.onerror();else img.onload();});}});return img;}};
  return {api:module.exports,r:module.exports.createRenderer(canvas),removed,exports,counts};
 }

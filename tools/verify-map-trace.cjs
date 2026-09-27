@@ -112,6 +112,8 @@ function loadRenderer(options) {
       if (id === './data') return { isSafeImage: () => true, isCloudImage: v => /^cloud:\/\//.test(String(v)) };
       if (id === './cloudRecords') return cloudRecords;
       if (id === './mapTrace') return trace;
+      // mapMarkers re-exports the Phase A diagnostics; photoTrace requires nothing itself.
+      if (id === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
       throw new Error('unexpected require ' + id);
     },
     wx, console, Promise, JSON, Math, Number, Boolean, Object, Array, RegExp,

@@ -332,8 +332,14 @@ Component({
         this.reset();
         this.triggerEvent('close');
       } catch (error) {
-        const reported = photos.logFailure(error, 'profile-save');
-        this.setData({ profileError: reported.category === 'identity' ? identityCopy().verify : i18n.t('Could not save. Free some storage and try again.') });
+        const reported = photos.profileSaveFailure(error);
+        console.error('[avatar]', reported.stage, reported.code);
+        // Only a real storage/quota failure may claim the storage wording; anything we could
+        // not classify gets a plain retry message rather than a false accusation about space.
+        const message = reported.category === 'identity' ? identityCopy().verify
+          : reported.category === 'storage' ? 'Could not save. Free some storage and try again.'
+          : 'Could not save. Please try again.';
+        this.setData({ profileError: i18n.t(message) });
       }
     },
   },

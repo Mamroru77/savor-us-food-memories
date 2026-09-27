@@ -1,5 +1,7 @@
 const identity = require('./identity');
 const photos = require('./photos');
+// Dev-only stage diagnostics; every call is a no-op while the trace flag is off.
+const trace = require('./photoTrace');
 
 const MIME = { jpeg: 'image/jpeg', jpg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp' };
 
@@ -20,9 +22,76 @@ async function inspect(localPath, owner) {
   return { mime, width: info.width, height: info.height };
 }
 
+// A durable avatar is a profile asset, not an archive of the user's camera roll. persistPhoto()
+// deliberately never downscales (that is a restaurant-photo invariant), so a 4000x3000 original
+// used to be copied into savor-photos at full size. Avatar-only rule: bound the long edge at
+// 1024 BEFORE the durable copy. Never upscales, never overwrites the user's original, never
+// uploads the original, and the existing 256px cloud derivative is unchanged.
+const AVATAR_MAX_EDGE = 1024;
+
+async function downsampleForAvatar(source, owner) {
+  identity.assertLease(owner);
+  const startedAt = Date.now();
+  const job = trace.begin('avatar');
+  trace.record(job, { stage: 'persist', originalBytes: trace.fileBytes(source), originalFormat: trace.extOf(source) });
+  const info = await new Promise((resolve, reject) => wx.getImageInfo({
+    src: source,
+    success: resolve,
+    fail: () => reject(imageFailure('IMAGE_UNREADABLE')),
+  })).catch(() => {
+    trace.record(job, { stage: 'decode', category: 'image', code: 'IMAGE_UNREADABLE' });
+    throw imageFailure('IMAGE_UNREADABLE');
+  });
+  identity.assertLease(owner);
+  const width = info && info.width > 0 ? info.width : 0;
+  const height = info && info.height > 0 ? info.height : 0;
+  if (!width || !height) throw imageFailure('IMAGE_UNREADABLE');
+  const longest = Math.max(width, height);
+  // Already small enough: no resize is requested at all, so nothing can be upscaled.
+  if (longest <= AVATAR_MAX_EDGE) {
+    trace.record(job, { stage: 'downsample', originalWidth: width, originalHeight: height,
+      resizeRequested: false, upscaled: false, compressMs: Date.now() - startedAt });
+    return { path: source, width, height, downsampled: false };
+  }
+  const scale = AVATAR_MAX_EDGE / longest;
+  const targetWidth = Math.max(1, Math.round(width * scale));
+  const targetHeight = Math.max(1, Math.round(height * scale));
+  let output;
+  try {
+    output = await new Promise((resolve, reject) => wx.compressImage({
+      src: source,
+      quality: 80,
+      compressedWidth: targetWidth,
+      compressedHeight: targetHeight,
+      success: resolve,
+      fail: () => reject(failure('compress', 'AVATAR_DOWNSAMPLE_FAILED', 'image')),
+    }));
+  } catch (error) {
+    trace.record(job, { stage: 'compress', category: 'image', code: 'AVATAR_DOWNSAMPLE_FAILED',
+      originalWidth: width, originalHeight: height, resizeRequested: true, compressInvoked: true });
+    // Never silently keep the giant original as the avatar.
+    throw failure('compress', 'AVATAR_DOWNSAMPLE_FAILED', 'image');
+  }
+  identity.assertLease(owner);
+  if (!output || typeof output.tempFilePath !== 'string' || !output.tempFilePath) {
+    trace.record(job, { stage: 'compress', category: 'image', code: 'AVATAR_DOWNSAMPLE_FAILED', resizeRequested: true, compressInvoked: true });
+    throw failure('compress', 'AVATAR_DOWNSAMPLE_FAILED', 'image');
+  }
+  trace.record(job, { stage: 'downsample', originalWidth: width, originalHeight: height,
+    requestedWidth: targetWidth, requestedHeight: targetHeight, resizeRequested: true,
+    compressInvoked: true, upscaled: false, resultBytes: trace.fileBytes(output.tempFilePath),
+    compressMs: Date.now() - startedAt });
+  return { path: output.tempFilePath, width: targetWidth, height: targetHeight, downsampled: true };
+}
+
 async function prepare(tempPath, owner, source) {
   if (!['chooseAvatar', 'album', 'camera', 'cloud'].includes(source)) throw imageFailure('AVATAR_SOURCE_INVALID');
-  const localPath = await photos.persistPhoto(tempPath, false, owner);
+  const prepared = await downsampleForAvatar(tempPath, owner);
+  // A downsampled avatar is already a fresh quality-80 encode, so it only needs the durable
+  // copy; an already-small one keeps going through persistPhoto exactly as it always did.
+  const localPath = prepared.downsampled
+    ? await photos.persistDerivative(prepared.path, owner)
+    : await photos.persistPhoto(tempPath, false, owner);
   const details = await inspect(localPath, owner);
   return { formatVersion: 1, localPath, ...details, source, syncState: 'local', remoteRef: null };
 }

@@ -26,12 +26,28 @@ function fixture(){
     uiFeedback:require('../miniprogram/utils/uiFeedback'),
     store:{get:()=>state,subscribe:fn=>{listeners.push(fn);return()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){},canResolve:()=>false},
     pageHeadings:{},data:{},
-    photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code})},
+    // The component classifies a profile-save failure through the real photos module, so this
+    // double delegates that one function to the real implementation instead of inventing a
+    // second classification that could drift from it. photos.js reads wx at load time only.
+    photos:{isCancelled:e=>!!e&&e.errMsg==='chooseMedia:fail cancel',logFailure:(e,stage)=>({category:stage==='identity'?'identity':e.category||'program',stage:stage||e.stage,code:e.code}),profileSaveFailure:requireRealPhotos().profileSaveFailure},
     avatar:{},
     memoryStats:{},metrics:{getMetrics:()=>({headerTop:60})},
   };
   deps.nativeFlow=loadNativeFlow(identity);
   return {state,deps,updates,modalCalls,emit:()=>listeners.slice().forEach(fn=>fn(state))};
+}
+
+// photos.js reads wx.getFileSystemManager() once at load time. Provide a throwaway stub for
+// that single call so the REAL profile-save classifier can be loaded and delegated to.
+let realPhotosCache = null;
+function requireRealPhotos() {
+  if (realPhotosCache) return realPhotosCache;
+  const had = Object.hasOwn(global, 'wx');
+  const saved = global.wx;
+  if (!had) global.wx = { getFileSystemManager: () => ({}) };
+  try { realPhotosCache = require('../miniprogram/utils/photos.js'); }
+  finally { if (!had) delete global.wx; else global.wx = saved; }
+  return realPhotosCache;
 }
 
 function loadNativeFlow(identity){

@@ -169,6 +169,19 @@ function updateProfile(changes) {
   identity.lease();
   ensureLoaded();
   commit(profileRepository.save(state,changes));
+  // Replacing an avatar orphans the previous durable file. The commit above is what actually
+  // makes it unreferenced, so the reclaim runs strictly AFTER it and strictly by RECOMPUTING
+  // the reference set from the committed state (plus the open draft, whose photos are still
+  // live). Consequences, all intended:
+  //   - a save that fails never reaches here, so the previous avatar is kept;
+  //   - a file still referenced by any memory / draft / outbox entry survives;
+  //   - the new avatar is referenced, so it survives;
+  //   - nothing is unlinked merely for "being the old avatar".
+  try {
+    const photos = require('./photos');
+    const draft = loadDraft();
+    photos.gcOrphanMedia(undefined, Object.assign({}, state, { draft }), { dryRun: false });
+  } catch (error) { /* Reclaim is best effort; it must never affect the saved profile. */ }
 }
 
 // Transactional local preferences: do not show success or mutate live state
@@ -256,6 +269,10 @@ function flushOutbox() {
           let memories=state.memories.filter(m=>m.id!==op.recordId && m.id!==saved.id);
           if(!saved.deleted) { const m=syncRepository.overlay(saved,outbox); if(!m.pendingDelete) memories.unshift(m); }
           commit(Object.assign({},state,{outbox,memories,cloudHidden:Array.from(new Set(state.cloudHidden.concat(op.recordId)))}));
+          // Crash-safe order: the commit above already points the state at the cloud reference,
+          // so any local copy this operation uploaded is now unreferenced and can be released.
+          // Best effort only - a failure here must never affect the saved record.
+          try { require('./photos').releaseUploadedLocalCopies(op.uploads, token, state); } catch(e) {}
           continue;
         }
         const saved=await require('./cloudRecords').mutate(op,persist);
@@ -266,6 +283,8 @@ function flushOutbox() {
         if(!saved.deleted) { const m=syncRepository.overlay(saved,outbox); if(!m.pendingDelete) memories.unshift(m); }
         const hidden=saved.deleted?Array.from(new Set(state.cloudHidden.concat(saved.id))):state.cloudHidden;
         commit(Object.assign({},state,{outbox,memories,cloudHidden:hidden}));
+        // Same crash-safe ordering as the recreate branch above.
+        try { require('./photos').releaseUploadedLocalCopies(op.uploads, token, state); } catch(e) {}
       } catch(e) {
         identity.assertLease(token);
         op.error=e.code||'OFFLINE'; op.message=e.message;
@@ -426,6 +445,9 @@ function createCloudMemory(memory, draft) {
     identity.assertLease(token);
     addMemory(saved);
     clearCompletedDraft('add',attempt.id);
+    // addMemory() has already committed, so the state points at the cloud references and the
+    // local copies this attempt uploaded are unreferenced. Best effort; never affects the save.
+    try { require('./photos').releaseUploadedLocalCopies(attempt.uploads, token, state); } catch (e) {}
     return saved;
   }).finally(function () { saveFlight = null; });
   return saveFlight;

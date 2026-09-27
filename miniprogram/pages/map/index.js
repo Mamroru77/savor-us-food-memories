@@ -314,6 +314,17 @@ Page({
       selectedSaved: Boolean(selected && selected.saved),
       distanceLabel: distanceLabel,
     };
+    // Dev-only, off by default: record what the selected Memory really holds so a grey marker
+    // can be attributed to the record instead of guessed at. Guarded so a harness that stubs
+    // mapMarkers (and therefore has no .photoTrace) simply skips it.
+    if (selected && mapMarkers.photoTrace) {
+      const own = (groups || []).find(g => g.memory.id === selected.id);
+      mapMarkers.photoTrace.memorySnapshot(selected, {
+        mapScale: this.data.mapScale,
+        groupCount: own ? own.members.length : 1,
+        defaultMeal: data.photos.meal,
+      });
+    }
     if (shouldFocus && viewportMode !== 'overview') {
       patch.latitude = selected.coordinates[0]; patch.longitude = selected.coordinates[1];
     }

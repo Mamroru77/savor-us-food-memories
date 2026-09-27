@@ -2714,5 +2714,10 @@ module.exports = [
     "key": "sff69a056db",
     "en": "Manage dining types",
     "zh": "管理餐饮类型"
+  },
+  {
+    "key": "s982fc91b01",
+    "en": "Could not save. Please try again.",
+    "zh": "保存失败，请重试。"
   }
 ];

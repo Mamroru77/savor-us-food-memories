@@ -158,6 +158,7 @@ function harness(options) {
       if (p === './data') return { isSafeImage: () => true, isCloudImage: v => /^cloud:\/\//.test(String(v)) };
       if (p === './cloudRecords') return current.cloudRecords;
       if (p === './mapTrace') return current.mapTrace;
+      if (p === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
       throw new Error('unexpected require ' + p);
     },
     wx: current.wx, console, Promise, JSON, Math, Number, Boolean,

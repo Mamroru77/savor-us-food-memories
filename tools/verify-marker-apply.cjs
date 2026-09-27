@@ -112,6 +112,7 @@ function loadMapMarkers() {
       if (id === './data') return { isSafeImage: () => true, isCloudImage: () => false };
       if (id === './cloudRecords') return { downloadMapPhoto: () => Promise.reject(new Error('no cloud in this fixture')) };
       if (id === './mapTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'mapTrace'));
+      if (id === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
       throw new Error('unexpected require ' + id);
     },
     wx: makeWx(), console, Promise, JSON, Math, Number, Boolean, Object, Array,

@@ -3,6 +3,9 @@ const data = require('./data');
 // Dev-only diagnostics. Every call is a no-op unless a developer switched it on, and it
 // can only ever store allowlisted tokens and counts (see utils/mapTrace.js).
 const trace = require('./mapTrace');
+// Phase A diagnostics live in photoTrace (which requires nothing, so it stays loadable from
+// anywhere). Re-exported here so pages/map/index.js needs no new dependency of its own.
+const photoTrace = require('./photoTrace');
 const WIDTH = 256, HEIGHT = 286;
 // Bound on distinct composed variants kept per renderer. It must comfortably exceed
 // the number of markers a zoomed-in map can show at once, otherwise the renderer
@@ -280,4 +283,4 @@ function createRenderer(canvas) {
     traceJobId(memory,selected){return readyTrace.get(JSON.stringify([photoFor(memory),!!selected]))||0;},
     dispose};
 }
-module.exports={style,photoFor,fallback,createRenderer,trace};
+module.exports={style,photoFor,fallback,createRenderer,trace,photoTrace};
