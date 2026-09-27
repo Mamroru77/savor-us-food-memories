@@ -34,7 +34,7 @@ for(const f of listFiles(mp).filter(f=>/\.(wxml|wxss|js)$/.test(f))){
   if(stroke)assert.equal(stroke[1],'1.75',f);
  }
 }
-assert.equal(count,85); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized). 2026-09-26 user-authorized: the Add dining-type manager adds five icons (+ chip, hide x, restore +, custom remove x, confirm check).
+assert.equal(count,87); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized). 2026-09-26 user-authorized: the Add dining-type manager adds five icons (+ chip, hide x, restore +, custom remove x, confirm check). 2026-09-28 user-authorized: the Map zoom stepper adds two (plus, minus).
 const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8');
 const settings=fs.readFileSync(path.join(mp,'components/settings-editor/index.wxml'),'utf8');
 assert.match(settings,/class="preference-tip">\s*<s-icon name="lightbulb"/);

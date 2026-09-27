@@ -13,7 +13,7 @@
     class="memory-map"
     latitude="{{latitude}}"
     longitude="{{longitude}}"
-    scale="{{initialMapScale}}"
+    scale="{{commandScale}}"
     bindregionchange="onMapRegionChange"
     min-scale="3"
     max-scale="18"
@@ -151,9 +151,26 @@
     </view>
   </view>
 
-  <!-- recenter -->
-  <view class="recenter-map glass" style="top: {{overlayTop}}px" bindtap="recenter" aria-role="button" aria-label="{{copy.sa65210588a}}">
-    <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pinned" size="40" stroke="1.75" />
+  <!-- Right-hand tool column. The recenter keeps its own position, icon and handler;
+       the zoom stepper simply stacks under it on the same axis, so the two read as one
+       tool group without becoming a single panel. The column is placed from the same
+       overlayTop the rest of the right edge uses, so the stepper can never drift into
+       the search bar, the place card or the TabBar. -->
+  <view class="map-tool-column" style="top: {{overlayTop}}px">
+    <view class="recenter-map glass" bindtap="recenter" aria-role="button" aria-label="{{copy.sa65210588a}}">
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pinned" size="40" stroke="1.75" />
+    </view>
+    <!-- Precise nudging next to pinch's coarse zoom. Disabled state is driven by the
+         observed native scale, and the handler refuses the command as well as the ink. -->
+    <view class="zoom-stepper glass">
+      <view class="zoom-step {{mapScale >= zoomInDisabledAt ? 'is-disabled' : ''}}" bindtap="onZoomIn" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.s4fc05f2763}}">
+        <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="32" stroke="1.75" />
+      </view>
+      <view class="zoom-step-divider" />
+      <view class="zoom-step {{mapScale <= zoomOutDisabledAt ? 'is-disabled' : ''}}" bindtap="onZoomOut" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.sa4ae4b24a1}}">
+        <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="minus" size="32" stroke="1.75" />
+      </view>
+    </view>
   </view>
 
 

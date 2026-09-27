@@ -2719,5 +2719,15 @@ module.exports = [
     "key": "s982fc91b01",
     "en": "Could not save. Please try again.",
     "zh": "保存失败，请重试。"
+  },
+  {
+    "key": "s4fc05f2763",
+    "en": "Zoom in",
+    "zh": "放大地图"
+  },
+  {
+    "key": "sa4ae4b24a1",
+    "en": "Zoom out",
+    "zh": "缩小地图"
   }
 ];

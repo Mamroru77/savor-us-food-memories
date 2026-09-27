@@ -110,10 +110,20 @@
 }
 .map-filter-option:last-child { border-bottom: 0; }
 
-.recenter-map {
+/* Right-hand tool column. One absolute anchor for the whole group, so the recenter and
+   the stepper share an axis and an rpx gap with no px/rpx arithmetic in the template —
+   overlayTop is px, the control sizes are rpx, and mixing them in the template is what
+   silently breaks on a different screen width. */
+.map-tool-column {
   position: absolute;
   z-index: 5;
   right: 42rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recenter-map {
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
@@ -124,6 +134,30 @@
   box-shadow: 0 12rpx 22rpx rgba(85, 85, 85, 0.13);
 }
 .dusk .recenter-map { background: rgba(73,73,73, 0.94); }
+
+/* Zoom stepper: deliberately lighter than the recenter. A precise nudge must not
+   out-shout "where am I". 72x72rpx per cell, 1rpx divider, 145rpx total. */
+.zoom-stepper {
+  margin-top: 18rpx;
+  width: 72rpx;
+  border-radius: var(--radius-control, 24rpx);
+  background: rgba(255, 255, 255, 0.89);
+  box-shadow: 0 12rpx 22rpx rgba(85, 85, 85, 0.13);
+}
+.dusk .zoom-stepper { background: rgba(73,73,73, 0.94); }
+.zoom-step {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.zoom-step-divider { height: 1rpx; margin: 0 14rpx; background: rgba(89, 92, 79, 0.14); }
+.dusk .zoom-step-divider { background: rgba(255, 255, 255, 0.12); }
+/* A disabled cell must not read as pressable. This rule outranks .ui-pressed's opacity,
+   and the handler returns before issuing any camera command — the state is functional,
+   not just grey. */
+.zoom-step.is-disabled { opacity: 0.38; }
 
 .map-results-count {
   position: absolute;

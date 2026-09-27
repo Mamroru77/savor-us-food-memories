@@ -23,6 +23,12 @@ test('Cloud state labels cover known states, retain uncertainty and work in both
  locale='en';const en=module.exports();assert(/unknown|unconfirmed/i.test(en.states.uncertain));assert(/not.*read/i.test(en.states.sent));assert(/not.*read|not.*resolved/i.test(en.states.stored));
 });
 test('Tencent native base map has no whole-map night veil; camera and map component retained',()=>{
- const m=read('miniprogram/pages/map/index.wxml'),c=read('miniprogram/pages/map/index.wxss');assert(!m.includes('map-night-veil'));assert(!c.includes('.map-night-veil'));assert(m.includes('scale="{{initialMapScale}}"'));assert(m.includes('bindregionchange="onMapRegionChange"'));
+ const m=read('miniprogram/pages/map/index.wxml'),c=read('miniprogram/pages/map/index.wxss');assert(!m.includes('map-night-veil'));assert(!c.includes('.map-night-veil'));
+ // The camera binding is now the zoom stepper's command channel. The same intent is
+ // checked under its new name, and the loop this file exists to prevent is asserted
+ // explicitly: the OBSERVED scale must never be bound back to the camera.
+ assert(m.includes('scale="{{commandScale}}"'));
+ assert(!m.includes('scale="{{mapScale}}"'));
+ assert(m.includes('bindregionchange="onMapRegionChange"'));
 });
 if(failures)process.exitCode=1;

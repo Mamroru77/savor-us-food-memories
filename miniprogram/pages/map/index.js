@@ -23,6 +23,15 @@ const restaurantCategory = require('../../utils/restaurantCategory');
 // only one ready, and it collapses a burst into a single bridge write.
 const MARKER_PHOTO_BATCH_MS = 16;
 
+// The zoom stepper's only camera channel is the bound `scale` prop, and that prop
+// floors fractional values (13.32 -> 13, 13.5 -> 13) on both the IDE and a real
+// device, so the stepper may only ever target a whole level. Observed zoom stays a
+// separate read-only value: it feeds grouping and never becomes a camera command.
+const ZOOM_MIN_SCALE = 3;
+const ZOOM_MAX_SCALE = 18;
+// A native scale this close to a whole level counts as being at that level.
+const ZOOM_LEVEL_EPSILON = 0.05;
+
 function visibleMemories(memories, query, filter) {
   const q = (query || '').toLowerCase().trim();
   return memories.filter(function (memory) {
@@ -111,8 +120,13 @@ Page({
     dusk: false,
     quiet: false,
     markers: [],
-    // Bind only the initial camera seed; observed zoom is for grouping, not camera commands.
-    initialMapScale:13,
+    // The bound camera channel, written only by the zoom stepper. Observed zoom
+    // (mapScale) feeds grouping and is never bound back to the map.
+    commandScale:13,
+    // Disabled thresholds for the stepper's visual state, derived from the same
+    // constants the handler clamps with so the two can never disagree.
+    zoomInDisabledAt: ZOOM_MAX_SCALE - ZOOM_LEVEL_EPSILON,
+    zoomOutDisabledAt: ZOOM_MIN_SCALE + ZOOM_LEVEL_EPSILON,
     stackPositionsReady:false, mapScale:13, cardCollapsed:false, clusterOpen:false, clusterChoices:[], mapDrawers:[], drawerPage:0,
     resultsCount: 0,
     selected: null,
@@ -178,6 +192,9 @@ Page({
     this.markerCanvasRequest=(this.markerCanvasRequest||0)+1;this.markerCanvasPending=false;
     this.onStackRelease();
     this.stackGesture=false;clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
+    // A hidden page must not resolve a tap against a reply that arrives later.
+    this.zoomReadRequest=(this.zoomReadRequest||0)+1;
+    this.clearZoomCommand();
     this.stackProjectionBusy=false;
     this.stackPositionRequest=(this.stackPositionRequest||0)+1;
     this.stopMarkerAnimation();
@@ -820,6 +837,87 @@ Page({
     };
     this.markerAnimation=setTimeout(step,25);
   },
+  // ---- Zoom stepper -------------------------------------------------------
+  // One tap issues at most one camera command, and that command always names a
+  // whole level: the bound `scale` prop floors fractions, so asking for 13.82
+  // would land on 13 and read to the user as "the button did nothing".
+  onZoomIn() { this.requestZoom(1); },
+  onZoomOut() { this.requestZoom(-1); },
+
+  // Direction-aware adjacent level. Deliberately NOT round(current) + delta: that
+  // would send 13.49 up to 14 while 13.51 jumps to 15, so the same tap would travel
+  // a different distance depending on which side of the rounding boundary a pinch
+  // happened to land on.
+  zoomAdjacentLevel(current, direction) {
+    if (!Number.isFinite(current)) return null;
+    const step = direction < 0 ? -1 : 1;
+    const nearest = Math.round(current);
+    const target = Math.abs(current - nearest) <= ZOOM_LEVEL_EPSILON
+      ? nearest + step
+      : (step > 0 ? Math.ceil(current) : Math.floor(current));
+    return Math.max(ZOOM_MIN_SCALE, Math.min(ZOOM_MAX_SCALE, target));
+  },
+
+  requestZoom(direction) {
+    if (!this.active || this.disposed || this.stackGesture || this.data.mapError) return;
+    const step = direction < 0 ? -1 : 1;
+    const pending = this.zoomPendingTarget;
+    if (Number.isFinite(pending)) {
+      // A command is still settling. Reading the native scale here would return the
+      // pre-command value and repeat the same level, so a burst of taps advances
+      // from the level the previous tap asked for instead.
+      this.issueZoomCommand(this.zoomAdjacentLevel(pending, step), pending);
+      return;
+    }
+    if (!this.mapCtx || !this.mapCtx.getScale) return;
+    const request = this.zoomReadRequest = (this.zoomReadRequest || 0) + 1;
+    this.mapCtx.getScale({
+      success: (reply) => {
+        if (request !== this.zoomReadRequest || !this.active || this.disposed || this.stackGesture) return;
+        const current = reply && reply.scale;
+        this.issueZoomCommand(this.zoomAdjacentLevel(current, step), current);
+      },
+      fail: () => {},
+    });
+  },
+
+  // The single place that writes the camera binding. `from` is where this tap was
+  // resolved from: the settling target, or the freshly read native scale.
+  issueZoomCommand(target, from) {
+    if (!Number.isFinite(target)) return;
+    const base = Number.isFinite(from) ? from : this.data.mapScale;
+    // Already at the requested level. Only reachable at a clamp boundary, and the level
+    // is KEPT as the pending target rather than dropped: dropping it would let the next
+    // tap re-derive the same level from a native scale that has not caught up yet and
+    // re-issue it. Convergence, or a gesture, clears it.
+    if (Math.abs(target - base) <= ZOOM_LEVEL_EPSILON) { this.zoomPendingTarget = target; return; }
+    this.zoomCommandCount = (this.zoomCommandCount || 0) + 1;
+    this.zoomPendingTarget = target;
+    // The guard above compares against the NATIVE level, never against the bound
+    // value. When a pinch leaves the native scale on 13.4 while the binding already
+    // holds 13, the tap must still write 13: the write itself is the command.
+    this.setData({ commandScale: target });
+  },
+
+  // A command is done once the native map reports the level it was asked for.
+  settleZoomCommand(observed) {
+    if (!Number.isFinite(this.zoomPendingTarget) || !Number.isFinite(observed)) return;
+    if (Math.abs(observed - this.zoomPendingTarget) <= ZOOM_LEVEL_EPSILON) { this.clearZoomCommand(); return; }
+    // Every level this control asks for is a whole number, so a fractional native
+    // scale while a command is in flight cannot have come from here.
+    if (Math.abs(observed - Math.round(observed)) > ZOOM_LEVEL_EPSILON) this.clearZoomCommand();
+  },
+
+  // A finger outranks a settling command: drop the pending target so a stale one can
+  // never drag the map back after the user has pinched somewhere else.
+  cancelZoomCommand(event) {
+    if (!Number.isFinite(this.zoomPendingTarget)) return;
+    const causedBy = event && event.detail && event.detail.causedBy;
+    if (causedBy === 'gesture' || causedBy === 'drag' || causedBy === 'scale') this.clearZoomCommand();
+  },
+
+  clearZoomCommand() { this.zoomPendingTarget = undefined; },
+
   onMapRegionChange(e) {
     const phase=e&&e.detail&&e.detail.type||e&&e.type;
     clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
@@ -831,6 +929,8 @@ Page({
     if(phase==='begin') {
       // A scale reply from before the gesture must never write camera props during it.
       this.scaleRequest=(this.scaleRequest||0)+1;
+      // A finger outranks a settling zoom command.
+      this.cancelZoomCommand(e);
       this.stackGesture=true;
       if(this.drawerAnimating){this.drawerResumeTarget=this.data.clusterOpen?1:0;this.pauseDrawerReveal();}
       this.markerResumeNeeded=this.markerResumeNeeded||!!this.markerAnimation;this.stopMarkerAnimation();
@@ -861,7 +961,10 @@ Page({
     if(!this.active || this.disposed || this.stackGesture) return;
     const request=this.scaleRequest=(this.scaleRequest||0)+1;
     const update=scale=>{
-      if(!this.active || this.disposed || this.stackGesture || request!==this.scaleRequest || !Number.isFinite(scale) || Math.abs(scale-this.data.mapScale)<.05) return;
+      if(!this.active || this.disposed || this.stackGesture || request!==this.scaleRequest || !Number.isFinite(scale)) return;
+      // A settling zoom command is confirmed here, ahead of the no-change shortcut.
+      this.settleZoomCommand(scale);
+      if(Math.abs(scale-this.data.mapScale)<.05) return;
       const nextScale=Math.max(3,Math.min(18,scale));
       const rootId=(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:this.data.selectedId;
       const groups=mapLayout.group(visibleMemories(this.allMemories||[],this.data.query,this.data.filter),nextScale,rootId);
@@ -881,6 +984,12 @@ Page({
       this.setData(keepDrawer?{mapScale:nextScale}:{mapScale:nextScale,clusterOpen:false,drawerPage:0});
       this.applyFilters(this.data.query,this.data.filter,this.data.selectedId,'preserve');
     };
+    // While a zoom command is in flight the event payload is not trustworthy: some
+    // platforms report the pre-move scale in `regionchange`. Ask the map directly.
+    if(Number.isFinite(this.zoomPendingTarget)) {
+      if(this.mapCtx && this.mapCtx.getScale) this.mapCtx.getScale({success:r=>update(r.scale),fail:()=>{}});
+      return;
+    }
     if(Number.isFinite(value)) update(value);
     else if(this.mapCtx && this.mapCtx.getScale) this.mapCtx.getScale({success:r=>update(r.scale),fail:()=>{}});
   },
