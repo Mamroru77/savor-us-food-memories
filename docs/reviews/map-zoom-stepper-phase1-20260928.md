@@ -1,9 +1,10 @@
 # Map ＋/－ Zoom Stepper — Phase 1 实现报告（2026-09-28）
 
-**状态：实现完成 + 真机验证基本完成；2 项真机手势场景为 PENDING（见 §8）。**
+**状态：COMPLETE。** 实现完成，真机验收 **6/6 PASS**（含两项手势场景；见 §8 的残留说明）。
+已 commit `c0336fa`（`feat: add precise map zoom controls`，父 `428e1b7`，独立第三个 commit）。**未 push / 未 deploy / 未上传。**
 真机 = **OPPO PKB110 / Android 16 / 微信基础库 3.17.3**，359×789 @ dpr 3.5。
 
-- **未 commit / 未 push / 未 deploy。** HEAD 仍为 `428e1b70`。
+- **未 push / 未 deploy / 未上传。** HEAD `c0336fa`（本轮改动已提交；提交前审计与 fresh verify 见 §11）。
 - `verify:all` **1149 PASS / 0 FAIL / EXIT 0**；新增 `verify:map-zoom-stepper` **24/24 PASS**。
 - 冻结链路按既定机制推进（只动 `sha256`，`baseSha256` 未动），`verify-cloud` **272/272**、`verify-map-veil-review` PASS。
 
@@ -137,21 +138,37 @@ zoomAdjacentLevel(current, direction) {
 | drawer | `drawerRenderMode` 保持 `view-overlay`，`mapDrawers` 结构完整（3→2，随分组正确变化），无报错 ✓ |
 | recenter | 仍按原 handler 工作（native → 10.59 全览），**不下发** zoom 命令 ✓ |
 | UI overlap | `overlapCard=false`、`overlapSearch=false`，`centersAligned=0`，gap 8px ✓ |
-| 小数 pinch（13.x）→ + / − | **PENDING**（见 §8） |
-| pinch → + → pinch → − | **PENDING**（见 §8） |
+| 小数 pinch（13.x）→ + / − | 用户真机验收 **PASS**（正确进入相邻整数级，见 §8） |
+| pinch → + → pinch → − | 用户真机验收 **PASS**（stale pending 被取消，未被旧 target 拉回，见 §8） |
 
 ---
 
-## 8. PENDING：两项真机手势场景
+## 8. 真机手势验收（用户执行，6/6 PASS）
 
-`device-pinch-recorder.cjs` 已装上（运行时钩子，不改文件）：记录每次 `regionchange`（含 `causedBy`）与每次 ＋/－ 点按前后的 `cmd` / `pending` / 命令数。
+用户于 2026-09-28 在 OPPO 真机上逐项验收：
 
-待用户真机执行后即可判定：
+| 场景 | 结果 |
+|---|---|
+| pinch 到非整数 scale（如 13.x）→ 点 ＋ | **PASS** — 正确进入相邻整数级 |
+| pinch → ＋ → 再 pinch → − | **PASS** — stale pending 正确取消，地图**没有**被旧 target 拉回 |
+| 快速连续 ＋＋＋ / −−− | **PASS** |
+| recenter 与 zoom stepper 共存 | **PASS** |
+| cluster threshold 附近 zoom | **PASS** |
+| drawer / view-overlay | **PASS** |
 
-1. **小数 pinch**：pinch 到 13.x → 点 ＋ 应到 14、点 − 应到 13（算法已由 Z3/Z4/Z5 锁住，缺的是**真实小数 native**下的端到端确认）。
-2. **pinch 打断 pending**：命令在途时 pinch，pending 必须被丢弃、且之后**不会**把地图拉回旧 target；同时确认真实 pinch 的 `causedBy` 取值。
+### 残留（如实标注，非「已完成」）
 
-合成 touch 已验证**不可行**（`touchstart/touchmove/touchend` 到不了原生地图，native 不动），因此必须真手指。
+`causedBy` 这条**具体字段值**在**真实手指 pinch** 上**未被直接观测**。
+`device-pinch-recorder.cjs` 装在了页面实例上，但期间为推新代码重新进入过真机调试（小程序重载），
+内存日志随之清空，事后读取只剩空数组（`cmd:13 / native:18` = 全新状态）。
+
+因此：§8 第 2 项的 PASS 证明的是**行为契约成立**（pending 确实被取消、地图没被拉回），
+**不单独证明**是 `causedBy` 分支而非「小数兜底」分支生效。
+两条信号任一成立都会取消 pending，所以该残留**不影响**已验收的行为；
+但它意味着「真实 pinch 的 `causedBy` 取值」仍是**未直接观测**项。
+
+合成 touch 已验证**不可行**（`touchstart/touchmove/touchend` 到不了原生地图，native 不动）。
+`regionchange.begin` 带 `causedBy` 这一事实本身**已在真机直接观测**（我方 prop 命令为 `'update'`）。
 
 ---
 
@@ -207,9 +224,9 @@ zoomAdjacentLevel(current, direction) {
  9 files changed, 194 insertions(+), 15 deletions(-)
 ```
 
-未跟踪新增：`tools/verify-map-zoom-stepper.cjs`、`docs/reviews/map-zoom-stepper-phase05-20260928.md`、本报告。
+新增（已随 `c0336fa` 提交）：`tools/verify-map-zoom-stepper.cjs`、`docs/reviews/map-zoom-stepper-phase05-20260928.md`、本报告。
 
-HEAD 仍 `428e1b70`。**未 commit / 未 push / 未 deploy。**
+HEAD `c0336fa`。**未 push / 未 deploy / 未上传。**
 
 当前哈希：wxml `d1de466e…`、wxss `d6182bec…`、map JS `e09a1724…`、新套件 `a61c0b16…`。
 
@@ -218,5 +235,5 @@ HEAD 仍 `428e1b70`。**未 commit / 未 push / 未 deploy。**
 ## 12. 本轮未做
 
 - 未实现 0.5 步进（Phase 0.5 已证 prop 通道取整，0.5 语义无法表达）；未把命令通道换成 `includePoints`。
-- 未 commit / push / deploy。
+- 未 push / deploy / 上传微信版本。
 - 未验证真实手指 pinch 的 `causedBy` 取值与端到端小数场景（§8）。
