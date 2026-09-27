@@ -18,9 +18,9 @@
     "review": "docs/mcp-r5-byte-review-20260919.md"
   },
   "miniprogram/pages/map/index.wxss": {
-    "baseSha256": "fa77efd61d741fa8efecd188d26500e52a5a8dfe9d4742310faca2cff3185691",
+    "baseSha256": "77c8ce71bdc6abbb49a2d6489c1d5ddffaf95ca7c58f15c7fb0567e8d6b7a95b",
     "sha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
-    "reason": "Reviewed R4 minimal style change only: raw restaurant identity in existing Memory flow, or removal of prohibited whole-map dark veil. Native acceptance separate. Exact disk bytes include final LF.",
+    "reason": "Reviewed R4 minimal style change only: raw restaurant identity in existing Memory flow, or removal of prohibited whole-map dark veil. Native acceptance separate. Exact disk bytes include final LF. 2026-09-26: base advanced to the user-requested drawer motion amendments recorded in ui-approved-updates.json (the motion opt-in, the hit-region follow-up, and the ordinary-overlay ink rules); the veil-removal checkpoint this review feeds is unchanged.",
     "review": "docs/mcp-r5-byte-review-20260919.md"
   }
 }

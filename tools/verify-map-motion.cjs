@@ -7,7 +7,16 @@ function setup(){const p=page();p.drawerRootId='root';p.data.mapDrawers=[{rootId
 let count=0;function test(name,fn){fn();count++;console.log('PASS '+name);}
 test('frame contains geometry only, no marker/photo/list replacement',()=>{const p=setup();p.patchDrawerFrame(.5);const patch=p.writes[0];assert.equal(Object.keys(patch).length,9);assert(Object.keys(patch).every(k=>/^mapDrawers\[0\]\.(progress|height|rootTop|rows\[\d\]\.(top|opacity))$/.test(k)));assert(!JSON.stringify(patch).includes('iconPath'));const expected=stack.layout(3,.5);assert.equal(p.data.mapDrawers[0].height,expected.height+14);assert.equal(p.data.mapDrawers[0].rows[0].top,expected.slots[2].top+14);});
 test('opening/closing uses 320ms geometry, not fade-only or regrouping',()=>{assert.equal(stack.DURATION,320);for(const method of ['onDrawerToggle','onDrawerPage'])assert(!spec[method].toString().includes('applyFilters'));assert(spec.patchDrawerFrame.toString().includes("set('height'"));});
-test('animation waits for native setData acknowledgement before scheduling next frame',()=>{timers.length=0;now=0;const p=setup();p.startDrawerReveal(1);const first=timers.shift();now=16;first.fn();assert.equal(p.writes.length,1);assert.equal(timers.length,0);now=40;p.callbacks.shift()();assert.equal(timers.length,1);assert.equal(timers[0].ms,16);});
+// Frame placement changed in the Map performance round: the next frame is scheduled
+// against an ABSOLUTE deadline (start + n*1000/60), not "16ms after the previous
+// acknowledgement". The one-frame-in-flight rule this test exists to protect is
+// unchanged; the deadline itself is pinned by the two tests below so it cannot
+// silently regress to a fixed 16ms delay.
+test('animation waits for native setData acknowledgement before scheduling next frame',()=>{timers.length=0;now=0;const p=setup();p.startDrawerReveal(1);const first=timers.shift();now=16;first.fn();assert.equal(p.writes.length,1);assert.equal(timers.length,0);now=40;p.callbacks.shift()();assert.equal(timers.length,1);
+ // Frame 1 was due at 1000/60ms, so an acknowledgement at 40ms is already late: the
+ // next frame fires immediately instead of adding another full 16ms of drift.
+ assert.equal(timers[0].ms,0);});
+test('a frame that is not behind schedule waits only until its absolute deadline',()=>{timers.length=0;now=0;const p=setup();p.startDrawerReveal(1);now=0;timers.shift().fn();assert.equal(p.writes.length,1);now=4;p.callbacks.shift()();assert.equal(timers.length,1);assert.ok(Math.abs(timers[0].ms-(1000/60-4))<0.01,'frame delay must be the remaining time to the absolute deadline, saw '+timers[0].ms);});
 test('interrupted frame acknowledgement cannot revive old animation',()=>{timers.length=0;now=0;const p=setup();p.startDrawerReveal(1);now=16;timers.shift().fn();p.pauseDrawerReveal();p.callbacks.shift()();assert.equal(timers.length,0);});
 test('drag pauses geometry without collapsing the visible stack',()=>{const p=setup();p.drawerProgress=.4;p.drawerAnimating=true;p.data.clusterOpen=true;p.data.stackPositionsReady=true;p.onMapRegionChange({detail:{type:'begin'}});assert.equal(p.stackGesture,true);assert.equal(p.drawerProgress,.4);assert.equal(p.drawerResumeTarget,1);assert.equal(p.data.stackPositionsReady,false);assert(p.writes.every(x=>!x.markers&&!x.mapDrawers));});
 test('store update during gesture defers map work without retaining a private snapshot',()=>{const p=setup();p.stackGesture=true;p.applyFilters=()=>assert.fail('rebuild during drag');const state={memories:[]};p.syncState(state);assert.equal(p.deferredMapState,true);assert.notEqual(p.deferredMapState,state);assert(spec.onMapRegionChange.toString().includes('this.syncState(store.get())'));assert.equal(p.writes.length,0);});
@@ -70,11 +79,16 @@ test('animation never resizes fixed native bounds or rewrites the root anchor',(
 test('fixed native ink remains equivalent to the original transparent hit projection',()=>{
  const w=fs.readFileSync('miniprogram/pages/map/index.wxml','utf8');
  assert(w.includes('class="native-stack" style="height:{{drawer.frameHeight}}px"'));
- assert(w.includes('top:{{drawer.screenY-drawer.height}}px;height:{{drawer.height}}px'));
+ // The ordinary layer now serves two renderers, so every binding is pinned in BOTH
+ // branches: the native-callout branch must keep the original projection exactly, and the
+ // view-overlay branch must read the fixed frame the page derives for it.
+ assert(w.includes('left:{{drawer.screenX}}px'));
+ assert(w.includes('top:{{drawer.overlayMode ? drawer.overlayTop : drawer.screenY-drawer.height}}px;height:{{drawer.overlayMode ? drawer.overlayHeight : drawer.height}}px'));
  for(const term of ['frameHeight-drawer.height+drawer.rootTop','frameHeight-drawer.height+pin.top','frameHeight-drawer.height+36'])assert.equal(w.split('top:{{drawer.'+term+'}}px').length-1,1);
- assert(w.includes('top:{{drawer.rootTop}}px'));assert(w.includes('top:{{pin.top}}px'));
+ assert(w.includes('top:{{drawer.overlayMode ? drawer.overlayRootTop : drawer.rootTop}}px'));
+ assert(w.includes('top:{{drawer.overlayMode ? pin.overlayRowTop : pin.top}}px'));
  assert(w.includes('top:{{drawer.frameHeight-drawer.height+drawer.buttonBox.top}}px'));
- assert(w.includes('top:{{drawer.buttonBox.hitTop}}px'));
+ assert(w.includes('top:{{drawer.overlayMode ? drawer.overlayToggleTop : drawer.buttonBox.hitTop}}px'));
 });
 test('near-pin button moves down 8px without shrinking targets or overlapping root and paging',()=>{
  for(const width of [320,375,390,430,768]){

@@ -302,10 +302,46 @@
 .native-stack-row,.native-stack-root { position:absolute; left:4px; width:80px; height:89px; }
 .native-stack-root { z-index:10; }
 .native-stack-photo { width:80px; height:89px; }
+/* Drawer motion as one transform transition instead of ~20 JS frame writes across the
+   JS -> native map bridge. Same 320ms and same cubic curve as mapStack.ease, so the two
+   drivers land on identical pixels. Applied only when the page enables the CSS driver:
+   the JS frame loop writes opacity every frame and must not be smoothed by a transition.
+   Whether cover-view honours transform transitions can only be answered on a device. */
+.native-stack-row-motion { transition:transform 320ms cubic-bezier(.333333,0,.666667,1),opacity 320ms cubic-bezier(.333333,0,.666667,1); }
+.native-stack-toggle-motion { transition:transform 320ms cubic-bezier(.333333,0,.666667,1); }
+.quiet .native-stack-row-motion,.quiet .native-stack-toggle-motion { transition:none; }
+/* The transparent hit regions live in a different layer from the native callout ink, so
+   under the CSS driver they must travel on the SAME transform or the tappable area would
+   sit at the open position while the visible row is still moving. Ordinary views, so this
+   transition does not depend on cover-view supporting transform. */
+.pin-stack-hit-motion { transition:transform 320ms cubic-bezier(.333333,0,.666667,1); }
+.quiet .pin-stack-hit-motion { transition:none; }
 .native-stack-pages { position:absolute; top:36px; left:0; width:88px; height:30px; display:flex; color:#34483c; z-index:21; background-color:#fffffb; border-radius:12px; }
 .native-stack-page-arrow { width:24px; height:28px; line-height:28px; text-align:center; font-size:22px; }
 .native-stack-page-number { width:40px; height:28px; line-height:28px; text-align:center; font-size:12px; }
 .map-stack-overlay .pin-stack-toggle,.map-stack-overlay .pin-stack-pages { background:transparent; border-color:transparent; box-shadow:none; }
+
+/* view-overlay: the ordinary layer owns the animated drawer ink, so the 320ms motion is an
+   ordinary view transition and never crosses the JS -> native map bridge. These rules sit
+   after the hit-region ones above and out-specify them, so the same elements carry the ink
+   in one mode and stay transparent in the other. Geometry is shared, not duplicated: the
+   sizes below are the native callout's own numbers. */
+.pin-stack-toggle-glyph { position:absolute; display:block; }
+/* The button asset already IS the whole button: stack-button-*.png is a translucent disc
+   plus its chevron (verified from the PNG alpha channel), and the native callout drew it as
+   a bare image with no styling. Painting a CSS background/border/shadow behind it would
+   stack a second disc under the first, so the ink toggle only has to stop being the
+   transparent hit region. The border must go to zero rather than merely transparent: an
+   absolutely positioned child is laid out against the PADDING box, so a 1px border would
+   inset the asset by 1px and break the pixel match. */
+.map-stack-overlay .pin-stack-ink .pin-stack-toggle { background:transparent; border:0; box-shadow:none; }
+.map-stack-overlay .pin-stack-ink .pin-stack-pages { background-color:rgba(255,255,250,.94); border-radius:12px; }
+.map-stack-overlay .pin-stack-ink .pin-stack-page-arrow { width:44px; flex-shrink:0; margin-left:-10px; margin-right:-10px; display:flex; align-items:center; justify-content:center; }
+.pin-stack-page-glyph { display:block; width:24px; height:24px; }
+.pin-stack-ink .pin-stack-photo { display:block; width:80px; height:89px; }
+.pin-stack-ink-motion { transition:transform 320ms cubic-bezier(.333333,0,.666667,1),opacity 320ms cubic-bezier(.333333,0,.666667,1); }
+.pin-stack-ink-toggle-motion { transition:transform 320ms cubic-bezier(.333333,0,.666667,1); }
+.quiet .pin-stack-ink-motion,.quiet .pin-stack-ink-toggle-motion { transition:none; }
 
 /* Menus stay mounted through both transition directions. Native map untouched. */
 .map-filter-button { transition:background-color 180ms ease; }

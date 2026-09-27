@@ -105,7 +105,38 @@ function page(name) {
   const file = path.join(mp, 'pages', name, 'index.js'); delete require.cache[require.resolve(file)]; require(file);
   // Match native setData path semantics as well as whole-field assignments.
   const instance = { ...spec, data: JSON.parse(JSON.stringify(spec.data)), setData(patch, cb) { for (const [key,value] of Object.entries(patch)) { const keys=key.replace(/\[(\d+)\]/g,'.$1').split('.'); let target=this.data; for (let i=0;i<keys.length-1;i++) { if(target[keys[i]]===undefined)target[keys[i]]=/^\d+$/.test(keys[i+1])?[]:{}; target=target[keys[i]]; } target[keys[keys.length-1]]=value; } if (cb) cb(); }, getTabBar: () => ({ showSelection() {}, updateAppearance() {} }) };
+  // The Map drawer now has two renderers and the page's default is the ordinary-overlay arm.
+  // These checks are about the NATIVE CALLOUT arm, so pin it here instead of inheriting a
+  // default: a suite that silently followed the default would stop measuring what it names.
+  // tools/verify-map-overlay-drawer.cjs owns the overlay arm.
+  if (name === 'map') instance.data.drawerRenderMode = 'native-callout';
   return instance;
+}
+// A closed drawer has two legitimate shapes, one per motion driver, and the difference
+// is the whole point of the round-3 A/B:
+//   JS  (drawerCssMotion=false) - the frame loop unmounts rows at rest, so a closed
+//                                 drawer has no rows at all.
+//   CSS (drawerCssMotion=true)  - rows must stay mounted or the transition has nothing
+//                                 to move, so they are transparent and offset instead.
+// The assertion reads the driver off the page rather than assuming one, and it checks
+// the CSS branch's invariants (fully transparent, non-zero travel offset, one row per
+// page member) instead of merely tolerating extra rows. Flipping the flag therefore
+// cannot silently disable this gate.
+function assertClosedDrawer(page, drawer, label) {
+  const where = label ? ' (' + label + ')' : '';
+  if (!page.data.drawerCssMotion) {
+    assert.equal(drawer.rows.length, 0, 'the JS driver unmounts rows at rest' + where);
+    return;
+  }
+  const expected = Math.min(3, drawer.count - 1);
+  assert.equal(drawer.rows.length, expected,
+    'the CSS driver keeps one mounted row per page member while closed' + where);
+  assert.ok(drawer.rows.every(row => row.opacity === 0),
+    'every closed CSS row must be fully transparent' + where);
+  assert.ok(drawer.rows.every(row => row.shiftY !== 0),
+    'every closed CSS row must carry a non-zero travel offset' + where);
+  assert.notEqual(drawer.toggleShiftY, 0,
+    'the closed CSS toggle must carry its travel offset' + where);
 }
 // Native route fixture. No inferred owner is used as navigation authority.
 function nativeTabs(initial=0){
@@ -1672,10 +1703,18 @@ function nativeTabs(initial=0){
     pending[2]('/user/current.png');await new Promise(setImmediate);assert.equal(p.data.markers[1].iconPath,'/user/current.png');
     p.onHide();assert(disposed);pending[3]('/user/hidden.png');pending[1]('/user/old.png');await new Promise(setImmediate);assert(!['/user/stale.png','/user/hidden.png','/user/old.png'].includes(p.data.markers[0].iconPath));
   });
-  await test('map photo work prioritizes selection and is bounded to 48 records per refresh', () => {
+  await test('map photo work prioritizes selection and requests every visible singleton', () => {
     const p=page('map');p.active=true;const seen=[];p.pinRenderer={render:(m,selected)=>{seen.push([m.id,selected]);return Promise.resolve(markerArt.fallback(selected));}};
     p.allMemories=Array.from({length:80},(_,i)=>({...sample(),id:'bounded-'+i,coordinates:[0,i*2]}));p.applyFilters('','all','bounded-79');
-    assert.equal(seen.length,48);assert.deepEqual(seen[0],['bounded-79',true]);assert.equal(p.data.markers.length,80);p.active=false;
+    // 2026-09-26: this used to assert a page-level cap of 48. That cap was the proven cause
+    // of markers sitting on the bundled fallback forever, because every later refresh
+    // re-took the same first 48 and the rest were never requested. The bound now lives in
+    // the renderer, which can finish all of them, so the contract is "none is left behind".
+    assert.deepEqual(seen[0],['bounded-79',true]);
+    assert.equal(seen.length,80);
+    assert.equal(new Set(seen.map(s=>s[0])).size,80,'every visible singleton is requested exactly once');
+    assert.equal(seen.filter(s=>s[1]).length,1,'only the selection uses the selected variant');
+    assert.equal(p.data.markers.length,80);p.active=false;
   });
   await test('late canvas export after leaving map is deleted and never reused', async () => {
     const old=wx.canvasToTempFilePath,fso=wx.getFileSystemManager;let release,started;const ready=new Promise(r=>{started=r;}),removed=[];
@@ -1686,10 +1725,25 @@ function nativeTabs(initial=0){
     } finally {wx.canvasToTempFilePath=old;wx.getFileSystemManager=fso;}
   });
   await test('marker cache bounds queued compositions and restaurant callouts remain tappable', async () => {
-    const r=markerArt.createRenderer(fakeMarkerCanvas());const jobs=[];
-    for(let i=0;i<96;i++)jobs.push(r.render({...sample(),noPhoto:false,placePhoto:undefined,photo:'/images/item-'+i+'.jpg'},false));
-    assert.equal(await r.render({...sample(),noPhoto:false,placePhoto:undefined,photo:'/images/overflow.jpg'},true),markerArt.fallback(true));
-    r.dispose();await Promise.all(jobs);
+    // The suite-wide wx has no canvasToTempFilePath, so every render here would fall back
+    // and the bound would never be exercised. Install a working export for the duration.
+    const exportOld=wx.canvasToTempFilePath,fsOld=wx.getFileSystemManager;let exports=0;
+    wx.canvasToTempFilePath=o=>o.success({tempFilePath:'/user/derived-'+(++exports)+'.png'});
+    wx.getFileSystemManager=()=>({unlinkSync(){}});
+    let settled=[];
+    try {
+      const r=markerArt.createRenderer(fakeMarkerCanvas());const jobs=[];
+      for(let i=0;i<560;i++)jobs.push(r.render({...sample(),noPhoto:false,placePhoto:undefined,photo:'/images/item-'+i+'.jpg'},false));
+      settled=await Promise.all(jobs);r.dispose();
+    } finally {wx.canvasToTempFilePath=exportOld;wx.getFileSystemManager=fsOld;}
+    // 2026-09-26: the bound used to be 96 and this test pinned that exact number - but with
+    // no export available nothing ever composed, so it passed without exercising anything.
+    // 96 is reachable by a zoomed-in map, and past it the renderer refused work for the rest
+    // of the session: another way a marker stayed on the bundled fallback. Assert the shape
+    // rather than the constant - the bound must clear a realistic marker count AND be finite.
+    const composed=settled.filter(p=>p!==markerArt.fallback(false)).length;
+    assert.ok(composed>=128,'the renderer bound must clear a realistic marker count, composed '+composed);
+    assert.ok(composed<560,'the renderer must still stop at a finite bound, composed '+composed);
     const markup=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');assert(markup.includes('class="map-stack-overlay"'));assert(markup.includes('slot="callout"'));assert(markup.includes('catchtap="onDrawerToggle"'));assert(markup.includes('catchtap="onClusterPick"'));
   });
   const mapLayout=require(path.join(mp,'utils/mapLayout'));
@@ -1984,11 +2038,11 @@ function nativeTabs(initial=0){
     }finally{wx.getDeviceInfo=original;}
   });
   await test('upward drawer keeps first real pin anchored, pages every member, and writes no meal data',()=>{
-    const p=page('map');p.allMemories=Array.from({length:9},(_,i)=>({...sample(),id:'drawer-'+i,coordinates:[31,121]}));const before=JSON.stringify(p.allMemories),adds=addCalls;p.applyFilters('','all','drawer-0');assert.equal(p.data.mapDrawers.length,1);assert.equal(p.data.mapDrawers[0].rows.length,0);
+    const p=page('map');p.allMemories=Array.from({length:9},(_,i)=>({...sample(),id:'drawer-'+i,coordinates:[31,121]}));const before=JSON.stringify(p.allMemories),adds=addCalls;p.applyFilters('','all','drawer-0');assert.equal(p.data.mapDrawers.length,1);assertClosedDrawer(p,p.data.mapDrawers[0],'never opened');
     p.onDrawerToggle({currentTarget:{dataset:{index:0}}});const first=p.data.mapDrawers[0];assert(first.open);assert.equal(first.pages,3);assert.deepEqual(first.rows.map(x=>x.id),['drawer-3','drawer-2','drawer-1']);assert.equal(p.data.markers[0].customCallout.anchorY,0);
     const seen=new Set();for(let pageIndex=0;pageIndex<3;pageIndex++){p.data.mapDrawers[0].rows.forEach(row=>seen.add(row.id));p.onDrawerPage({currentTarget:{dataset:{step:1}}});}assert.equal(seen.size,8);
     p.onClusterPick({currentTarget:{dataset:{id:'drawer-2'}}});assert.equal(p.data.selected.id,'drawer-2');assert(p.data.clusterOpen);assert.equal(p.data.markers[0].memoryId,'drawer-0');assert(p.data.mapDrawers[0].rows.find(r=>r.id==='drawer-2').selected);
-    assert.equal(JSON.stringify(p.allMemories),before);assert.equal(addCalls,adds);p.onClusterClose();assert.equal(p.data.mapDrawers[0].rows.length,0);
+    assert.equal(JSON.stringify(p.allMemories),before);assert.equal(addCalls,adds);p.onClusterClose();assertClosedDrawer(p,p.data.mapDrawers[0],'after close');
   });
   await test('drawer closes when filtering or zoom splits a group and ignores old row taps',()=>{
     const p=page('map');p.allMemories=[{...sample(),id:'drawer-near-a',restaurant:'alpha',coordinates:[31,121]},{...sample(),id:'drawer-near-b',restaurant:'beta',coordinates:[31.001,121.001]}];p.applyFilters('','all','drawer-near-a');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});assert(p.data.clusterOpen);p.onQuery({detail:{value:'alpha'}});assert.equal(p.data.clusterOpen,false);assert.equal(p.data.mapDrawers.length,0);p.onClusterPick({currentTarget:{dataset:{id:'drawer-near-b'}}});assert.equal(p.data.selected.id,'drawer-near-a');
@@ -2009,10 +2063,13 @@ function nativeTabs(initial=0){
     const css=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8'),w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');assert(!css.includes('@keyframes pin-stack-rise'));assert(!w.includes('animation-delay:'));assert(fs.readFileSync(path.join(mp,'pages/map/index.js'),'utf8').includes('this.active&&!this.data.quiet'));assert(!css.includes('.pin-drawer'));assert(!css.includes('overflow:visible'));assert(css.includes('width:80px; height:89px'));
     const p=page('map');p.allMemories=[{...sample(),id:'first'},{...sample(),id:'second'}];p.applyFilters('','all','first');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});p.onClusterPick({currentTarget:{dataset:{id:'second'}}});p.onMarkerTap({detail:{markerId:0}});assert.equal(p.data.selected.id,'first');assert(p.data.clusterOpen);assert.equal(p.data.markers[0].width,1);assert.equal(p.data.markers[0].iconPath,'/images/markers/stack-anchor.png');
   });
+  // This one is specifically the JS frame loop: it asserts a mid-flight opacity strictly
+  // between 0 and 1, which only the per-frame driver can produce. Pin the driver instead
+  // of inheriting the page default, so flipping the A/B flag cannot make it vacuous.
   await test('stack interpolates both opening and closing and cancels on exit',async()=>{
-    const p=page('map');p.active=true;p.allMemories=Array.from({length:4},(_,i)=>({...sample(),id:'reveal-'+i,coordinates:[31,121]}));p.applyFilters('','all','reveal-0');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});const closedHeight=p.data.mapDrawers[0].height;assert.equal(p.data.mapDrawers[0].rows.length,3);assert(p.data.mapDrawers[0].rows.every(row=>row.opacity===0));
+    const p=page('map');p.data.drawerCssMotion=false;p.active=true;p.allMemories=Array.from({length:4},(_,i)=>({...sample(),id:'reveal-'+i,coordinates:[31,121]}));p.applyFilters('','all','reveal-0');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});const closedHeight=p.data.mapDrawers[0].height;assert.equal(p.data.mapDrawers[0].rows.length,3);assert(p.data.mapDrawers[0].rows.every(row=>row.opacity===0));
     await new Promise(r=>setTimeout(r,120));const mid=p.data.mapDrawers[0].height;assert(mid>closedHeight);assert(mid<432);assert(p.data.mapDrawers[0].rows.some(row=>row.opacity>0&&row.opacity<1));await new Promise(r=>setTimeout(r,240));const full=p.data.mapDrawers[0].height;assert.equal(full,432);
-    p.onClusterClose();assert.equal(p.data.mapDrawers[0].height,full);assert.equal(p.data.mapDrawers[0].rows.length,3);await new Promise(r=>setTimeout(r,120));assert(p.data.mapDrawers[0].height<full);assert(p.data.mapDrawers[0].height>closedHeight);await new Promise(r=>setTimeout(r,240));assert.equal(p.data.mapDrawers[0].rows.length,0);assert.equal(p.data.mapDrawers[0].height,closedHeight);
+    p.onClusterClose();assert.equal(p.data.mapDrawers[0].height,full);assert.equal(p.data.mapDrawers[0].rows.length,3);await new Promise(r=>setTimeout(r,120));assert(p.data.mapDrawers[0].height<full);assert(p.data.mapDrawers[0].height>closedHeight);await new Promise(r=>setTimeout(r,240));assertClosedDrawer(p,p.data.mapDrawers[0],'JS driver at rest');assert.equal(p.data.mapDrawers[0].height,closedHeight);
     p.onDrawerToggle({currentTarget:{dataset:{index:0}}});p.onHide();assert.equal(p.drawerRevealTimer,null);await new Promise(r=>setTimeout(r,100));assert.deepEqual(p.data.mapDrawers,[]);
   });
   await test('single restaurant has no misleading expansion arrow; Quiet groups expand immediately',()=>{
@@ -2021,22 +2078,33 @@ function nativeTabs(initial=0){
   await test('stack layout keeps the root baseline fixed and equal spacing at rest',()=>{
     const stack=require(path.join(mp,'utils/mapStack'));let previous=0;for(let n=0;n<=3;n++){previous=0;for(let i=0;i<=20;i++){const frame=stack.layout(n,i/20);assert.equal(frame.height-frame.rootTop,89);assert(frame.height>=previous);previous=frame.height;assert(frame.slots.every(row=>Number.isInteger(row.top)&&row.opacity>=0&&row.opacity<=1));}const last=stack.layout(n,1);last.slots.forEach((row,j)=>assert.equal(last.rootTop-row.top,(j+1)*101));}
   });
+  // Frame-driven height interpolation again: only the JS driver moves drawer.height, so
+  // pin the driver rather than inheriting whatever the A/B flag currently is.
   await test('reversing a partially opened stack preserves position and frames cause no extra image requests',async()=>{
-    const p=page('map');p.active=true;p.allMemories=[{...sample(),id:'reverse-root'},{...sample(),id:'reverse-child'}];let renders=0;p.pinRenderer={peek:()=>'/user/cached-stamp.png',render:async()=>{renders++;return '/user/cached-stamp.png';},dispose(){}};p.applyFilters('','all','reverse-root');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});const calls=renders;await new Promise(r=>setTimeout(r,120));assert.equal(renders,calls);const mid=p.data.mapDrawers[0].height;p.onDrawerToggle({currentTarget:{dataset:{index:0}}});assert.equal(p.data.mapDrawers[0].height,mid);await new Promise(r=>setTimeout(r,120));assert(p.data.mapDrawers[0].height<mid);assert(p.data.mapDrawers[0].height>=129);p.onHide();
+    const p=page('map');p.data.drawerCssMotion=false;p.active=true;p.allMemories=[{...sample(),id:'reverse-root'},{...sample(),id:'reverse-child'}];let renders=0;p.pinRenderer={peek:()=>'/user/cached-stamp.png',render:async()=>{renders++;return '/user/cached-stamp.png';},dispose(){}};p.applyFilters('','all','reverse-root');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});const calls=renders;await new Promise(r=>setTimeout(r,120));assert.equal(renders,calls);const mid=p.data.mapDrawers[0].height;p.onDrawerToggle({currentTarget:{dataset:{index:0}}});assert.equal(p.data.mapDrawers[0].height,mid);await new Promise(r=>setTimeout(r,120));assert(p.data.mapDrawers[0].height<mid);assert(p.data.mapDrawers[0].height>=129);p.onHide();
   });
   await test('native visuals and transparent hit regions are separated but share frame data',()=>{
     const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
-    const native=w.split('<cover-view slot="callout">')[1].split('</map>')[0];
+    // The callout block is now gated on the renderer, so split on the slot attribute itself.
+    assert(w.includes('slot="callout" wx:if="{{drawerRenderMode === \'native-callout\'}}"'),'the callout must be gated on its renderer');
+    const native=w.split('slot="callout"')[1].split('</map>')[0];
     const hits=w.split('<view class="map-stack-overlay"')[1].split('<!-- offline')[0];
     assert(native.includes('marker-id="{{drawer.markerId}}"'));assert(native.includes('native-stack-photo'));
     assert(!native.includes('catchtap'));assert(!native.includes('stackPositionsReady'));
-    assert(!hits.includes('<image'));assert(!hits.includes('<cover-image'));
+    // The overlay draws ink under the overlay renderer and stays transparent under the
+    // callout one, so every image it holds must be gated on the mode. That is strictly
+    // stronger than the old "no image at all", which only described one of the two arms.
+    const inkImages=(hits.match(/<image /g)||[]).length;
+    const gatedImages=(hits.match(/<image wx:if="\{\{drawer\.overlayMode\}\}"/g)||[]).length;
+    assert.ok(inkImages>0,'the overlay must be able to draw the drawer ink');
+    assert.equal(inkImages,gatedImages,'every overlay image must be gated on the overlay renderer');
+    assert(!hits.includes('<cover-image'),'the overlay must never use cover-image');
     for(const handler of ['onDrawerToggle','onClusterPick','onStackRoot','onDrawerPage'])assert(hits.includes('catchtap="'+handler+'"'));
     for(const field of ['drawer.height','drawer.rootTop','pin.top']){assert(native.includes(field));assert(hits.includes(field));}
     assert(!w.includes('class="stack-close-fallback glass"'));
   });
   await test('arrow, root, child and close handlers retain their intended operations',()=>{
-    const p=page('map');p.data.quiet=true;p.allMemories=[{...sample(),id:'tap-root'},{...sample(),id:'tap-child'}];p.applyFilters('','all','tap-root');p.onDrawerToggle({currentTarget:{dataset:{index:'0'}}});assert(p.data.clusterOpen);p.onClusterPick({currentTarget:{dataset:{id:'tap-child'}}});assert.equal(p.data.selectedId,'tap-child');p.onStackRoot({currentTarget:{dataset:{id:'tap-root'}}});assert.equal(p.data.selectedId,'tap-root');p.onClusterClose();assert.equal(p.data.clusterOpen,false);assert.equal(p.data.mapDrawers[0].rows.length,0);
+    const p=page('map');p.data.quiet=true;p.allMemories=[{...sample(),id:'tap-root'},{...sample(),id:'tap-child'}];p.applyFilters('','all','tap-root');p.onDrawerToggle({currentTarget:{dataset:{index:'0'}}});assert(p.data.clusterOpen);p.onClusterPick({currentTarget:{dataset:{id:'tap-child'}}});assert.equal(p.data.selectedId,'tap-child');p.onStackRoot({currentTarget:{dataset:{id:'tap-root'}}});assert.equal(p.data.selectedId,'tap-root');p.onClusterClose();assert.equal(p.data.clusterOpen,false);assertClosedDrawer(p,p.data.mapDrawers[0],'quiet close');
   });
   await test('real viewport projection preserves coordinate input and handles wrapped longitude',()=>{
     const projection=require(path.join(mp,'utils/mapProjection'));
@@ -2358,8 +2426,10 @@ function nativeTabs(initial=0){
     for(const t of [0,.25,.5,.75,1]){const p=stack.ease(t),frame=stack.layout(3,p);assert(frame.slots.every(row=>row.opacity===Number(p.toFixed(3))));frame.slots.forEach((row,i)=>assert.equal(frame.rootTop-row.top,Math.round((i+1)*101*p)));assert.equal(frame.height-frame.rootTop,89);}
     const css=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8');assert(css.includes('320ms cubic-bezier(.333333,0,.666667,1)'));
   });
+  // "height is retained while reversing" is a statement about the frame-driven driver:
+  // the CSS driver holds drawer.height constant, which would make it trivially true.
   await test('closing or reversing on the last stack page retains its members and height',async()=>{
-    const p=page('map');p.active=true;p.allMemories=Array.from({length:8},(_,i)=>({...sample(),id:'last-page-'+i,coordinates:[31,121]}));p.data.quiet=true;p.applyFilters('','all','last-page-0');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});p.onDrawerPage({currentTarget:{dataset:{step:1}}});p.onDrawerPage({currentTarget:{dataset:{step:1}}});assert.equal(p.data.drawerPage,2);assert.equal(p.data.mapDrawers[0].rows.length,1);
+    const p=page('map');p.data.drawerCssMotion=false;p.active=true;p.allMemories=Array.from({length:8},(_,i)=>({...sample(),id:'last-page-'+i,coordinates:[31,121]}));p.data.quiet=true;p.applyFilters('','all','last-page-0');p.onDrawerToggle({currentTarget:{dataset:{index:0}}});p.onDrawerPage({currentTarget:{dataset:{step:1}}});p.onDrawerPage({currentTarget:{dataset:{step:1}}});assert.equal(p.data.drawerPage,2);assert.equal(p.data.mapDrawers[0].rows.length,1);
     const ids=p.data.mapDrawers[0].rows.map(r=>r.id),height=p.data.mapDrawers[0].height;p.data.quiet=false;p.onDrawerToggle({currentTarget:{dataset:{index:0}}});assert.equal(p.data.drawerPage,2);assert.deepEqual(p.data.mapDrawers[0].rows.map(r=>r.id),ids);assert.equal(p.data.mapDrawers[0].height,height);
     await new Promise(r=>setTimeout(r,80));const mid=p.data.mapDrawers[0].height;p.onDrawerToggle({currentTarget:{dataset:{index:0}}});assert.equal(p.data.mapDrawers[0].height,mid);assert.deepEqual(p.data.mapDrawers[0].rows.map(r=>r.id),ids);p.onHide();
   });
@@ -2374,7 +2444,20 @@ function nativeTabs(initial=0){
     const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');assert(w.includes('bindtouchcancel="onStackRelease"'));assert(w.includes('pressedStackRoot === drawer.rootId ? 0.85 : 1'));
   });
   await test('paging material remains mounted through close and shrinks without overlapping the first stamp',()=>{
-    const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');assert.equal((w.match(/drawer.open && drawer.pages > 1/g)||[]).length,2);assert.equal((w.match(/30 \* drawer.progress/g)||[]).length,2);assert(w.includes("drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'"));
+    const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
+    // 2026-09-26: the gate moved from `drawer.open` to `drawer.stripOpen`, defined as
+    // `staticFrame ? targetOpen : open`. Under a transform driver `open` is true for EVERY
+    // cluster (rows must stay mounted to have something to transition), so gating on it
+    // would mount a paging strip in every closed cluster. `staticFrame` now covers BOTH
+    // transform drivers - the callout transition and the ordinary overlay - so the JS frame
+    // loop keeps the behaviour this test was written for: the strip stays mounted through
+    // the close fade. The assertion pins both halves rather than tolerating the rename.
+    assert.equal((w.match(/drawer.stripOpen && drawer.pages > 1/g)||[]).length,2,'both paging strips must gate on stripOpen');
+    assert.equal((w.match(/drawer.open && drawer.pages > 1/g)||[]).length,0,'no strip may gate on the driver-dependent open flag');
+    const src=fs.readFileSync(path.join(mp,'pages/map/index.js'),'utf8');
+    assert(src.includes('stripOpen:staticFrame?targetOpen:open'),'stripOpen must follow the active driver');
+    assert(src.includes('const staticFrame=Boolean(this.data.drawerCssMotion)||overlayMode;'),'staticFrame must cover both transform drivers');
+    assert.equal((w.match(/30 \* drawer.progress/g)||[]).length,2);assert(w.includes("drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'"));
     for(let i=0;i<=100;i++){const p=i/100;assert(36+30*p<=40+Math.round(28*p));}
   });
   await test('create-collection permission errors are not silently swallowed', async () => {

@@ -1,14 +1,14 @@
 {
   "miniprogram/pages/map/index.wxml": {
     "baseSha256": "464c48ae3efc36197a54de494efaaddee5616023d4457d5241381437193c9db1",
-    "sha256": "cf92efbb3250d1378d88f72adcd551d2d44916ca651e619c61ceb0deced25ccf",
-    "reason": "Reviewed Map identity-state markup: the blocking gate became an inline status while locked Store state rebuilds the map from an empty identity partition; no production template change in this repair.",
+    "sha256": "4fbb01868c60cf009cdeef42bfbb04c1f63dcd2be58d73952b8ef38328c24be9",
+    "reason": "Reviewed Map identity-state markup: the blocking gate became an inline status while locked Store state rebuilds the map from an empty identity partition; no production template change in this repair. 2026-09-26 user-requested drawer motion change: the drawer rows and toggle opt into a transform transition under a data flag while the JS frame driver stays reachable; the identity-state markup is untouched. 2026-09-26 A/B follow-up: the overlay hit region travels on the same transform as the toggle. 2026-09-26 architecture follow-up: the overlay can own the drawer ink under drawerRenderMode=view-overlay, so the same ordinary views now carry either the visible drawer or a transparent hit region; the identity-state markup is still untouched and the native-callout branch keeps its original expressions. 2026-09-27 user-reported visual regression: the ordinary-view toggle now shows the ORIGINAL stack-button asset for the correct orientation (the two callout branches use opposite conditions, so the overlay had shown the wrong chevron in every downward drawer), reads one shared asset field instead of re-deriving the rule, and carries the original pressed opacity.",
     "review": "docs/reviews/map-identity-state-20260922.md"
   },
   "miniprogram/pages/map/index.wxss": {
     "baseSha256": "1af64be700166e451ffd3c411f3bb8c936de0d2daf38e5f8eb0a4008e95259de",
-    "sha256": "fa77efd61d741fa8efecd188d26500e52a5a8dfe9d4742310faca2cff3185691",
-    "reason": "Reviewed styles paired with the Map inline identity status; prior map geometry, stack, and veil decisions remain intact.",
+    "sha256": "77c8ce71bdc6abbb49a2d6489c1d5ddffaf95ca7c58f15c7fb0567e8d6b7a95b",
+    "reason": "Reviewed styles paired with the Map inline identity status; prior map geometry, stack, and veil decisions remain intact. 2026-09-26 user-requested drawer motion change: adds the 320ms transform/opacity transition rules on the existing cubic curve; no other style rule changed. 2026-09-26 A/B follow-up: the overlay hit region gets the same transition so hit and visual cannot diverge. 2026-09-26 architecture follow-up: adds the pin-stack-ink rules for the ordinary-view drawer, scoped under the mode class so the hit-region-only styles are unchanged. 2026-09-27 user-reported visual regression: the ordinary-view toggle no longer paints a CSS disc/shadow behind the button asset (the PNG already contains the disc and chevron) and drops the 1px transparent border so the absolutely positioned asset is not inset.",
     "review": "docs/reviews/map-identity-state-20260922.md"
   }
 }
