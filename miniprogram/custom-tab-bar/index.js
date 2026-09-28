@@ -12,7 +12,7 @@ Component({
   data: {
     labels: ['Home', 'Map', 'Add', 'Us', 'Me'], addLabel: 'Add a memory',
     morphDuration: 480,
-    selected: 0, transitionFrom: -1, entryKey: 0, entryActive:false, presentationReady:false, viewState:null,
+    selected: 0, visualSelected: 0, warmEndpoints: [], transitionFrom: -1, entryKey: 0, entryActive:false, presentationReady:false, viewState:null,
     dusk: false,
     quiet: false,
     list: [
@@ -43,8 +43,30 @@ Component({
     },
     onMorphReport(event){
       const r=event.detail||{};
-      this.trace('icon',{index:Number(event.currentTarget.dataset.index),key:r.entryKey==null?this.data.entryKey:r.entryKey,mode:r.mode,reason:r.reason,
+      const index=Number(event.currentTarget.dataset.index);
+      this.trace('icon',{index,key:r.entryKey==null?this.data.entryKey:r.entryKey,mode:r.mode,reason:r.reason,
         durationMs:r.durationMs,firstFrameWaitMs:r.firstFrameWaitMs,frameBudgetMs:r.frameBudgetMs});
+      // The emphasis moves when the incoming icon has actually begun its morph ('start'), or when
+      // it reports that no morph will run at all ('ready' = static path, 'complete' = it finished
+      // without a start we could see, 'static-fallback' = the renderer declined). 'static-loaded'
+      // is deliberately NOT a trigger: it fires just before the first frame, and the whole point
+      // is that the buttons must not re-style before the shape moves.
+      if(index===this.data.selected&&this.data.visualSelected!==this.data.selected&&
+         (r.mode==='start'||r.mode==='complete'||r.mode==='ready'||r.mode==='static-fallback')){
+        this.trace('visual-selected',{to:this.data.selected,reason:r.mode});
+        // The template reads viewState.visualSelected, so both copies must move together.
+        this.setData({visualSelected:this.data.selected,'viewState.visualSelected':this.data.selected});
+      }
+    },
+    // Semantic selection is the navigation truth; visual selection owns .is-active and the label
+    // emphasis. They only diverge while a morph is in flight, which is the whole point: the
+    // buttons must not re-style themselves ~80ms before the shape starts to move.
+    nextVisualSelection(next){
+      if(this.data.visualSelected===undefined)return next.selected;   // first publish
+      if(next.quiet)return next.selected;                            // no morph to wait for
+      if(next.entryActive===false)return next.selected;              // parked bars are invisible
+      if(next.selected!==this.data.selected)return this.data.visualSelected;  // wait for the morph
+      return this.data.visualSelected;
     },
     routeSelection(){
       try{
@@ -59,28 +81,78 @@ Component({
         return {selected:Number(selected),transitionFrom:t.from,entryKey:t.id,entryActive:true,presentationReady:true};
       return {selected:Number(selected),transitionFrom:-1,entryKey:0,entryActive:true,presentationReady:true};
     },
+    // Everything that can change what the five children render. `revision` is deliberately NOT
+    // part of it: it is a monotonic counter, not a visual field, and two publishes with identical
+    // visuals still carry different revisions. presentationReady decides whether the bar exists at
+    // all; labels/addLabel are the bar's own text.
+    // Kept as a method so the regression suite can pin the key directly instead of inferring it
+    // from a call count.
+    visualPublishKey(next,icons){
+      return JSON.stringify([next.presentationReady,next.labels,next.addLabel,next.visualSelected,icons.map(icon=>({
+        key:icon.key,active:icon.active,name:icon.name,fromName:icon.fromName,
+        quiet:icon.quiet,duration:icon.duration,color:icon.color
+      }))]);
+    },
+    // The exact (name, color) pairs a morph can ask the static endpoint for, per item: both
+    // glyphs, in every colour this item can be rendered in. The child turns them into URIs with
+    // the same iconSvg() call the endpoint uses, so the warmed URI is byte-identical. The Add
+    // item has one colour in both states, hence 2 entries instead of 4.
+    warmPlan(dusk){
+      const on=!!dusk;
+      return (this.data.list||[]).map(item=>{
+        const active=item.add?(on?'#302a23':'#111510'):(on?'#dec8a7':'#171a16');
+        const inactive=item.add?(on?'#302a23':'#111510'):(on?'#a9a69f':'#828480');
+        const colors=item.add?[active]:[active,inactive];
+        const out=[];
+        for(const color of colors)for(const name of [item.rest,item.chosen])out.push({name,color});
+        return out;
+      });
+    },
     publish(patch,done){
-      const next=Object.assign({},this.data,patch),revision=++presentationSerial;
-      const icons=(next.list||[]).map((item,index)=>({
+      const next=Object.assign({},this.data,patch);
+      next.visualSelected=this.nextVisualSelection(next);
+      // The warm plan only changes with the theme, so it rides along with that publish and never
+      // becomes part of the morph command.
+      const warmKey=JSON.stringify(this.warmPlan(next.dusk));
+      if(warmKey!==this._warmKey){this._warmKey=warmKey;patch=Object.assign({},patch,{warmEndpoints:this.warmPlan(next.dusk)});}
+      const compose=revision=>(next.list||[]).map((item,index)=>({
         revision,key:next.entryKey,active:next.entryActive,name:next.selected===index?item.chosen:item.rest,
         fromName:next.transitionFrom===index?item.chosen:item.rest,
         quiet:!!next.quiet,duration:480,
         color:item.add?(next.dusk?'#302a23':'#111510'):(next.selected===index?(next.dusk?'#dec8a7':'#171a16'):(next.dusk?'#a9a69f':'#828480'))
       }));
-      // Parked peers change only the previous/current selected glyphs. Preserve
-      // unchanged child commands so parking does not cause five redundant commits.
-      if(next.entryActive===false&&this.data.viewState){icons.forEach((icon,index)=>{
-        const old=this.data.viewState.icons[index];
-        if(old&&['key','active','name','fromName','quiet','duration','color'].every(k=>old[k]===icon[k]))icons[index]=old;
-      });}
-      const viewState={revision,selected:next.selected,icons};this._viewRevision=revision;
-      this.trace('publish',{revision,selected:next.selected,from:next.transitionFrom,key:next.entryKey,active:next.entryActive});
+      const park=icons=>{
+        // Parked peers change only the previous/current selected glyphs. Preserve
+        // unchanged child commands so parking does not cause five redundant commits.
+        if(next.entryActive===false&&this.data.viewState){icons.forEach((icon,index)=>{
+          const old=this.data.viewState.icons[index];
+          if(old&&['key','active','name','fromName','quiet','duration','color'].every(k=>old[k]===icon[k]))icons[index]=old;
+        });}
+        return icons;
+      };
+      // A publish whose visual payload matches the last one is indistinguishable to every child,
+      // so it is pure bridge traffic: the viewState already on the children carries the same
+      // commands. Skipping it therefore cannot change anything a child renders.
+      const visualKey=this.visualPublishKey(next,park(compose(0)));
+      if(this._publishedVisualKey===visualKey){
+        this._publishSkipped=(this._publishSkipped||0)+1;
+        this.trace('publish-skipped',{selected:next.selected,from:next.transitionFrom,key:next.entryKey,active:next.entryActive,skipped:this._publishSkipped});
+        if(done)done();
+        return false;
+      }
+      const revision=++presentationSerial;
+      const icons=park(compose(revision));
+      this._publishedVisualKey=visualKey;
+      const viewState={revision,selected:next.selected,visualSelected:next.visualSelected,icons};this._viewRevision=revision;
+      this.trace('publish',{revision,selected:next.selected,from:next.transitionFrom,key:next.entryKey,active:next.entryActive,visual:next.visualSelected});
       // A single declarative input owns each child. Never remap a query result by array position.
-      this.setData(Object.assign({},patch,{viewState}),()=>{
+      this.setData(Object.assign({},patch,{viewState,visualSelected:next.visualSelected}),()=>{
         if(this._alive!==false&&this._viewRevision===revision)this.trace('view-commit',{revision,selected:next.selected,key:next.entryKey});
         if(done)done();
       });
+      return true;
     },
+    getPublishDiagnostics(){return {published:this._publishedVisualKey!==undefined,skipped:this._publishSkipped||0};},
     parkPresentation(selected){
       // Static current-page endpoints, not this cached page's last selected target.
       // from===to also keeps a later incoming handoff on the same visible geometry.

@@ -1,2 +1,7 @@
 .morph-box { position:relative;overflow:hidden; }
 .morph-canvas,.morph-svg,.morph-fallback { position:absolute;left:0;top:0;pointer-events:none; }
+
+/* Offscreen endpoint preloader: kept in the tree so the native image layer rasterises the URI,
+   but moved out of the viewport and made non-interactive. Deliberately NOT display:none. */
+.morph-warm { position:absolute;left:-9999rpx;top:-9999rpx;width:1rpx;height:1rpx;opacity:0;pointer-events:none;overflow:hidden; }
+.morph-warm-image { width:1rpx;height:1rpx; }

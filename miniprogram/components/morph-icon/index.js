@@ -3,6 +3,25 @@ const {iconSvg}=require('../../utils/icons');
 const {SPRING_PRESETS,Spring}=require('../../vendor/morphicons-core');
 let engine=null;
 let diagnosticSerial=0;
+
+// Endpoint warmup registry. Module-level, so every icon on every cached TabBar shares one set:
+// a given endpoint URI is handed to the native image layer at most once per app run.
+//   cold -> loading -> ready | failed
+// The point is only to rasterise the static endpoint SVGs the morph will ask for, so the first
+// tap does not have to wait for a cold decode. No frames are generated and no morph is run here.
+const WARM_BATCH = 2;
+const warmState = new Map();
+function warmClaim(uris){
+  const out=[];
+  for(const uri of uris){ if(!uri||warmState.has(uri))continue; warmState.set(uri,'loading'); out.push(uri); }
+  return out;
+}
+function warmSettle(uri,ok){ if(warmState.get(uri)==='loading')warmState.set(uri,ok?'ready':'failed'); }
+function warmSnapshot(){
+  const out={cold:0,loading:0,ready:0,failed:0,uris:[]};
+  warmState.forEach((v,k)=>{out[v]++;out.uris.push({uri:k,state:v});});
+  return out;
+}
 // Morphicons' own spring presets. A caller that names one gets a per-frame integrated
 // curve and a timeline that ends when the spring settles; callers that name nothing keep
 // the previous fixed-duration smoothstep exactly as before.
@@ -10,8 +29,8 @@ function springFor(name){const preset=name?SPRING_PRESETS[name]:null;if(!preset)
 function springStep(spring,dt){const settled=spring.step(dt)===true;return {ease:Math.max(0,Math.min(1,spring.x)),settled};}
 try{engine=require('../../utils/morphEngine');}catch(e){/* Static SVG fallback remains available. */}
 Component({
-  properties:{presentation:{type:Object,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},spring:{type:String,value:''},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
-  data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]},
+  properties:{presentation:{type:Object,value:null},warm:{type:Array,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},spring:{type:String,value:''},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
+  data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[],warmSlots:[]},
   observers:{presentation:function(command){if(command)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
     if(this._acceptedCommand||this.data.presentation)return;
     const signature=JSON.stringify([this.data.name,this.data.quiet,this.data.color,this.data.fromName,this.data.entryKey]);
@@ -27,11 +46,49 @@ Component({
   }},
   lifetimes:{
     attached(){if(!this._diagnosticId)this._diagnosticId=++diagnosticSerial;this._alive=true;this.recordRender('attached');if(this.data.presentation)this.acceptPresentation(this.data.presentation);},
-    ready(){this.setup();},
+    ready(){this.setup();setTimeout(()=>{this.startWarm();},0);},
     detached(){this.recordRender('detached');this._alive=false;const pending=this._commandWaiters||[];this._commandWaiters=[];pending.forEach(fn=>fn());this.cancel();this.clearSurface();this._svgReady=false;this._ctx=null;this._canvas=null;}
   },
   pageLifetimes:{hide(){this.recordRender('page-hide');this._hiddenAfterRevision=this._acceptedCommand?this._acceptedCommand.revision:0;this._hidden=true;this.cancel();this.clearSurface();this.setData({painting:false,frameSrc:''});},show(){this.recordRender('page-show');this._rafStalled=false;if(this.data.renderer==='svg')return;this._hidden=false;if(this._ctx&&!this.data.painting)this.move(!this.data.entryKey);}},
   methods:{
+    // ---- endpoint warmup -------------------------------------------------
+    // The morph cannot start until the static endpoint <image> reports load (armStaticWait ->
+    // staticLoaded -> finishCommandCommit), so a cold endpoint decode sits directly in front of
+    // the first morph. These methods ask the native image layer to rasterise exactly the URIs the
+    // morph will later request, using the same iconSvg() call the endpoint uses, so a warmed URI
+    // is byte-identical. Nothing is generated and no morph is run: the visible path is untouched.
+    warmUris(){
+      const plan=this.data.warm||[];const uris=[];
+      for(const entry of plan){
+        if(!entry||!entry.name)continue;
+        try{const uri=iconSvg(entry.name,{stroke:entry.color,strokeWidth:1.75});if(uri)uris.push(uri);}catch(e){}
+      }
+      return uris;
+    },
+    startWarm(){
+      if(this._warmStarted||!this._alive)return;
+      this._warmStarted=true;
+      this._warmQueue=warmClaim(this.warmUris());
+      this.recordRender('warm-start',{claimed:this._warmQueue.length});
+      this.pumpWarm();
+    },
+    pumpWarm(){
+      if(!this._alive)return;
+      const slots=(this._warmQueue||[]).slice(0,WARM_BATCH).map(uri=>({uri}));
+      const current=this.data.warmSlots||[];
+      if(slots.length===current.length&&slots.every((s,i)=>current[i]&&current[i].uri===s.uri))return;
+      this.setData({warmSlots:slots});
+    },
+    onWarmLoad(event){this.finishWarm(event,true);},
+    onWarmError(event){this.finishWarm(event,false);},
+    finishWarm(event,ok){
+      const uri=event&&event.currentTarget&&event.currentTarget.dataset?event.currentTarget.dataset.uri:'';
+      warmSettle(uri,ok);
+      this.recordRender(ok?'warm-load':'warm-error',{});
+      this._warmQueue=(this._warmQueue||[]).filter(u=>u!==uri);
+      this.pumpWarm();
+    },
+    getWarmDebug(){return {slots:(this.data.warmSlots||[]).map(s=>s.uri),queue:(this._warmQueue||[]).length,started:!!this._warmStarted,registry:warmSnapshot()};},
     renderSnapshot(){
       const d=this.data,v=d.viewCommand,c=this._acceptedCommand,m=this._svgMotion;
       const target=v&&(v.quiet||d.fallbackOnly||!v.key||(v.active&&d.settledEntryKey===v.key));

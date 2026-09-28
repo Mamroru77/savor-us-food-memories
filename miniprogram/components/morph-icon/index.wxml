@@ -13,3 +13,10 @@
   <view wx:if="{{!ready || !painting || !entryActive || (renderer === 'svg' && !frameVisible)}}" class="morph-fallback"><image wx:if="{{renderer === 'svg' && entryActive && painting}}" src="{{loadingSrc}}" mode="aspectFit" style="width:{{size}}rpx;height:{{size}}rpx" /><s-icon wx:else name="{{'lucide-'+(quiet || fallbackOnly ? name : (entryKey && (entryActive === false || settledEntryKey !== entryKey) && fromName ? fromName : (staticName || name)))}}" size="{{size}}" color="{{color}}" stroke="1.75" /></view>
 </view>
 </block>
+
+<!-- Offscreen endpoint preloader. Moved out of the viewport rather than display:none, because
+     some native image pipelines decline to rasterise a display:none source. It carries only the
+     endpoint URIs this icon claimed, at most two at a time, and its load/error are observable. -->
+<view wx:if="{{warmSlots.length}}" class="morph-warm" aria-hidden="true">
+  <image wx:for="{{warmSlots}}" wx:key="uri" class="morph-warm-image" src="{{item.uri}}" mode="aspectFit" bindload="onWarmLoad" binderror="onWarmError" data-uri="{{item.uri}}" />
+</view>

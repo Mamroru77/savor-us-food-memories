@@ -60,16 +60,16 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/custom-tab-bar/index.js": {
-    "sha256": "73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。"
+    "sha256": "8845ad4b75dc5bc930740062c94f4d9748428fbcf3a0a06680a253e73a4da91d",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。 2026-09-28 Phase 1A (docs/reviews/tabbar-publish-dedupe-phase1a-20260928.md): publish() skips a publish whose visual payload repeats the previous one. It compares the exact icon commands every child receives and skips only on byte-identical payloads (revision excluded) — the rejected 2026-09-16 round inferred duplicates from function names instead. 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): endpoint warm plan (warmEndpoints) plus the semantic/visual selection split (visualSelected, which moves only when the morph starts). 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.wxml": {
-    "sha256": "413cf4ccc74e52ac83ca555bd53d50d75d044d81108336986e646f7902119d07",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。"
+    "sha256": "9f7b4c3465fb19d640fa302d2a9422e968d46e8cd92914e954ff5685f93fdb01",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): .is-active now reads viewState.visualSelected, and each s-morph gains warm=\"{{warmEndpoints[index]}}\". 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "57e506ffa7e14d8d832ac1259c12a72fc2395f2037c94c8f4635b340811adae0",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。"
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。 The label styling is back to the original single .tab-label. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/pages/home/index.wxml": {
     "sha256": "a369416c6b85c27119dccd13387d456714af94269442a7c7f195c9fc6c544998",
@@ -84,8 +84,8 @@
     "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
   },
   "miniprogram/components/morph-icon/index.wxml": {
-    "sha256": "cc9cfaef93ca8069492ae0ce40e7b0e6fa5f2af58855c55dc80aa7d0ebd1c4c6",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。"
+    "sha256": "99d35e2283fd285dddad2cfa8f3e93a81432d7a12738fc05a9b89776c0faf8c5",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen warm <image> slots with observable load/error. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.json": {
     "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
@@ -104,12 +104,12 @@
     "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
   },
   "miniprogram/components/morph-icon/index.js": {
-    "sha256": "ebce76ff577e16daa7e272031c02f698af49b1fedad405a6b11ab06cbbe274b4",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。"
+    "sha256": "4349e4b668a64854db5cc450dba7add1f257cd4b6c3c69bca7e03eded46d8659",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): module-level endpoint warmup registry (claim/settle/pump) and the offscreen preload lifecycle. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/components/morph-icon/index.wxss": {
-    "sha256": "a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。"
+    "sha256": "ac3372470bc25a25b51b84cac5fd8c012f502ae785d5733beba6de473b93c0f0",
+    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。 2026-09-28 user-authorized Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen .morph-warm placement (NOT display:none, so the native layer rasterises it). Supersedes the 2026-09-16 TabBar rollback pin only for this change; the real-device verdict is still pending. Previous hash a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc."
   },
   "miniprogram/pages/morph-lab/index.js": {
     "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",

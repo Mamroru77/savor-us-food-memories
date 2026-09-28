@@ -206,7 +206,12 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   assert.equal(current.icons[2].name,'utensils');assert.equal(current.icons[2].fromName,'utensils');assert.equal(current.icons[1].name,'map');assert.equal(current.icons[1].fromName,'map');assert(old.revision<current.revision);
  });
  await test('neither old nor new parent callbacks imperatively dispatch to queried children',()=>{
-  const h=controller(),b=h.bar(true);b.flush();let queried=0;b.selectAllComponents=()=>{queried++;throw Error('not required');};b.showSelection(2);const older=b.acks.shift();b.updateAppearance(2,{dusk:true});b.flush();older();assert.equal(queried,0);assert.equal(b.data.viewState.icons[2].name,'utensils-crossed');
+  const h=controller(),b=h.bar(true);b.flush();
+  // The mount already published selected:2/active:true, and a publish whose visual payload repeats
+  // the previous one is now deduped, so showSelection(2) would queue no ack at all. Start from the
+  // parked state a cached bar sits in so this stays a real transition; the assertions are unchanged.
+  b.publish({selected:2,transitionFrom:2,entryKey:0,entryActive:false,presentationReady:true});b.flush();
+  let queried=0;b.selectAllComponents=()=>{queried++;throw Error('not required');};b.showSelection(2);const older=b.acks.shift();b.updateAppearance(2,{dusk:true});b.flush();older();assert.equal(queried,0);assert.equal(b.data.viewState.icons[2].name,'utensils-crossed');
  });
  await test('stale property delivery and stale first-frame callbacks cannot overwrite the latest accepted command',()=>{
   const c=morph({deferFrame:true});const a=command(10,10,true);c.receive(a);const oldGeneration=c._generation,oldAck=c.frames.shift();
@@ -255,7 +260,7 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   const h=controller(),b=h.bar();h.tap(b,2);h.tap(b,99);assert.equal(h.calls.length,0);const log=b.getTransitionTrace();assert(log.some(r=>r.event==='tap-noop'&&r.reason==='already-on-route'));assert(log.some(r=>r.event==='tap-rejected'&&r.reason==='invalid-index'));
  });
  await test('debug output identifies the queried instance rather than assuming the last global trace row is visible',()=>{
-  const h=controller(),a=h.bar(),b=h.bar();const info=a.getTransitionDebug();assert.equal(info.bar,a._instanceId);assert.notEqual(info.bar,b._instanceId);assert.equal(info.schema,'nav-independent-v1');a.onMorphReport({currentTarget:{dataset:{index:2}},detail:{mode:'static-fallback',entryKey:7,reason:'svg-static-timeout'}});assert.equal(a.getTransitionTrace().at(-1).reason,'svg-static-timeout');
+  const h=controller(),a=h.bar(),b=h.bar();const info=a.getTransitionDebug();assert.equal(info.bar,a._instanceId);assert.notEqual(info.bar,b._instanceId);assert.equal(info.schema,'nav-independent-v1');a.onMorphReport({currentTarget:{dataset:{index:2}},detail:{mode:'static-fallback',entryKey:7,reason:'svg-static-timeout'}});assert.equal(a.getTransitionTrace().filter(r=>r.event==='icon').at(-1).reason,'svg-static-timeout');
  });
  await test('precreated bar after explicit show inherits language and current static endpoint',()=>{
   const h=controller(),a=h.bar();h.tap(a,4);h.setRoute(4);a.showSelection(4,{labels:['回忆','地图','记录','我们','我的'],dusk:true,quiet:false});const me=h.bar();assert.equal(me.data.labels[4],'我的');assert.equal(me.data.entryActive,false);assert.equal(me.data.viewState.icons[4].fromName,'user-round');assert.equal(me.data.viewState.icons[4].name,'user-round');assert.equal(me.data.dusk,true);

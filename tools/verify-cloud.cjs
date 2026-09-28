@@ -147,7 +147,10 @@ function nativeTabs(initial=0){
     getCurrentPages:()=>route<0?[]:[{route:'pages/'+['home','map','add','us','me'][route]+'/index',_tabAppearance:appearance}],
     wx:{switchTab(o){calls.push(o);route=['home','map','add','us','me'].indexOf(o.url.split('/')[2]);if(o.success)o.success();}}
   });
-  function bar(){const b={...spec.methods,data:JSON.parse(JSON.stringify(spec.data)),updates:[],setData(p,cb){this.updates.push(p);Object.assign(this.data,p);if(cb)cb();}};spec.lifetimes.attached.call(b);return b;}
+  function bar(){const b={...spec.methods,data:JSON.parse(JSON.stringify(spec.data)),updates:[],setData(p,cb){this.updates.push(p);
+    // Native setData path semantics: 'viewState.visualSelected' must land nested, not as a literal key.
+    for(const [key,value] of Object.entries(p)){const keys=key.replace(/\[(\d+)\]/g,'.$1').split('.');let t=this.data;for(let i=0;i<keys.length-1;i++){if(t[keys[i]]===undefined)t[keys[i]]=/^\d+$/.test(keys[i+1])?[]:{};t=t[keys[i]];}t[keys[keys.length-1]]=value;}
+    if(cb)cb();}};spec.lifetimes.attached.call(b);return b;}
   return {spec,bar,calls,setRoute:n=>route=n,tap:(b,n)=>b.onTabTap({currentTarget:{dataset:{index:n,path:'/pages/'+['home','map','add','us','me'][n]+'/index'}}})};
 }
 (async () => {
