@@ -1,6 +1,6 @@
 {
   "name": "savor-miniprogram",
-  "version": "1.0.0",
+  "version": "1.2.3",
   "private": true,
   "description": "Savor — WeChat native mini program port of the Savor food-diary web app.",
   "scripts": {

@@ -4,7 +4,8 @@
 
 ## 先读这些
 
-- [Release Closure 2026-09-24](reviews/release-closure-20260924.md) —— 当前状态索引：7 项真机问题、提交清单与验证矩阵
+- [Release Closeout v1.2.3](reviews/release-closeout-v1.2.3-20260929.md) —— **当前版本**索引：仓库审计、本地清理、验证矩阵与发布动作
+- [Release Closure 2026-09-24](reviews/release-closure-20260924.md) —— `v1.0.0` 收尾：7 项真机问题、提交清单与验证矩阵
 - [开发与验证指南](guides/development.md)
 - [总进度](status/PROJECT_PROGRESS.md)
 - [统一验收清单](status/UNIFIED_ACCEPTANCE.md)
@@ -24,10 +25,36 @@
 
 ### 长期文档（RCA）
 
-- [release-closure-20260924.md](reviews/release-closure-20260924.md) —— 收尾索引：7 项真机问题、提交清单、验证矩阵与真机取证
+- [release-closeout-v1.2.3-20260929.md](reviews/release-closeout-v1.2.3-20260929.md) —— v1.2.3 发布收尾：仓库审计、本地清理、验证矩阵与发布动作
+- [release-closure-20260924.md](reviews/release-closure-20260924.md) —— v1.0.0 收尾索引：7 项真机问题、提交清单、验证矩阵与真机取证
 - [avatar-final-rca-and-fix.md](reviews/avatar-final-rca-and-fix.md) —— 头像链路四个独立缺陷、被证伪的假设与最终架构合同
 - [identity-partition-migration.md](reviews/identity-partition-migration.md) —— 历史身份分区迁移矩阵、marker 存在性契约与数据保全
 - [add-native-return-fix.md](reviews/add-native-return-fix.md) —— Add 照片 native-return 竞态、生命周期合同与为何不动 identity
+
+### 2026-09-25 ~ 09-28 修复与迭代
+
+图片、媒体、地图、餐饮类型与 TabBar 的逐轮记录。**含已回退或已暂停的实验方案**，
+阅读时注意各文件顶部的状态标注（`REVERTED` / `DEFERRED` / `EXPERIMENTAL`）。
+
+- [image-pipelines-round7-20260927.md](reviews/image-pipelines-round7-20260927.md) —— 图片链路第 15 轮
+- [photo-upload-timeout-and-poi-name-20260925.md](reviews/photo-upload-timeout-and-poi-name-20260925.md)
+- [round8-media-gc-20260928.md](reviews/round8-media-gc-20260928.md) —— orphan media 回收
+- [round7-device-root-cause-20260928.md](reviews/round7-device-root-cause-20260928.md)
+- [round7-device-trace-runbook-20260927.md](reviews/round7-device-trace-runbook-20260927.md)
+- [round7-automation-takeover-result-20260928.md](reviews/round7-automation-takeover-result-20260928.md)
+- [map-performance-investigation-20260926.md](reviews/map-performance-investigation-20260926.md)
+- [map-performance-fix-round1-20260926.md](reviews/map-performance-fix-round1-20260926.md)
+- [map-performance-fix-round2-20260926.md](reviews/map-performance-fix-round2-20260926.md)
+- [map-real-device-ab-round3-20260926.md](reviews/map-real-device-ab-round3-20260926.md)
+- [map-overlay-drawer-round4-20260926.md](reviews/map-overlay-drawer-round4-20260926.md)
+- [map-toggle-visual-restore-round5-20260927.md](reviews/map-toggle-visual-restore-round5-20260927.md)
+- [map-zoom-stepper-phase05-20260928.md](reviews/map-zoom-stepper-phase05-20260928.md)
+- [map-zoom-stepper-phase1-20260928.md](reviews/map-zoom-stepper-phase1-20260928.md) —— 精细缩放最终方案
+- [cloud-deleted-edit-keep-20260925.md](reviews/cloud-deleted-edit-keep-20260925.md)
+- [cloud-deleted-edit-keep-20260925-audit.md](reviews/cloud-deleted-edit-keep-20260925-audit.md)
+- [tabbar-publish-dedupe-phase1a-20260928.md](reviews/tabbar-publish-dedupe-phase1a-20260928.md) —— **生产保留**
+- [tabbar-phase1c-20260928.md](reviews/tabbar-phase1c-20260928.md) —— **生产保留**（endpoint warmup）
+- [tabbar-phase2e-20260928.md](reviews/tabbar-phase2e-20260928.md) —— TabBar 抽动 `DEFERRED`；Phase 2B/2C/2D 已**全部回退**
 
 ### 阶段性记录
 
