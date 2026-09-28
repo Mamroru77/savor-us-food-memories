@@ -5,8 +5,31 @@
 # Dependencies and generated files
 node_modules/
 npm-debug.log*
-Thumbs.db
+
+# OS scratch files
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor scratch files
+*.swp
+*.swo
+*~
+.idea/
+
+# Local Python tooling caches (tools/build-map-icons.py itself stays tracked)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local scratch, temporary probes and transient output
+scratch/
+tmp/
+temp/
+.cache/
+*.tmp
 
 # Credentials must never be committed
 .env
