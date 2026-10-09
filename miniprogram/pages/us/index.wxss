@@ -4,7 +4,7 @@
   padding-right: var(--page-gutter);
   padding-bottom: 16rpx;
 }
-.us-heading { margin: 0 8rpx; }
+.us-heading { margin: 0; }
 .us-heading .heading-title { display: block; }
 .us-heading .heading-sub { display: block; }
 .us-settings {
@@ -102,11 +102,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The Latest thumbnail is a place photo, not a third person: a circle here repeated the two avatar
+   circles one card above and was the only circular photo in the product. It now uses the shared
+   image radius so Us belongs to the same photographic system as Add / Home / Map. */
 .journey-latest-photo {
   height: 92rpx;
   width: 92rpx;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-image, 28rpx);
   background: rgba(255, 255, 255, 0.4);
 }
 
@@ -173,8 +176,6 @@
 .shared-like s-icon { position:relative; }
 .shared-photo-copy { right:100rpx; }
 .shared-photo-name { font-weight:500; }
-.space-management{width:100%;margin:28rpx 0 0;color:var(--ink);font-family:var(--sans);line-height:40rpx;font-size:25rpx;white-space:normal}.space-management::after{border:0}
-
 .avatar-blank {
   display: flex;
   align-items: center;

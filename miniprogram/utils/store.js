@@ -35,6 +35,12 @@ const listeners = [];
 const toastListeners = [];
 let toastTimer = null;
 let currentToast = null;
+// Monotonic revision of the published diary. It is bumped by exactly the two events that
+// publish a new state to subscribers -- a commit, and an identity transition that reloads the
+// partition -- so a consumer may memoize on it: an unchanged revision means no notification has
+// been published since that consumer last looked. Nothing else is a data change, which is what
+// lets a page keep its derived view model across a primary-tab switch instead of rebuilding it.
+let revisionCount = 0;
 
 function defaults() {
   return {
@@ -234,8 +240,13 @@ function commit(next, language) {
   identity.setStorageSync(STORAGE_KEY,JSON.stringify(diary));
   Object.assign(state,diary);
   if(language!==undefined)i18n.setLanguage(language);
+  revisionCount+=1;
   listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
 }
+// The published-diary revision. Read-only, monotonic within an app session, and never persisted:
+// it exists so a consumer can ask "has anything been published since I last rendered?" without
+// re-deriving the whole view model to find out.
+function revision() { return revisionCount; }
 function queueMutation(memory,kind,patch,updated) {
   ensureLoaded();
   const token=identity.lease();
@@ -399,8 +410,27 @@ function editedRecordIds() {
 function mergeCloudRead(memories,token) {
   identity.assertLease(token);
   const merged=syncRepository.mergeCloud(state.memories,memories,state.cloudHidden,state.outbox,editedRecordIds());
+  // A cloud read that produced exactly the records this device already holds is NOT a change.
+  // Committing it would rewrite identical bytes, bump the revision and notify every subscriber,
+  // which is how a redundant sync (Home's onShow does one too) used to make a hidden Map page
+  // rebuild its markers for nothing. Only a real difference is published.
+  if(sameMemories(merged,state.memories))return state.memories;
   commit(Object.assign({},state,{memories:merged}));
   return state.memories;
+}
+// Content equality for the merge result. Key order can differ between a locally built memory and
+// one that came back through overlay(), so compare canonically rather than by reference.
+function sameMemories(a,b) {
+  if(a===b)return true;
+  if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+  return canonical(a)===canonical(b);
+}
+function canonical(list) {
+  return JSON.stringify(list.map(memory=>{
+    const out={};
+    Object.keys(memory).sort().forEach(key=>{out[key]=memory[key];});
+    return out;
+  }));
 }
 async function refreshCloudReadOnly(){identity.assertBusinessCloudAllowed();const token=identity.lease();const memories=await require('./cloudRecords').listRecords();return mergeCloudRead(memories,token);}
 function applyCloudProfile(profile,preferences,token){
@@ -519,10 +549,14 @@ async function setMemoryLocation(memory, location) {
 identity.subscribe(()=>{
   loaded=false; mutationFlight=null;syncFlight=null;saveFlight=null;resolvingRecords.clear();
   ensureLoaded();state.identity=identity.snapshot();
+  // An actor transition reloads the partition and republishes: it is a change by definition, so
+  // no consumer may mistake it for "nothing happened" and keep the previous actor's view model.
+  revisionCount+=1;
   dismissToast();listeners.slice().forEach(fn=>{try{fn(state);}catch(e){}});
 });
 module.exports = { refreshCloudReadOnly, applyCloudProfile, privateCopy, canResolve, flushOutbox, useCloudVersion, keepLocalEdit, beginEdit,
   setMemoryLocation,
+  revision,
   STORAGE_KEY,
   DRAFT_KEY,
   get,

@@ -1,7 +1,7 @@
 const data = require('./data');
 const diningTypeOptions = require('./diningTypeOptions');
 
-const DEVICE_KEYS = ['theme', 'language', 'reduceMotion'];
+const DEVICE_KEYS = ['theme', 'language', 'reduceMotion', 'showNativePoi'];
 const language = value => ['system', 'zh-CN', 'en'].includes(value) ? value : 'system';
 
 // Resident dining types live in the owner's settings partition (never the device-level key), so they

@@ -1,7 +1,7 @@
 // Unknown bytes fail closed before the reviewed current menu is projected onto
 // the immutable historical fixture. This does not edit the fixture or product.
 const assert=require('node:assert/strict'),crypto=require('crypto'),fs=require('node:fs'),path=require('node:path');
-const approvedSha256='e694190111f07b2afc999da19aac483eae2fc9dcddb8f02c8f8be43b4385b491';
+const approvedSha256='efc70e5c48362c241f70fade1e600f8616c6682647a2bc013ae6892f4d6632dc';
 const menuPattern=/const MENU_ROWS = [\s\S]*?\n\];/;
 function project(source){
  assert.equal(crypto.createHash('sha256').update(source).digest('hex'),approvedSha256,'Me source differs from exact reviewed A+menu integration');

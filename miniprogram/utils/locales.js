@@ -2729,5 +2729,50 @@ module.exports = [
     "key": "sa4ae4b24a1",
     "en": "Zoom out",
     "zh": "缩小地图"
+  },
+  {
+    "key": "s471d756846",
+    "en": "Saving your memory...",
+    "zh": "正在保存回忆..."
+  },
+  {
+    "key": "sc7d968ffcb",
+    "en": "Memory saved",
+    "zh": "回忆已保存"
+  },
+  {
+    "key": "s691f4302fc",
+    "en": "Verifying…",
+    "zh": "正在验证…"
+  },
+  {
+    "key": "seb662620b5",
+    "en": "Hide map places",
+    "zh": "隐藏地图地标"
+  },
+  {
+    "key": "s156290796b",
+    "en": "Show map places",
+    "zh": "显示地图地标"
+  },
+  {
+    "key": "sc0a8060f3b",
+    "en": "Original",
+    "zh": "原图"
+  },
+  {
+    "key": "sbb16bc4970",
+    "en": "Location permission is needed to choose a restaurant location.",
+    "zh": "选择餐厅位置需要定位权限。"
+  },
+  {
+    "key": "sbd17d58cf8",
+    "en": "Photo permission is needed to add a photo.",
+    "zh": "添加照片需要照片权限。"
+  },
+  {
+    "key": "s134635e9a2",
+    "en": "Open Settings",
+    "zh": "去设置"
   }
 ];

@@ -1,5 +1,11 @@
 const identity = require('../../utils/identity');
 const motionPresence = require('../../utils/motionPresence');
+const imageCache = require('../../utils/imageCache');
+// The first screen of each secondary list. Small on purpose: this is a prediction, not a
+// download of the library.
+const LIBRARY_PREFETCH_WINDOW = 6;
+// The list-thumbnail variant the rows themselves request, so the prediction and the render agree.
+const LIBRARY_PREFETCH_LONG_EDGE = 384;
 const localDate = require('../../utils/localDate');
 const i18n = require('../../utils/i18n');
 const uiFeedback = require('../../utils/uiFeedback');
@@ -57,7 +63,11 @@ Component({
     type: { type: null, value: '' },
     memoryId: { type: null, value: '' },
     filter: { type: null, value: '' },
-    readingPosition: { type: Object, value: null },
+    // Same convention as its three siblings above: the documented "no reading
+    // position yet" value is null, so the contract is Object-or-null and a
+    // bare `type: Object` rejected the component's own default on every page
+    // entry. This is the property contract, not a coercion of the value.
+    readingPosition: { type: null, value: null },
   },
 
   data: {
@@ -130,6 +140,33 @@ Component({
 
   lifetimes: {
     attached() {
+      // P3 — predictive preload for the three secondary destinations the Me page opens (Meals,
+      // Places, Saved memories). They are the SAME library list seen through a filter, so the
+      // first screen is built ONCE from the union of their prefixes and deduped by id: a photo in
+      // two tabs is fetched once, not twice, and never three times.
+      //
+      // It lives here rather than on the Me page because the sheet already owns the library data
+      // and is mounted with the page — and because the Me page source is a whole-file reviewed
+      // gate that a performance round must not touch. Bounded to the first screen, never the
+      // library, and it runs through the image pipeline's serialized queue, so it can never delay
+      // an image the user actually asked for.
+      try {
+        const host = getCurrentPages();
+        const route = host.length ? host[host.length - 1].route : '';
+        if (route === 'pages/me/index') {
+          const memories = (store.get().memories) || [];
+          const saved = memories.filter(memory => memory.saved || memory.liked).slice(0, LIBRARY_PREFETCH_WINDOW);
+          const shared = memories.filter(memory => memory.shared).slice(0, LIBRARY_PREFETCH_WINDOW);
+          const seen = new Set();
+          memories.slice(0, LIBRARY_PREFETCH_WINDOW).concat(saved, shared).forEach(memory => {
+            if (!memory || seen.has(memory.id)) return;
+            seen.add(memory.id);
+            const source = memory.placePhoto || memory.photo;
+            if (!source || !imageCache.isCloudSource(source)) return;
+            imageCache.ensureLocal(source, 'marker', LIBRARY_PREFETCH_LONG_EDGE, { revision: memory.revision }).catch(() => {});
+          });
+        }
+      } catch (e) { /* a preload must never break the component it is preloading for */ }
       this.setData({ sheetTop: metrics.getMetrics().headerTop + 8 });
       this._onResize = () => { if(this._detached)return; this.setData({ sheetTop: metrics.getMetrics(true).headerTop + 8, sheetScrollHeight: 0 }, () => this.measureScroll()); };
       if (wx.onWindowResize) wx.onWindowResize(this._onResize);

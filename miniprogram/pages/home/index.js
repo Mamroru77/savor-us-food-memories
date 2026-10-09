@@ -4,6 +4,11 @@ const uiFeedback = require('../../utils/uiFeedback');
 // recent memories. Tab bar sync happens in onShow (getTabBar).
 const store = require('../../utils/store');
 const data = require('../../utils/data');
+const imageCache = require('../../utils/imageCache');
+// Home shows five recent rows; the prediction covers the next five and stops there.
+const HOME_VISIBLE_ROWS = 5;
+const HOME_PREFETCH_ROWS = 5;
+const HOME_PREFETCH_LONG_EDGE = 384;
 const stats = require('../../utils/memoryStats');
 const metrics = require('../../utils/metrics');
 
@@ -105,6 +110,21 @@ Page({
     const changed={};
     Object.keys(patch).forEach(key=>{if(JSON.stringify(patch[key])!==JSON.stringify(this.data[key]))changed[key]=patch[key];});
     if(Object.keys(changed).length)this.setData(changed);
+    this.prefetchNextRows(state);
+  },
+
+  // P3 — the next likely Home rows. The five visible rows load themselves; this warms only the
+  // rows just past the fold, so scrolling down finds them ready. The rest of the history is
+  // deliberately NOT preloaded: a prediction that covers everything is a download of the library.
+  prefetchNextRows(state) {
+    try {
+      const rows = ((state && state.memories) || []).slice(HOME_VISIBLE_ROWS, HOME_VISIBLE_ROWS + HOME_PREFETCH_ROWS);
+      rows.forEach(memory => {
+        const source = memory && (memory.placePhoto || memory.photo);
+        if (!source || !data.isCloudImage(source)) return;
+        imageCache.ensureLocal(source, 'marker', HOME_PREFETCH_LONG_EDGE, { revision: memory.revision }).catch(() => {});
+      });
+    } catch (e) { /* a preload must never break the page it is preloading for */ }
   },
 
   onNotifications() {

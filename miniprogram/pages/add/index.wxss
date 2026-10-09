@@ -6,7 +6,10 @@
   padding-bottom: var(--space-sm);
 }
 
-.add-heading { display: flex; gap: 17rpx; align-items: flex-start; margin-left: -12rpx; }
+/* Round 1 — first-view composition. The header keeps its editorial type; the gap down to the
+   first content block is now an explicit token instead of inheriting the utility row's margin,
+   so the header reads as one calm unit rather than the top of a settings form. */
+.add-heading { display: flex; gap: 17rpx; align-items: flex-start; margin-left: -12rpx; margin-bottom: var(--space-md); }
 .close-add {
   width: 58rpx;
   height: 62rpx;
@@ -24,14 +27,17 @@
   line-height: 62rpx;
   letter-spacing: -0.5rpx;
 }
-.add-subtitle { font-size: 26rpx; margin-top: 2rpx; color: var(--muted, #565752); white-space: nowrap; }
+.add-subtitle { font-size: 26rpx; margin-top: 6rpx; color: var(--muted, #565752); white-space: nowrap; }
 
 .photo-editor-row {
   height: 430rpx;
   display: flex;
   align-items: center;
   gap: 20rpx;
-  margin: var(--space-lg) 0 var(--space-md);
+  /* Round 1: the media block is the emotional anchor and keeps its 430rpx photo + 175x320rpx
+     Add-more relationship (measured against the concept: the photo must dominate Add more and
+     stay proportional to the viewport). Only the surrounding air is regularised onto one token. */
+  margin: var(--space-md) 0 var(--space-md);
 }
 .main-photo-wrap {
   width: auto;
@@ -238,8 +244,16 @@
 
 .save-memory { height: 100rpx; margin-top: 38rpx; }
 
-.import-entry { display:flex; justify-content:space-between; align-items:center; padding:22rpx 28rpx; margin:20rpx 0; border-radius:24rpx; font-size:28rpx; }
-.import-entry-note { font-size:22rpx; opacity:.6; }
+/* Round 1 — Import is a secondary utility, not a primary task. Its position, its tap behaviour
+   and the whole 万能导入 flow are unchanged; only the glass card is replaced by a quiet one-line
+   row, so the first view stops reading as an import tool. The row keeps the shared control token
+   height: density is not bought by shrinking a touch target.
+   REVISE (same round): the first attempt inherited `--muted` for the label, which measured
+   unreadable over the live ambient photo — the row keeps a light, borderless wash and puts the
+   label back on `--ink`, so lowering the card weight does not cost legibility. */
+.import-entry { display:flex; justify-content:space-between; align-items:center; gap:20rpx; padding:0 24rpx; min-height:var(--control-height,88rpx); margin:0 0 var(--space-md); border-radius:var(--radius-control); font-size:var(--type-caption); color:var(--ink); background:rgba(251,250,247,.52); border:0; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; box-sizing:border-box; }
+.import-entry-note { font-size:20rpx; color:var(--muted); opacity:.85; }
+.dusk .add-screen .import-entry { background:rgba(238,234,227,.08); color:var(--ink); }
 .location-entry { display:flex; align-items:center; gap:16rpx; padding:22rpx 0; font-size:26rpx; }
 .location-address { display:block; font-size:22rpx; opacity:.6; margin-top:8rpx; }
 
@@ -292,11 +306,18 @@
 .add-subtitle { white-space:normal; overflow-wrap:break-word; }
 .input-wrap .form-input { padding-right:98rpx; }
 .input-clear { width:88rpx; height:88rpx; top:0; right:0; }
-.date-rating-row { flex-wrap:wrap; }
-.date-rating-row > .form-field { flex:1 1 240rpx; }
-.date-rating-row > .form-field:last-child { flex-basis:464rpx; }
+/* Round 5 — the pre-P1-A responsive declarations that used to sit here have been DELETED, not
+   overridden. They were:
+     .date-rating-row { flex-wrap:wrap; }                    -> superseded by P1-A (now nowrap)
+     .date-rating-row > .form-field { flex:1 1 240rpx; }      -> superseded by P1-A
+     .date-rating-row > .form-field:last-child { flex-basis:464rpx; } -> superseded by P1-A
+     .rating-input { flex-wrap:wrap; }                        -> NOT restated by P1-A, so it survived
+   That last one is the regression: it was written for the old two-row design, P1-A replaced the
+   column sizing but never re-declared `.rating-input`'s flex-wrap, so the obsolete `wrap` stayed
+   the live computed value and the five-star row was free to wrap. Deleting all four leaves exactly
+   one Date/Rating contract, in the Round 5 block at the end of this file.
+   Only the star target rule stays here: the touch-target gate pins the literal string. */
 .rating-star { flex:0 0 88rpx; width:88rpx; height:88rpx; }
-.rating-input { flex-wrap:wrap; }
 .photo-strip-remove { width:88rpx; height:88rpx; background:transparent; align-items:flex-start; justify-content:flex-end; }
 .photo-remove-glyph { display:flex; align-items:center; justify-content:center; width:48rpx; height:48rpx; border-radius:50%; background:#000a; }
 .category-type, .suggested-tag { min-height:88rpx; box-sizing:border-box; display:inline-flex; align-items:center; }
@@ -319,7 +340,13 @@
 
 
 .rating-input { min-height:90rpx; height:auto; }
-.date-input { min-height:88rpx; height:auto; padding-top:17rpx; padding-bottom:17rpx; }
+/* Final optical pass: the Date control and the Rating frame sit side by side in ONE metadata row, so
+   they must share a height. The frame's floor is 90rpx (the 88rpx star box plus its 1rpx border on
+   each side); the Date control was left on the shared 88rpx control token, so the two controls ended
+   2rpx apart and their bottom edges did not line up. Date now matches the frame rather than the
+   generic token, because in this row the frame's height is the binding one. Width, the frozen
+   five-target reservation and the baseline alignment are all untouched. */
+.date-input { min-height:90rpx; height:auto; padding-top:17rpx; padding-bottom:17rpx; }
 .dusk .close-add { background:transparent; }
 .dusk .close-add::before { background:rgba(234,234,234,.12); }
 .dusk .clear-draft::before { background:rgba(234,234,234,.12); }
@@ -358,7 +385,7 @@
 .ambient-photo.ambient-stable {
   transition: opacity 0.25s ease;
   will-change: opacity;
-  opacity: 0.92;
+  opacity: 0.18;
 }
 .photo-editor-row, .main-photo-wrap {
   transform: translateZ(0);
@@ -445,3 +472,207 @@
   color: var(--muted, #565752);
   text-align: center;
 }
+
+/* Gate-1 closeout — the shared remove control is positioned against the photo ROW, so one element
+   can serve both anchors: the Add-more tile when the draft holds several photos, the main photo
+   when it holds exactly one. `21rpx` is the Add-more tile's old offset re-expressed against the
+   430rpx row (tile 320rpx, centred => 55rpx, minus the old -34rpx), so the multi-photo anchor is
+   pixel-identical to before. Neither anchor is in flow, so neither state costs vertical height. */
+.photo-editor-row { position: relative; }
+.remove-extra { top: 21rpx; right: -31rpx; }
+.remove-extra.remove-single { top: auto; right: auto; left: 22rpx; bottom: 22rpx; }
+
+/* Round 2 P0 — geo disclosure. The summary row keeps its height; the edit affordance is a text
+   action stretched back over the row's own padding (`align-self: stretch` + `margin: -22rpx 0`),
+   so the touch target is the whole row height instead of the small text box. */
+.location-copy { flex: 1 1 auto; min-width: 0; }
+.geo-toggle { align-self: stretch; display: flex; align-items: center; flex-shrink: 0; margin: -22rpx 0; padding: 0 20rpx; font-size: var(--type-caption); color: var(--muted); text-decoration: underline; text-underline-offset: 8rpx; }
+
+/* Round 2 P0 — the low-frequency business metadata (per-capita, cuisine, dishes, dining types)
+   leaves the primary flow. Deliberately the quietest row on the page: muted caption text plus a
+   CSS caret, no card, no glass, no shadow — it must not compete with Notes / Date+Rating / Tags /
+   Save. The caret is drawn with borders because the icon ledger (verify-icons.cjs) pins the
+   template <s-icon> count at exactly 87, so no icon element may be added here. */
+.more-details { margin-top: var(--space-md); }
+/* Final optical pass: the row carried `padding: 0 4rpx`, which put the "More details" label 4rpx right
+   of every other form label, and the chevron carried `margin-right: 14rpx`, which put its optical right
+   edge ~5px inside the content column — so the last row before Save did not line up with the button
+   beneath it. The chevron is a rotated 12rpx square, so its visual box overhangs its layout box by
+   ~2.5rpx per side; a 2rpx margin therefore lands its optical right edge on the content edge. */
+.more-details-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; min-height: var(--control-height, 88rpx); padding: 0; font-size: var(--type-caption); color: var(--muted); }
+.more-details-row::after { content: ""; flex-shrink: 0; width: 12rpx; height: 12rpx; margin: -6rpx 2rpx 0 0; border-right: 2rpx solid currentColor; border-bottom: 2rpx solid currentColor; transform: rotate(45deg); transition: transform var(--motion-normal) var(--ease-soft); }
+.more-details.is-open .more-details-row::after { transform: rotate(-135deg); margin-top: 6rpx; }
+.more-details-body { display: flex; flex-direction: column; gap: var(--space-md); padding-top: var(--space-xs); }
+.quiet .more-details-row::after { transition: none; }
+
+/* Round 2 P1-A — Date + Rating read as ONE metadata row.
+   The row used to wrap: the columns declared flex-basis 240rpx + 464rpx + gap 32rpx = 736rpx
+   against 673rpx of content width, so flex-wrap stacked them into two independent form sections
+   230pt tall with an 18pt row-gap between them. It now stays on one line at the same 384pt content
+   width, with the columns split asymmetrically: Date takes only what its control needs, Rating
+   takes the remainder.
+   The stars keep their 88rpx hit area (verify-visual-language.cjs pins the literal string
+   "flex:0 0 88rpx"). Narrowing the Rating column is what stops them being spread across the full
+   384pt — they now sit as a compact group inside their own control, and every target is unchanged.
+   The date control gives back only padding and the rating frame only its own inset, so neither
+   control actually shrinks. */
+
+/* Round 5 — the P1-A split above assumed "Date takes only what its control needs". That holds only
+   while the Date column's own max-content fits in what is left after Rating, and it does not: the
+   English placeholder "Choose a date" makes the Date control 226.4rpx wide, which leaves Rating at
+   436rpx, while five 88rpx targets need 440rpx of content box (442rpx once the 1rpx frame border is
+   counted). The shortfall was 7.5rpx, so the fifth star wrapped onto a second line and the row grew
+   from 109pt to 158pt.
+   This is NOT width-specific: rpx is proportional, so the rpx budget is identical at every width
+   (673rpx of content) and the widest Date content is simply the English placeholder. The defect was
+   reproducible at the approved 428pt width — the previous check pinned the literal CSS string
+   "flex:0 0 88rpx" and never measured the rendered row.
+   Round 5 inverts the priority: RATING RESERVES, DATE ABSORBS. The Rating column can no longer be
+   squeezed below the five-target width; the Date column takes whatever remains and gives back 6rpx
+   of its own inner padding so its control still fits untruncated. Every target is unchanged: each
+   star keeps its 88rpx box, and the row gap stays the existing compact 12rpx (measured at 10.5rpx,
+   so it was never part of the defect).
+   THE SINGLE AUTHORITATIVE DATE/RATING CONTRACT (Round 5). No other rule in this file may size
+   these columns or set the star row's flex-wrap:
+     .date-rating-row            nowrap, gap 12rpx, align-items flex-start
+     > .form-field               Date: flexible, min-width 0 (absorbs whatever is left)
+     > .form-field:last-child    Rating: never shrinks, min-width 444rpx (5 x 88rpx + frame + slack)
+     .rating-input               nowrap, zero horizontal padding (the five targets own the width)
+     .rating-star                flex:0 0 88rpx — the 88rpx touch target, unchanged */
+.date-rating-row { flex-wrap: nowrap; gap: 12rpx; margin-top: 25rpx; align-items: flex-start; }
+.date-rating-row > .form-field { flex: 1 1 auto; min-width: 0; }
+/* 444rpx = 5 x 88rpx of star content, the 1rpx frame border on each side, and 2rpx of slack so the
+   five targets can never be one device-pixel of rounding away from wrapping. `flex: 0 0 auto` keeps
+   the column at its own content width and never lets it shrink; the explicit floor states the
+   requirement so a later header/label change cannot silently reintroduce the squeeze. */
+.date-rating-row > .form-field:last-child { flex: 0 0 auto; min-width: 444rpx; }
+.date-input { padding-left: 6rpx; padding-right: 6rpx; gap: 6rpx; }
+/* Safety net only. At the tested widths the date text fits untruncated (165rpx needed against
+   167rpx available); if a platform font renders the placeholder wider, the text ellipsises rather
+   than colliding with the calendar icon. */
+.date-input > text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rating-input { flex-wrap: nowrap; padding-left: 0; padding-right: 0; justify-content: flex-start; }
+
+/* The clear-rating affordance shares the Rating header line instead of owning a 50pt row of its own
+   between the label and the stars. Same handler, same copy, same 88rpx target — only its position
+   changed, and because the header line is exactly that 88rpx the target fits inside it with no
+   overlap onto the stars below.
+   Both header lines are given the same 88rpx height. That is what puts the date control and the
+   stars on the same baseline, so Date and Rating read as one metadata row instead of two stacked
+   form sections — the alignment is doing the work, not a smaller control. */
+.rating-head { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; min-height: var(--control-height, 88rpx); }
+.date-rating-row > .form-field > .form-label { display: flex; align-items: center; min-height: var(--control-height, 88rpx); }
+.rating-clear { margin: 0; }
+
+/* Round 2 P1-B — the end-of-form rhythm.
+   The three transitions out of Date/Rating used to measure 18 / 18 / 21pt: flat, so the page read
+   as three unrelated sections and Save looked like just another block. They are now deliberately
+   unequal, so the hierarchy is legible from spacing alone:
+     Date/Rating -> Tags        32rpx (18pt)  metadata group -> next group   (unchanged)
+     Tags -> More details       18rpx (10pt)  same optional cluster, tighter
+     More details -> Save       56rpx (32pt)  the completion transition
+   Nothing is compressed: the tail grows by ~3pt. Touch targets, chip height, Save height and the
+   safe-area spacer are all untouched. */
+.tags-field { margin-top: 32rpx; }
+.more-details { margin-top: 18rpx; }
+.save-memory { margin-top: 56rpx; }
+
+/* Zero tags: the lone + under the Tags heading read as a stranded chip. With no chips to sit
+   beside, the affordance moves onto the heading line, so it reads as an action on the Tags group
+   rather than an unfinished row. No default tags, no added copy, and the block gets 27pt shorter
+   instead of taller. `.tag-popover` is absolutely positioned, so it is unaffected by the row. */
+.tags-field.tags-empty { flex-direction: row; align-items: center; justify-content: space-between; }
+
+/* Round 3-A — STATE-P0-2. Every field has always been disabled during save/upload, but no rule
+   anywhere described that state, so a locked form rendered exactly like a resting one (a pixel
+   diff of the Restaurant field shows its own surface unchanged). The locked treatment keeps the
+   value at full contrast — the state is carried by the label and a recessed surface, never by
+   opacity on the text, which stays as readable as it is at rest. */
+.is-locked .form-label { color: var(--muted); }
+.is-locked .form-input, .is-locked .form-textarea,
+.is-locked .date-input, .is-locked .rating-input { background: rgba(233, 231, 226, 0.42); }
+.dusk .is-locked .form-input, .dusk .is-locked .form-textarea,
+.dusk .is-locked .date-input, .dusk .is-locked .rating-input { background: rgba(255, 255, 255, 0.03); }
+
+/* Round 3-A — STATE-P0-3. When perCapita carries an error the section is force-opened, but the
+   row looked identical to one the user opened themselves: the only rule in the collapsed/expanded
+   pair changes the chevron transform. A user who scrolled past could not tell the section had been
+   opened for them, or that it contains an error. The row now carries the existing error colour,
+   so the forced state is identifiable without adding a badge or a second message. */
+.more-details.is-error .more-details-row { color: #994d3d; }
+.dusk .more-details.is-error .more-details-row { color: #ffc0aa; }
+
+/* Round 3-A — STATE-P0-1. `.field-error` is applied alongside `.form-error`, so an inline
+   per-field message inherited the page-level card: padding 20rpx, radius 20rpx and a tinted
+   background. A message about ONE field then looked exactly like a form-wide failure banner and
+   added ~38pt of block under every error. The inline variant is now a plain caption in the same
+   error colour, attached to the field above it; `.form-error` alone keeps the card for
+   form-level failures. Same colour, no new token.
+   Scoped to `.add-screen` on purpose: `form-error field-error` is also used by
+   components/profile-editor and components/sheet, which are outside this round. */
+.add-screen .form-error.field-error { margin: 8rpx 0 0; padding: 0; border-radius: 0; background: none; }
+
+/* Round 3-B1 — PHOTO-P0-1. While a pick is running every photo handler returns early
+   (`onReplacePhoto` / `onAddMore` / `onRemoveExtra` / `onRemovePhoto` all bail on `uploading`),
+   but Edit, Add more and both remove controls kept their full active appearance — an action that
+   looked available and was not. They now take the same locked treatment the form fields took in
+   Round 3-A: the control chrome steps back. The photo itself is untouched and stays fully
+   readable; only the affordances change. */
+.is-locked .edit-photo { background: rgba(226, 224, 219, 0.62); border-color: rgba(255, 255, 255, 0.38); }
+.is-locked .edit-photo text { color: var(--muted); }
+.is-locked .add-photo { border-color: rgba(160, 160, 156, 0.2); }
+.is-locked .add-photo .add-photo-copy { color: var(--muted); }
+.is-locked .remove-extra { background: rgba(226, 224, 219, 0.62); box-shadow: none; }
+.is-locked .photo-remove-glyph { background: rgba(0, 0, 0, 0.32); }
+.dusk .is-locked .edit-photo { background: rgba(255, 255, 255, 0.07); border-color: rgba(238, 234, 227, 0.12); }
+.dusk .is-locked .remove-extra { background: rgba(255, 255, 255, 0.07); }
+
+/* Round 3-B1 — PHOTO-P0-3. A failed image load falls back to /images/le-comptoir.jpg, which is a
+   real-looking plated dish: the editor then showed a photo the user never chose, with nothing to
+   say it was a placeholder. The fallback now carries a dashed marker in the existing error colour,
+   so it reads as unavailable rather than as content. The fallback image itself is unchanged —
+   that mapping is shared with the rest of the app and is out of this round's scope. */
+.main-memory-photo.is-fallback { border: 2rpx dashed rgba(153, 77, 61, 0.55); box-sizing: border-box; }
+.dusk .main-memory-photo.is-fallback { border-color: rgba(255, 192, 170, 0.55); }
+
+/* ============================================================================================
+   Round 4-A — motion language. Three motion families plus one mount continuity, all built on
+   the existing tokens (--motion-quick 140ms / --motion-normal 220ms / --ease-soft). No new
+   framework, no new easing, no keyframe that loops. Every rule has an explicit Quiet twin.
+   ============================================================================================ */
+
+/* MOTION-P0-1 — Save transaction acknowledgement.
+   READY -> WORKING used to snap: the button swapped class, label and icon in one frame, so the
+   only acknowledgement of the tap was the press opacity, and the arrival of the working state
+   read as a jump. The surface now eases between the two approved keyframes. Opacity and
+   background only — the button never resizes and the page never moves. */
+.save-memory { transition: opacity var(--motion-normal) var(--ease-soft), background-color var(--motion-normal) var(--ease-soft); }
+.quiet .save-memory { transition: none; }
+
+/* MOTION-P0-2 — More details spatial disclosure.
+   The chevron already rotated, but the body was inserted with no reveal at all, so the pocket of
+   information popped rather than opened. The body now arrives with a short fade and a 6rpx lift.
+   Height is deliberately NOT animated: the body is up to 509pt tall and interpolating it stutters,
+   so the surrounding content still moves in one step while the new content resolves into place. */
+@keyframes savor-details-in { from { opacity: 0; transform: translateY(-6rpx); } to { opacity: 1; transform: none; } }
+.more-details-body { animation: savor-details-in var(--motion-normal) var(--ease-soft); }
+.quiet .more-details-body { animation: none; }
+
+/* MOTION-P0-4 — Photo slot continuity.
+   Adding the first photo and removing the last one both mount a different element in the same
+   fixed 274x245pt slot, so the swap read as a cut. Both sides of that swap now resolve in with a
+   short fade. Geometry is untouched, and a plain src replacement (the Replace path) is not
+   remounted, so it stays an instant swap — which is what "same slot, new content" should be. */
+@keyframes savor-photo-in { from { opacity: 0; } to { opacity: 1; } }
+.main-memory-photo { animation: savor-photo-in var(--motion-quick) var(--ease-soft); }
+.photo-placeholder { animation: savor-photo-in var(--motion-quick) var(--ease-soft); }
+.quiet .main-memory-photo, .quiet .photo-placeholder { animation: none; }
+
+/* Permission recovery. Reuses this page's own quiet text-action idiom (see .geo-toggle): caption
+   size, muted, underlined with the same 8rpx offset. No new surface, no new control family — it is
+   an inline affordance under the existing error line, and it only renders while an explicit
+   platform denial is being explained.
+   `.form-error` is a <text>, so its own vertical margins do not push the next block: without the
+   top margin here the action would sit on the error's painted bottom padding. 20rpx clears it. */
+.permission-recovery { margin: 28rpx 0 22rpx; padding: 0 22rpx; }
+.permission-recovery-action { display: inline-block; font-size: var(--type-caption); line-height: 38rpx; color: var(--muted); text-decoration: underline; text-underline-offset: 8rpx; }

@@ -229,7 +229,19 @@ test('UI: vertical stepper, no scale number, existing icon system, one tool colu
   const column = wxml.match(/<view class="map-tool-column"[\s\S]*?<\/view>\s*<\/view>/)[0];
   assert(column.includes('class="recenter-map glass"'), 'recenter stays inside the shared column');
   assert(column.includes('bindtap="recenter"'), 'recenter keeps its handler');
-  assert(column.includes('name="map-pinned"'), 'recenter keeps its icon');
+  // Overview and POI visibility are different products and must never share a glyph family. The pin
+  // family is DERIVED from what the POI control actually renders, so re-pointing either control at the
+  // other's family fails here instead of the two silently agreeing with each other. The approved
+  // decision is overview = map; the previous map-pinned behaviour must fail.
+  const poiControl = wxml.match(/<view class="poi-toggle[\s\S]*?<\/view>/)[0];
+  const poiGlyph = poiControl.match(/<s-icon[^>]*\bname="\{\{[^}]*?'([a-z0-9-]+)'[^}]*?'([a-z0-9-]+)'[^}]*?\}\}"/);
+  assert(poiGlyph, 'the POI visibility control must drive its glyph from product state');
+  const pinFamily = new RegExp('^' + poiGlyph[1].replace(/-[a-z0-9-]+$/, '') + '-');
+  const recenter = column.match(/<view class="recenter-map[\s\S]*?<\/view>/)[0];
+  const overviewGlyph = (recenter.match(/<s-icon[^>]*\bname="([^"]+)"/) || [])[1];
+  assert(!pinFamily.test(overviewGlyph),
+    'the overview control must not reuse the POI control pin-family glyph (' + overviewGlyph + ')');
+  assert.equal(overviewGlyph, 'map', 'the overview/recenter control uses the map glyph');
   const wxss = fs.readFileSync('miniprogram/pages/map/index.wxss', 'utf8');
   assert(/\.zoom-step\s*\{[^}]*width: 72rpx[^}]*height: 72rpx/.test(wxss), '72x72rpx hit cell');
   assert(/\.zoom-stepper\s*\{[^}]*width: 72rpx/.test(wxss), 'stepper is lighter than the 88rpx recenter');

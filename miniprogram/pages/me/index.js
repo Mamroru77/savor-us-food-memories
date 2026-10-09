@@ -9,15 +9,15 @@ const memoryStats = require('../../utils/memoryStats');
 const nativeFlow = require('../../utils/nativeFlow');
 
 const MENU_ROWS = [
-  { title:'Cloud tools',subtitle:'Backups, preferences and feedback',icon:'archive',sheet:'workspace' },
-  { title:'Annual reports',subtitle:'Memories, milestones and sharing',icon:'archive',sheet:'reports' },
+  { title:'Cloud tools',subtitle:'Backups, preferences and feedback',icon:'cloud',sheet:'workspace' },
+  { title:'Annual reports',subtitle:'Memories, milestones and sharing',icon:'calendar-days',sheet:'reports' },
   { title:'Shared space & wishlist',subtitle:'Invite, consent and share explicitly',icon:'users',sheet:'space' },
   { title:'Account & legacy data',subtitle:'Identity partitions, backups and recovery',icon:'shield-check',sheet:'account' },
   { title: 'Sync status', subtitle: 'Pending changes and conflicts', icon: 'arrow-up-from-line', sheet: 'sync' },
   { title: 'Personalize', subtitle: 'Page titles and your profile', icon: 'pencil', sheet: 'personalize' },
   { title: 'Preferences', subtitle: 'Dietary, cuisines, tags', icon: 'utensils', sheet: 'preferences' },
-  { title: 'Memories', subtitle: 'Export, backup, import', icon: 'archive', sheet: 'library' },
-  { title: 'Privacy', subtitle: 'Manage your data', icon: 'shield-check', sheet: 'privacy' },
+  { title: 'Memories', subtitle: 'Export, backup, import', icon: 'library', sheet: 'library' },
+  { title: 'Privacy', subtitle: 'Manage your data', icon: 'lock-keyhole', sheet: 'privacy' },
   { title: 'Settings', subtitle: 'Notifications, theme, more', icon: 'settings', sheet: 'settings' },
   { title: 'Help & Feedback', subtitle: "We're here to help", icon: 'circle-question-mark', sheet: 'help' },
 ];

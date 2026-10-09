@@ -1,6 +1,6 @@
 <s-identity-gate wx:if="{{locked}}"/>
 <scroll-view wx:else scroll-y class="space-scroll {{dusk ? 'dusk' : ''}}"><view class="screen secondary-screen space-page {{dusk ? 'dusk' : ''}} {{locale === 'zh-CN' ? 'locale-zh' : ''}}">
- <text class="title">{{labels.title}}</text><text class="hint">{{labels.intro}}</text>
+ <text class="title">{{labels.title}}</text><text class="hint">{{labels.intro}}</text><text class="hint">{{copy.s325a78d28f}}</text>
  <button class="{{(busy) ? 'ui-disabled' : ''}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" loading="{{busy}}" bindtap="refresh" disabled="{{busy}}">{{busy ? labels.loading : labels.refresh}}</button>
  <text wx:if="{{message}}" class="notice" selectable>{{message}}</text>
  <view wx:if="{{pending}}" class="card"><text>{{labels.pending}}</text><button class="{{(busy) ? 'ui-disabled' : ''}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" bindtap="retry" disabled="{{busy}}">{{labels.retry}}</button></view>

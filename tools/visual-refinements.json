@@ -6,9 +6,9 @@
     "review": "docs/reviews/visual-refinement-20260916.md"
   },
   "miniprogram/pages/us/index.wxss": {
-    "baseSha256": "d4a9b1b32f4efaf3f88061269ec38f886a39ddf3aae76c5106a91ede0fafbbe3",
-    "sha256": "a021a8dba2129f3ea269521c4b84b38e341eecb1275de0f62d020aa92a73882e",
-    "reason": "R2 native 390/en measured label/photo overlap: normal-flow Journey statistics and footer retain real photo, tokens and minimum card height while allowing localized content to grow. Dedicated clearance suite and native evidence; no historical fixtures changed.",
+    "baseSha256": "6f731a4bc045762a12426a596179e9718f80c00d049340200a4e688aa5d82ffc",
+    "sha256": "6f731a4bc045762a12426a596179e9718f80c00d049340200a4e688aa5d82ffc",
+    "reason": "R2 native 390/en measured label/photo overlap: normal-flow Journey statistics and footer retain real photo, tokens and minimum card height while allowing localized content to grow. Dedicated clearance suite and native evidence; no historical fixtures changed. 2026-10-01 approved US-P1-1 management entry hierarchy correction (docs/reviews/us-p11-management-entry-20261001.md): the Us management entry stops being a filled secondary-button surface specifically for this entry - transparent, no border, no radius, no padding, left aligned, --muted - while keeping the existing secondary-button structural reuse, the full 88rpx interactive target and full row width; .secondary-subtle drops to the page caption hierarchy with its wording unchanged. Couple identity is restored as the first dominant visual surface (only filled surface after the header; 4x the entry's area). PEARL/DUSK and Chinese/English verified on the simulator at 428x926. No WXML/JS/business logic change. Accepted utility-affordance trade-off: the entry intentionally stays quiet and relies on wording, position and the full-width hit target rather than a filled surface. Do not reopen for further affordance polish without a reproduced real-device usability failure.",
     "review": "docs/mcp-r2-remaining-layout-review-20260919.md"
   },
   "miniprogram/components/sheet/index.wxss": {

@@ -21,7 +21,7 @@ function fixture(){
   const deps={
     identity,
     identityCopy:()=>({verify:'Verify your account first'}),
-    motionPresence:{update(){},dispose(){}},localDate:{today:()=> '2026-09-16'},
+    motionPresence:{update(){},dispose(){}},localDate:{today:()=> '2026-09-16'},imageCache:{ensureLocal:()=>Promise.resolve(null),isCloudSource:()=>false},
     i18n:{copy:()=>({}),options:()=>[],locale:()=> 'en',t:s=>s,modal:options=>{modalCalls.push(options);}},
     uiFeedback:require('../miniprogram/utils/uiFeedback'),
     store:{get:()=>state,subscribe:fn=>{listeners.push(fn);return()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},updateProfile:changes=>{state.profile={...state.profile,...changes};},updateSettings:changes=>{updates.push(JSON.parse(JSON.stringify(changes)));state.settings={...state.settings,...changes};},notify(){},canResolve:()=>false},

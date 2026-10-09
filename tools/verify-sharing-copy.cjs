@@ -16,7 +16,14 @@ for(const locale of ['en','zh-CN']){
   assert.equal(memory.restaurant,'用户 Café');assert.equal(memory.notes,'不翻译');
  }
 }
-for(const path of ['miniprogram/pages/us/index.wxml','miniprogram/components/sheet/index.wxml'])assert(fs.readFileSync(path,'utf8').includes(key(caption)));
+// 2026-10-03 Us/Me information-architecture cleanup: the cross-account boundary note is a
+// MANAGEMENT-domain explanation, so its home moved off Us onto the Me destination
+// (/pages/space/index, reached from the Me row "Shared space & wishlist"). It must stay reachable
+// from the management page AND from the memory-detail sheet, and it must NOT come back to Us:
+// a second management surface on Us is exactly what this round removed.
+for(const path of ['miniprogram/pages/space/index.wxml','miniprogram/components/sheet/index.wxml'])assert(fs.readFileSync(path,'utf8').includes(key(caption)),'the cross-account explanation must stay reachable at '+path);
 assert(!source.includes('Couple binding and sending records to another person are not enabled.'));
-const us=fs.readFileSync('miniprogram/pages/us/index.wxml','utf8');for(const section of ['together-card','journey-card','shared-section'])assert(us.includes(section));
+const us=fs.readFileSync('miniprogram/pages/us/index.wxml','utf8');
+assert(!us.includes(key(caption)),'Us must no longer carry the cross-account management explanation');
+for(const section of ['together-card','journey-card','shared-section'])assert(us.includes(section));
 console.log('PASS both locales: collection-only toggle, explicit access boundary, truthful FAQ, preserved user text and Us sections');

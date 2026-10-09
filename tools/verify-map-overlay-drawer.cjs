@@ -72,7 +72,7 @@ function loadPage() {
     '../../utils/i18n': { copy: () => ({}), locale: () => 'zh-CN', syncPage: () => {}, t: x => x },
     '../../utils/uiFeedback': {},
     '../../utils/store': { subscribe: () => () => {}, get: () => ({ memories: [], settings: {} }) },
-    '../../utils/data': { formatDate: x => x, photos: { meal: '' } },
+    '../../utils/data': { isCloudImage: v => typeof v === 'string' && v.indexOf('cloud://') === 0, formatDate: x => x, photos: { meal: '' } },
     '../../utils/metrics': { getMetrics: () => ({ screenWidth: 375, headerTop: 54 }) },
     '../../utils/locations': { confirmed: () => true, choose: () => Promise.resolve(null) },
     '../../utils/mapMarkers': {
@@ -85,6 +85,8 @@ function loadPage() {
     },
     '../../utils/mapLayout': require(path.join(REPO, 'miniprogram', 'utils', 'mapLayout')),
     '../../utils/mapStack': stack,
+    '../../utils/mapCamera': require(path.join(REPO, 'miniprogram', 'utils', 'mapCamera')),
+    '../../utils/imageCache': require(path.join(REPO, 'miniprogram', 'utils', 'imageCache')),
     '../../utils/mapProjection': projection,
     '../../utils/restaurantCategory': { summary: () => '' },
   };
@@ -226,6 +228,9 @@ tests.push(() => test('D3 overlay mode gives the cluster no animated customCallo
   assert.equal(p.data.markers.length, 1, 'the four nearby memories must group into one cluster');
   assert.equal(p.markerGroups[0].members.length, 4, 'the cluster must own all four members');
   const marker = p.data.markers[0];
+  // Overlay mode must not hand the native map a callout at all. (The 2026-10-02 disclosure round
+  // briefly made an exception for the selected marker; that round is WITHDRAWN and the disclosure
+  // control lives in the bottom card again, so the original contract is restored verbatim.)
   assert.equal(marker.customCallout, undefined,
     'overlay mode must not mount a callout for the animated drawer, got ' + JSON.stringify(marker.customCallout));
   // And the native-callout arm must still mount it, or the two arms are not an A/B.

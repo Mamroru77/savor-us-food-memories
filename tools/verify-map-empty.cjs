@@ -5,7 +5,7 @@ const im={exports:{}};
 vm.runInNewContext(fs.readFileSync('miniprogram/utils/i18n.js','utf8'),{module:im,require:p=>p==='./locales'?catalog:{},wx:{}});
 const i18n=im.exports;
 let spec;
-const deps={i18n,uiFeedback:{},data:{formatDate:x=>x,photos:{meal:'fixture'}},restaurantCategory:{summary:()=>''},mapMarkers:{style:()=>({width:48,height:54})},mapLayout:{group:ms=>ms.map(memory=>({memory,members:[memory]}))}};
+const deps={i18n,uiFeedback:{},data:{isCloudImage:v=>typeof v==='string'&&v.indexOf('cloud://')===0,formatDate:x=>x,photos:{meal:'fixture'}},restaurantCategory:{summary:()=>''},mapMarkers:{style:()=>({width:48,height:54})},mapLayout:{group:ms=>ms.map(memory=>({memory,members:[memory]}))},mapCamera:require('../miniprogram/utils/mapCamera'),imageCache:require('../miniprogram/utils/imageCache')};
 const context={Page:p=>spec=p,require:p=>deps[p.split('/').pop()]||{},wx:{}};
 vm.createContext(context);vm.runInContext(fs.readFileSync('miniprogram/pages/map/index.js','utf8'),context);
 const fixture={id:'fixture-map',restaurant:'用户餐厅',city:'fixture city',country:'fixture country',tags:[],coordinates:[30,120],date:'2026-09-16',photo:'fixture',saved:false,shared:false};

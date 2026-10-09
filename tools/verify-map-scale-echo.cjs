@@ -1,11 +1,16 @@
 // Template-bound camera input vs production scale readback; no native floor mock.
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 const layout=require('../miniprogram/utils/mapLayout');
+// The page now derives its camera composition from utils/mapCamera. This harness stubs
+// require with a whitelist, so the real module must be listed here or the production path
+// silently degrades to no command at all (the fallback's try/catch would swallow the
+// missing dependency). No assertion below is relaxed by supplying it.
+const mapCamera=require('../miniprogram/utils/mapCamera');
 const wxml=fs.readFileSync('miniprogram/pages/map/index.wxml','utf8');
 const match=wxml.match(/\n\s+scale="\{\{(\w+)\}\}"/);assert(match,'Map must retain an explicit initial scale binding');
 const bound=match[1];let spec;
 vm.runInNewContext(fs.readFileSync('miniprogram/pages/map/index.js','utf8'),{
- Page:p=>spec=p,require:p=>({mapLayout:layout,i18n:{copy:()=>({}),locale:()=> 'en'}}[p.split('/').pop()]||{}),
+ Page:p=>spec=p,require:p=>({mapLayout:layout,mapCamera,imageCache:require('../miniprogram/utils/imageCache'),i18n:{copy:()=>({}),locale:()=> 'en'}}[p.split('/').pop()]||{}),
  wx:{getDeviceInfo:()=>({platform:'devtools'})},setTimeout:()=>1,clearTimeout:()=>{},
 });
 function harness(){
@@ -30,10 +35,28 @@ test('gesture end keeps precision and drawer state without echoing a new camera 
  assert.equal(p.data.mapScale,14.25);assert.equal(p.cameraInputs.length,0);assert.equal(p.data.clusterOpen,true);
  assert.equal(p.data.drawerPage,1);assert.equal(p.drawerProgress,.5);
 });
-test('existing explicit focus still targets the same real point using one native command',()=>{
- const p=harness();p.focusMapCamera([22.6,120.3]);assert.equal(p.commands.length,1);
- assert.deepEqual(JSON.parse(JSON.stringify(p.commands[0].points)),[{latitude:22.6,longitude:120.3}]);
- assert.equal(p.data.latitude,22.6);assert.equal(p.data.longitude,120.3);assert.equal(p.cameraInputs.length,0);
+// A focus is a TRAVEL, not a command. The platform exposes no camera animation API, so the
+// travel is a short sequence of ordinary bound-centre writes; the contract this suite owns is
+// that it is continuous, that it ends exactly on the composed target, and that it never
+// touches the bound SCALE (which is this file's subject).
+test('existing explicit focus travels to the real point without a native command',()=>{
+ const p=harness();p.focusMapCamera([22.6,120.3]);
+ assert.equal(p.commands.length,0,'a focus must not issue a native camera command');
+ assert.ok(p.cameraTransition,'a travel is in flight');
+ const travel=p.cameraTransition;
+ const from=[travel.from[0],travel.from[1]];
+ p.stepCameraTransition(travel.duration*0.5);
+ assert.notDeepEqual([p.data.latitude,p.data.longitude],from,'the travel has moved by mid-flight');
+ p.stepCameraTransition(travel.duration);
+ assert.ok(Number.isFinite(travel.to[0])&&Number.isFinite(travel.to[1]),'the target is a real point');
+ assert.notDeepEqual(travel.to,from,'the target differs from where the travel started');
+ assert.ok(Math.abs(p.data.latitude-travel.to[0])<1e-9,'the travel ends exactly on its target latitude');
+ assert.ok(Math.abs(p.data.longitude-travel.to[1])<1e-9,'the travel ends exactly on its target longitude');
+ // And that target IS the composed one: the marker lands at the centre of the unobstructed
+ // region rather than at the centre of the component.
+ const composed=mapCamera.centreForPoint([22.6,120.3],travel.scale,travel.viewport,travel.padding);
+ assert.ok(Math.abs(travel.to[0]-composed[0])<1e-9,'the target is the composed centre');
+ assert.equal(p.cameraInputs.length,0,'the bound scale is never touched by a focus');
 });
 console.log(`${passed} passed, ${failed} failed; template/production contract, native replay recorded separately.`);
 if(failed)process.exitCode=1;

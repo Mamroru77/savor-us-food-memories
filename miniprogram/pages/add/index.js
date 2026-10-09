@@ -11,6 +11,7 @@ const data = require('../../utils/data');
 const photos = require('../../utils/photos');
 const metrics = require('../../utils/metrics');
 const locations = require('../../utils/locations');
+const recovery = require('../../utils/permissionRecovery');
 const shareImport = require('../../utils/shareImport');
 const categories = require('../../utils/restaurantCategory');
 const diningTypeOptions = require('../../utils/diningTypeOptions');
@@ -33,6 +34,9 @@ Page({
     uploading: false,
     saving: false,
     error: '', errorContext: 'save', errorField: '', fieldErrors: {},
+    // '' | 'location' | 'photo'. Set only when the platform reports an explicit permission denial
+    // for that action, and only after it has already failed; it drives the inline settings action.
+    permissionRecovery: '',
     showTagInput: false,
     tag: '',
     importOpen: false, importText: '', importCandidate: null, importSourceIndex: 0,
@@ -49,6 +53,12 @@ Page({
     // persisted; the flag only swallows taps while Eraser -> Check -> Eraser runs.
     clearingDraft: false,
     clearIcon: {name: 'eraser', fromName: 'eraser', key: 0},
+    // Round 2 P0 — disclosure state, presentation only. Neither flag is ever written into the
+    // draft, so an identity/i18n refresh cannot destroy draft data and a lifecycle rehydrate
+    // cannot persist them. geoOpen is additionally forced open by syncContext while the selected
+    // location still needs its city/country confirmed.
+    geoOpen: false,
+    moreOpen: false,
     // Resident dining types: the picker offers built-ins minus the hidden ones plus the custom
     // names. Managing that list never edits the current draft.
     diningTypeManagerOpen: false,
@@ -141,7 +151,9 @@ Page({
   // instead of relying on a storage re-read. Never called for a transient locked window.
   clearImportEditor() {
     this.resetImportLookup();
-    this.setData({importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',importSearching:false,importSearchDone:false,importSourceIndex:0});
+    // Round 2 P0 — a confirmed owner change also drops the previous owner's disclosure state.
+    // syncContext runs after this and re-opens the geo block if the new draft needs confirming.
+    this.setData({importOpen:false,importText:'',importCandidate:null,importMatches:[],importCity:'',importLookupError:'',importSearching:false,importSearchDone:false,importSourceIndex:0,geoOpen:false,moreOpen:false});
   },
 
   syncContext(state) {
@@ -183,6 +195,13 @@ Page({
       formTypes:this.diningTypeRows(state.settings, draft),
       managedBuiltins:this.managedBuiltinRows(state.settings),
       managedCustom:this.managedCustomRows(state.settings),
+      // Round 2 P0 — an unconfirmed location must stay visible. `geoConfirmed !== true` also
+      // clears city/country downstream (cloudRecords / memoryRepository / store) and is surfaced
+      // on the Map as a pending location, so the detail fields cannot be collapsed in that state.
+      // Deliberately keyed off the stored flag, not off the live input events: onGeoField
+      // recomputes geoConfirmed on every keystroke, so collapsing on it would close the block
+      // while the user is still typing the country.
+      geoOpen: !!(draft.location && draft.location.geoConfirmed !== true) || this.data.geoOpen,
     });
   },
 
@@ -282,7 +301,7 @@ Page({
     const serial = this.nativePhotoSerial = (this.nativePhotoSerial || 0) + 1;
     const visibleAgain = new Promise(resolve => { this._nativePhotoShow = {serial, resolve}; });
     const waitVisible = () => (!this.active && this._nativePhotoShow && this._nativePhotoShow.serial === serial) ? visibleAgain : Promise.resolve();
-    this.setData({ uploading: true, uploadProgress: 0, uploadTotal: count, uploadCurrent: 0, originalMode: false, error: '', errorContext:'save',errorField:'',fieldErrors:{} });
+    this.setData({ uploading: true, uploadProgress: 0, uploadTotal: count, uploadCurrent: 0, originalMode: false, error: '', errorContext:'save',errorField:'',fieldErrors:{}, permissionRecovery: '' });
     photos.choosePhotos(count, { waitVisible }, function(p){
       that.setData({
         uploadProgress: p.percent || 0,
@@ -319,7 +338,7 @@ Page({
         that.setData({ uploading: false, error: require('../../utils/identityCopy')().draftFailed });
         return;
       }
-      that.setData({ uploading: false, uploadProgress: 100, draft: newDraft, fieldErrors:{},errorField:'',error:'' });
+      that.setData({ uploading: false, uploadProgress: 100, draft: newDraft, fieldErrors:{},errorField:'',error:'', permissionRecovery: '' });
       that.syncContext(store.get());
       // The chooser can drop an unreadable original; never let a partial selection look complete.
       if (paths.failures && paths.failures.length) store.notify(i18n.t('Some photos could not be prepared. Reselect them and try again.'));
@@ -336,7 +355,27 @@ Page({
         that.setData({ uploading: false });
         return;
       }
-      that.setData({ uploading: false, error: cancelled ? '' : (msg.includes('IDENTITY') ? error.message : i18n.t('Could not prepare the photo. Please select it again.')) });
+      if (cancelled) {
+        // A cancel is a decision, not a failure: quiet return, and the control stays usable.
+        that.setData({ uploading: false, error: '', permissionRecovery: '' });
+        return;
+      }
+      if (msg.includes('IDENTITY')) {
+        that.setData({ uploading: false, error: error.message, permissionRecovery: '' });
+        return;
+      }
+      // A real failure. Ask the platform whether it was a settings-required denial; only an
+      // explicit denial offers the settings route, so a transient failure keeps the retry copy.
+      recovery.denied('photo').then(function (isDenied) {
+        if (serial !== that.nativePhotoSerial || that.disposed) return;
+        that.setData({
+          uploading: false,
+          error: i18n.t(isDenied
+            ? 'Photo permission is needed to add a photo.'
+            : 'Could not prepare the photo. Please select it again.'),
+          permissionRecovery: isDenied ? 'photo' : '',
+        });
+      });
     });
   },
 
@@ -384,10 +423,25 @@ Page({
 
   showFieldError(field, message) {
     const errors = {}; errors[field] = message;
-    this.setData({error:message,errorContext:'save',errorField:field,fieldErrors:errors,saving:false}, () => {
+    // Round 2 P0 — a field that lives inside a collapsed section must be revealed in the SAME
+    // setData: pageScrollTo runs in the completion callback and measures the render that this
+    // setData produces, so opening the section afterwards would leave the target unrendered.
+    const open = {};
+    if (field === 'perCapita') open.moreOpen = true;
+    if (field === 'geography' || field === 'location') open.geoOpen = true;
+    this.setData(Object.assign({error:message,errorContext:'save',errorField:field,fieldErrors:errors,saving:false}, open), () => {
       if(!this.disposed && wx.pageScrollTo) wx.pageScrollTo({selector:'#field-'+field,duration:this.data.quiet?0:200,fail:()=>{}});
     });
   },
+
+  // Round 2 P0 — disclosure toggles. Presentation state only; no draft write, no business rule.
+  // The geo block cannot be collapsed while the location still needs confirming, whatever calls
+  // this: the affordance is hidden in that state, and the guard keeps the invariant if it is not.
+  onToggleGeo() {
+    if (this.data.draft.location && this.data.draft.location.geoConfirmed !== true) return;
+    this.setData({ geoOpen: !this.data.geoOpen });
+  },
+  onToggleMore() { this.setData({ moreOpen: !this.data.moreOpen }); },
 
   // ---------- save ----------
   onSave() {
@@ -411,7 +465,7 @@ Page({
     }
     if (!Number.isFinite(Number(draft.perCapita || 0)) || Number(draft.perCapita || 0)<0 || Number(draft.perCapita || 0)>1000000) { this.showFieldError('perCapita',i18n.t('Enter a valid per-person cost.')); return; }
     this.saveLock = true;
-    this.setData({ saving: true, saveProgress: 10, saveProgressText: '准备保存...' });
+    this.setData({ saving: true, saveProgress: 10, saveProgressText: i18n.t('Saving your memory...') });
     const state = store.get();
 
     const known = this.data.knownPlace;
@@ -453,12 +507,12 @@ Page({
     const thatSave = this;
     const saveProgressInterval = setInterval(()=>{
       if (thatSave.data.saveProgress < 90) {
-        thatSave.setData({ saveProgress: thatSave.data.saveProgress + 5, saveProgressText: thatSave.data.saveProgress < 50 ? '上传照片到云端...' : '同步到云端...' });
+        thatSave.setData({ saveProgress: thatSave.data.saveProgress + 5, saveProgressText: i18n.t('Saving your memory...') });
       }
     }, 400);
     return store.createCloudMemory(memory, draft).then(() => {
       clearInterval(saveProgressInterval);
-      if(identity.isCurrent(token)&&!thatSave.disposed) thatSave.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '', saveProgress: 100, saveProgressText: '保存成功' });
+      if(identity.isCurrent(token)&&!thatSave.disposed) thatSave.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '', saveProgress: 100, saveProgressText: i18n.t('Memory saved') });
       store.notify(i18n.t('A little moment, kept forever. Memory saved.'));
       setTimeout(()=>{ if (thatSave.active && !thatSave.disposed && identity.isCurrent(token)) wx.switchTab({ url: '/pages/home/index' }); }, 400);
     }).catch(error => {
@@ -488,11 +542,31 @@ Page({
       // types the user already chose while the name is seeded.
       if (!this.data.draft.restaurant.trim() && pick.locationName) this.changeDraft('restaurant', pick.locationName, {keepRelated: true});
       this.changeDraft('location', pick);
-      this.setData({ error: '' });
+      this.setData({ error: '', permissionRecovery: '' });
     }).catch(error => {
       if (!identity.isCurrent(token))return;
-      if (!error.cancelled && !this.disposed) this.setData({ error: i18n.t(error.message) });
+      // A cancel is quiet and clears any previous recovery state; a real failure explains itself,
+      // and only an explicit platform denial adds the inline settings action.
+      if (error.cancelled) { if (!this.disposed) this.setData({ permissionRecovery: '' }); return; }
+      if (!this.disposed) this.setData({
+        error: i18n.t(error.message),
+        permissionRecovery: error.permissionDenied ? 'location' : '',
+      });
     }).finally(() => { this.locating = false; });
+  },
+
+  // wx.openSetting only works from a user gesture, so it is never called automatically. It is
+  // offered only while an explicit permission denial is being explained, and it never relaunches
+  // the picker: after returning, the control is actionable again and the user taps it themselves.
+  // Clearing the state here is what prevents both a repeated openSetting and a stale denial line.
+  onOpenSettings() {
+    if (this.identityFence()) return;
+    if (!this.data.permissionRecovery) return;
+    this.setData({ permissionRecovery: '' });
+    return recovery.openSettings().then(() => {
+      if (this.disposed) return;
+      this.setData({ error: '' });
+    });
   },
 
   importBlocked() {
@@ -676,7 +750,13 @@ Page({
       this.syncContext(store.get());
       this.locating = false;
       if (pickerError) {
-        if (!pickerError.cancelled) this.setData({error:i18n.t(pickerError.message)});
+        // Cancelling stays quiet; a real failure explains itself, and only an explicit platform
+        // denial adds the inline settings action. The draft is untouched either way.
+        if (!pickerError.cancelled) this.setData({
+          error: i18n.t(pickerError.message),
+          permissionRecovery: pickerError.permissionDenied ? 'location' : '',
+        });
+        else this.setData({ permissionRecovery: '' });
       } else this.confirmImportLocation(pick, '');
     } catch (error) { /* Failed/different identity stays gated; never restore its scene. */ }
     finally {

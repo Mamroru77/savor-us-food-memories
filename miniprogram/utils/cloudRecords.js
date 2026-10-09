@@ -84,18 +84,20 @@ function cloudRecordToMemory(r) {
 }
 // Store cloud:// IDs, not expiring URLs. Renderers that cannot consume cloud
 // IDs resolve them here; returned URLs are transient and never enter the diary.
+//
+// The identity boundary stays HERE, and the actual resolution lives in the shared image
+// pipeline: it batches the ids of every caller in the same tick into one platform call,
+// never resolves the same fileID twice while a resolution is in flight, and reuses a
+// returned URL for its whole life. That last part is what stops a list from being handed a
+// fresh signature on every mount — a new signature is a new platform cache key, which is
+// how the same photo was being fetched again on every reopen.
 async function resolvePhotoUrls(ids) {
   identity.assertBusinessCloudAllowed();
   const token=identity.lease();
   initCloud();
-  const cloudIds = ids.filter(data.isCloudImage);
-  const urls = {};
-  for (let i = 0; i < cloudIds.length; i += 50) {
-    const result = await wx.cloud.getTempFileURL({ fileList: cloudIds.slice(i, i + 50) });
-    identity.assertLease(token);
-    (result.fileList || []).forEach(f => { if (f.status === 0 && f.tempFileURL) urls[f.fileID] = f.tempFileURL; });
-  }
-  return ids.map(id => urls[id] || id);
+  const urls = await require('./imageCache').resolve(ids);
+  identity.assertLease(token);
+  return urls.map((url, index) => (url === ids[index] ? ids[index] : url));
 }
 // A stored photo keeps its own bytes, so the copy that is actually uploaded is what has
 // to fit the upload window. The budget is measured in BYTES, not pixels: a high-quality
@@ -281,21 +283,55 @@ async function confirmOperation(id, operationId) {
 }
 // Download a private photo only through the existing CloudBase boundary.
 // Caller owns this temporary copy; never store it in Memory or outbox.
+//
+// The window below bounds a transfer by PROGRESS, not by a stopwatch. A renderer asks for
+// whatever a Memory's photo field holds, and that field is only guaranteed to be small for
+// records written since the upload gate above existed: a record from before it can legitimately
+// hold a much larger original. The duration of a HEALTHY transfer is therefore a property of
+// the record, not of this function, and a fixed total deadline rejects a large legacy original
+// while it is still arriving - which is exactly how a Map pin ends up stuck on the bundled
+// fallback. So the window is reset every time bytes actually arrive: a live transfer is never
+// treated as a failure, and a transfer that stops delivering bytes still fails in the same 8 s
+// it always did. When the platform offers no progress channel there is no way to tell "slow"
+// from "dead", and the previous fixed window is kept exactly as it was.
+const PHOTO_STALL_MS = 8000;
 function downloadMapPhoto(fileID) {
   const token=identity.lease();
   if(!data.isCloudImage(fileID)) return Promise.reject(error('INVALID_PHOTO','Invalid cloud photo.'));
   initCloud();
   if(!wx.cloud.downloadFile) return Promise.reject(error('UNAVAILABLE','Photo preview unavailable.'));
   return new Promise((resolve,reject)=>{
-    let expired=false;
-    const timer=setTimeout(()=>{expired=true;reject(error('PHOTO_TIMEOUT','Photo preview timed out.'));},8000);
-    wx.cloud.downloadFile({fileID,success:r=>{
-      clearTimeout(timer);
-      try{identity.assertLease(token);}catch(e){expired=true;reject(e);}
-      if(expired) {try{wx.getFileSystemManager().unlinkSync(r.tempFilePath);}catch(e){}return;}
-      if(!r.tempFilePath) {reject(error('INVALID_PHOTO','Invalid cloud photo.'));return;}
-      resolve(r.tempFilePath);
-    },fail:()=>{clearTimeout(timer);reject(error('PHOTO_FAILED','Photo preview unavailable.'));}});
+    let expired=false, settled=false, stall=null, written=-1, task=null;
+    const discard=path=>{ if(!path)return; try{wx.getFileSystemManager().unlinkSync(path);}catch(e){} };
+    const stopStall=()=>{ if(stall!==null){clearTimeout(stall);stall=null;} };
+    const settle=(fn,value)=>{ if(settled)return; settled=true; stopStall(); fn(value); };
+    const armStall=()=>{ stopStall(); stall=setTimeout(()=>{
+      stopStall(); settled=true; expired=true;
+      // A stalled transfer is abandoned, not merely ignored: no socket may stay open behind a
+      // rejected promise, and no temporary copy may be left behind.
+      try { if(task && task.abort) task.abort(); } catch(e) {}
+      reject(error('PHOTO_TIMEOUT','Photo preview timed out.'));
+    }, PHOTO_STALL_MS); };
+    task=wx.cloud.downloadFile({fileID,success:r=>{
+      if(expired) {discard(r.tempFilePath);return;}
+      let leaseError=null;
+      try{identity.assertLease(token);}catch(e){leaseError=e;}
+      if(leaseError) {expired=true;discard(r.tempFilePath);settle(reject,leaseError);return;}
+      if(!r.tempFilePath) {settle(reject,error('INVALID_PHOTO','Invalid cloud photo.'));return;}
+      settle(resolve,r.tempFilePath);
+    },fail:()=>{settle(reject,error('PHOTO_FAILED','Photo preview unavailable.'));}});
+    // Only a byte that actually arrived counts as progress. A repeated report of the same count
+    // must not keep a dead transfer alive.
+    if(task && typeof task.onProgressUpdate==='function') {
+      try { task.onProgressUpdate(p=>{
+        if(settled||expired||!p)return;
+        const bytes=Number(p.totalBytesWritten);
+        if(!Number.isFinite(bytes)||bytes<=written)return;
+        written=bytes;
+        armStall();
+      }); } catch(e) { /* No progress channel: the initial window still applies. */ }
+    }
+    armStall();
   });
 }
 async function searchPlaces(keyword,city) {

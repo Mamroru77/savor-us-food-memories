@@ -178,9 +178,21 @@
       <block wx:if="{{displayType === 'together'}}">
         <view class="settings-form">
           <view class="sheet-couple">
-            <image class="sheet-couple-avatar" src="{{imageErrors[(state.profile.avatar)] ? '/images/jamie.jpg' : (state.profile.avatar)}}" mode="aspectFill"  data-source="{{state.profile.avatar}}" binderror="onImageError" />
-            <s-icon name="heart" size="55" color="{{dusk ? '#d7d1c7' : '#df816b'}}" fill="#df816b" stroke="1.75" />
-            <image class="sheet-couple-avatar" src="{{imageErrors[(state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg')] ? '/images/jamie.jpg' : (state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg')}}" mode="aspectFill"  data-source="{{state.settings.loveSent ? state.profile.avatar : '/images/alex.jpg'}}" binderror="onImageError" />
+            <block wx:if="{{state.profile.avatar}}">
+              <image class="sheet-couple-avatar" src="{{imageErrors[(state.profile.avatar)] ? '/images/jamie.jpg' : (state.profile.avatar)}}" mode="aspectFill" data-source="{{state.profile.avatar}}" binderror="onImageError" />
+            </block>
+            <block wx:else>
+              <view class="sheet-couple-avatar sheet-couple-avatar-blank"><s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" /></view>
+            </block>
+            <view class="sheet-couple-heart {{state.settings.loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{state.settings.loveSent ? copy.s59000d4666 : copy.sc279e1cef9}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+              <s-icon name="heart" size="47" color="{{state.settings.loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.75" />
+            </view>
+            <block wx:if="{{partner}}">
+              <image class="sheet-couple-avatar" src="/images/alex.jpg" mode="aspectFill" />
+            </block>
+            <block wx:else>
+              <view class="sheet-couple-avatar sheet-couple-avatar-blank"><s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" /></view>
+            </block>
           </view>
           <text class="together-message">{{copy.s82d4ff5478}}</text>
           <view class="form-field">

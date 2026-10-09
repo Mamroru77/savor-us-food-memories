@@ -39,8 +39,9 @@
   left: 0;
   right: 0;
   z-index: 4;
-  padding-left: 35rpx;
-  padding-right: 35rpx;
+  /* Shared page gutter, so the Map heading sits on the same left rail as Home/Add/Us/Me. */
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
 }
 .map-top-fade {
   position: absolute;
@@ -53,7 +54,9 @@
   z-index: 2;
 }
 .dusk .map-top-fade { background: linear-gradient(rgba(73,73,73, 0.92), rgba(73,73,73, 0)); }
-.map-heading { margin: 0 8rpx; }
+/* No extra inset: the concept board starts the "Map First" glyph on the search field's own
+   left edge, and the field is the wider element that defines the rail. */
+.map-heading { margin: 0; }
 .map-heading .heading-title { display: block; }
 .map-heading .heading-sub { display: block; }
 
@@ -158,6 +161,23 @@
    and the handler returns before issuing any camera command — the state is functional,
    not just grey. */
 .zoom-step.is-disabled { opacity: 0.38; }
+
+/* Provider-POI visibility toggle: a secondary map-display utility. Same floating-control
+   material and 88rpx touch target as the recenter so the tool column stays one family, but the
+   state is carried by the glyph (map-pin / map-pin-off) rather than by colour. No dimming: both
+   states are valid product modes, not an enabled/disabled pair. */
+.poi-toggle {
+  margin-top: 18rpx;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.89);
+  box-shadow: 0 12rpx 22rpx rgba(85, 85, 85, 0.13);
+}
+.dusk .poi-toggle { background: rgba(73,73,73, 0.94); }
 
 .map-results-count {
   position: absolute;
@@ -282,7 +302,14 @@
 
 .dusk .map-search, .dusk .recenter-map, .dusk .pending-bubble { background:rgba(37,38,42,.94); border-color:rgba(238,234,227,.12); }
 .dusk .pending-popover, .dusk .map-filter-menu { background:#2b2c30; border-color:rgba(238,234,227,.12); }
-.dusk .map-top-fade { background:linear-gradient(rgba(18,19,21,.96),rgba(18,19,21,0)); }
+/* The pearl fade holds its first 30% before decaying, but the dusk fade decayed from the
+   very first pixel. The map tiles stay light in BOTH themes, so by the subtitle's line the
+   dusk backdrop had fallen to ~#858a8d and the light muted subtitle sat at ~1.8:1 contrast;
+   no text colour can recover from that (white would only reach 3.65:1). Holding the dusk
+   stop to 55% keeps a real dark backdrop under both header lines and brings the subtitle
+   back to pearl's own measured contrast (worst 5.43:1 vs pearl 5.36:1) instead of darkening
+   the whole map. */
+.dusk .map-top-fade { background:linear-gradient(rgba(18,19,21,.96) 55%,rgba(18,19,21,0)); }
 .dusk .filter-active { background:#5a4d3d; color:#f5f0e8; }
 
 /* Native 2D composition surface: off-screen, not display:none. */

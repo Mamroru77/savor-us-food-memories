@@ -6,6 +6,12 @@ const trace = require('./mapTrace');
 // Phase A diagnostics live in photoTrace (which requires nothing, so it stays loadable from
 // anywhere). Re-exported here so pages/map/index.js needs no new dependency of its own.
 const photoTrace = require('./photoTrace');
+// The shared image pipeline. The renderer used to cache its work under [source, selected],
+// which meant selecting a marker that was already on screen downloaded the SAME cloud file
+// again just to compose the selected variant (measured: two downloads of one fileID). The
+// download and the 384px re-encode now belong to the SOURCE and are shared by every variant;
+// only the canvas compose stays per-variant, which is a local, cheap, genuinely different job.
+const imageCache = require('./imageCache');
 const WIDTH = 256, HEIGHT = 286;
 // Bound on distinct composed variants kept per renderer. It must comfortably exceed
 // the number of markers a zoomed-in map can show at once, otherwise the renderer
@@ -113,15 +119,32 @@ function createRenderer(canvas) {
   // composed output is kept in `files` instead, because it is what the map displays.
   function release(entry) { while(entry.owned.length) remove(entry.owned.pop()); }
 
+  // The one derivative every marker variant of a source shares: a 384px long-edge re-encode.
+  // Kept here, not in the cache module, because how small a marker source should be is this
+  // renderer's decision; the cache only knows that one source needs one prepared file.
+  async function prepareMarkerSource(local) {
+    let meta=null;
+    try { meta=await info(local); } catch(e) { return local; }
+    const w=Number(meta&&meta.width)||0,h=Number(meta&&meta.height)||0;
+    if(!(w>0)||!(h>0))return local;
+    const fit=fitLongEdge(w,h,SOURCE_LONG_EDGE);
+    if(!fit)return local;
+    try { return await shrink(local,fit.width,fit.height); } catch(e) { return local; }
+  }
+
   // Stage 1 - NETWORK. May overlap. Never touches ctx or the canvas pixels.
   async function networkStage(entry) {
     const started=clock();
     try {
       trace.record(entry.jobId, { sourceKind: trace.sourceKindOf(entry.source), stage: 'download' });
       if(data.isCloudImage(entry.source)) {
-        const local=await require('./cloudRecords').downloadMapPhoto(entry.source);
-        if(local) entry.owned.push(local);
-        entry.local=local;
+        // The download is shared per SOURCE, so the selected variant of a marker that is
+        // already on screen no longer fetches the same cloud file a second time. Preparing
+        // the derivative stays in the heavy stage below, where it is serialised.
+        const shared=await imageCache.localSource(entry.source,'marker',{revision:entry.revision});
+        entry.local=shared.path;
+        entry.prepared=shared.cached===true;
+        (shared.disposable||[]).forEach(path=>entry.owned.push(path));
       } else if(entry.source.startsWith('/images/')) {
         // Bundled package art is already small; never re-encode a package asset.
         entry.local=entry.source;entry.bundled=true;
@@ -141,7 +164,11 @@ function createRenderer(canvas) {
     const started=clock();
     try {
       let decoded=entry.local;
-      if(!entry.bundled) {
+      if(entry.prepared) {
+        // The shared derivative came straight from the persistent cache: nothing to measure,
+        // nothing to re-encode, and the decode below is the only remaining cost.
+        trace.record(entry.jobId, { stage: 'downsample', reason: 'shared-derivative' });
+      } else if(!entry.bundled) {
         let meta=entry.meta;
         if(!meta) { try { meta=await info(entry.local); } catch(e) { meta=null;entry.reason='size-unavailable'; } }
         const w=Number(meta&&meta.width)||0,h=Number(meta&&meta.height)||0;
@@ -154,6 +181,9 @@ function createRenderer(canvas) {
             entry.owned.push(derivative);
             entry.derivativeWidth=fit.width;entry.derivativeHeight=fit.height;
             decoded=derivative;
+            // Keep it for the next session. This runs inside the single heavy slot, so the
+            // persistence never adds concurrency to the expensive step.
+            imageCache.store(entry.source,'marker',derivative,{revision:entry.revision});
             trace.record(entry.jobId, { stage: 'downsample', derivativeWidth: fit.width,
               derivativeHeight: fit.height, derivativeBytes: trace.fileBytes(derivative) });
           } catch(e) {
@@ -245,7 +275,8 @@ function createRenderer(canvas) {
     let resolve;
     const job=new Promise(r=>{resolve=r;});
     const jobId=trace.newJob(!!selected);
-    const entry={key,source,selected:!!selected,backup,resolve,owned:[],local:'',bundled:false,meta:null,reason:'',path:'',
+    const entry={key,source,selected:!!selected,backup,resolve,owned:[],local:'',bundled:false,meta:null,reason:'',path:'',prepared:false,
+      revision: memory && memory.revision!==undefined ? memory.revision : undefined,
       jobId,
       // Only read when tracing is on, so an off trace costs nothing at all. -1 (not 0)
       // marks "no start captured", because a job legitimately begins at clock 0 and a
@@ -277,7 +308,26 @@ function createRenderer(canvas) {
     frameArt.normal=null;frameArt.selected=null;
     files.forEach(remove);files.clear();cache.clear();ready.clear();readyTrace.clear();
   }
-  return {render,
+  // Warm the SELECTED variant of the markers the user can see, so the next tap finds its
+  // marker icon already composed. Downloads are shared with the normal variants, so this
+  // costs a compose per marker and no extra bytes. The selected variant is queued at the
+  // renderer's existing high priority, so a real tap still overtakes the prefetch.
+  function prefetchSelected(memories, skipId) {
+    if (disposed) return 0;
+    let queued = 0;
+    (memories || []).forEach(memory => {
+      if (!memory || memory.id === skipId) return;
+      const source = photoFor(memory);
+      if (!source || !data.isSafeImage(source)) return;
+      const key = JSON.stringify([source, true]);
+      if (cache.has(key)) return;
+      if (cache.size >= LIMIT) return;
+      render(memory, true);
+      queued += 1;
+    });
+    return queued;
+  }
+  return {render, prefetchSelected,
     peek(memory,selected){return ready.get(JSON.stringify([photoFor(memory),!!selected]));},
     // Dev-only attribution for a ready photo; 0 when tracing is off or nothing is ready.
     traceJobId(memory,selected){return readyTrace.get(JSON.stringify([photoFor(memory),!!selected]))||0;},

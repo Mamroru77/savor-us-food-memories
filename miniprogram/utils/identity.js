@@ -87,6 +87,7 @@ function normalizeDeviceSettings(value){
   if(['pearl','dusk'].includes(value.theme))allowed.theme=value.theme;
   if(['system','zh-CN','en'].includes(value.language))allowed.language=value.language;
   if(typeof value.reduceMotion==='boolean')allowed.reduceMotion=value.reduceMotion;
+  if(typeof value.showNativePoi==='boolean')allowed.showNativePoi=value.showNativePoi;
   return allowed;
 }
 function deviceSettings(){try{const raw=wx.getStorageSync(SETTINGS);return normalizeDeviceSettings(typeof raw==='string'?JSON.parse(raw):raw);}catch(e){return {};}}

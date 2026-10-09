@@ -160,4 +160,76 @@ test('Tab press still responds and Quiet suppresses transitions without changing
  assert(css.includes('width: 130rpx;'));assert(css.includes('height: 130rpx;'));assert(css.includes('margin-top: -14rpx;'));
  assert(css.includes('.theme-quiet .tab-label { transition: none !important; animation: none !important; }'));
 });
+// 2026-10-03 (Us/Me IA cleanup). The Us management entry is GONE - shared-space and wishlist
+// management now live only on the Me destination (/pages/space/index), reached from the existing
+// Me row "Shared space & wishlist". The contract below is therefore ABSENCE plus hierarchy:
+// nothing management-shaped may survive on Us in EITHER theme, and the couple identity card must
+// still be the first primary surface after the header.
+//
+// The resolution below is specificity-aware on purpose. The entry keeps the shared
+// `secondary-button` class, and the dark theme paints it with `.dusk .secondary-button` - two
+// classes. A single-class override silently loses to that, which is exactly how a "quiet"
+// treatment can still be a dark slab in DUSK. A gate that assumed source order alone would have
+// called that fixed.
+function cascadeRules(sheets){
+ const out=[];let order=0;
+ sheets.forEach(css=>{
+  const text=String(css).replace(/\/\*[\s\S]*?\*\//g,'');
+  const re=/([^{}]+)\{([^}]*)\}/g;let m;
+  while((m=re.exec(text))){
+   const selector=m[1].trim();
+   if(!selector||selector.startsWith('@'))continue;
+   out.push({selector,body:m[2],order:order++});
+  }
+ });
+ return out;
+}
+function specificity(selector){
+ const classes=(selector.match(/\.[\w-]+/g)||[]).length;
+ const attrs=(selector.match(/\[[^\]]+\]/g)||[]).length;
+ const pseudo=(selector.match(/:(?!:)[\w-]+/g)||[]).length;
+ const elements=(selector.match(/(?:^|[\s>+~])([a-z][\w-]*)/g)||[]).length;
+ return [classes+attrs+pseudo,elements];
+}
+function compareSpecificity(a,b){return a[0]!==b[0]?a[0]-b[0]:a[1]-b[1];}
+function lastDeclaration(body,property){
+ let found=null;
+ for(const decl of body.split(';')){const i=decl.indexOf(':');if(i<0)continue;if(decl.slice(0,i).trim()===property)found=decl.slice(i+1).trim();}
+ return found;
+}
+// What the device applies: highest specificity wins, ties broken by later application order.
+function applied(sheets,matching,property){
+ let best=null;
+ for(const rule of cascadeRules(sheets)){
+  if(!matching.includes(rule.selector))continue;
+  const value=lastDeclaration(rule.body,property);
+  if(value===null)continue;
+  const spec=specificity(rule.selector);
+  if(!best||compareSpecificity(spec,best.spec)>0||(compareSpecificity(spec,best.spec)===0&&rule.order>best.order))best={spec,order:rule.order,value};
+ }
+ return best?best.value:null;
+}
+test('Us carries no shared-space management entry and the identity card keeps first glance',()=>{
+ const usCss=read('pages/us/index.wxss'),usWxml=read('pages/us/index.wxml'),appCss=read('app.wxss'),usJs=read('pages/us/index.js');
+ const sheets=[appCss,usCss];
+ // 1. The removal is structural, not cosmetic: no rule in EITHER theme may still target the
+ //    removed entry or its caption. A leftover rule would mean a leftover node, or a dead shell.
+ for(const selector of ['.space-management','.us-screen .space-management','.dusk .space-management','.dusk .us-screen .space-management'])assert.equal(applied(sheets,[selector],'min-height'),null,'no rule may still paint the removed Us management entry: '+selector);
+ assert.equal(applied(sheets,['.secondary-subtle'],'font-size'),null,'the removed Us caption treatment must not survive as a rule');
+ // The shared product control itself is untouched: the sheet still uses it.
+ assert.equal(applied(sheets,['.secondary-button'],'min-height'),'var(--control-height)','the shared secondary control must keep its product height');
+ // 2. U1 + U3: the utility, its label and its tap target are all gone together. No placeholder,
+ //    no invisible hit target, no dead handler.
+ assert(!usWxml.includes('space-management'),'U1 Us must not render the shared-space management utility');
+ assert(!usWxml.includes('管理双人空间与 Wishlist')&&!usWxml.includes('Manage shared space & wishlist'),'U1 the management label must not remain on Us');
+ assert(!usWxml.includes('onManageSpace'),'U3 no management tap target may remain in the Us markup');
+ assert(!usJs.includes('onManageSpace'),'U3 the handler must be removed with the node, not left dead');
+ assert(!usWxml.includes('secondary-subtle'),'U1 the moved explanation must not remain on Us');
+ // 3. U2: after the header the couple identity card is the FIRST primary surface, and the
+ //    approved hierarchy identity -> journey -> shared moments is intact.
+ const heading=usWxml.indexOf('us-heading'),together=usWxml.indexOf('together-card'),journey=usWxml.indexOf('journey-card'),shared=usWxml.indexOf('shared-section');
+ assert(heading>=0&&together>heading,'U2 the couple identity card must follow the header');
+ assert(together<journey&&journey<shared,'U2 the identity card must still precede the journey card and the gallery');
+ for(const between of ['space-management','secondary-subtle','secondary-button','onManageSpace']){const at=usWxml.indexOf(between);assert(at<0||at>together,'U2 nothing may sit between the header and the identity card: '+between);}
+});
 console.log('\n'+count+'/'+count+' UI quality regression checks passed. Native/device/keyboard/screen-reader acceptance NOT_EXECUTED.');

@@ -110,6 +110,9 @@ function page(name) {
   // default: a suite that silently followed the default would stop measuring what it names.
   // tools/verify-map-overlay-drawer.cjs owns the overlay arm.
   if (name === 'map') instance.data.drawerRenderMode = 'native-callout';
+  // A page under test is a page the user is looking at: the camera transition refuses to write
+  // frames into a hidden page, so the harness has to be honest about visibility.
+  if (name === 'map') instance.active = true;
   return instance;
 }
 // A closed drawer has two legitimate shapes, one per motion driver, and the difference
@@ -295,16 +298,25 @@ function nativeTabs(initial=0){
     const original=service.resolvePhotoUrls;let calls=0;const id='cloud://env.bucket/dining/a.jpg';
     service.resolvePhotoUrls=async ids=>{calls++;assert.deepEqual(ids,[id]);return ['https://example.com/private.jpg'];};
     try{const p=memoryRow();const memory={...sample(),photo:id,noPhoto:false};p.data.memory=memory;
-      p.spec.observers['memory, locale'].call(p,memory);await Promise.resolve();
+      // The row now goes through the shared image pipeline first (which declines in this harness)
+      // and only then resolves a URL, so the honest way to observe the outcome is to await the
+      // row's own load rather than a fixed number of microtasks.
+      await p.spec.observers['memory, locale'].call(p,memory);
       assert.equal(p.data.photoSrc,'https://example.com/private.jpg');assert.equal(memory.photo,id);
       p.spec.lifetimes.attached.call(p);p.spec.observers['memory, locale'].call(p,memory);assert.equal(calls,1);
     }finally{service.resolvePhotoUrls=original;}
   });
   await test('memory row rejects stale and detached cloud-photo completions',async()=>{
     const original=service.resolvePhotoUrls;let done;service.resolvePhotoUrls=()=>new Promise(r=>{done=r;});
+    // The row asks the shared image pipeline before it resolves a URL, so the URL call is no
+    // longer reached on the first microtask. Wait for it to actually be in flight instead of
+    // assuming an internal ordering.
+    const untilPending=async()=>{for(let i=0;i<80&&!done;i++)await Promise.resolve();assert.ok(done,'the url resolution must be reached');};
     try{const p=memoryRow();const pending=p.loadPhoto('cloud://env.bucket/dining/a.jpg');
+      await untilPending();
       await p.loadPhoto(data.photos.meal);done(['https://example.com/old.jpg']);await pending;assert.equal(p.data.photoSrc,data.photos.meal);
-      const next=p.loadPhoto('cloud://env.bucket/dining/b.jpg');p.spec.lifetimes.detached.call(p);done(['https://example.com/detached.jpg']);await next;assert.equal(p.data.photoSrc,data.photos.meal);
+      done=undefined;const next=p.loadPhoto('cloud://env.bucket/dining/b.jpg');await untilPending();
+      p.spec.lifetimes.detached.call(p);done(['https://example.com/detached.jpg']);await next;assert.equal(p.data.photoSrc,data.photos.meal);
     }finally{service.resolvePhotoUrls=original;}
   });
   await test('memory row keeps fallback on denied/unresolved photos and bounds expiry retry',async()=>{
@@ -838,7 +850,14 @@ function nativeTabs(initial=0){
     assert(p.data.markers.length > 0); for (const marker of p.data.markers) {
       const m = store.get().memories.find(m => m.id === marker.memoryId); assert.equal(m.locationSource, 'tencent-picker');
     }
-    assert.equal(p.data.latitude, p.data.selected.coordinates[0]); p.onUnload();
+    // A marker focus is a TRAVEL, not an immediate prop write: the camera is driven by the
+    // transition's own frames, so the contract here is that the travel targets the composed
+    // centre of the selected record rather than that the bound prop has already jumped.
+    const mapCamera = require(path.join(mp, 'utils', 'mapCamera'));
+    const target = mapCamera.centreForPoint(p.data.selected.coordinates, p.data.mapScale, p.cameraViewport(), p.cameraPadding());
+    assert.ok(p.cameraTransition, 'the map starts a travel to the selected record');
+    assert.ok(Math.abs(p.cameraTransition.to[0] - target[0]) < 1e-9 && Math.abs(p.cameraTransition.to[1] - target[1]) < 1e-9,
+      'the travel ends on the composed centre of the selected record'); p.onUnload();
   });
   await test('Us and Me ambient images react to store changes', () => {
     const us = page('us'), me = page('me'); us.onLoad(); me.onLoad();
@@ -1133,6 +1152,16 @@ function nativeTabs(initial=0){
     const geo=require(path.join(mp,'utils/locations'));
     assert.deepEqual(geo.metadata('江苏省苏州市太仓市太仓大道').city,'苏州市');
     assert.equal(geo.metadata('上海市黄浦区').city,'上海市'); assert.equal(geo.metadata('台湾高雄市苓雅區').city,'高雄市');
+    // Country labels follow the official position of the PRC: Taiwan, Hong Kong and Macao are parts of
+    // China and must never be emitted as a country, in the stored field or in the displayed line.
+    assert.equal(geo.metadata('台湾高雄市苓雅區').country,'中国台湾');
+    assert.equal(geo.metadata('中国台湾台北市').country,'中国台湾');
+    assert.equal(geo.metadata('香港中环').country,'中国');
+    assert.equal(geo.metadata('澳门大堂区').country,'中国');
+    for(const address of ['台湾高雄市苓雅區','中国台湾台北市','香港中环','澳门大堂区']){
+      assert.notEqual(geo.metadata(address).country,'台湾'); assert.notEqual(geo.metadata(address).country,'香港'); assert.notEqual(geo.metadata(address).country,'澳门');
+      assert.equal(geo.display({...geo.metadata(address),geoConfirmed:true}).split(', ')[1],geo.metadata(address).country);
+    }
     assert.equal(geo.metadata('10 Some Street').geoConfirmed,false);
     const stale=service.cloudRecordToMemory({...service.memoryToCloudRecord(sample()),...pickedLocation,_id:'stale-paris',city:'Paris',country:'France',geoConfirmed:false});
     assert.equal(stale.city,''); assert.equal(stale.country,'');
@@ -1454,7 +1483,7 @@ function nativeTabs(initial=0){
     p.onRestaurant({detail:{value:'表单测试餐厅'}});await p.onChooseRestaurantLocation();
     for(const [field,value] of [['cuisine','粤菜'],['perCapita','66.5'],['dishes','粥，茶']]) p.onBusinessField({currentTarget:{dataset:{field}},detail:{value}});
     p.changeDraft('photos',Array(9).fill('/images/cafe.jpg'));await p.onSave();
-    const record=[...rows.values()].find(r=>r.restaurantName==='表单测试餐厅');assert(record);assert.equal(record.city,'高雄市');assert.equal(record.country,'台湾');assert.equal(record.geoConfirmed,true);
+    const record=[...rows.values()].find(r=>r.restaurantName==='表单测试餐厅');assert(record);assert.equal(record.city,'高雄市');assert.equal(record.country,'中国台湾');assert.equal(record.geoConfirmed,true);
     assert.equal(record.cuisine,'粤菜');assert.equal(record.perCapita,66.5);assert.deepEqual(Array.from(record.dishes),['粥','茶']);assert.equal(record.photos.length,9);assert.equal(record.rating,undefined);p.onUnload();
   });
   await test('a delayed list cannot overwrite a newer locally acknowledged mutation', async () => {
@@ -1632,22 +1661,37 @@ function nativeTabs(initial=0){
     const call=wx.cloud.callFunction;wx.cloud.callFunction=async()=>({result:{success:true,record:{_id:'wrong-record',revision:2,operationReceipts:[{id:editing.editOperationId,revision:2}]}}});
     try{await assert.rejects(service.confirmOperation(created.id,editing.editOperationId),e=>e.code==='INVALID_RESPONSE');}finally{wx.cloud.callFunction=call;}
   });
-  await test('map marker focus centers the selected restaurant and never fits all points', () => {
+  // A marker focus is a TRAVEL, not a native command. The platform has no camera animation API,
+  // so the journey is a short sequence of ordinary bound-centre writes; what must stay true is
+  // that it targets the selected record's composed centre and that it never fits all points.
+  await test('map marker focus travels to the selected restaurant and never fits all points', () => {
+    const camera=require(path.join(mp,'utils','mapCamera'));
     const p=page('map');const moves=[],fits=[];
     p.mapCtx={moveToLocation:o=>moves.push(o),includePoints:o=>fits.push(o)};
     p.allMemories=[{...sample(),id:'map-a',coordinates:[31.4,121.1]},{...sample(),id:'map-b',coordinates:[31.5,121.2]}];
     p.applyFilters('','all','map-a');moves.length=0;
     p.onMarkerTap({detail:{markerId:1}});
-    assert.equal(p.data.selected.id,'map-b');assert.equal(p.data.selectedId,'map-b');assert.deepEqual(moves.map(({latitude,longitude})=>({latitude,longitude})),[{latitude:31.5,longitude:121.2}]);assert.equal(typeof moves[0].fail,'function');assert.equal(fits.length,0);
-    p.onMarkerTap({detail:{markerId:1}});assert.equal(moves.length,2);
+    assert.equal(p.data.selected.id,'map-b');assert.equal(p.data.selectedId,'map-b');
+    assert.equal(moves.length,0,'a focus issues no native camera command');
+    assert.equal(fits.length,0,'and never fits all points');
+    assert.ok(p.cameraTransition,'a travel is in flight');
+    const composed=camera.centreForPoint([31.5,121.2],p.data.mapScale,p.cameraViewport(),p.cameraPadding());
+    assert.ok(Math.abs(p.cameraTransition.to[0]-composed[0])<1e-9&&Math.abs(p.cameraTransition.to[1]-composed[1])<1e-9,'the travel targets the composed centre');
+    p.onMarkerTap({detail:{markerId:1}});
+    assert.ok(p.cameraTransition,'tapping the same marker again starts its own travel, not a queued one');
   });
   await test('map passive updates preserve pan; explicit overview alone fits all points', () => {
     const p=page('map');let moves=0;const fits=[];p.mapCtx={moveToLocation:()=>moves++,includePoints:o=>fits.push(o)};
     p.allMemories=[{...sample(),id:'map-real',coordinates:[31.4,121.1]}];
-    p.applyFilters('','all','map-real');assert.equal(moves,1);
-    p.applyFilters('','all','map-real','preserve');assert.equal(moves,1);assert.equal(fits.length,0);
-    p.recenter();assert.equal(fits.length,1);assert.equal(moves,1);assert.equal(p.data.selectedId,'map-real');
-    p.applyFilters('not-found','all','map-real');assert.equal(p.data.selected,null);assert.equal(moves,1);
+    p.applyFilters('','all','map-real');
+    assert.equal(moves,0,'a selection travels; it never issues a native camera command');
+    const travel=p.cameraTransition;assert.ok(travel,'a travel is in flight');
+    p.applyFilters('','all','map-real','preserve');assert.equal(p.cameraTransition.token,travel.token,'a passive update must not restart the travel');assert.equal(fits.length,0);
+    p.recenter();assert.equal(fits.length,0,'the overview no longer fits imperatively: its centre travels');
+    assert.equal(moves,0);assert.equal(p.data.selectedId,'map-real');
+    assert.ok(p.cameraTransition,'and it starts a travel to the plan centre');
+    assert.equal(p.cameraTransition.from.length,2,'from a real position');
+    p.applyFilters('not-found','all','map-real');assert.equal(p.data.selected,null);assert.equal(moves,0);
   });
   const markerArt=require(path.join(mp,'utils/mapMarkers'));
   function fakeMarkerCanvas(failImage) {
@@ -1704,7 +1748,13 @@ function nativeTabs(initial=0){
     p.applyFilters('','all','stamp-a');p.applyFilters('','all','stamp-b');
     pending[0]('/user/stale.png');await new Promise(setImmediate);assert(!['/user/stale.png','/user/hidden.png','/user/old.png'].includes(p.data.markers[0].iconPath));
     pending[2]('/user/current.png');await new Promise(setImmediate);assert.equal(p.data.markers[1].iconPath,'/user/current.png');
-    p.onHide();assert(disposed);pending[3]('/user/hidden.png');pending[1]('/user/old.png');await new Promise(setImmediate);assert(!['/user/stale.png','/user/hidden.png','/user/old.png'].includes(p.data.markers[0].iconPath));
+    p.onHide();
+    // 2026-10-01 (Map P0-2): onHide no longer disposes the renderer. A primary-tab switch is not
+    // an unload, and the composed photos are exactly what a tab return must reuse. The guarantee
+    // this test exists for - a late reply must never reach a hidden page - is carried by the
+    // page's own active/generation gates below, and the renderer is still released on unload.
+    pending[3]('/user/hidden.png');pending[1]('/user/old.png');await new Promise(setImmediate);assert(!['/user/stale.png','/user/hidden.png','/user/old.png'].includes(p.data.markers[0].iconPath));
+    p.onUnload();assert(disposed);
   });
   await test('map photo work prioritizes selection and requests every visible singleton', () => {
     const p=page('map');p.active=true;const seen=[];p.pinRenderer={render:(m,selected)=>{seen.push([m.id,selected]);return Promise.resolve(markerArt.fallback(selected));}};
@@ -1762,20 +1812,25 @@ function nativeTabs(initial=0){
     assert.equal(p.data.markers.length,1);assert.equal(p.data.markers[0].groupCount,9);assert.equal(p.data.markers[0].label,undefined);assert.equal(p.data.mapDrawers[0].count,9);
     p.onMarkerTap({detail:{markerId:0}});assert(p.data.clusterOpen);assert.equal(p.data.clusterChoices.length,9);
     p.data.cardCollapsed=true;p.onClusterPick({currentTarget:{dataset:{id:'same-8'}}});
-    assert.equal(p.data.selected.id,'same-8');assert.equal(p.data.cardCollapsed,false);assert.equal(p.data.clusterOpen,true);assert.equal(moves.length,2);
-    assert.deepEqual({latitude:moves[1].latitude,longitude:moves[1].longitude},{latitude:31,longitude:121});assert.equal(p.data.markers[0].memoryId,'same-0');
+    assert.equal(p.data.selected.id,'same-8');assert.equal(p.data.cardCollapsed,false);assert.equal(p.data.clusterOpen,true);assert.equal(moves.length,0);
+    assert.ok(p.cameraTransition,'picking a cluster member starts its own travel');
+    const composedMember=require(path.join(mp,'utils','mapCamera')).centreForPoint([31,121],p.data.mapScale,p.cameraViewport(),p.cameraPadding());
+    assert.ok(Math.abs(p.cameraTransition.to[0]-composedMember[0])<1e-9&&Math.abs(p.cameraTransition.to[1]-composedMember[1])<1e-9,'and it targets that member, composed into the visible region');
+    assert.equal(p.data.markers[0].memoryId,'same-0');
   });
   await test('zoom changes regroup without recentering; stale native scale replies are ignored', () => {
     const p=page('map');p.active=true;p.data.quiet=true;let moves=0;const replies=[];
     p.mapCtx={moveToLocation:()=>moves++,getScale:o=>replies.push(o.success)};
-    p.allMemories=[{...sample(),id:'z-a',coordinates:[31,121]},{...sample(),id:'z-b',coordinates:[31.001,121.001]}];p.applyFilters('','all','z-a');assert.equal(moves,1);
+    p.allMemories=[{...sample(),id:'z-a',coordinates:[31,121]},{...sample(),id:'z-b',coordinates:[31.001,121.001]}];p.applyFilters('','all','z-a');assert.equal(moves,0,'a selection travels, it does not command the camera');
     p.readMapScale();p.readMapScale();replies[1]({scale:18});replies[0]({scale:10});
-    assert.equal(p.data.mapScale,18);assert.equal(p.data.markers.length,2);assert.equal(moves,1);p.onHide();
+    assert.equal(p.data.mapScale,18);assert.equal(p.data.markers.length,2);assert.equal(moves,0);p.onHide();
   });
   await test('collapse and expand keep the selection, bookmark and map camera unchanged', () => {
     const p=page('map');p.allMemories=[{...sample(),id:'card-one'}];let moves=0;p.mapCtx={moveToLocation:()=>moves++};p.applyFilters('','all','card-one');
-    const selected=p.data.selected,saved=p.data.selectedSaved;p.onTogglePlaceCard();assert(p.data.cardCollapsed);p.onTogglePlaceCard();assert.equal(p.data.cardCollapsed,false);
-    assert.equal(p.data.selected,selected);assert.equal(p.data.selectedSaved,saved);assert.equal(moves,1);
+    const selected=p.data.selected,saved=p.data.selectedSaved;const travel=p.cameraTransition;assert.ok(travel);
+    p.onTogglePlaceCard();assert(p.data.cardCollapsed);p.onTogglePlaceCard();assert.equal(p.data.cardCollapsed,false);
+    assert.equal(p.data.selected,selected);assert.equal(p.data.selectedSaved,saved);assert.equal(moves,0);
+    assert.equal(p.cameraTransition.token,travel.token,'collapsing the card must not disturb the camera');
     const css=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8');assert.match(css,/\.place-photo\s*\{[^}]*top:30rpx/);assert.match(css,/\.place-photo\s*\{[^}]*bottom:30rpx/);assert(css.includes('.place-expand'));
   });
   await test('marker size easing is bounded and reduced-motion skips animation', () => {
@@ -2029,15 +2084,31 @@ function nativeTabs(initial=0){
     const w=fs.readFileSync(path.join(mp,'pages/add/index.wxml'),'utf8');const status=w.split('<view class="merchant-page-status">')[1].split('</view>')[0];assert(!/bindtap|switch|button/.test(status));assert(w.indexOf('merchant-page-status')<w.indexOf('location-search-section'));assert(w.indexOf('{{importLookupError}}')>w.indexOf('location-search-section'));assert(!w.includes('copy.sd6d6617fee'));
     const report=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/regression/merchant-page-public-recheck.json'),'utf8'));assert.equal(report.results.length,5);assert(report.results.every(x=>x.merchantFieldsRetrieved.length===0));
   });
-  await test('DevTools camera skips unsupported moveToLocation and falls back to one real point',()=>{
+  await test('the camera never depends on a native call the IDE cannot run',()=>{
     const original=wx.getDeviceInfo;wx.getDeviceInfo=()=>({platform:'devtools'});
-    try{const p=page('map');let moves=0;const fits=[];p.mapCtx={moveToLocation:()=>{moves++;throw new Error('unsupported');},includePoints:o=>fits.push(o)};p.allMemories=[{...sample(),id:'camera-safe',coordinates:[31,121]}];p.applyFilters('','all','camera-safe');assert.equal(moves,0);assert.equal(fits.length,1);assert.deepEqual(fits[0].points,[{latitude:31,longitude:121}]);assert.equal(p.data.latitude,31);assert.equal(p.data.longitude,121);p.onMarkerTap({detail:{markerId:0}});assert.equal(moves,0);assert.equal(fits.length,2);}finally{wx.getDeviceInfo=original;}
+    try{const p=page('map');let moves=0;const fits=[];p.mapCtx={moveToLocation:()=>{moves++;throw new Error('unsupported');},includePoints:o=>fits.push(o)};p.allMemories=[{...sample(),id:'camera-safe',coordinates:[31,121]}];p.applyFilters('','all','camera-safe');
+      // moveToLocation is unsupported on the IDE and includePoints is a silent no-op there, so a
+      // focus must reach the camera through the bound centre alone — never through either call.
+      assert.equal(moves,0,'no moveToLocation on the IDE');
+      assert.equal(fits.length,0,'and no includePoints for a focus');
+      assert.ok(p.cameraTransition,'the travel is the camera on every platform');
+      p.onMarkerTap({detail:{markerId:0}});assert.equal(moves,0);assert.equal(fits.length,0);}finally{wx.getDeviceInfo=original;}
   });
-  await test('native camera handles callback and thrown failures without moving to stale selections',()=>{
+  await test('a superseded travel cannot move the camera to a stale selection',()=>{
     const original=wx.getDeviceInfo;wx.getDeviceInfo=()=>({platform:'ios'});
     try{
-      for(const throws of [false,true]){const p=page('map');let fits=0,moves=0;p.markerGeneration=1;p.mapCtx={moveToLocation:o=>{moves++;if(throws)throw new Error('unsupported');o.fail();},includePoints:()=>fits++};assert.doesNotThrow(()=>p.focusMapCamera([31,121]));assert.equal(fits,1);p.focusMapCamera([32,122]);assert.equal(moves,1);assert.equal(fits,2);}
-      const p=page('map');let reply;const fits=[];p.markerGeneration=1;p.mapCtx={moveToLocation:o=>{reply=o.fail;},includePoints:o=>fits.push(o)};p.focusMapCamera([31,121]);p.markerGeneration=2;p.setData({latitude:32,longitude:122});reply();assert.equal(fits.length,0);assert.equal(p.data.latitude,32);
+      const p=page('map');let fits=0,moves=0;p.markerGeneration=1;p.mapCtx={moveToLocation:()=>moves++,includePoints:()=>fits++};
+      assert.doesNotThrow(()=>p.focusMapCamera([31,121]));assert.equal(fits,0);assert.equal(moves,0);
+      const first=p.cameraTransition;assert.ok(first,'the first focus starts a travel');
+      p.focusMapCamera([32,122]);
+      const second=p.cameraTransition;assert.ok(second,'the second focus starts its own travel');
+      assert.notEqual(second.token,first.token,'the first travel is superseded, never queued');
+      // The settle hands the acknowledgement path the CURRENT generation; a superseded one is
+      // refused there by the existing guard, so an abandoned journey can never win a race.
+      let ack=null;p.onCameraViewportReady=(g,r)=>{ack={g,r};};
+      p.stepCameraTransition(second.duration);
+      assert.equal(p.cameraTransition,null,'the travel completes once');
+      assert.deepEqual(ack,{g:1,r:'focus'},'the settle reconciles the live generation');
     }finally{wx.getDeviceInfo=original;}
   });
   await test('upward drawer keeps first real pin anchored, pages every member, and writes no meal data',()=>{
@@ -2088,11 +2159,18 @@ function nativeTabs(initial=0){
   });
   await test('native visuals and transparent hit regions are separated but share frame data',()=>{
     const w=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
+    // Comments are prose, not markup: a gate must never be tripped by a sentence that merely NAMES
+    // an attribute. Every structural assertion below reads the comment-free source.
+    const markup=w.replace(/<!--[\s\S]*?-->/g,'');
     // The callout block is now gated on the renderer, so split on the slot attribute itself.
     assert(w.includes('slot="callout" wx:if="{{drawerRenderMode === \'native-callout\'}}"'),'the callout must be gated on its renderer');
-    const native=w.split('slot="callout"')[1].split('</map>')[0];
+    const native=markup.split('slot="callout"')[1].split('</map>')[0];
     const hits=w.split('<view class="map-stack-overlay"')[1].split('<!-- offline')[0];
     assert(native.includes('marker-id="{{drawer.markerId}}"'));assert(native.includes('native-stack-photo'));
+    // The callout is the drawer's alone: no second callout may exist, and the drawer's ink must not
+    // carry a tap (the drawer's taps live in the overlay layer). The 2026-10-02 disclosure round
+    // briefly put one tap here; that round is withdrawn, so the original contract stands.
+    assert.equal((markup.match(/slot="callout"/g)||[]).length,1,'only the drawer may own the callout slot');
     assert(!native.includes('catchtap'));assert(!native.includes('stackPositionsReady'));
     // The overlay draws ink under the overlay renderer and stays transparent under the
     // callout one, so every image it holds must be gated on the mode. That is strictly
@@ -2145,7 +2223,7 @@ function nativeTabs(initial=0){
     const p=page('map');p.active=true;p.data.stackPositionsReady=true;const frames=[{markerId:0,height:230}];p.data.mapDrawers=frames;let calls=0;
     p.syncStackPositions=()=>{calls++;};
     p.onMapRegionChange({detail:{type:'begin'}});
-    await new Promise(r=>setTimeout(r,115));assert.equal(calls,0);assert.equal(p.data.stackPositionsReady,false);assert.strictEqual(p.data.mapDrawers,frames);
+    await new Promise(r=>setTimeout(r,115));assert.equal(calls,0);assert.equal(p.data.stackPositionsReady,false,'a gesture hides the group so the native callout keeps the pixels');assert.strictEqual(p.data.mapDrawers,frames);
     p.onMapRegionChange({detail:{type:'end'}});await new Promise(r=>setTimeout(r,120));assert.equal(calls,1);
     await new Promise(r=>setTimeout(r,100));assert.equal(calls,1);
     p.onMapRegionChange({detail:{type:'end'}});p.onHide();await new Promise(r=>setTimeout(r,100));assert.equal(calls,1);assert.equal(p.stackAlignTimer,null);
@@ -2232,7 +2310,7 @@ function nativeTabs(initial=0){
     const file=path.join(mp,'components/morph-icon/index.js');let spec;const old=global.Component;global.Component=x=>spec=x;delete require.cache[require.resolve(file)];require(file);global.Component=old;
     let report;const c={...spec.methods,data:{ready:true},_alive:true,setData(p){Object.assign(this.data,p);},triggerEvent(n,r){report=r;}};c.canvasError();assert.equal(c.data.ready,false);assert.equal(report.mode,'static-fallback');
     const tab=JSON.parse(fs.readFileSync(path.join(mp,'custom-tab-bar/index.json'),'utf8'));assert.equal(tab.usingComponents['s-morph'],'/components/morph-icon/index');const w=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(w.includes('!ready || !painting'));assert(w.includes('<s-icon'));
-    const app=JSON.parse(fs.readFileSync(path.join(mp,'app.json'),'utf8'));assert.equal(app.tabBar.list.length,5);assert(app.pages.includes('pages/morph-lab/index'));
+    const app=JSON.parse(fs.readFileSync(path.join(mp,'app.json'),'utf8'));assert.equal(app.tabBar.list.length,5);assert(!app.pages.includes('pages/morph-lab/index'),'the dev-only morph lab must not ship as a registered production page');
   });
   await test('approved tab endpoints exactly use official Lucide shape nodes',()=>{
     const nodes=require(path.join(mp,'utils/lucideMorphNodes')),icons=require(path.join(mp,'utils/icons')).icons;

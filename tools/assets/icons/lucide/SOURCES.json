@@ -90,6 +90,12 @@
     "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
   },
   {
+    "name": "cloud",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/cloud.svg",
+    "sha256": "28a34022ed00177eb1f218eea5d2b7af30d09b529187fe32219e4dd8ea2b9740",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry. Me P1-2: the 'Cloud tools' secondary-menu row's own metaphor; it previously reused archive, which three rows shared."
+  },
+  {
     "name": "eraser",
     "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/eraser.svg",
     "sha256": "838d4355dd49340523c38a22a2d23f1aca72ef42f8eba79f6a0c84bf6e27b929",
@@ -118,6 +124,12 @@
     "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/image.svg",
     "sha256": "619c9db58c879dce6250376ba67d9c9102ca6dbb3b1efb9294c9f180e22273a5",
     "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry."
+  },
+  {
+    "name": "library",
+    "url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/library.svg",
+    "sha256": "892ba1bd1ee2e5bba320eea1c30c83ed83055ded5a0a0c0e7e4ee5fb06c307a5",
+    "note": "Original SVG; preview applies stroke-width 1.75 without modifying geometry. Me P1-2: the 'Memories' secondary-menu row opens the sheet named library ('Your memories. A beautiful collection.'); it previously reused archive, which three rows shared."
   },
   {
     "name": "loader-circle",

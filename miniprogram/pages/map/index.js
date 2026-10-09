@@ -13,6 +13,14 @@ const mapMarkers = require('../../utils/mapMarkers');
 const mapLayout = require('../../utils/mapLayout');
 const mapStack = require('../../utils/mapStack');
 const mapProjection = require('../../utils/mapProjection');
+const mapCamera = require('../../utils/mapCamera');
+const imageCache = require('../../utils/imageCache');
+// The selected card is a PREVIEW surface, not a detail page. Its rendered box is 280rpx square;
+// measured on the attached 3.5x device that is 469 device pixels, so a 512px long-edge variant
+// covers it with a small margin and is still ~40x smaller than a 10 MB legacy original. The
+// marker/list variant (384px) stays as it is: it already covers the 280px marker and the 215px
+// list cell, and re-pointing it would churn a tested, documented path for no gain.
+const CARD_PREVIEW_LONG_EDGE = 512;
 const restaurantCategory = require('../../utils/restaurantCategory');
 
 // Marker photos arrive asynchronously and each one used to trigger its own whole-array
@@ -31,6 +39,16 @@ const ZOOM_MIN_SCALE = 3;
 const ZOOM_MAX_SCALE = 18;
 // A native scale this close to a whole level counts as being at that level.
 const ZOOM_LEVEL_EPSILON = 0.05;
+
+// How long a Map session may go without re-reading the product data from the cloud.
+//
+// This is deliberately NOT the correctness mechanism. Local writes publish through the store
+// subscription, an actor transition republishes, and a queued outbox is flushed by the sync
+// itself - so every change this device can observe already reaches the page without a read.
+// What a read adds is remote changes made on another device, and there is no push channel for
+// those, so a bounded refresh window is the honest way to keep them reachable. A primary-tab
+// switch is NOT a reason to read: that is the whole point of this round.
+const MAP_CLOUD_SYNC_INTERVAL_MS = 30000;
 
 function visibleMemories(memories, query, filter) {
   const q = (query || '').toLowerCase().trim();
@@ -65,6 +83,9 @@ function emptyMapState(query, filter, pendingCount) {
 Page({
   onFieldFocus: uiFeedback.onFieldFocus,
   onFieldBlur: uiFeedback.onFieldBlur,
+  // Same shared image-failure path every other page uses (data-source + imageErrors), so the
+  // selected-place photo falls back exactly like Add / Home / Us / Me photos do.
+  onImageError: uiFeedback.onImageError,
   data: {
     focusedField: '', imageErrors: {}, pressedStackRoot:'',
     // Drawer motion driver. Under drawerRenderMode='native-callout' it decides whether the
@@ -133,6 +154,7 @@ Page({
     selectedPhoto: '',
     distanceLabel: '',
     mapError: false,
+    showNativePoi: true,
   },
 
   onLoad() {
@@ -182,18 +204,76 @@ Page({
       this.setData({overlayTop:top},()=>this.syncStackPositions());
     }).exec();
   },
+  // The camera's composition geometry, measured — never guessed. The search bar's bottom,
+  // the tool column's left edge and the place card's top are what actually stand between
+  // the user and the map, and all three move with the device, the locale and the card's
+  // collapsed state. Deliberately a SEPARATE query from syncOverlayClearance: that one is
+  // pinned by its own suite to the search selector and to a single overlayTop write, and
+  // it must stay exactly that. This one writes nothing to `data` at all — the padding is
+  // read at command time, so a measurement never costs a bridge write or a re-render.
+  syncCameraPadding() {
+    if(!this.active||this.disposed||!this.createSelectorQuery)return;
+    const request=this.cameraPaddingRequest=(this.cameraPaddingRequest||0)+1;
+    this.createSelectorQuery()
+      .select('.map-tool-column').boundingClientRect(tool=>{
+        this.createSelectorQuery().select('.place-card').boundingClientRect(card=>{
+          if(!this.active||this.disposed||request!==this.cameraPaddingRequest)return;
+          const next=this.cameraMeasurement=this.cameraMeasurement||{};
+          if(tool&&Number.isFinite(tool.left))next.toolLeft=tool.left;
+          if(card&&Number.isFinite(card.top))next.cardTop=card.top;
+        }).exec();
+      }).exec();
+  },
+  cameraViewport() {
+    try {
+      const win=wx.getWindowInfo?wx.getWindowInfo():(wx.getSystemInfoSync?wx.getSystemInfoSync():null);
+      if(win&&Number.isFinite(win.windowWidth)&&win.windowWidth>0) {
+        return {width:win.windowWidth, height:Number.isFinite(win.windowHeight)?win.windowHeight:0,
+          safeBottom:win.safeArea?Math.max(0,(win.windowHeight||0)-win.safeArea.bottom):0};
+      }
+    } catch(e) { /* fall through to the shared metric */ }
+    // No window info: there is no honest height to reserve against, so the caller is told
+    // exactly that (height 0) instead of being handed an invented one.
+    let width=0;
+    try { width=metrics.getMetrics().screenWidth; } catch(e) { /* keep 0 */ }
+    return {width:Number.isFinite(width)&&width>0?width:375, height:0, safeBottom:0};
+  },
+  // [top, right, bottom, left] in component pixels, from the last measurement. Falls back
+  // to a documented mirror of the CSS contract until the first measurement lands, and
+  // over-reserves rather than under-reserves while it does.
+  cameraPadding() {
+    const viewport=this.cameraViewport();
+    const measured=this.cameraMeasurement;
+    // overlayTop is the page's own measured safe line (search bottom + 8). onLoad seeds it
+    // from the capsule metric, so it is a real device-derived value before the first
+    // measurement ever lands; the bootstrap covers a page that has neither.
+    const overlayTop=Number(this.data.overlayTop)>0?Number(this.data.overlayTop):(Number(this.data.headerTop)>0?Number(this.data.headerTop)+120:0);
+    if(!measured||!(measured.toolLeft>0)||!(measured.cardTop>0)||!(overlayTop>0))return mapCamera.bootstrapPadding(viewport,overlayTop);
+    return mapCamera.paddingFrom({viewport,searchBottom:overlayTop,toolLeft:measured.toolLeft,cardTop:measured.cardTop,gutter:0});
+  },
+  // The overview camera plan for the visible markers. Null when there is nothing
+  // legitimate to fit — a 0-marker overview then issues NO camera command instead of
+  // jumping somewhere arbitrary, which is the safe default the brief asks for.
+  planOverview(visible) {
+    const points=(visible||[]).map(m=>m.coordinates).filter(Boolean);
+    if(!points.length)return null;
+    return mapCamera.overview(points,this.cameraViewport(),this.cameraPadding(),this.data.mapScale);
+  },
   initMarkerRenderer() {
     if(this.active && this.markerCanvas && !this.pinRenderer) {
       try {this.pinRenderer=mapMarkers.createRenderer(this.markerCanvas);} catch(e) { /* bundled fallback remains usable */ }
     }
   },
-  onResize() { const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120},()=>{this.syncOverlayClearance();this.syncStackPositions();}); },
+  onResize() { const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120},()=>{this.syncOverlayClearance();this.syncCameraPadding();this.syncStackPositions();}); },
   onHide() {
     this.markerCanvasRequest=(this.markerCanvasRequest||0)+1;this.markerCanvasPending=false;
     this.onStackRelease();
+    // A transition that is still running must not write a camera frame into a hidden page.
+    this.cancelCameraTransition();
     this.stackGesture=false;clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
     // A hidden page must not resolve a tap against a reply that arrives later.
     this.zoomReadRequest=(this.zoomReadRequest||0)+1;
+    this.cameraPaddingRequest=(this.cameraPaddingRequest||0)+1;
     this.clearZoomCommand();
     this.stackProjectionBusy=false;
     this.stackPositionRequest=(this.stackPositionRequest||0)+1;
@@ -203,18 +283,24 @@ Page({
     this.setData({clusterOpen:false,mapDrawers:[],stackPositionsReady:false});
     this.deferredMapState=null;this.drawerResumeTarget=undefined;this.markerResumeNeeded=false;
     this.active=false;this.markerGeneration=(this.markerGeneration||0)+1;
-    if(this.pinRenderer) this.pinRenderer.dispose();this.pinRenderer=null;
+    // A primary-tab switch is not an unload. The page instance, the <map> component, the WXML
+    // node tree and the renderer canvas all survive it, so the composed marker photos must
+    // survive with them: disposing here is what threw away every resolved photo and forced the
+    // whole visible set to be downloaded and re-composed on the very next onShow. The renderer
+    // is bounded by its own LIMIT of composed variants, and it is released in onUnload.
   },
   onUnload() {
     if (this._memoryPreview) this._memoryPreview.cancel();
     this.disposed=true;this.onHide();
+    // The renderer now outlives onHide, so its release belongs to the real end of the page.
+    if(this.pinRenderer) this.pinRenderer.dispose();this.pinRenderer=null;
     if (this.unsubscribe) this.unsubscribe();
   },
 
   onShow() {
     try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
 
-    const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120});
+    const m=metrics.getMetrics(true); this.setData({headerTop:m.headerTop,overlayTop:m.headerTop+120,imageErrors:{}});
     this.active=true;this.initMarkerRenderer();
     const state = store.get();
     this._tabAppearance = {
@@ -233,11 +319,18 @@ Page({
 
   async syncMapCloud() {
     if (identity.isDiagnosisActive()) return; // An intentional freeze is not an outage.
+    const session = identity.snapshot();
+    const unsettled = session.locked || session.status === 'verifying';
+    // Joining an in-flight verification is a fail-closed obligation and always runs. Reading the
+    // product data again is not: the store subscription already carries every local change, so a
+    // read only happens when this session has never synced, when queued work needs flushing, or
+    // when the bounded refresh window has elapsed.
+    if (!unsettled && !this.cloudSyncDue()) return;
     try {
-      const session = identity.snapshot();
-      if (session.locked || session.status === 'verifying') await identity.verify();
+      if (unsettled) await identity.verify();
       if (!this.active || this.disposed) return;
       await store.syncCloud();
+      this.lastCloudSyncAt = Date.now();
     } catch (error) {
       if (!this.active || this.disposed || identity.isDiagnosisActive()) return;
       // A failed/changed identity is rendered by the identity gate, not a cache Toast.
@@ -246,19 +339,52 @@ Page({
     }
   },
 
+  cloudSyncDue() {
+    if (this.lastCloudSyncAt === undefined) return true;   // this page has never read the cloud
+    if ((store.get().outbox || []).length) return true;    // queued work must be flushed
+    return Date.now() - this.lastCloudSyncAt >= MAP_CLOUD_SYNC_INTERVAL_MS;
+  },
+
   syncState(state) {
+    // The image cache is per owner. A different owner must not inherit resolved URLs or
+    // prepared derivatives, so the whole pipeline is dropped the moment the owner changes.
+    const owner = state && state.identity ? state.identity.userId : '';
+    if (this.imageCacheOwner !== owner) { this.imageCacheOwner = owner; imageCache.reset(); }
     i18n.syncPage(this, state, 1);
     // Identity appearance updates remain immediate; defer only map rendering during a pan.
     // Remember work, never retain a private account snapshot across a gesture.
     this.deferredMapState=null;
     if(this.stackGesture && !identity.snapshot().locked){this.deferredMapState=true;return;}
+    // This page is published to by the store subscription, so the store's revision says whether
+    // anything it renders has actually changed. An unchanged revision means the values below are
+    // already on screen: re-deriving them and re-publishing them would be a bridge write that
+    // changes nothing, and rebuilding the marker set would throw away the composed photos the
+    // renderer still holds. A primary-tab switch publishes nothing, so this is the path a tab
+    // return takes.
+    const revision = store.revision();
+    if (revision === this.renderedRevision) { this.resumeMapView(); return; }
+    this.renderedRevision = revision;
     const isSample = m => !m.cloudId && data.initialMemories.some(seed => seed.id === m.id);
     const real = state.memories.filter(m => !isSample(m));
     this.pendingLocations = real.filter(m => !locations.confirmed(m) || !m.geoConfirmed);
     this.allMemories = real.length ? real.filter(locations.confirmed) : state.memories.filter(isSample);
     this.setData({ pendingCount: this.pendingLocations.length, demoMode: !real.length });
-    this.setData({ dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion });
+    this.setData({ dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion, showNativePoi: state.settings.showNativePoi !== false });
     this.applyFilters(this.data.query, this.data.filter, this.data.selectedId, 'preserve');
+  },
+
+  // Everything a page that became visible again genuinely has to redo, and nothing more.
+  // The marker set, the drawers and the composed photos are already correct, so this only
+  // restores what a hidden page could not keep running: the native-bounds measurement and the
+  // overlay hit regions. Any photo the renderer already holds is rebound from its cache rather
+  // than downloaded again, so a return with no data change performs no network work at all.
+  resumeMapView() {
+    if (!this.active || this.disposed) return;
+    this.syncOverlayClearance();
+    this.syncCameraPadding();
+    this.syncStackPositions();
+    this.renderMarkerPhotos((this.markerGroups||[]).map(g=>g.memory), this.data.selectedId, this.markerGeneration);
+    this.renderDrawerPhotos(this.markerGeneration);
   },
 
   applyFilters(query, filter, preferredId, viewportMode) {
@@ -342,55 +468,197 @@ Page({
         defaultMeal: data.photos.meal,
       });
     }
-    if (shouldFocus && viewportMode !== 'overview') {
-      patch.latitude = selected.coordinates[0]; patch.longitude = selected.coordinates[1];
-    }
-    // IDE 的全览指令可能停在旧中心：同一批可见点改由既有受控属性表达。
-    // 只更新中心，不改变缩放、分组、固定边界与 320ms 动效。
-    const overviewLocalFit = viewportMode === 'overview' && visible.length > 1 && this.cameraFitLocal();
-    if (overviewLocalFit) {
-      let la = Infinity, hi = -Infinity, lo = Infinity, hj = -Infinity;
-      visible.forEach(function (m) {
-        la = Math.min(la, m.coordinates[0]); hi = Math.max(hi, m.coordinates[0]);
-        lo = Math.min(lo, m.coordinates[1]); hj = Math.max(hj, m.coordinates[1]);
-      });
-      patch.latitude = (la + hi) / 2; patch.longitude = (lo + hj) / 2;
-    }
+    // The bound props ARE a camera channel, and on a real device that channel is INSTANT:
+    // writing latitude/longitude moves the native camera in the same frame (measured —
+    // 161 samples over 900ms, one distinct centre). Writing them in the same patch as the
+    // selection therefore teleported the map BEFORE any camera command could run, and that
+    // is exactly what made a marker tap read as a jump cut.
+    //
+    // A marker focus is now a TRAVEL, not a write: focusMapCamera() below drives a short
+    // sequence of centre writes behind an explicit transition token. So no camera prop is
+    // written here at all — the selection patch carries selection state only. The overview
+    // is the one case that still writes the props directly, because on the IDE the bound
+    // props are the only channel that can express a chosen fit level.
+    const overviewPlan = viewportMode === 'overview' ? this.planOverview(visible) : null;
+    // The overview's plan is unchanged — same fit geometry, same measured padding, same chosen
+    // level. Only the way it is APPLIED changed: the centre TRAVELS through the same token as a
+    // marker focus instead of being written in one frame. It used to be the last instant centre
+    // jump left in the Map, and "detail -> overview" is supposed to be the mirror of
+    // "overview -> detail", not a cut.
+    // The card is a preview surface. When the preview is ALREADY cached — the normal case, since
+    // the visible set is warmed after every camera settle — it is bound in the same patch as the
+    // selection, so the card paints it immediately and the cloud original is never requested.
+    // When it is not cached the original stands as the placeholder and the preview replaces it,
+    // which is strictly better than an empty card while a 10 MB original arrives.
+    const cardSource = selected ? (selected.placePhoto || selected.photo || data.photos.meal) : '';
+    const cardPreview = selected && data.isCloudImage(cardSource) ? imageCache.cachedLocal(cardSource, 'preview', selected.revision) : null;
+    if (cardPreview) patch.selectedPhoto = cardPreview;
     // Wait for the marker/card update before issuing one camera command.
     // A native pan need not update data.latitude: explicit focus also handles
     // tapping the same marker again after panning away.
     this.setData(patch, () => {
       this.ensureMarkerRenderer();
       this.syncOverlayClearance();
+      this.syncCameraPadding();
       this.syncStackPositions();
       this.animateMarkerSizes(animation,generation);
       this.renderMarkerPhotos(representatives, selected && selected.id, generation);
       this.renderDrawerPhotos(generation);
-      if (!this.mapCtx) return;
-      if (viewportMode === 'overview' && visible.length) {
-        const points = visible.map(m => ({latitude:m.coordinates[0], longitude:m.coordinates[1]}));
-        const overviewReason = overviewLocalFit ? 'overview-bound-fit' : 'overview';
-        try {this.mapCtx.includePoints({ points, padding: [90, 40, 165, 40],success:()=>this.onCameraViewportReady(generation,overviewReason),fail:()=>{} });}catch(e){/* Existing viewport remains usable. */}
-      } else if (shouldFocus) {
-        this.focusMapCamera(selected.coordinates);
+      // Image preparation is raised BEFORE and ALONGSIDE the camera work, never after it: the
+      // card's preview must be on its way the moment the selection happens, not when the travel
+      // finishes. (The marker side is the renderer's own queue.)
+      this.resolveCardPreview(selected, generation);
+      if (overviewPlan) {
+        // One travel, carrying the plan's own centre and level. `includePoints` is deliberately
+        // no longer used here: it sets the centre AND the scale in one imperative jump, which is
+        // exactly the cut this round removes. The geometry module already computes the level the
+        // fit would have chosen, so nothing about the plan is lost.
+        const centre = mapCamera.centreForPoint(overviewPlan.centre, overviewPlan.level, this.cameraViewport(), overviewPlan.padding);
+        this.cancelCameraTransition();
+        // Written only when it changes something: re-writing the same level re-dispatches the
+        // bound prop and restarts the platform's own zoom easing for no reason.
+        const observed = Number.isFinite(this.data.mapScale) ? this.data.mapScale : overviewPlan.level;
+        if (Math.abs(overviewPlan.level - observed) >= 0.5) this.setData({ commandScale: overviewPlan.level });
+        this.startCameraTransition(centre);
+        return;
       }
+      if (shouldFocus) this.focusMapCamera(selected.coordinates);
     });
   },
 
+  // A marker focus is a short, interruptible TRAVEL from wherever the camera actually is
+  // to the selected marker, composed into the unobstructed region. It is deliberately not
+  // a native command: the platform offers no camera animation API, `moveToLocation` is a
+  // centre-only jump and is unavailable on the IDE, and `includePoints` is a silent no-op
+  // there. The bound centre props, however, are followed write by write (measured: 30
+  // writes 20 ms apart -> 26 distinct native centres along a monotone path), so a
+  // sequence of ordinary writes IS a continuous pan on every platform.
+  //
+  // Nothing here queues: a second tap cancels the running travel and re-seeds from the
+  // CURRENT position, so the last intent always wins and the camera never finishes an
+  // abandoned journey first.
   focusMapCamera(coordinates) {
-    const latitude=coordinates[0],longitude=coordinates[1];
-    let devtools=false;
-    try {const info=wx.getDeviceInfo?wx.getDeviceInfo():wx.getSystemInfoSync?wx.getSystemInfoSync():{};devtools=info.platform==='devtools';}catch(e){}
-    const generation=this.markerGeneration;
-    const fallback=()=>{
-      if(this.disposed||generation!==this.markerGeneration)return;
-      this.setData({latitude,longitude});
-      // A single point also restores focus after a manual pan; never fit unrelated restaurants.
-      if(this.mapCtx&&this.mapCtx.includePoints)try{this.mapCtx.includePoints({points:[{latitude,longitude}],padding:[90,40,165,40],success:()=>this.onCameraViewportReady(generation),fail:()=>{}});}catch(e){}
+    const scale = Number.isFinite(this.data.mapScale) ? this.data.mapScale : 13;
+    const viewport = this.cameraViewport();
+    const padding = this.cameraPadding();
+    const target = mapCamera.centreForPoint(coordinates, scale, viewport, padding);
+    this.startCameraTransition(target);
+  },
+
+  // ---- programmatic camera transition -------------------------------------------------
+  // The token every write of this transition is guarded by. While it is live, the page's
+  // regionchange handler must do NO derived work: each centre write raises regionchange
+  // (measured at 2 begin/end pairs per write), and rebuilding projections / re-reading the
+  // scale / regrouping markers per frame is exactly the bridge flood this exists to avoid.
+  // A user gesture always outranks it.
+  cameraCentre() {
+    const live = this.cameraLiveCentre;
+    if (live && Number.isFinite(live[0]) && Number.isFinite(live[1])) return [live[0], live[1]];
+    const lat = Number(this.data.latitude), lng = Number(this.data.longitude);
+    return [Number.isFinite(lat) ? lat : 0, Number.isFinite(lng) ? lng : 0];
+  },
+  startCameraTransition(target) {
+    this.cancelCameraTransition();
+    const from = this.cameraCentre();
+    const scale = Number.isFinite(this.data.mapScale) ? this.data.mapScale : 13;
+    const distance = mapCamera.panPixels(from, target, scale);
+    const duration = mapCamera.panDurationMs(distance);
+    const transition = this.cameraTransition = {
+      token: (this.cameraTransitionSerial || 0) + 1,
+      from, to: [target[0], target[1]],
+      // The geometry the target was composed for. Carried on the transition so the contract
+      // "it lands on the composed centre" stays checkable without recomputing it.
+      scale, viewport: this.cameraViewport(), padding: this.cameraPadding(),
+      duration, startedAt: Date.now(), frame: 0, timer: null,
     };
-    if(devtools||this.cameraMoveUnavailable||!this.mapCtx||!this.mapCtx.moveToLocation){fallback();return;}
-    try {this.mapCtx.moveToLocation({latitude,longitude,success:()=>this.onCameraViewportReady(generation),fail:()=>{this.cameraMoveUnavailable=true;fallback();}});}
-    catch(e){this.cameraMoveUnavailable=true;fallback();}
+    this.cameraTransitionSerial = transition.token;
+    // The projected drawer ink lives in page coordinates, so a moving camera would leave it
+    // behind. Exactly like a user gesture, the hit regions go away for the duration and are
+    // re-projected once, when the camera settles.
+    if (this.data.stackPositionsReady) this.setData({ stackPositionsReady: false });
+    this.stepCameraTransition(0);
+  },
+  // Drives the transition to `elapsed` ms. Exposed as a plain method so the contract can be
+  // exercised without a timer: the frame loop is only a scheduler around this.
+  stepCameraTransition(elapsed) {
+    const transition = this.cameraTransition;
+    if (!transition || transition.token !== this.cameraTransitionSerial) return;
+    if (this.disposed || !this.active) { this.cancelCameraTransition(); return; }
+    const progress = transition.duration > 0 ? Number(elapsed) / transition.duration : 1;
+    const point = mapCamera.panPoint(transition.from, transition.to, progress);
+    transition.frame += 1;
+    this.cameraLiveCentre = point;
+    // The first sample is the point the camera is ALREADY at. Writing it would only
+    // re-dispatch the bound props, so the travel starts on the first real movement.
+    if (progress > 0) this.setData({ latitude: point[0], longitude: point[1] });
+    if (progress >= 1) { this.finishCameraTransition(transition); return; }
+    this.scheduleCameraFrame(transition);
+  },
+  scheduleCameraFrame(transition) {
+    // Absolute deadlines, never "16 ms after the last acknowledgement": a late frame must
+    // not add its own drift on top of the delay (same rule as the drawer reveal).
+    const due = transition.startedAt + transition.frame * (1000 / 60);
+    const delay = Math.max(0, due - Date.now());
+    transition.timer = setTimeout(() => {
+      transition.timer = null;
+      this.stepCameraTransition(Date.now() - transition.startedAt);
+    }, delay);
+  },
+  finishCameraTransition(transition) {
+    if (transition.timer) { clearTimeout(transition.timer); transition.timer = null; }
+    this.cameraTransition = null;
+    this.cameraLiveCentre = transition.to;
+    // One reconciliation, after the camera has settled — never per frame. This reuses the
+    // existing imperative-command path: it re-projects the hit regions, re-reads the real
+    // scale, adopts the real centre as the anchor and regroups only if the grouping changed.
+    this.onCameraViewportReady(this.markerGeneration, 'focus');
+  },
+  // Raise the selected card's PREVIEW. It runs in parallel with the camera travel, and it is
+  // bound only if it is still the right selection when it lands — a stale preview must never
+  // paint over a newer card.
+  resolveCardPreview(selected, generation) {
+    if (!selected) return;
+    const source = selected.placePhoto || selected.photo || data.photos.meal;
+    if (!data.isCloudImage(source)) return;                 // package art and local paths are already final
+    if (imageCache.cachedLocal(source, 'preview', selected.revision)) return;  // already bound in the patch
+    imageCache.ensureLocal(source, 'preview', CARD_PREVIEW_LONG_EDGE, { revision: selected.revision })
+      .then(path => {
+        if (!path || this.disposed || generation !== this.markerGeneration) return;
+        if (this.data.selectedId !== selected.id) return;
+        if (path === this.data.selectedPhoto) return;
+        this.setData({ selectedPhoto: path });
+      })
+      .catch(() => { /* the card keeps the original binding it already has */ });
+  },
+  // After the camera settles, warm the SELECTED marker variant of everything on screen. The
+  // bytes are shared with the normal variants, so this buys the next tap a ready icon for the
+  // cost of one local compose per marker — and it never competes with a real tap, which is
+  // queued at the renderer's own high priority.
+  prefetchVisibleSelection() {
+    const groups = this.markerGroups || [];
+    if (this.pinRenderer && this.pinRenderer.prefetchSelected) {
+      this.pinRenderer.prefetchSelected(groups.map(group => group.memory), this.data.selectedId);
+    }
+    // P2, the other half of the same prediction: the selected-card PREVIEW of every marker the
+    // user can see. It is serialized inside the image pipeline, so this can never compete with
+    // the image the user just asked for — and a tap then paints its card in the same frame
+    // instead of waiting for a cloud original.
+    groups.forEach(group => {
+      const memory = group.memory;
+      if (!memory || memory.id === this.data.selectedId) return;
+      const source = memory.placePhoto || memory.photo;
+      if (!source || !data.isCloudImage(source)) return;
+      imageCache.ensureLocal(source, 'preview', CARD_PREVIEW_LONG_EDGE, { revision: memory.revision }).catch(() => {});
+    });
+  },
+  cancelCameraTransition() {
+    const transition = this.cameraTransition;
+    if (!transition) return;
+    if (transition.timer) clearTimeout(transition.timer);
+    this.cameraTransition = null;
+    // Whatever the camera reached is the truth from now on: a following transition re-seeds
+    // from here instead of from the abandoned target.
+    this.cameraLiveCentre = this.cameraLiveCentre || transition.from;
   },
   cameraFitLocal() {
     // Whether an imperative viewport fit can be trusted; when it cannot, the
@@ -408,14 +676,17 @@ Page({
     this.stackPositionRequest = (this.stackPositionRequest || 0) + 1;
     this.stackProjectionBusy = false;
     if (this.data.stackPositionsReady) this.setData({stackPositionsReady:false});
-    // A fit moves the native centre without moving the bound props, and the scale
-    // reply below re-asserts them: track the anchor to that same native viewport
-    // first, or applying the new scale silently pulls the view back to the
-    // previous centre. 单点聚焦与原生定位各自保留显式目标，不参与对齐。
+    // A fit or a focus moves the native centre without moving the bound props, and the
+    // scale reply below re-asserts them: track the anchor to that same native viewport
+    // first, or applying the new scale silently pulls the view back to the previous
+    // centre. This now covers BOTH imperative commands — a focus is exactly as
+    // imperative as an overview, and on a device it is the only thing that moved the
+    // camera at all. 单点聚焦与原生定位各自保留显式目标，不参与对齐。
     // 顺序保持既有可观察时序（本帧内同步刷新缩放与投影），锚点仅追加一次只读对齐。
     // 只对齐一次：由下面 syncStackPositions 已发起的那次 getRegion 回复消费，
     // 不额外查询、不新增定时器、不下发新的相机指令。
-    this.cameraAnchorPending = reason === 'overview';
+    this.cameraAnchorPending = reason === 'overview' || reason === 'focus';
+    this.prefetchVisibleSelection();
     this.rebindReadyMarkerPhotos();
     this.readMapScale();
     this.syncStackPositions();
@@ -431,6 +702,11 @@ Page({
     const finish=()=>{if(request===this.stackPositionRequest)this.stackProjectionBusy=false;};
     this.mapCtx.getRegion({success:region=>{
       if(!this.active||this.disposed||request!==this.stackPositionRequest){finish();return;}
+      // The real native centre, captured for free. A later camera transition must start from
+      // where the camera ACTUALLY is — after a user pan the bound props are stale, and a
+      // travel seeded from them would jump on its first frame.
+      const ne0=region&&region.northeast,sw0=region&&region.southwest;
+      if(ne0&&sw0&&Number.isFinite(ne0.latitude)&&Number.isFinite(sw0.latitude)&&Number.isFinite(ne0.longitude)&&Number.isFinite(sw0.longitude))this.cameraLiveCentre=[(ne0.latitude+sw0.latitude)/2,(ne0.longitude+sw0.longitude)/2];
       this.createSelectorQuery().select('#savor-map').boundingClientRect(rect=>{
         if(!rect||!this.active||this.disposed||request!==this.stackPositionRequest){finish();return;}
         const positions={};
@@ -844,6 +1120,14 @@ Page({
   onZoomIn() { this.requestZoom(1); },
   onZoomOut() { this.requestZoom(-1); },
 
+  // Presentation preference only. Native provider POIs are geographic context, so the product
+  // default is ON and the user may simplify the map; the choice rides the existing device-level
+  // settings pattern (theme / language / reduceMotion) and is remembered per device. Nothing about
+  // Savor's own markers, the selection, the card, the query or the camera is touched here.
+  onToggleNativePoi() {
+    store.updateSettings({ showNativePoi: this.data.showNativePoi === false });
+  },
+
   // Direction-aware adjacent level. Deliberately NOT round(current) + delta: that
   // would send 13.49 up to 14 while 13.51 jumps to 15, so the same tap would travel
   // a different distance depending on which side of the rounding boundary a pinch
@@ -893,6 +1177,9 @@ Page({
     if (Math.abs(target - base) <= ZOOM_LEVEL_EPSILON) { this.zoomPendingTarget = target; return; }
     this.zoomCommandCount = (this.zoomCommandCount || 0) + 1;
     this.zoomPendingTarget = target;
+    // A zoom is the user taking the camera: a travel still in flight was aimed at the old
+    // scale, so it stops here instead of fighting the new level.
+    this.cancelCameraTransition();
     // The guard above compares against the NATIVE level, never against the bound
     // value. When a pinch leaves the native scale on 13.4 while the binding already
     // holds 13, the tap must still write 13: the write itself is the command.
@@ -920,6 +1207,18 @@ Page({
 
   onMapRegionChange(e) {
     const phase=e&&e.detail&&e.detail.type||e&&e.type;
+    // A programmatic transition drives its own frames through the bound centre, and every
+    // one of those writes raises regionchange (measured: 2 begin/end pairs per write).
+    // Running the derived work per frame — re-projecting, re-reading the scale, regrouping
+    // markers — is exactly the bridge flood the transition token exists to prevent, so our
+    // own writes are ignored outright and reconciled once, when the camera settles.
+    // A real finger always outranks the transition: a gesture cancels it and falls through
+    // to the normal path unchanged.
+    if (this.cameraTransition) {
+      const causedBy=e&&e.detail&&e.detail.causedBy;
+      if(causedBy==='gesture'||causedBy==='drag'||causedBy==='scale')this.cancelCameraTransition();
+      else return;
+    }
     clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
     this.stackPositionRequest=(this.stackPositionRequest||0)+1;
     this.stackProjectionBusy=false;

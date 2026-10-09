@@ -1,9 +1,10 @@
 const secondaryUI=require('../../utils/secondaryUI');
+const i18n=require('../../utils/i18n');
 const identity=require('../../utils/identity'),spaces=require('../../utils/spaces'),copy=require('../../utils/spaceCopy');
 const store=require('../../utils/store'),media=require('../../utils/sharedMedia'),photos=require('../../utils/photos');
 Page({
  onFieldFocus:secondaryUI.onFieldFocus,onFieldBlur:secondaryUI.onFieldBlur,
- data:{locked:true,busy:false,pending:false,mediaPending:false,labels:copy(),space:null,invitation:null,wishes:[],meals:[],publishCandidates:[],message:'',inviteText:'',wishTitle:'',wishNote:'',userId:''},
+ data:{locked:true,busy:false,pending:false,mediaPending:false,labels:copy(),copy:i18n.copy(),space:null,invitation:null,wishes:[],meals:[],publishCandidates:[],message:'',inviteText:'',wishTitle:'',wishNote:'',userId:''},
  onLoad(){this._serial=0;this.off=identity.subscribe(()=>{this.clear();if(this.active&&!identity.snapshot().locked)this.refresh();});},
  onShow(){this.active=true;this.refresh();},
  onHide(){this.active=false;this.clear();},
@@ -13,7 +14,7 @@ Page({
  async refresh(){
   if(this.disposed||!this.active)return;
   secondaryUI.sync(this);
-  const labels=copy();this.setData({labels,locked:identity.snapshot().locked});wx.setNavigationBarTitle({title:labels.title});
+  const labels=copy();this.setData({labels,copy:i18n.copy(),locked:identity.snapshot().locked});wx.setNavigationBarTitle({title:labels.title});
   if(identity.snapshot().locked)return;
   media.clear();
   const token=identity.lease(),serial=++this._serial;clearTimeout(this.timer);

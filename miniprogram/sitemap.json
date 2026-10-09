@@ -1,4 +1,4 @@
 {
-  "desc": "Savor food diary",
-  "rules": [{ "action": "allow", "page": "*" }]
+  "desc": "Savor food diary — every page is private, identity-gated, user-specific content, so nothing is exposed to search indexing.",
+  "rules": [{ "action": "disallow", "page": "*" }]
 }

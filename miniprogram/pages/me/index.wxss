@@ -10,7 +10,10 @@
   align-items: center;
   gap: 35rpx;
   height: 185rpx;
-  margin: 0 5rpx 42rpx;
+  /* The concept steps the profile block in from the card rail by 20rpx so it reads as its own
+     identity layer rather than the first item of the card column. It previously carried an
+     accidental 5rpx, which is neither aligned nor a deliberate step. */
+  margin: 0 20rpx 42rpx;
 }
 .profile-avatar {
   width: 180rpx;
@@ -46,7 +49,8 @@
   height: 78rpx;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  margin-right: -5rpx;
+  /* Cancels the profile block's own step-in so the Edit control stays on the card rail. */
+  margin-right: -20rpx;
   display: flex;
   align-items: center;
   justify-content: center;

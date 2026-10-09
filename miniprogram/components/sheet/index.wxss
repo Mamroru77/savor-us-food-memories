@@ -245,8 +245,20 @@
 .settings-form { display: flex; flex-direction: column; gap: 35rpx; padding-bottom: 10rpx; }
 .picker-value { display: flex; align-items: center; }
 
-.sheet-couple { display: flex; justify-content: center; align-items: center; gap: 50rpx; margin-top: 20rpx; }
-.sheet-couple-avatar { width: 152rpx; height: 152rpx; border-radius: 50%; border: 5rpx solid #fff; box-sizing: border-box; }
+/* Couple identity row — the SAME treatment as the Us page's together card
+   (`pages/us/index.wxss`: .couple-avatars / .avatar / .avatar-blank / .couple-heart).
+   Us and this sheet are the only two surfaces that show the couple, and the same app state used to
+   render two different pairs: Us drew two blank glyph circles, while this row drew an empty circle
+   with no glyph at all beside an unconditional photo. The declarations below are kept identical to
+   the Us card's; only the theme ancestor differs (this panel marks dusk with `.theme-dusk-panel`,
+   not `.dusk`) and the row keeps this sheet's own 20rpx top offset so the rest of the panel does
+   not move. `tools/verify-couple-avatar-unity.cjs` pins the two sets together so they cannot drift. */
+.sheet-couple { display: flex; justify-content: center; gap: 35rpx; align-items: center; margin-top: 20rpx; }
+.sheet-couple-avatar { width: 132rpx; height: 132rpx; border: 5rpx solid rgba(255, 255, 255, 0.91); border-radius: 50%; box-shadow: 0 5rpx 8rpx rgba(85, 85, 85, 0.07); box-sizing: border-box; background: rgba(255, 255, 255, 0.4); }
+.sheet-couple-avatar-blank { display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.6); }
+.theme-dusk-panel .sheet-couple-avatar-blank { background: rgba(255, 255, 255, 0.12); border-color: rgba(238,234,227,.18); }
+.sheet-couple-heart { height: 72rpx; width: 72rpx; border-radius: 50%; background: rgba(239, 194, 181, 0.23); border: 1rpx solid rgba(255, 255, 255, 0.5); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2rpx 8rpx rgba(255, 255, 255, 0.53); }
+.sheet-couple-heart.love-sent { background: rgba(242, 200, 186, 0.4); }
 .together-message {
   text-align: center;
   font-family: var(--serif);

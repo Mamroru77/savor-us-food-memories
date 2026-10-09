@@ -1,17 +1,17 @@
 {
-  "note": "Frozen digests for the R2 build-source move and the runtime PNGs that must not change with it. Recorded at the move commit so the gate never depends on git history.",
+  "note": "Frozen digests for the R2 build-source move and the runtime PNGs that must not change with it. Recorded at the move commit so the gate never depends on git history. The two icon SOURCES.* files are the manifest of the icon registry and are expected to grow when an approved icon is added through tools/build-icons.cjs; their digests therefore track their current content (last advanced 2026-10-01 for Me P1-2, +2 official Lucide originals), while every other entry stays frozen at the move.",
   "moved": [
     {
       "from": "miniprogram/images/icons/lucide/SOURCES.json",
       "to": "tools/assets/icons/lucide/SOURCES.json",
-      "sha256": "4dfd8b5fae0a5889fb943c517aca9ee0cb0ed3044ef08f7be3b72981e142fb94",
-      "bytes": 14643
+      "sha256": "39cbfe22af7220339870f4cc03c2a4e8a155436dab5f567d715945f592ef6681",
+      "bytes": 15518
     },
     {
       "from": "miniprogram/images/icons/lucide/SOURCES.md",
       "to": "tools/assets/icons/lucide/SOURCES.md",
-      "sha256": "c7b2f361269fa5b5ffa42ea68a42f937f1e33c5765bf278a984c24d926a830d5",
-      "bytes": 523
+      "sha256": "8910f4d42ba7e5a25a39cf4bff271f9e5b689803085b1bdffa399fbe09c8497a",
+      "bytes": 814
     },
     {
       "from": "miniprogram/images/markers/stack-button-up.svg",

@@ -105,14 +105,33 @@ function makeWx() {
   };
 }
 
+
+// The shared image pipeline is exercised by its own suite. Here it is a thin pass-through to
+// THIS harness's cloudRecords stub, so the renderer's own concurrency and disposal contracts
+// stay measured against the same synthetic download the suite already controls.
+function makeSandboxImageCache(cloudRecords) {
+  return {
+    localSource: (source, variant, prepare) => cloudRecords.downloadMapPhoto(source).then(async local => {
+      let prepared = local;
+      if (prepare) { try { prepared = (await prepare(local)) || local; } catch (e) { prepared = local; } }
+      return { path: prepared, cached: false, disposable: [local] };
+    }),
+    store: () => null,
+    prefetch() {}, cancelPrefetch() {}, reset() {}, snapshot: () => ({}), urlFor: () => null,
+  };
+}
+
 function loadMapMarkers() {
+  const fixtureCloud = { downloadMapPhoto: () => Promise.reject(new Error('no cloud in this fixture')) };
+  const sandboxImageCache = makeSandboxImageCache(fixtureCloud);
   const sandbox = {
     module: { exports: {} }, exports: {},
     require: id => {
       if (id === './data') return { isSafeImage: () => true, isCloudImage: () => false };
-      if (id === './cloudRecords') return { downloadMapPhoto: () => Promise.reject(new Error('no cloud in this fixture')) };
+      if (id === './cloudRecords') return fixtureCloud;
       if (id === './mapTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'mapTrace'));
       if (id === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
+      if (id === './imageCache') return sandboxImageCache;
       throw new Error('unexpected require ' + id);
     },
     wx: makeWx(), console, Promise, JSON, Math, Number, Boolean, Object, Array,
@@ -130,14 +149,16 @@ function loadPage(mapMarkersApi) {
     '../../utils/i18n': { copy: () => ({}), locale: () => 'zh-CN', syncPage: () => {}, t: x => x },
     '../../utils/uiFeedback': {},
     '../../utils/store': { subscribe: () => () => {}, get: () => ({ memories: [], settings: {} }) },
-    '../../utils/data': { formatDate: x => x, photos: { meal: '' } },
+    '../../utils/data': { isCloudImage: v => typeof v === 'string' && v.indexOf('cloud://') === 0, formatDate: x => x, photos: { meal: '' } },
     '../../utils/metrics': { getMetrics: () => ({ screenWidth: 375, headerTop: 54 }) },
     '../../utils/locations': { confirmed: () => true, choose: () => Promise.resolve(null) },
     '../../utils/mapMarkers': mapMarkersApi,
     '../../utils/mapLayout': require(path.join(REPO, 'miniprogram', 'utils', 'mapLayout')),
     '../../utils/mapStack': require(path.join(REPO, 'miniprogram', 'utils', 'mapStack')),
+    '../../utils/mapCamera': require(path.join(REPO, 'miniprogram', 'utils', 'mapCamera')),
     '../../utils/mapProjection': require(path.join(REPO, 'miniprogram', 'utils', 'mapProjection')),
     '../../utils/restaurantCategory': { summary: () => '' },
+    '../../utils/imageCache': { reset() {}, prefetch() {}, cancelPrefetch() {}, snapshot: () => ({}), urlFor: () => null },
   };
   vm.runInNewContext(fs.readFileSync(PAGE, 'utf8'), {
     Page: p => { spec = p; },

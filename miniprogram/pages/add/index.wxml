@@ -1,7 +1,7 @@
 <view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;">
   <view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;">
     <s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" />
-    <text>{{identityLabels ? identityLabels.busy : '正在验证...'}}</text>
+    <text>{{identityLabels ? identityLabels.busy : copy.s691f4302fc}}</text>
   </view>
 </view>
 <view class="screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
@@ -72,7 +72,7 @@
         </view>
         <button class="import-action import-cancel" bindtap="onImportCancel">{{copy.sa4b5358b5d}}</button>
       </view>
-      <view class="memory-form">
+      <view class="memory-form {{saving || uploading ? 'is-locked' : ''}}">
         <view wx:if="{{draft.sourcePlatform}}" class="helper-note">
           {{copy.s9d14bf0709}}: {{draft.diningMode === 'dine-in' ? copy.s003ff3645d : draft.sourcePlatform === 'meituan' ? copy.sd572da5430 : copy.sc9c62cffcf}}
           <text class="form-label">{{copy.s7c3835c40f}}</text>
@@ -88,7 +88,7 @@
         <!-- photos -->
         <view class="photo-editor-row">
           <view class="main-photo-wrap {{!draft.photos.length ? 'no-photo' : ''}}">
-            <image wx:if="{{draft.photos.length}}" class="main-memory-photo" bindtap="onPreviewPhoto" data-index="0" src="{{imageErrors[(draft.photos[0])] ? '/images/le-comptoir.jpg' : (draft.photos[0])}}" mode="aspectFill"  data-source="{{draft.photos[0]}}" binderror="onImageError" />
+            <image wx:if="{{draft.photos.length}}" class="main-memory-photo {{imageErrors[(draft.photos[0])] ? 'is-fallback' : ''}}" bindtap="onPreviewPhoto" data-index="0" src="{{imageErrors[(draft.photos[0])] ? '/images/le-comptoir.jpg' : (draft.photos[0])}}" mode="aspectFill"  data-source="{{draft.photos[0]}}" binderror="onImageError" />
             <view wx:else class="photo-placeholder" bindtap="onReplacePhoto" aria-role="button" aria-label="{{copy.s90bd281078}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
               <s-icon name="plus" size="65" stroke="1.75" color="{{dusk ? '#d7d1c7' : '#565752'}}" />
               <text>{{copy.sd2550c6d35}}</text>
@@ -101,7 +101,11 @@
               <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="loader-circle" size="55" stroke="1.75" class="spin" />
             </view>
           </view>
-          <view class="more-photos-wrap">
+          <!-- Round 3-B1 PHOTO-P0-2: with no photos the empty primary target IS the add
+               affordance, and the Add-more tile was a second, equally weighted + doing the same
+               job. The tile now appears as soon as there is one photo, so the empty state has a
+               single unambiguous entry point. No capability is lost — both call the same picker. -->
+          <view wx:if="{{draft.photos.length}}" class="more-photos-wrap">
             <view class="add-photo {{draft.photos.length > 1 ? 'has-photo' : ''}}" bindtap="onAddMore" aria-role="button" aria-label="{{copy.sc063aa0dbb}}">
               <image wx:if="{{draft.photos.length > 1}}" src="{{imageErrors[(draft.photos[draft.photos.length - 1])] ? '/images/le-comptoir.jpg' : (draft.photos[draft.photos.length - 1])}}" mode="aspectFill"  data-source="{{draft.photos[draft.photos.length - 1]}}" binderror="onImageError" />
               <view class="add-photo-copy">
@@ -109,9 +113,15 @@
                 <text>{{draft.photos.length > 1 ? draft.photos.length + ' ' + copy.s2e58e0c1ea : copy.s15e4e30633}}</text>
               </view>
             </view>
-            <view wx:if="{{draft.photos.length > 1}}" class="remove-extra" bindtap="onRemoveExtra" aria-role="button" aria-label="{{copy.s86447b96f4}}">
-              <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="30" stroke="1.75" />
-            </view>
+          </view>
+          <!-- Gate-1 closeout: ONE shared remove control, re-anchored by state instead of
+               duplicated. With several photos it stays on the Add-more tile exactly as before;
+               with exactly one photo it moves onto the main photo, so the only photo is still
+               removable without restoring the 219rpx rail. Both anchors are absolute, so neither
+               state adds vertical height, and the handler stays onRemoveExtra (with one photo its
+               "last" is that photo). -->
+          <view wx:if="{{draft.photos.length}}" class="remove-extra {{draft.photos.length === 1 ? 'remove-single' : ''}}" bindtap="onRemoveExtra" aria-role="button" aria-label="{{copy.s86447b96f4}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="30" stroke="1.75" />
           </view>
         </view>
 
@@ -119,7 +129,7 @@
           <view class="upload-progress-bar">
             <view class="upload-progress-fill" style="width: {{uploadProgress}}%"></view>
           </view>
-          <text class="upload-progress-text">{{uploadCurrent}}/{{uploadTotal}} {{uploadProgress}}% {{originalMode ? '原图' : ''}}</text>
+          <text class="upload-progress-text">{{uploadCurrent}}/{{uploadTotal}} {{uploadProgress}}% {{originalMode ? copy.sc0a8060f3b : ''}}</text>
         </view>
         <view wx:if="{{saving}}" class="save-progress-wrap">
           <view class="save-progress-bar">
@@ -128,7 +138,11 @@
           <text class="save-progress-text">{{saveProgressText}}</text>
         </view>
 
-        <scroll-view wx:if="{{draft.photos.length}}" class="photo-strip" scroll-x>
+        <!-- Round 1: the rail only carries information the media block cannot. With one photo it
+             duplicated the main image inside ~220rpx of mostly empty height, which is what pushed
+             Restaurant off the first view. From two photos on, it stays the only way to remove an
+             individual photo, so it is kept exactly as it was. -->
+        <scroll-view wx:if="{{draft.photos.length > 1}}" class="photo-strip" scroll-x>
           <view class="photo-strip-inner">
             <view wx:for="{{draft.photos}}" wx:key="index" class="photo-strip-item">
               <image src="{{imageErrors[(item)] ? '/images/le-comptoir.jpg' : (item)}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewPhoto"  data-source="{{item}}" binderror="onImageError" />
@@ -151,31 +165,21 @@
 
         <view id="field-location" class="location-entry {{fieldErrors.location ? 'has-error' : ''}}" bindtap="onChooseRestaurantLocation" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
           <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pin" size="32" stroke="1.75" />
-          <view><text>{{draft.location ? (draft.location.locationName || copy.sa7f59ecd4b) : copy.s95fb7999ad}}</text>
+          <view class="location-copy"><text>{{draft.location ? (draft.location.locationName || copy.sa7f59ecd4b) : copy.s95fb7999ad}}</text>
           <text class="location-address">{{draft.location ? draft.location.address : copy.s4461516590}}</text></view>
+          <!-- Round 2 P0 — geo disclosure. The affordance is a text action INSIDE the summary row
+               (catchtap keeps it off the picker), so the row keeps its original height. It only
+               appears once the geo is confirmed: while `geoConfirmed !== true` the detailed fields
+               are forced open and cannot be collapsed, because an unconfirmed geo also clears
+               city/country downstream and is surfaced on the Map as a pending location. -->
+          <text wx:if="{{draft.location && draft.location.geoConfirmed === true}}" class="geo-toggle" catchtap="onToggleGeo" aria-role="button" aria-label="{{geoOpen ? copy.s9cf188d3a6 : copy.s5301648dcf}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{geoOpen ? copy.s9cf188d3a6 : copy.s5301648dcf}}</text>
         </view>
         <text wx:if="{{fieldErrors.location}}" class="form-error field-error">{{fieldErrors.location}}</text>
-        <view id="field-geography" wx:if="{{draft.location}}" class="geo-fields">
+        <view id="field-geography" wx:if="{{draft.location && (geoOpen || fieldErrors.geography)}}" class="geo-fields">
           <text wx:if="{{fieldErrors.geography}}" class="form-error field-error">{{fieldErrors.geography}}</text>
           <text class="helper-note">{{copy.sd37fcb52e3}}</text>
           <view class="form-field"><text class="form-label">{{copy.s4271627f4f}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onGeoField-city') ? 'is-focused' : ''}}" value="{{draft.location.city}}" data-field="city" bindinput="onGeoField" maxlength="80"  aria-label="{{copy.s4271627f4f}}" placeholder-class="form-placeholder" data-focus-key="{{'onGeoField-city'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
           <view class="form-field"><text class="form-label">{{copy.sdfdeaebf93}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onGeoField-country') ? 'is-focused' : ''}}" value="{{draft.location.country}}" data-field="country" bindinput="onGeoField" maxlength="80"  aria-label="{{copy.sdfdeaebf93}}" placeholder-class="form-placeholder" data-focus-key="{{'onGeoField-country'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
-        </view>
-        <view class="form-field"><text class="form-label">{{copy.s072d63b568}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{fieldErrors.perCapita ? 'has-error' : ''}} {{focusedField === ('onBusinessField-perCapita') ? 'is-focused' : ''}}" type="digit" value="{{draft.perCapita}}" data-field="perCapita" bindinput="onBusinessField" maxlength="10"  aria-label="{{copy.s072d63b568}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-perCapita'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur"  id="field-perCapita" /><text wx:if="{{fieldErrors.perCapita}}" class="form-error field-error">{{fieldErrors.perCapita}}</text></view>
-        <view class="form-field"><text class="form-label">{{copy.sacef9c91d8}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onBusinessField-cuisine') ? 'is-focused' : ''}}" value="{{draft.cuisine}}" data-field="cuisine" bindinput="onBusinessField" maxlength="30"  aria-label="{{copy.sacef9c91d8}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-cuisine'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
-        <view class="form-field"><text class="form-label">{{copy.s9ec0dc5473}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onBusinessField-dishes') ? 'is-focused' : ''}}" value="{{draft.dishes}}" data-field="dishes" bindinput="onBusinessField" maxlength="600"  aria-label="{{copy.s9ec0dc5473}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-dishes'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
-        <text class="form-label">{{copy.se88a5129d5}}</text>
-        <view class="category-type-list"><view wx:for="{{formTypes}}" wx:key="name" class="category-type {{item.selected ? 'is-selected' : ''}}" aria-role="button" aria-pressed="{{item.selected}}" bindtap="onDraftDiningType" data-value="{{item.name}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item.label}}</view><view class="category-type dining-type-add" aria-role="button" aria-label="{{copy.sff69a056db}}" bindtap="onDiningTypeManager" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="30" stroke="1.75" /></view></view>
-        <view wx:if="{{diningTypeManagerOpen}}" class="dining-type-manager glass">
-          <text class="form-label">{{copy.se88a5129d5}}</text>
-          <text class="form-label">{{copy.s20f409cc87}}</text>
-          <view class="category-type-list"><view wx:for="{{managedBuiltins}}" wx:key="name" class="category-type {{item.hidden ? 'is-hidden' : ''}}"><text>{{item.label}}</text><view wx:if="{{item.hidden}}" class="category-type-remove" aria-role="button" aria-label="{{copy.sd475c54aa7}}" data-value="{{item.name}}" bindtap="onRestoreDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="26" stroke="1.75" /></view><view wx:else class="category-type-remove" aria-role="button" aria-label="{{copy.sb6f5e039b3}}" data-value="{{item.name}}" bindtap="onHideDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="26" stroke="1.75" /></view></view></view>
-          <text class="form-label">{{copy.sd42af7968b}}</text>
-          <view wx:if="{{managedCustom.length}}" class="category-type-list"><view wx:for="{{managedCustom}}" wx:key="name" class="category-type"><text>{{item.label}}</text><view class="category-type-remove" aria-role="button" aria-label="{{copy.s9b6c5bbedb}}" data-value="{{item.name}}" bindtap="onRemoveDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="26" stroke="1.75" /></view></view></view>
-          <view wx:if="{{diningTypeInputOpen}}" class="dining-type-input"><input class="form-input" value="{{diningTypeInput}}" maxlength="20" bindinput="onDiningTypeInput" data-focus-key="{{('onDiningTypeInput-')}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindconfirm="onDiningTypeConfirm" placeholder="{{copy.s8affe505da}}" placeholder-class="form-placeholder" aria-label="{{copy.s8affe505da}}" disabled="{{saving || uploading || !identityReady}}" /><view class="tag-confirm" aria-role="button" aria-label="{{copy.s04a212215e}}" bindtap="onDiningTypeConfirm" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="check" size="40" stroke="1.75" /></view></view>
-          <view wx:else class="import-action" aria-role="button" bindtap="onAddDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s937e2dfc44}}</view>
-          <text wx:if="{{diningTypeError}}" class="form-error">{{diningTypeError}}</text>
-          <view class="import-action import-cancel" aria-role="button" bindtap="onDiningTypeManager" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.se9b450d14b}}</view>
         </view>
         <!-- notes -->
         <view class="form-field notes-field">
@@ -196,18 +200,26 @@
             <text wx:if="{{fieldErrors.date}}" class="form-error field-error">{{fieldErrors.date}}</text>
           </view>
           <view class="form-field">
-            <text class="form-label">{{copy.s83cd624d2e}}</text>
-            <text class="helper-note rating-clear" aria-role="button" data-value="0" bindtap="onRating" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{draft.rating > 0 ? (locale === 'zh-CN' ? '已评 ' + draft.rating + ' 星 · 清除评分' : draft.rating + ' stars · Clear rating') : copy.s43f4e5ea65}}</text>
+            <!-- Round 2 P1-A: the clear-rating affordance shares the Rating header line instead of
+                 owning a 50pt row of its own between the label and the stars. Same handler, same
+                 copy, same 88rpx target — only its position changed. -->
+            <view class="rating-head">
+              <text class="form-label">{{copy.s83cd624d2e}}</text>
+              <text class="helper-note rating-clear" aria-role="button" data-value="0" bindtap="onRating" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{draft.rating > 0 ? (locale === 'zh-CN' ? '已评 ' + draft.rating + ' 星 · 清除评分' : draft.rating + ' stars · Clear rating') : copy.s43f4e5ea65}}</text>
+            </view>
             <view class="rating-input">
               <view wx:for="{{[1, 2, 3, 4, 5]}}" wx:key="*this" class="rating-star" data-value="{{item}}" bindtap="onRating" aria-pressed="{{item <= draft.rating}}" aria-role="button" aria-label="{{copy.s3a9c736b31}} {{item}} {{copy.s76147eddeb}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-                <s-icon name="star" size="37" stroke="1.75" color="{{dusk ? '#d7d1c7' : '#898a84'}}" fill="{{item <= draft.rating ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" />
+                <s-icon name="star" size="44" stroke="1.75" color="{{dusk ? '#d7d1c7' : '#898a84'}}" fill="{{item <= draft.rating ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" />
               </view>
             </view>
           </view>
         </view>
 
         <!-- tags -->
-        <view class="form-field tags-field">
+        <!-- Round 2 P1-B: `tags-empty` only changes the layout of the zero-tag state — with no
+             chips to sit beside, the Add Tag affordance moves onto the heading line instead of
+             being stranded on a row of its own. No default tags, no extra copy, no extra height. -->
+        <view class="form-field tags-field {{draft.tags.length ? '' : 'tags-empty'}}">
           <text class="form-label">{{copy.s848eed0fbd}}</text>
           <view class="tag-list">
             <view wx:for="{{draft.tags}}" wx:key="*this" class="tag" data-value="{{item}}" bindtap="onRemoveTag" aria-role="button" aria-label="{{copy.se963907dac}} {{item}} {{copy.s5e9b60f691}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item}}</view>
@@ -228,7 +240,45 @@
           </view>
         </view>
 
+        <!-- Round 2 P0 — the low-frequency business metadata leaves the primary memory flow so the
+             eye travels Photo → Restaurant → Location → Notes → Date/Rating → Tags → Save.
+             Save-validation audit (pages/add/index.js onSave): `perCapita` is the ONLY field in
+             here that can block a save (non-finite or outside 0..1000000). cuisine, dishes and the
+             dining types have no validation and are optional. So the section auto-exposes whenever
+             perCapita carries an error, and showFieldError opens it before scrolling to the field:
+             a required field can never stay silently collapsed. -->
+        <view class="more-details {{moreOpen || fieldErrors.perCapita ? 'is-open' : ''}} {{fieldErrors.perCapita ? 'is-error' : ''}}">
+          <view class="more-details-row" bindtap="onToggleMore" aria-role="button" aria-expanded="{{moreOpen || fieldErrors.perCapita ? true : false}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
+            <text>{{copy.sfbda121c8d}}</text>
+          </view>
+          <view wx:if="{{moreOpen || fieldErrors.perCapita}}" class="more-details-body">
+            <view class="form-field"><text class="form-label">{{copy.s072d63b568}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{fieldErrors.perCapita ? 'has-error' : ''}} {{focusedField === ('onBusinessField-perCapita') ? 'is-focused' : ''}}" type="digit" value="{{draft.perCapita}}" data-field="perCapita" bindinput="onBusinessField" maxlength="10"  aria-label="{{copy.s072d63b568}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-perCapita'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur"  id="field-perCapita" /><text wx:if="{{fieldErrors.perCapita}}" class="form-error field-error">{{fieldErrors.perCapita}}</text></view>
+            <view class="form-field"><text class="form-label">{{copy.sacef9c91d8}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onBusinessField-cuisine') ? 'is-focused' : ''}}" value="{{draft.cuisine}}" data-field="cuisine" bindinput="onBusinessField" maxlength="30"  aria-label="{{copy.sacef9c91d8}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-cuisine'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+            <view class="form-field"><text class="form-label">{{copy.s9ec0dc5473}}</text><input disabled="{{saving || uploading || !identityReady}}" class="form-input {{focusedField === ('onBusinessField-dishes') ? 'is-focused' : ''}}" value="{{draft.dishes}}" data-field="dishes" bindinput="onBusinessField" maxlength="600"  aria-label="{{copy.s9ec0dc5473}}" placeholder-class="form-placeholder" data-focus-key="{{'onBusinessField-dishes'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" /></view>
+            <text class="form-label">{{copy.se88a5129d5}}</text>
+            <view class="category-type-list"><view wx:for="{{formTypes}}" wx:key="name" class="category-type {{item.selected ? 'is-selected' : ''}}" aria-role="button" aria-pressed="{{item.selected}}" bindtap="onDraftDiningType" data-value="{{item.name}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{item.label}}</view><view class="category-type dining-type-add" aria-role="button" aria-label="{{copy.sff69a056db}}" bindtap="onDiningTypeManager" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="30" stroke="1.75" /></view></view>
+            <view wx:if="{{diningTypeManagerOpen}}" class="dining-type-manager glass">
+              <text class="form-label">{{copy.se88a5129d5}}</text>
+              <text class="form-label">{{copy.s20f409cc87}}</text>
+              <view class="category-type-list"><view wx:for="{{managedBuiltins}}" wx:key="name" class="category-type {{item.hidden ? 'is-hidden' : ''}}"><text>{{item.label}}</text><view wx:if="{{item.hidden}}" class="category-type-remove" aria-role="button" aria-label="{{copy.sd475c54aa7}}" data-value="{{item.name}}" bindtap="onRestoreDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="plus" size="26" stroke="1.75" /></view><view wx:else class="category-type-remove" aria-role="button" aria-label="{{copy.sb6f5e039b3}}" data-value="{{item.name}}" bindtap="onHideDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="26" stroke="1.75" /></view></view></view>
+              <text class="form-label">{{copy.sd42af7968b}}</text>
+              <view wx:if="{{managedCustom.length}}" class="category-type-list"><view wx:for="{{managedCustom}}" wx:key="name" class="category-type"><text>{{item.label}}</text><view class="category-type-remove" aria-role="button" aria-label="{{copy.s9b6c5bbedb}}" data-value="{{item.name}}" bindtap="onRemoveDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="x" size="26" stroke="1.75" /></view></view></view>
+              <view wx:if="{{diningTypeInputOpen}}" class="dining-type-input"><input class="form-input" value="{{diningTypeInput}}" maxlength="20" bindinput="onDiningTypeInput" data-focus-key="{{('onDiningTypeInput-')}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" bindconfirm="onDiningTypeConfirm" placeholder="{{copy.s8affe505da}}" placeholder-class="form-placeholder" aria-label="{{copy.s8affe505da}}" disabled="{{saving || uploading || !identityReady}}" /><view class="tag-confirm" aria-role="button" aria-label="{{copy.s04a212215e}}" bindtap="onDiningTypeConfirm" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100"><s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="check" size="40" stroke="1.75" /></view></view>
+              <view wx:else class="import-action" aria-role="button" bindtap="onAddDiningType" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s937e2dfc44}}</view>
+              <text wx:if="{{diningTypeError}}" class="form-error">{{diningTypeError}}</text>
+              <view class="import-action import-cancel" aria-role="button" bindtap="onDiningTypeManager" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.se9b450d14b}}</view>
+            </view>
+          </view>
+        </view>
+
         <text wx:if="{{error && errorContext !== 'import' && !errorField}}" class="form-error">{{error}}</text>
+
+        <!-- Permission recovery. Renders only while an explicit platform denial is being explained,
+             and only calls wx.openSetting from this tap. It never relaunches the picker: after the
+             trip to Settings the original control is simply actionable again. -->
+        <view wx:if="{{permissionRecovery}}" class="permission-recovery">
+          <text class="permission-recovery-action" bindtap="onOpenSettings" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">{{copy.s134635e9a2}}</text>
+        </view>
 
         <view class="primary-button save-memory {{businessFrozen || uploading || saving ? 'ghosted' : ''}}" bindtap="onSave" aria-role="button" aria-disabled="{{businessFrozen || uploading || saving}}" aria-busy="{{uploading || saving}}">
           <s-icon wx:if="{{uploading || saving}}" name="loader-circle" size="35" color="#ffffff" stroke="1.75" class="spin" />

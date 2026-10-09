@@ -9,7 +9,13 @@ console.log('PASS generated locale catalog exactly matches TSV source');
 const moduleStub={exports:{}};vm.runInNewContext(fs.readFileSync('miniprogram/utils/i18n.js','utf8'),{module:moduleStub,require:p=>p==='./locales'?catalog:p==='./pageHeadings'?{}:assert.fail(p),wx:{getAppBaseInfo:()=>({language:'en'})}});const i18n=moduleStub.exports;
 for(const [lang,expected] of [['en',['Cloud tools','Backups, preferences and feedback','Annual reports','Memories, milestones and sharing']],['zh-CN',['云端工具','备份、偏好与反馈','年度报告','日记、里程碑与主动分享']]]){i18n.setLanguage(lang);assert.deepEqual(rows.slice(0,2).flatMap(r=>[i18n.t(r.title),i18n.t(r.subtitle)]),expected);}
 console.log('PASS both language preferences produce single-language entry labels');
-const before=fs.readFileSync('tools/fixtures/regression/lifecycle-review-20260916/batch4/backup/miniprogram/pages/me/index.js','utf8');assert.deepEqual(rows.map(({title,subtitle,...other})=>other),menu(before).map(({title,subtitle,...other})=>other));assert.equal(source.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'),before.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'));
-console.log('PASS menu count/order/icons/routes and every non-menu line outside exact reviewed A integration are unchanged');
+// 2026-10-01 (Me P1-2): the `icon` field is deliberately NO LONGER pinned to this historical
+// fixture -- the icons legitimately changed so that every secondary-menu row owns a distinct
+// glyph. What this assertion exists for is that the menu's ROUTES, count and order did not drift,
+// so it now pins `sheet` (the destination) and leaves the approved title -> icon mapping to the
+// dedicated suite tools/verify-me-menu-icons.cjs, which also proves glyph uniqueness and that
+// every icon resolves to a registered official shape. This is a re-scope, not a removal.
+const before=fs.readFileSync('tools/fixtures/regression/lifecycle-review-20260916/batch4/backup/miniprogram/pages/me/index.js','utf8');const destination=row=>({sheet:row.sheet});assert.deepEqual(rows.map(destination),menu(before).map(destination),'Me menu destinations, count and order must not drift');assert.equal(source.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'),before.replace(/const MENU_ROWS = [\s\S]*?\n\];/,'MENU'));
+console.log('PASS menu count/order/routes and every non-menu line outside exact reviewed A integration are unchanged (icon mapping is owned by verify-me-menu-icons)');
 require('./verify-me-review-contract.cjs');
 console.log('4/4 menu copy checks passed. No live preferences or private content modified.');

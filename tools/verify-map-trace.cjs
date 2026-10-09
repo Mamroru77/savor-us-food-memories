@@ -17,6 +17,22 @@ const assert = require('node:assert/strict');
 const REPO = path.resolve(__dirname, '..');
 const MARKERS = path.join(REPO, 'miniprogram', 'utils', 'mapMarkers.js');
 const PAGE = path.join(REPO, 'miniprogram', 'pages', 'map', 'index.js');
+
+// The shared image pipeline is exercised by its own suite. Here it is a thin pass-through to
+// THIS harness's cloudRecords stub, so the renderer's own concurrency and disposal contracts
+// stay measured against the same synthetic download the suite already controls.
+function makeSandboxImageCache(cloudRecords) {
+  return {
+    localSource: (source, variant, prepare) => cloudRecords.downloadMapPhoto(source).then(async local => {
+      let prepared = local;
+      if (prepare) { try { prepared = (await prepare(local)) || local; } catch (e) { prepared = local; } }
+      return { path: prepared, cached: false, disposable: [local] };
+    }),
+    store: () => null,
+    prefetch() {}, cancelPrefetch() {}, reset() {}, snapshot: () => ({}), urlFor: () => null,
+  };
+}
+
 const TRACE = require(path.join(REPO, 'miniprogram', 'utils', 'mapTrace'));
 
 // ---- virtual clock ---------------------------------------------------------
@@ -106,12 +122,14 @@ function loadRenderer(options) {
       return img;
     },
   };
+  const sandboxImageCache = makeSandboxImageCache(cloudRecords);
   vm.runInNewContext(fs.readFileSync(MARKERS, 'utf8'), {
     module, exports: module.exports,
     require(id) {
       if (id === './data') return { isSafeImage: () => true, isCloudImage: v => /^cloud:\/\//.test(String(v)) };
       if (id === './cloudRecords') return cloudRecords;
       if (id === './mapTrace') return trace;
+      if (id === './imageCache') return sandboxImageCache;
       // mapMarkers re-exports the Phase A diagnostics; photoTrace requires nothing itself.
       if (id === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
       throw new Error('unexpected require ' + id);
@@ -136,6 +154,8 @@ const PAGE_DEPS = {
   '../../utils/locations': { confirmed: () => true, choose: () => Promise.resolve(null) },
   '../../utils/mapLayout': require(path.join(REPO, 'miniprogram', 'utils', 'mapLayout')),
   '../../utils/mapStack': require(path.join(REPO, 'miniprogram', 'utils', 'mapStack')),
+  '../../utils/mapCamera': require(path.join(REPO, 'miniprogram', 'utils', 'mapCamera')),
+  '../../utils/imageCache': { reset() {}, prefetch() {}, cancelPrefetch() {}, snapshot: () => ({}), urlFor: () => null, localSource: () => Promise.resolve({ path: '', cached: false }), store: () => null },
   '../../utils/mapProjection': require(path.join(REPO, 'miniprogram', 'utils', 'mapProjection')),
   '../../utils/restaurantCategory': { summary: () => '' },
   '../../utils/cloudRecords': {},

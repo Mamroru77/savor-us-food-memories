@@ -63,6 +63,8 @@ function loadPage() {
     },
     '../../utils/mapLayout': require(path.join(REPO, 'miniprogram', 'utils', 'mapLayout')),
     '../../utils/mapStack': stack,
+    '../../utils/mapCamera': require(path.join(REPO, 'miniprogram', 'utils', 'mapCamera')),
+    '../../utils/imageCache': require(path.join(REPO, 'miniprogram', 'utils', 'imageCache')),
     '../../utils/mapProjection': require(path.join(REPO, 'miniprogram', 'utils', 'mapProjection')),
     '../../utils/restaurantCategory': { summary: () => '' },
   };

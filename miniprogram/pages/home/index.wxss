@@ -44,6 +44,9 @@
   max-width: 400rpx;
 }
 .dusk .home-intro-sub { color: #b6b2aa; }
+/* CJK has no word spaces, so the shipped Chinese hero line needs a wider measure.
+   At the English 400rpx it broke after 15 glyphs and orphaned "忆。" on line two. */
+.locale-zh .home-intro-sub { max-width: 540rpx; }
 
 .weekly-card {
   position: relative;
@@ -90,7 +93,9 @@
 .recent-section { margin-top: 58rpx; }
 .recent-title {
   display: block;
-  margin: 0 27rpx 20rpx;
+  /* Shares the recent-row content rail (--space-md) instead of its own 27rpx,
+     so the section label sits directly above the thumbnails it labels. */
+  margin: 0 var(--space-md) 20rpx;
   font-family: var(--serif);
   font-size: 32rpx;
   line-height: 40rpx;

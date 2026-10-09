@@ -6,7 +6,11 @@ const root=path.join(__dirname,'..'),mp=path.join(root,'miniprogram'),dir=path.j
 const sources=JSON.parse(fs.readFileSync(path.join(root,'tools/assets/icons/lucide','SOURCES.json'))),nodes=require(path.join(mp,'utils/lucideMorphNodes'));
 const {icons,iconSvg}=require(path.join(mp,'utils/icons')),aliases=require('./icon-aliases.json');
 const parse=s=>[...s.matchAll(/<(path|line|rect|circle|ellipse|polyline|polygon)\s+([^>]+)\/>/g)].map(m=>[m[1],Object.fromEntries([...m[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(a=>[a[1],a[2]]))]);
-assert.equal(sources.length,49);assert.equal(Object.keys(nodes).length,49);assert.equal(Object.keys(aliases).length,28);
+// 2026-10-01 (Me P1-2): 49 -> 51. Two plain official Lucide originals were added through the
+// existing path (svg + SOURCES.json + tools/build-icons.cjs): `cloud` for the Me "Cloud tools"
+// row and `library` for the Me "Memories" row. The per-source loop below still proves each one
+// against its recorded official URL and SHA-256, so this is a count, not a weakening.
+assert.equal(sources.length,51);assert.equal(Object.keys(nodes).length,51);assert.equal(Object.keys(aliases).length,29);
 assert.deepEqual(sources.map(s=>s.name).sort(),Object.keys(nodes).sort());
 assert(fs.readFileSync(path.join(dir,'LICENSE.txt'),'utf8').includes('ISC'));
 for(const source of sources){
@@ -18,6 +22,30 @@ for(const source of sources){
  assert.match(decodeURIComponent(iconSvg(source.name)),/stroke-width="1.75"/);
 }
 for(const [alias,name] of Object.entries(aliases))assert.equal(icons[alias],icons[name]);
+// Morph name-path coverage (2026-09-30). components/morph-icon's fallback for the name path renders
+// <s-icon name="{{'lucide-' + name}}">, so every name a morph is driven with must exist as a
+// 'lucide-<name>' alias — otherwise that fallback paints an empty circle while the morph itself is
+// fine. The Add quick-clear morph (name/from-name "eraser") had no such alias, so the control showed
+// a bare circular surface. This asserts the requirement directly: an alias-total assertion would not
+// have caught it, and must not be the only thing standing between us and the same regression.
+assert.match(fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8'),/'lucide-'\s*\+/,'morph fallback must keep the lucide- prefix convention');
+const morphDriven=new Set();
+for(const f of listFiles(mp).filter(f=>f.endsWith('.wxml'))){
+ for(const m of fs.readFileSync(f,'utf8').matchAll(/<s-morph\b[^>]*>/g)){
+  for(const attr of ['name','from-name']){
+   const v=m[0].match(new RegExp('\\s'+attr+'="([^"]+)"'));
+   if(v&&!v[1].startsWith('{{'))morphDriven.add(v[1]);
+  }
+ }
+}
+// The Add quick-clear pair is bound through clearIcon, so read its literals from the page itself.
+for(const m of fs.readFileSync(path.join(mp,'pages/add/index.js'),'utf8').matchAll(/clearIcon:\s*\{([^}]*)\}/g)){
+ for(const k of ['name','fromName']){const v=m[1].match(new RegExp(k+":\\s*'([a-z0-9-]+)'"));if(v)morphDriven.add(v[1]);}
+}
+assert(morphDriven.has('eraser'),'the Add quick-clear morph name must be covered by this check');
+for(const n of morphDriven)assert(icons['lucide-'+n],'morph fallback name lucide-'+n+' must resolve to a non-empty icon source');
+assert.equal(aliases['lucide-eraser'],'eraser','lucide-eraser must alias eraser');
+assert.match(decodeURIComponent(iconSvg('lucide-eraser')),/<(path|line|rect|circle|ellipse|polyline|polygon) /,'lucide-eraser must render an SVG shape body');
 for(const removed of ['sparkles','map-shield','home-filled','loader','circle-help','trash-2'])assert.equal(icons[removed],undefined);
 assert.equal(iconSvg('missing-icon'),'');
 assert.match(decodeURIComponent(iconSvg('heart',{stroke:'#dec8a7',fill:'#dec8a7'})),/fill="#dec8a7" stroke="#dec8a7"/);
@@ -34,7 +62,25 @@ for(const f of listFiles(mp).filter(f=>/\.(wxml|wxss|js)$/.test(f))){
   if(stroke)assert.equal(stroke[1],'1.75',f);
  }
 }
-assert.equal(count,87); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized). 2026-09-26 user-authorized: the Add dining-type manager adds five icons (+ chip, hide x, restore +, custom remove x, confirm check). 2026-09-28 user-authorized: the Map zoom stepper adds two (plus, minus).
+assert.equal(count,90); // Includes reviewed identity-loading and avatar-fallback states. The Add quick-clear button now renders one <s-morph> pair (eraser -> check) instead of a static <s-icon> (2026-09-25 user-authorized). 2026-09-26 user-authorized: the Add dining-type manager adds five icons (+ chip, hide x, restore +, custom remove x, confirm check). 2026-09-28 user-authorized: the Map zoom stepper adds two (plus, minus). 2026-09-30 user-authorized: the Map native-POI visibility toggle adds one, driven from product state. 2026-10-03: back to 88 — the Map card's lower-left disclosure control is restored verbatim and it renders one <s-icon name="chevron-down">, which is exactly the count this line had before the withdrawn native-marker round. 2026-10-03 user-authorized: the gear sheet's couple row is unified with the Us page's identity card, so it now draws the same two <s-icon name="user-round"> empty-avatar glyphs the Us card draws (+2). The sheet's heart icon changed size 55 -> 47 but not its declaration count.
+// The Map POI toggle drives its glyph from the product state, so both branches must resolve or the
+// control would silently paint an empty circle in one of its two states.
+const mapPoiToggle=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8').match(/name="\{\{[^}]*?'(map-pin)'[^}]*?'(map-pin-off)'[^}]*?\}\}"/);
+assert(mapPoiToggle,'the Map POI toggle must drive one icon from the product state');
+for(const n of [mapPoiToggle[1],mapPoiToggle[2]])assert(icons[n],'the Map POI toggle icon '+n+' must resolve to a non-empty icon source');
+// Silhouette-collision guard (2026-09-30): the Map page's two floating 88rpx circles sat next to each
+// other showing map-pinned and map-pin, which at 20-23px are the same teardrop pin with a small
+// difference in the base — two near-duplicates. The POI toggle legitimately needs the pin family
+// (map-pin / map-pin-off is the only true on/off places pair), so the OTHER circle must stay out of it.
+// This asserts the relationship, not a spelling: whichever name the recenter uses must not be a pin.
+const mapRecenter=(()=>{
+ const block=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8').match(/<view class="recenter-map[\s\S]*?<\/view>/);
+ assert(block,'the Map recenter control must exist');
+ const m=block[0].match(/<s-icon[^>]*\bname="([^"]+)"/);
+ return m&&m[1];
+})();
+assert(mapRecenter,'the Map recenter must declare an icon');
+assert(!/^map-pin/.test(mapRecenter),'the Map recenter must not reuse a pin glyph ('+mapRecenter+') beside the pin-family POI toggle');
 const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxml'),'utf8');
 const settings=fs.readFileSync(path.join(mp,'components/settings-editor/index.wxml'),'utf8');
 assert.match(settings,/class="preference-tip">\s*<s-icon name="lightbulb"/);
@@ -66,4 +112,4 @@ for(const item of pixelReport.stampPixelChecks){
 const generated=['miniprogram/utils/icons.js','miniprogram/utils/lucideMorphNodes.js','tools/_gen/icons.json'];const before=generated.map(f=>fs.readFileSync(path.join(root,f),'utf8'));
 const run=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'build-icons.cjs')],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
 generated.forEach((f,i)=>assert.equal(fs.readFileSync(path.join(root,f),'utf8'),before[i],'generator drift: '+f));
-console.log('ICON VERIFICATION PASSED: 49 official SVGs, 28 compatibility aliases, 85 template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');
+console.log('ICON VERIFICATION PASSED: 51 official SVGs, 29 compatibility aliases (incl. morph-fallback coverage), '+count+' template declarations, semantic roles, native SVG/PNG contracts, repeatable generation. Native visual acceptance still required.');

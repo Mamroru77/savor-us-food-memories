@@ -1,11 +1,11 @@
 {
   "miniprogram/app.json": {
-    "sha256": "fcad4880b2a89165f8e78255856cffd38f7b4cf70dc8109892fb6fde50fb7403",
-    "reason": "用户要求一次完成剩余4类：仅增加云端工具、年报非Tab入口和帮助页真实反馈入口；保留正式五Tab/Map及现有本机反馈。原生视觉统一待验收。"
+    "sha256": "52ef7f0ebcf918129e8db66766ec1498bdd569ba0360822ed610d0402d64f54c",
+    "reason": "\u7528\u6237\u8981\u6c42\u4e00\u6b21\u5b8c\u6210\u5269\u4f594\u7c7b\uff1a\u4ec5\u589e\u52a0\u4e91\u7aef\u5de5\u5177\u3001\u5e74\u62a5\u975eTab\u5165\u53e3\u548c\u5e2e\u52a9\u9875\u771f\u5b9e\u53cd\u9988\u5165\u53e3\uff1b\u4fdd\u7559\u6b63\u5f0f\u4e94Tab/Map\u53ca\u73b0\u6709\u672c\u673a\u53cd\u9988\u3002\u539f\u751f\u89c6\u89c9\u7edf\u4e00\u5f85\u9a8c\u6536\u3002  2026-09-30 release hygiene (docs/reviews/release-readiness-qa-20260930.md): the dev-only pages/morph-lab/index registration is removed from the production page list, so the lab no longer ships as a reachable production page. The morph-lab files themselves, the Morphicons runtime and every icon asset are untouched; no page visual surface changed."
   },
   "miniprogram/components/sheet/index.wxml": {
     "sha256": "63f946b159fe2b9dc741fbe3427648240d5c57635684d890c9d90622fb72218e",
-    "reason": "2026-09-25 用户授权的墓碑记录修复：为「云端已删除」的待处理修改新增「保留我的修改」按钮，复用既有 secondary-button 与 i18n copy 槽位；未改布局、样式、Tab、Map 几何或其他入口。原生验收待执行。"
+    "reason": "2026-09-25 \u7528\u6237\u6388\u6743\u7684\u5893\u7891\u8bb0\u5f55\u4fee\u590d\uff1a\u4e3a\u300c\u4e91\u7aef\u5df2\u5220\u9664\u300d\u7684\u5f85\u5904\u7406\u4fee\u6539\u65b0\u589e\u300c\u4fdd\u7559\u6211\u7684\u4fee\u6539\u300d\u6309\u94ae\uff0c\u590d\u7528\u65e2\u6709 secondary-button \u4e0e i18n copy \u69fd\u4f4d\uff1b\u672a\u6539\u5e03\u5c40\u3001\u6837\u5f0f\u3001Tab\u3001Map \u51e0\u4f55\u6216\u5176\u4ed6\u5165\u53e3\u3002\u539f\u751f\u9a8c\u6536\u5f85\u6267\u884c\u3002"
   },
   "miniprogram/components/sheet/index.wxss": {
     "sha256": "96cdb3d0ac4a017802e238766e7fbfabf01abe672cd85f2dd5cbfd468c900ebf",
@@ -17,7 +17,7 @@
   },
   "miniprogram/pages/me/index.wxml": {
     "sha256": "e609d14fa625d101ac3f939a43894536195110f5691798e72f733ee7e3558a2e",
-    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。"
+    "reason": "S1\u8eab\u4efd\u9694\u79bb\uff1a\u589e\u52a0\u8d26\u53f7\u9501\u5b9a/\u6062\u590d\u5165\u53e3\u4e0e\u9648\u65e7\u4f1a\u8bdd\u4fdd\u62a4\uff1b\u4fdd\u75594daeb2e\u6b63\u5f0fTab\u53caMap\u89c6\u89c9\u6837\u5f0f\u3002\u539f\u751f\u9a8c\u6536\u5f85\u6267\u884c\u3002"
   },
   "miniprogram/pages/add/index.wxml": {
     "sha256": "816e836d405841dd37c779590b1e18c291c82d3b5d0e5259d7174c3ef2eb84f6",
@@ -36,8 +36,8 @@
     "reason": "2026-09-16 user screenshot request: search shares exact bottom-card material; keep Map geometry and Morphicons-compatible official Lucide icon sources. Phone performance not claimed. 2026-09-25 user-authorized: Add page quick-clear draft button in the heading; Map bookmark now shares the card drawer transition. 2026-09-26 user-requested drawer motion change: adds the transform/opacity transition rules for the drawer rows and toggle on the existing cubic curve. Device support for cover-view transitions is NOT claimed and remains an open real-device test. 2026-09-26 user-requested architecture follow-up: adds the pin-stack-ink rules that give the ordinary overlay the callout's own sizes, materials and 320ms transform/opacity transition, scoped so the hit-region-only mode is unchanged. 2026-09-27 user-reported visual regression: the ordinary-view toggle no longer paints a CSS disc/shadow behind the button asset (the PNG already contains the disc and chevron) and drops the 1px transparent border so the absolutely positioned asset is not inset."
   },
   "miniprogram/pages/us/index.wxss": {
-    "sha256": "d4a9b1b32f4efaf3f88061269ec38f886a39ddf3aae76c5106a91ede0fafbbe3",
-    "reason": "Concept-led round2: related page proportions, typography and spacing; no JS/WXML/business change."
+    "sha256": "6f731a4bc045762a12426a596179e9718f80c00d049340200a4e688aa5d82ffc",
+    "reason": "Concept-led round2: related page proportions, typography and spacing; no JS/WXML/business change. 2026-10-01 approved US-P1-1 management entry hierarchy correction (docs/reviews/us-p11-management-entry-20261001.md): the Us management entry stops being a filled secondary-button surface specifically for this entry - transparent, no border, no radius, no padding, left aligned, --muted - while keeping the existing secondary-button structural reuse, the full 88rpx interactive target and full row width; .secondary-subtle drops to the page caption hierarchy with its wording unchanged. Couple identity is restored as the first dominant visual surface (only filled surface after the header; 4x the entry's area). PEARL/DUSK and Chinese/English verified on the simulator at 428x926. No WXML/JS/business logic change. Accepted utility-affordance trade-off: the entry intentionally stays quiet and relies on wording, position and the full-width hit target rather than a filled surface. Do not reopen for further affordance polish without a reproduced real-device usability failure."
   },
   "miniprogram/pages/me/index.wxss": {
     "sha256": "3e8e458dac2352384c3025b527970ea04e58d2320e67673477b2c2a494b7abc4",
@@ -49,7 +49,7 @@
   },
   "miniprogram/components/memory-row/index.wxml": {
     "sha256": "fa51bcdd7883efffde26d52b00e9d91fb6b6ac626ae9c05572aca1f5d8d0c801",
-    "reason": "用户确认Lucide统一方案：仅替换图案与线宽，其他已验收布局保持不变。"
+    "reason": "\u7528\u6237\u786e\u8ba4Lucide\u7edf\u4e00\u65b9\u6848\uff1a\u4ec5\u66ff\u6362\u56fe\u6848\u4e0e\u7ebf\u5bbd\uff0c\u5176\u4ed6\u5df2\u9a8c\u6536\u5e03\u5c40\u4fdd\u6301\u4e0d\u53d8\u3002"
   },
   "miniprogram/components/memory-row/index.wxss": {
     "sha256": "e8831b65eeebfa6199723c51246115e89e2a290c5c005c8dcab69c72fb25c4a6",
@@ -57,23 +57,23 @@
   },
   "miniprogram/components/toast/index.wxml": {
     "sha256": "68aabcdee7c9cd906f71b90721c83d53e3883658d6ddcf7a6546097422cbf9e2",
-    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+    "reason": "\u7528\u6237\u6388\u6743\u6309\u6700\u5c0f\u4fee\u590d\u65b9\u5411\u5b9e\u65bd UI Audit P0/P1/P2\uff1b\u53ea\u6539\u5df2\u5ba1\u67e5UI\u5c42\uff0c\u4fdd\u7559\u54c1\u724c\u3001\u4e1a\u52a1/API\u3001\u9910\u5177Tab 480ms\u4e0eMap\u539f\u751f\u89c6\u89c9320ms\u3002"
   },
   "miniprogram/custom-tab-bar/index.js": {
     "sha256": "8845ad4b75dc5bc930740062c94f4d9748428fbcf3a0a06680a253e73a4da91d",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除只供可见探针使用的状态，保留导航与动画逻辑。 2026-09-28 Phase 1A (docs/reviews/tabbar-publish-dedupe-phase1a-20260928.md): publish() skips a publish whose visual payload repeats the previous one. It compares the exact icon commands every child receives and skips only on byte-identical payloads (revision excluded) — the rejected 2026-09-16 round inferred duplicates from function names instead. 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): endpoint warm plan (warmEndpoints) plus the semantic/visual selection split (visualSelected, which moves only when the morph starts). 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u79fb\u9664\u53ea\u4f9b\u53ef\u89c1\u63a2\u9488\u4f7f\u7528\u7684\u72b6\u6001\uff0c\u4fdd\u7559\u5bfc\u822a\u4e0e\u52a8\u753b\u903b\u8f91\u3002 2026-09-28 Phase 1A (docs/reviews/tabbar-publish-dedupe-phase1a-20260928.md): publish() skips a publish whose visual payload repeats the previous one. It compares the exact icon commands every child receives and skips only on byte-identical payloads (revision excluded) \u2014 the rejected 2026-09-16 round inferred duplicates from function names instead. 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): endpoint warm plan (warmEndpoints) plus the semantic/visual selection split (visualSelected, which moves only when the morph starts). 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full \u2014 none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.wxml": {
     "sha256": "9f7b4c3465fb19d640fa302d2a9422e968d46e8cd92914e954ff5685f93fdb01",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除Tab栏可见测试信息。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): .is-active now reads viewState.visualSelected, and each s-morph gains warm=\"{{warmEndpoints[index]}}\". 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u79fb\u9664Tab\u680f\u53ef\u89c1\u6d4b\u8bd5\u4fe1\u606f\u3002 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): .is-active now reads viewState.visualSelected, and each s-morph gains warm=\"{{warmEndpoints[index]}}\". 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full \u2014 none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.wxss": {
     "sha256": "57e506ffa7e14d8d832ac1259c12a72fc2395f2037c94c8f4635b340811adae0",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除Tab栏可见测试信息样式。 The label styling is back to the original single .tab-label. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u5220\u9664Tab\u680f\u53ef\u89c1\u6d4b\u8bd5\u4fe1\u606f\u6837\u5f0f\u3002 The label styling is back to the original single .tab-label. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full \u2014 none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/pages/home/index.wxml": {
     "sha256": "a369416c6b85c27119dccd13387d456714af94269442a7c7f195c9fc6c544998",
-    "reason": "S1身份隔离：增加账号锁定/恢复入口与陈旧会话保护；保留4daeb2e正式Tab及Map视觉样式。原生验收待执行。 本轮只同步目标分支已存在的 R2 非视觉定位属性 id=\"identity-gate\"；移除此单个属性即与原哈希完全相同，未改布局/样式，非新增原生视觉验收。"
+    "reason": "S1\u8eab\u4efd\u9694\u79bb\uff1a\u589e\u52a0\u8d26\u53f7\u9501\u5b9a/\u6062\u590d\u5165\u53e3\u4e0e\u9648\u65e7\u4f1a\u8bdd\u4fdd\u62a4\uff1b\u4fdd\u75594daeb2e\u6b63\u5f0fTab\u53caMap\u89c6\u89c9\u6837\u5f0f\u3002\u539f\u751f\u9a8c\u6536\u5f85\u6267\u884c\u3002 \u672c\u8f6e\u53ea\u540c\u6b65\u76ee\u6807\u5206\u652f\u5df2\u5b58\u5728\u7684 R2 \u975e\u89c6\u89c9\u5b9a\u4f4d\u5c5e\u6027 id=\"identity-gate\"\uff1b\u79fb\u9664\u6b64\u5355\u4e2a\u5c5e\u6027\u5373\u4e0e\u539f\u54c8\u5e0c\u5b8c\u5168\u76f8\u540c\uff0c\u672a\u6539\u5e03\u5c40/\u6837\u5f0f\uff0c\u975e\u65b0\u589e\u539f\u751f\u89c6\u89c9\u9a8c\u6536\u3002"
   },
   "miniprogram/pages/home/index.wxss": {
     "sha256": "a9be695bf2427cd13066e910312a2adf878936d41721873fde6baa60bae381b3",
@@ -81,19 +81,19 @@
   },
   "miniprogram/components/toast/index.wxss": {
     "sha256": "81ad659141c4ee6dc75253ebf83a5ad3b3960dce34f91b0c4a8968eecb33dfad",
-    "reason": "用户授权按最小修复方向实施 UI Audit P0/P1/P2；只改已审查UI层，保留品牌、业务/API、餐具Tab 480ms与Map原生视觉320ms。"
+    "reason": "\u7528\u6237\u6388\u6743\u6309\u6700\u5c0f\u4fee\u590d\u65b9\u5411\u5b9e\u65bd UI Audit P0/P1/P2\uff1b\u53ea\u6539\u5df2\u5ba1\u67e5UI\u5c42\uff0c\u4fdd\u7559\u54c1\u724c\u3001\u4e1a\u52a1/API\u3001\u9910\u5177Tab 480ms\u4e0eMap\u539f\u751f\u89c6\u89c9320ms\u3002"
   },
   "miniprogram/components/morph-icon/index.wxml": {
     "sha256": "99d35e2283fd285dddad2cfa8f3e93a81432d7a12738fc05a9b89776c0faf8c5",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；移除各Tab图标上方的可见诊断标记。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen warm <image> slots with observable load/error. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u79fb\u9664\u5404Tab\u56fe\u6807\u4e0a\u65b9\u7684\u53ef\u89c1\u8bca\u65ad\u6807\u8bb0\u3002 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen warm <image> slots with observable load/error. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full \u2014 none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/custom-tab-bar/index.json": {
     "sha256": "4f8e57fb8433065e882a485c1f3343e2a5474f50218dd891871f552c495ce0d9",
-    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+    "reason": "\u7528\u6237\u786e\u8ba4\u4e94\u7ec4Lucide\u5b98\u65b9\u53cc\u6001\u7aef\u70b9\uff1bTab\u63a5\u5165\u5e26SVG\u9759\u6001\u7aef\u70b9/\u964d\u7ea7\u7684\u8def\u5f84\u8fc7\u6e21\uff0c\u4e0d\u52a0\u80cc\u666f\uff1b\u9a8c\u8bc1\u9875\u540c\u6b65\u6b63\u5f0f\u914d\u5bf9\u3002"
   },
   "miniprogram/pages/morph-lab/index.wxml": {
     "sha256": "510aba2d5081c2067253670e35fd980cf8f8c2a90efc3f01cfd64b4a93f02745",
-    "reason": "用户确认五组Lucide官方双态端点；Tab接入带SVG静态端点/降级的路径过渡，不加背景；验证页同步正式配对。"
+    "reason": "\u7528\u6237\u786e\u8ba4\u4e94\u7ec4Lucide\u5b98\u65b9\u53cc\u6001\u7aef\u70b9\uff1bTab\u63a5\u5165\u5e26SVG\u9759\u6001\u7aef\u70b9/\u964d\u7ea7\u7684\u8def\u5f84\u8fc7\u6e21\uff0c\u4e0d\u52a0\u80cc\u666f\uff1b\u9a8c\u8bc1\u9875\u540c\u6b65\u6b63\u5f0f\u914d\u5bf9\u3002"
   },
   "miniprogram/images/pin.png": {
     "removed": true,
@@ -101,19 +101,19 @@
       "miniprogram/images/markers/landmark-normal-fallback.png",
       "miniprogram/images/markers/landmark-selected-fallback.png"
     ],
-    "reason": "全量图标审计确认旧 pin.png 不再被运行代码引用；删除废弃素材，并验证实际原生地图邮戳资源。"
+    "reason": "\u5168\u91cf\u56fe\u6807\u5ba1\u8ba1\u786e\u8ba4\u65e7 pin.png \u4e0d\u518d\u88ab\u8fd0\u884c\u4ee3\u7801\u5f15\u7528\uff1b\u5220\u9664\u5e9f\u5f03\u7d20\u6750\uff0c\u5e76\u9a8c\u8bc1\u5b9e\u9645\u539f\u751f\u5730\u56fe\u90ae\u6233\u8d44\u6e90\u3002"
   },
   "miniprogram/components/morph-icon/index.js": {
     "sha256": "4349e4b668a64854db5cc450dba7add1f257cd4b6c3c69bca7e03eded46d8659",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除只供可见图标标记使用的字段，动画状态机不变。 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): module-level endpoint warmup registry (claim/settle/pump) and the offscreen preload lifecycle. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full — none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u5220\u9664\u53ea\u4f9b\u53ef\u89c1\u56fe\u6807\u6807\u8bb0\u4f7f\u7528\u7684\u5b57\u6bb5\uff0c\u52a8\u753b\u72b6\u6001\u673a\u4e0d\u53d8\u3002 2026-09-28 Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): module-level endpoint warmup registry (claim/settle/pump) and the offscreen preload lifecycle. 2026-09-28 Phase 2F: the Phase 1D label crossfade and the Phase 2B/2C/2D renderer/motion experiments were reverted in full \u2014 none of them resolved the tab-transition twitch, which is now a deferred KNOWN_ISSUE (docs/reviews/tabbar-phase2e-20260928.md). The retained work is Phase 1A publish dedupe and Phase 1C endpoint warmup only. Rollback target for the whole TabBar round: 73cd0a3c7057b657937a25e178ea92edf62c88c81a3be2c45293dcd931bc1779."
   },
   "miniprogram/components/morph-icon/index.wxss": {
     "sha256": "ac3372470bc25a25b51b84cac5fd8c012f502ae785d5733beba6de473b93c0f0",
-    "reason": "用户暂停Tab问题排查并要求恢复正常UI；删除各Tab图标可见诊断样式。 2026-09-28 user-authorized Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen .morph-warm placement (NOT display:none, so the native layer rasterises it). Supersedes the 2026-09-16 TabBar rollback pin only for this change; the real-device verdict is still pending. Previous hash a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc."
+    "reason": "\u7528\u6237\u6682\u505cTab\u95ee\u9898\u6392\u67e5\u5e76\u8981\u6c42\u6062\u590d\u6b63\u5e38UI\uff1b\u5220\u9664\u5404Tab\u56fe\u6807\u53ef\u89c1\u8bca\u65ad\u6837\u5f0f\u3002 2026-09-28 user-authorized Phase 1C (docs/reviews/tabbar-phase1c-20260928.md): offscreen .morph-warm placement (NOT display:none, so the native layer rasterises it). Supersedes the 2026-09-16 TabBar rollback pin only for this change; the real-device verdict is still pending. Previous hash a7a54a3e40f0369f31de9f1fecd0e21a3d691a414dac0df2424a5cc627c01ecc."
   },
   "miniprogram/pages/morph-lab/index.js": {
     "sha256": "a8c8c34e4821750a2ff117ae43b65cabad48225c0898993ef30e173fe1c44e9b",
-    "reason": "用户选择L餐具主题/480ms：Add端点改为官方Utensils/UtensilsCrossed；原480ms首帧计时修复、SVG层、尺寸、路线及地图不变。"
+    "reason": "\u7528\u6237\u9009\u62e9L\u9910\u5177\u4e3b\u9898/480ms\uff1aAdd\u7aef\u70b9\u6539\u4e3a\u5b98\u65b9Utensils/UtensilsCrossed\uff1b\u539f480ms\u9996\u5e27\u8ba1\u65f6\u4fee\u590d\u3001SVG\u5c42\u3001\u5c3a\u5bf8\u3001\u8def\u7ebf\u53ca\u5730\u56fe\u4e0d\u53d8\u3002"
   },
   "miniprogram/pages/add/index.js": {
     "sha256": "81d734c7e4a6bcdbd97b895cadcf878e9d81a89d89f465ccc9eab488d92c99aa",
@@ -177,11 +177,11 @@
   },
   "miniprogram/utils/locales.js": {
     "sha256": "76f184c8ba4ce2f9ee782bef31c15ab4a31e461139594347a269924f2d999cc4",
-    "reason": "2026-09-25 用户授权的墓碑记录修复：经既有 TSV 构建追加四条文案（保留我的修改、另存确认、无法保留错误、新回忆）。未改菜单顺序、图标、路由、Tab 行为或既有文案。"
+    "reason": "2026-09-25 \u7528\u6237\u6388\u6743\u7684\u5893\u7891\u8bb0\u5f55\u4fee\u590d\uff1a\u7ecf\u65e2\u6709 TSV \u6784\u5efa\u8ffd\u52a0\u56db\u6761\u6587\u6848\uff08\u4fdd\u7559\u6211\u7684\u4fee\u6539\u3001\u53e6\u5b58\u786e\u8ba4\u3001\u65e0\u6cd5\u4fdd\u7559\u9519\u8bef\u3001\u65b0\u56de\u5fc6\uff09\u3002\u672a\u6539\u83dc\u5355\u987a\u5e8f\u3001\u56fe\u6807\u3001\u8def\u7531\u3001Tab \u884c\u4e3a\u6216\u65e2\u6709\u6587\u6848\u3002"
   },
   "miniprogram/components/sheet/index.js": {
     "sha256": "eb844c42c0739dc23917425b37cb9d2b3a661cda4678a457b875dece60d3fee9",
-    "reason": "2026-09-25 用户授权的墓碑记录修复：同步状态新增 keepable 行标志与 onKeepEdit 处理，recreate 行显示为「新回忆」。未改身份恢复、租约或持久化语义。"
+    "reason": "2026-09-25 \u7528\u6237\u6388\u6743\u7684\u5893\u7891\u8bb0\u5f55\u4fee\u590d\uff1a\u540c\u6b65\u72b6\u6001\u65b0\u589e keepable \u884c\u6807\u5fd7\u4e0e onKeepEdit \u5904\u7406\uff0crecreate \u884c\u663e\u793a\u4e3a\u300c\u65b0\u56de\u5fc6\u300d\u3002\u672a\u6539\u8eab\u4efd\u6062\u590d\u3001\u79df\u7ea6\u6216\u6301\u4e45\u5316\u8bed\u4e49\u3002"
   },
   "miniprogram/styles/visual-tokens.wxss": {
     "sha256": "d259392ff5b37ecc062f7882e3789ba93f8f840b854e7f2d25a6bf1deba8e28e",

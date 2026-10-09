@@ -15,11 +15,13 @@ const icons = {
   "chevron-up": "<path d=\"m18 15-6-6-6 6\"/>",
   "circle-check": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16 9-5.5 5.5L8 12\"/>",
   "circle-question-mark": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>",
+  "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\"/>",
   "eraser": "<path d=\"M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21\"/><path d=\"m5.082 11.09 8.828 8.828\"/>",
   "heart": "<path d=\"M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5\"/>",
   "house-heart": "<path d=\"M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>",
   "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>",
   "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>",
+  "library": "<path d=\"m16 6 4 14\"/><path d=\"M12 6v14\"/><path d=\"M8 8v12\"/><path d=\"M4 4v16\"/>",
   "lightbulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>",
   "loader-circle": "<path d=\"M21 12a9 9 0 1 1-6.219-8.56\"/>",
   "lock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\"/><rect x=\"3\" y=\"10\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M7 10V7a5 5 0 0 1 10 0v3\"/>",
@@ -50,7 +52,7 @@ const icons = {
   "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\"/>",
   "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>"
 };
-const aliases = {"lucide-house":"house","lucide-map-pinned":"map-pinned","lucide-plus":"plus","lucide-users-round":"users-round","lucide-user-round":"user-round","lucide-x":"x","lucide-chevron-left":"chevron-left","lucide-chevron-right":"chevron-right","lucide-chevron-up":"chevron-up","lucide-chevron-down":"chevron-down","lucide-sliders-horizontal":"sliders-horizontal","lucide-check":"check","lucide-bookmark":"bookmark","lucide-bookmark-check":"bookmark-check","lucide-heart":"heart","lucide-star":"star","lucide-minus":"minus","lucide-loader-circle":"loader-circle","lucide-circle-check":"circle-check","lucide-house-heart":"house-heart","lucide-map":"map","lucide-square-plus":"square-plus","lucide-users":"users","lucide-user":"user","lucide-pen":"pen","lucide-pen-line":"pen-line","lucide-utensils":"utensils","lucide-utensils-crossed":"utensils-crossed"};
+const aliases = {"lucide-house":"house","lucide-map-pinned":"map-pinned","lucide-plus":"plus","lucide-users-round":"users-round","lucide-user-round":"user-round","lucide-x":"x","lucide-chevron-left":"chevron-left","lucide-chevron-right":"chevron-right","lucide-chevron-up":"chevron-up","lucide-chevron-down":"chevron-down","lucide-sliders-horizontal":"sliders-horizontal","lucide-check":"check","lucide-eraser":"eraser","lucide-bookmark":"bookmark","lucide-bookmark-check":"bookmark-check","lucide-heart":"heart","lucide-star":"star","lucide-minus":"minus","lucide-loader-circle":"loader-circle","lucide-circle-check":"circle-check","lucide-house-heart":"house-heart","lucide-map":"map","lucide-square-plus":"square-plus","lucide-users":"users","lucide-user":"user","lucide-pen":"pen","lucide-pen-line":"pen-line","lucide-utensils":"utensils","lucide-utensils-crossed":"utensils-crossed"};
 Object.keys(aliases).forEach(name => { icons[name] = icons[aliases[name]]; });
 const EXTRA = { fill: 'none', stroke: '#1b1c1a', strokeWidth: 1.75 };
 function iconSvg(name, options) {

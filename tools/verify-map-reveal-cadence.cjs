@@ -67,6 +67,8 @@ const dependencies = {
   '../../utils/mapMarkers': { style: () => ({ iconPath: 'fallback.png' }) },
   '../../utils/mapLayout': require('../miniprogram/utils/mapLayout'),
   '../../utils/mapStack': stack,
+  '../../utils/mapCamera': require('../miniprogram/utils/mapCamera'),
+  '../../utils/imageCache': require('../miniprogram/utils/imageCache'),
   '../../utils/mapProjection': require('../miniprogram/utils/mapProjection'),
   '../../utils/restaurantCategory': { summary: () => '' },
 };

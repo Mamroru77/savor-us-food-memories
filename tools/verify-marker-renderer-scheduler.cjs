@@ -150,7 +150,23 @@ function harness(options) {
     },
   };
 
-  let current = { wx, cloudRecords, mapTrace: require(path.join(REPO, 'miniprogram', 'utils', 'mapTrace')) };
+  
+// The shared image pipeline is exercised by its own suite. Here it is a thin pass-through to
+// THIS harness's cloudRecords stub, so the renderer's own concurrency and disposal contracts
+// stay measured against the same synthetic download the suite already controls.
+function makeSandboxImageCache(cloudRecords) {
+  return {
+    localSource: (source, variant, prepare) => cloudRecords.downloadMapPhoto(source).then(async local => {
+      let prepared = local;
+      if (prepare) { try { prepared = (await prepare(local)) || local; } catch (e) { prepared = local; } }
+      return { path: prepared, cached: false, disposable: [local] };
+    }),
+    store: () => null,
+    prefetch() {}, cancelPrefetch() {}, reset() {}, snapshot: () => ({}), urlFor: () => null,
+  };
+}
+
+let current = { wx, cloudRecords, mapTrace: require(path.join(REPO, 'miniprogram', 'utils', 'mapTrace')) };
   const module = { exports: {} };
   vm.runInNewContext(fs.readFileSync('miniprogram/utils/mapMarkers.js', 'utf8'), {
     module, exports: module.exports,
@@ -159,6 +175,7 @@ function harness(options) {
       if (p === './cloudRecords') return current.cloudRecords;
       if (p === './mapTrace') return current.mapTrace;
       if (p === './photoTrace') return require(path.join(REPO, 'miniprogram', 'utils', 'photoTrace'));
+      if (p === './imageCache') return makeSandboxImageCache(current.cloudRecords);
       throw new Error('unexpected require ' + p);
     },
     wx: current.wx, console, Promise, JSON, Math, Number, Boolean,

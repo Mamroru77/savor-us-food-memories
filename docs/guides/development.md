@@ -12,7 +12,9 @@
 ## 验证与云部署的区别
 
 在根目录运行 `npm run verify:all`。这是静态、模拟与源代码契约检查，不会代替真实设备或两账号验收。
-当前基线：`npm run verify` **359/359**，`npm run verify:all` **EXIT 0**（v1.2.3）。
+当前基线（2026-10-02）：`npm run verify` **359/359（EXIT 0）**；`verify:cloud` **272/272（EXIT 0）**；
+`npm run verify:all` **EXIT 0**（57 个顶层套件全部跑完，0 FAIL）。
+（Add 冻结页检查点已于 2026-10-02 为权限恢复推进并注册，此前长期存在的预期红已消失。）
 
 ### 本机环境限制：同步子进程 stdin
 

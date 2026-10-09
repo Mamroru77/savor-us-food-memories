@@ -97,7 +97,6 @@ Page({
     store.updateSettings({ loveSent: !settings.loveSent });
     if (!settings.loveSent) store.notify(i18n.t('A little love, added to your shared space.'));
   },
-  onManageSpace(){wx.navigateTo({url:'/pages/space/index'});},
   onTogether() { this.openSheet('together'); },
   onJourney() { this.openSheet('journey'); },
   onGalleryScroll(event) { this._memoryGalleryScrollLeft = event.detail.scrollLeft; },

@@ -1,7 +1,7 @@
 <view wx:if="{{!identityReady}}" class="identity-inline-loading {{dusk ? 'dusk' : ''}}" style="top:{{menuButtonTop}}px; height:{{menuButtonHeight}}px; border-radius:{{menuButtonBorderRadius}}px; line-height:{{menuButtonHeight}}px;">
   <view class="inline-loading-inner" style="height:{{menuButtonHeight}}px; line-height:{{menuButtonHeight}}px;">
     <s-icon name="loader-circle" size="28" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" class="spin" />
-    <text>正在验证...</text>
+    <text>{{copy.s691f4302fc}}</text>
   </view>
 </view>
 <view class="screen map-screen {{locale === 'zh-CN' ? 'locale-zh' : ''}} {{dusk ? 'dusk' : ''}} {{quiet ? 'quiet' : ''}}">
@@ -21,7 +21,7 @@
     bindmarkertap="onMarkerTap"
     binderror="onMapError"
     show-location="{{false}}"
-    enable-poi="{{true}}"
+    enable-poi="{{showNativePoi}}"
     enable-building="{{true}}"
     enable-rotate="{{false}}"
     enable-overlooking="{{false}}"
@@ -105,7 +105,7 @@
 
     <!-- search -->
     <view class="map-search glass content-card">
-      <s-icon name="search" size="37" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
+      <s-icon name="search" size="42" color="{{dusk ? '#d7d1c7' : '#565752'}}" stroke="1.75" />
       <input
         class="map-search-input {{focusedField === ('onQuery-') ? 'is-focused' : ''}}"
         placeholder="{{copy.scf3490d051}}"
@@ -158,7 +158,7 @@
        the search bar, the place card or the TabBar. -->
   <view class="map-tool-column" style="top: {{overlayTop}}px">
     <view class="recenter-map glass" bindtap="recenter" aria-role="button" aria-label="{{copy.sa65210588a}}">
-      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map-pinned" size="40" stroke="1.75" />
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="map" size="40" stroke="1.75" />
     </view>
     <!-- Precise nudging next to pinch's coarse zoom. Disabled state is driven by the
          observed native scale, and the handler refuses the command as well as the ink. -->
@@ -170,6 +170,13 @@
       <view class="zoom-step {{mapScale <= zoomOutDisabledAt ? 'is-disabled' : ''}}" bindtap="onZoomOut" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{copy.sa4ae4b24a1}}">
         <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="minus" size="32" stroke="1.75" />
       </view>
+    </view>
+    <!-- Secondary map-display utility, not a primary CTA. It owns ONLY the provider's native
+         POI / landmark layer: Savor's own markers, the selection, the card, Search and the
+         recenter are independent of it. The state is carried by the glyph itself (pin vs
+         pin-off), so it never depends on colour alone. -->
+    <view class="poi-toggle glass" bindtap="onToggleNativePoi" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" aria-role="button" aria-label="{{showNativePoi ? copy.seb662620b5 : copy.s156290796b}}">
+      <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="{{showNativePoi ? 'map-pin' : 'map-pin-off'}}" size="36" stroke="1.75" />
     </view>
   </view>
 
@@ -187,7 +194,7 @@
         <text class="place-date">{{selected.dateLabel}}</text>
       </view>
     </view>
-    <image class="place-photo" src="{{selectedPhoto}}" mode="aspectFill" bindtap="onPlaceOpen" />
+    <image class="place-photo" src="{{imageErrors[(selectedPhoto)] ? '/images/le-comptoir.jpg' : (selectedPhoto)}}" mode="aspectFill" data-source="{{selectedPhoto}}" binderror="onImageError" bindtap="onPlaceOpen" />
     <view class="place-location-actions">
       <text bindtap="onCorrectLocation" aria-role="button" aria-label="{{copy.sddc6088f76}}">{{copy.s48e09e45c5}}</text><text bindtap="onNavigate" aria-role="button" aria-label="{{copy.s5da3945bd1}}">{{copy.se56f29da2a}}</text>
     </view>

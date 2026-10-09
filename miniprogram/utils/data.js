@@ -46,6 +46,9 @@ const defaultSettings = {
   reminders: true,
   reduceMotion: false,
   theme: 'pearl',
+  // Map display preference. Native provider POIs are geographic context and stay ON by default;
+  // the user may simplify the map, and their choice is remembered per device.
+  showNativePoi: true,
   loveSent: false,
   notificationsRead: false,
   // Add-page resident dining types. Built-ins stay in restaurantCategory.TYPES; hiding only removes
