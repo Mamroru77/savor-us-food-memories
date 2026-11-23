@@ -546,7 +546,16 @@ Component({
 
     // ---------- journey ----------
     refreshJourney(patch, state) {
-      patch.journeyStops=stats.real(state.memories,true).map((memory,index)=>({title:require('../../utils/locations').display(memory),date:data.formatDate(memory.date),text:memory.restaurant,fresh:index===0}));
+      patch.journeyStops=stats.real(state.memories,true).map((memory,index)=>{
+        const place=require('../../utils/locations').display(memory);
+        const restaurant=memory.restaurant||'';
+        return {
+          title:restaurant||place,
+          date:data.formatDate(memory.date),
+          text:restaurant&&place&&place!==restaurant?place:'',
+          fresh:index===0,
+        };
+      });
     },
     onJourneyMap() { this.goTab({ currentTarget: { dataset: { url: '/pages/map/index' } } }); },
 

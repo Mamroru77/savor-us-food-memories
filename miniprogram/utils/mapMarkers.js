@@ -38,6 +38,15 @@ const HEAVY_CONCURRENCY = 1;
 const SOURCE_LONG_EDGE = 384;
 const fallback = selected => '/images/markers/landmark-' + (selected ? 'selected' : 'normal') + '-fallback.png';
 function photoFor(memory) { return memory.placePhoto || (!memory.noPhoto ? memory.photo : '') || ''; }
+function clusterBadge(count) {
+  const n = Number(count) || 0;
+  if (n <= 1) return '';
+  return n > 9 ? '9+' : String(Math.floor(n));
+}
+function cacheKey(source, selected, count) {
+  const badge = clusterBadge(count);
+  return badge ? JSON.stringify([source, !!selected, badge]) : JSON.stringify([source, !!selected]);
+}
 function style(selected) {
   const width = selected ? 80 : 48;
   return { iconPath: fallback(selected), width, height: width * HEIGHT / WIDTH,
@@ -220,6 +229,27 @@ function createRenderer(canvas) {
       const scale=Math.max(192/photo.width,195/photo.height),w=photo.width*scale,h=photo.height*scale;
       ctx.drawImage(photo,32+(192-w)/2,43+(195-h)/2,w,h);ctx.restore();
       ctx.drawImage(frame,0,0,WIDTH,HEIGHT);
+      // Native cluster count badge: baked straight into the marker bitmap at the top-right
+      // slot (218, 40) so clusters travel at native 60fps with zero floating overlay button.
+      // Unselected uses the dark olive family matching the S badge; selected integrates into
+      // the brand-green selected slot so a marker never stacks 4 competing corner badges.
+      if(entry.badge) {
+        const cx=218, cy=40, r=27;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.fillStyle=entry.selected?'#416344':'#273b31';
+        ctx.fill();
+        ctx.lineWidth=4;
+        ctx.strokeStyle='#faf7f0';
+        ctx.stroke();
+        ctx.fillStyle='#faf7f0';
+        ctx.font='bold '+(entry.badge.length>1?'24px':'28px')+' sans-serif';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(entry.badge,cx,cy+1);
+        ctx.restore();
+      }
       // Canvas draw calls are synchronous; this is the CPU cost of the 768x858 compose.
       trace.record(entry.jobId, { composeMs: clock()-started });
       const exporting=clock();
@@ -258,8 +288,8 @@ function createRenderer(canvas) {
     }
   }
 
-  function render(memory, selected) {
-    const source=photoFor(memory), backup=fallback(selected);
+  function render(memory, selected, count) {
+    const source=photoFor(memory), backup=fallback(selected), badge=clusterBadge(count);
     if(disposed || !source || !data.isSafeImage(source)) {
       const refused=Promise.resolve(backup);
       if(trace.on()) {
@@ -269,13 +299,13 @@ function createRenderer(canvas) {
       }
       return refused;
     }
-    const key=JSON.stringify([source,!!selected]);
+    const key=cacheKey(source,selected,count);
     if(cache.has(key)) return cache.get(key);
     if(cache.size>=LIMIT) return Promise.resolve(backup);
     let resolve;
     const job=new Promise(r=>{resolve=r;});
     const jobId=trace.newJob(!!selected);
-    const entry={key,source,selected:!!selected,backup,resolve,owned:[],local:'',bundled:false,meta:null,reason:'',path:'',prepared:false,
+    const entry={key,source,selected:!!selected,badge,backup,resolve,owned:[],local:'',bundled:false,meta:null,reason:'',path:'',prepared:false,
       revision: memory && memory.revision!==undefined ? memory.revision : undefined,
       jobId,
       // Only read when tracing is on, so an off trace costs nothing at all. -1 (not 0)
@@ -312,25 +342,26 @@ function createRenderer(canvas) {
   // marker icon already composed. Downloads are shared with the normal variants, so this
   // costs a compose per marker and no extra bytes. The selected variant is queued at the
   // renderer's existing high priority, so a real tap still overtakes the prefetch.
-  function prefetchSelected(memories, skipId) {
+  function prefetchSelected(memories, skipId, counts) {
     if (disposed) return 0;
     let queued = 0;
-    (memories || []).forEach(memory => {
+    (memories || []).forEach((memory, index) => {
       if (!memory || memory.id === skipId) return;
       const source = photoFor(memory);
       if (!source || !data.isSafeImage(source)) return;
-      const key = JSON.stringify([source, true]);
+      const count = Array.isArray(counts) ? counts[index] : 1;
+      const key = cacheKey(source, true, count);
       if (cache.has(key)) return;
       if (cache.size >= LIMIT) return;
-      render(memory, true);
+      render(memory, true, count);
       queued += 1;
     });
     return queued;
   }
   return {render, prefetchSelected,
-    peek(memory,selected){return ready.get(JSON.stringify([photoFor(memory),!!selected]));},
+    peek(memory,selected,count){return ready.get(cacheKey(photoFor(memory),selected,count));},
     // Dev-only attribution for a ready photo; 0 when tracing is off or nothing is ready.
-    traceJobId(memory,selected){return readyTrace.get(JSON.stringify([photoFor(memory),!!selected]))||0;},
+    traceJobId(memory,selected,count){return readyTrace.get(cacheKey(photoFor(memory),selected,count))||0;},
     dispose};
 }
-module.exports={style,photoFor,fallback,createRenderer,trace,photoTrace};
+module.exports={style,photoFor,fallback,clusterBadge,createRenderer,trace,photoTrace};

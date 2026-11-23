@@ -132,16 +132,46 @@ function cornersFor(centre, scale, viewport, padding) {
   ];
 }
 
+// The map centre that puts `point` at screen pixel `(screenX, screenY)` within `viewport`.
+function centreForScreenPoint(point, scale, viewport, screenX, screenY) {
+  const dx = finite(Number(screenX), 0) - finite(Number(viewport.width), 0) / 2;
+  const dy = finite(Number(screenY), 0) - finite(Number(viewport.height), 0) / 2;
+  const dLng = dx * 360 / (TILE * Math.pow(2, scale));
+  const dMerc = dy * 2 * Math.PI / (TILE * Math.pow(2, scale));
+  return [inverseMercator(mercator(finite(Number(point[0]), 0)) + dMerc), wrapLongitude(finite(Number(point[1]), 0) - dLng)];
+}
+
 // The map centre that puts `point` at the centre of the UNOBSTRUCTED region instead of
 // the centre of the component. Used only where the bound props are the camera (the IDE):
 // includePoints composes by padding, the props compose by offset.
 function centreForPoint(point, scale, viewport, padding) {
   const centre = usableCentre(viewport, padding);
-  const dx = centre.x - finite(Number(viewport.width), 0) / 2;
-  const dy = centre.y - finite(Number(viewport.height), 0) / 2;
-  const dLng = dx * 360 / (TILE * Math.pow(2, scale));
-  const dMerc = dy * 2 * Math.PI / (TILE * Math.pow(2, scale));
-  return [inverseMercator(mercator(finite(Number(point[0]), 0)) + dMerc), wrapLongitude(finite(Number(point[1]), 0) - dLng)];
+  return centreForScreenPoint(point, scale, viewport, centre.x, centre.y);
+}
+
+// Ideal vertical anchor (screen Y of the cluster root pin tip) so the cluster's drawer
+// unfolds into the maximum unobstructed space between search bar and bottom card:
+//   - If an upward drawer fits inside the unobstructed band, place the root in the lower
+//     portion so the entire upward stack + chevron sit centered between search bar and card.
+//   - If a tall 3-row+paging drawer exceeds the band height (so buildDrawers flips downward),
+//     place the root right below the search bar so its downward stack unfolds into clear sky
+//     instead of disappearing behind the bottom card.
+function clusterAnchorY(viewport, padding, drawerHeight) {
+  const region = usable(viewport, padding);
+  const midY = region.top + region.height / 2;
+  const maxY = Math.max(midY, region.top + region.height - 12);
+  const height = finite(Number(drawerHeight), 0);
+  if (height > 0 && (maxY - height) < region.top) {
+    return clamp(region.top + 89 + 12, region.top + 89, midY);
+  }
+  const idealY = region.top + (region.height + height) / 2;
+  return clamp(idealY, midY, maxY);
+}
+
+// The map centre that frames a cluster root marker for an unobstructed upward drawer open.
+function centreForCluster(point, scale, viewport, padding, drawerHeight) {
+  const centre = usableCentre(viewport, padding);
+  return centreForScreenPoint(point, scale, viewport, centre.x, clusterAnchorY(viewport, padding, drawerHeight));
 }
 
 // The camera padding, from MEASURED obstructions. Nothing here is a fixed guess: the
@@ -272,7 +302,8 @@ function panPoint(from, to, progress) {
 module.exports = {
   TILE, SCALE_MIN, SCALE_MAX, OVERVIEW_MAX_SCALE,
   mercator, inverseMercator, pixelsPerLongitude, pixelsPerMercator, wrapLongitude,
-  usable, usableCentre, bounds, boundsCentre, fitScale, cornersFor, centreForPoint,
+  usable, usableCentre, bounds, boundsCentre, fitScale, cornersFor,
+  centreForScreenPoint, centreForPoint, clusterAnchorY, centreForCluster,
   paddingFrom, bootstrapPadding, overview, levelWithin,
   panPixels, panDurationMs, panProgress, panPoint, projectPoint, scaleForSpan, PAN_NEAR_MS, PAN_FAR_MS,
 };

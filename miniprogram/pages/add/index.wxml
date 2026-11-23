@@ -281,8 +281,8 @@
         </view>
 
         <view class="primary-button save-memory {{businessFrozen || uploading || saving ? 'ghosted' : ''}}" bindtap="onSave" aria-role="button" aria-disabled="{{businessFrozen || uploading || saving}}" aria-busy="{{uploading || saving}}">
-          <s-icon wx:if="{{uploading || saving}}" name="loader-circle" size="35" color="#ffffff" stroke="1.75" class="spin" />
-          <s-icon wx:else name="notebook-pen" size="35" color="#ffffff" stroke="1.75" />
+          <s-icon wx:if="{{uploading || saving}}" name="loader-circle" size="35" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" class="spin" />
+          <s-icon wx:else name="notebook-pen" size="35" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
           <text>{{businessFrozen ? identityLabels.frozenSave : uploading ? copy.sb89bb7bce2 : saving ? copy.s29251fb4a8 : copy.s8a4f0b248a}}</text>
         </view>
       </view>

@@ -11,17 +11,17 @@
     <view class="me-screen" style="padding-top: {{headerTop + 10}}px">
       <!-- profile heading -->
       <view class="profile-heading">
-        <block wx:if="{{profile.avatar}}">
-        <image class="profile-avatar" src="{{imageErrors[(profile.avatar)] ? '/images/jamie.jpg' : (profile.avatar)}}" mode="aspectFill"  data-source="{{profile.avatar}}" binderror="onImageError" />
+        <block wx:if="{{profile.avatar && profile.avatar !== '/images/jamie.jpg' && profile.avatar !== '/images/alex.jpg' && !imageErrors[profile.avatar]}}">
+        <image class="profile-avatar" src="{{profile.avatar}}" mode="aspectFill"  data-source="{{profile.avatar}}" binderror="onImageError" />
       </block>
       <block wx:else>
         <view class="profile-avatar avatar-blank">
           <s-icon name="user-round" size="80" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
         </view>
       </block>
-        <view class="profile-copy">
-          <text class="profile-name">{{profile.name}}</text>
-          <text class="profile-bio">{{profile.bio}}</text>
+        <view class="profile-copy" bindtap="onEditProfile">
+          <text class="profile-name {{profile.name ? '' : 'is-placeholder'}}">{{profile.name || copy.s50cc924dbf}}</text>
+          <text class="profile-bio {{profile.bio ? '' : 'is-placeholder'}}">{{profile.bio || copy.s997ee5da2f}}</text>
         </view>
         <view class="edit-profile-button" bindtap="onEditProfile" aria-role="button" aria-label="{{copy.s15141eab3a}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
           <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="pencil" size="42" stroke="1.75" />

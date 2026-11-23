@@ -82,10 +82,10 @@
 
 
 /* Navigation has its own elevation, not another content card. */
-.theme-dusk.tab-bar { background:linear-gradient(rgba(24,25,28,.88),rgba(18,19,21,.97)); border-top-color:rgba(238,234,227,.09); box-shadow:0 -12rpx 40rpx #0002; }
-.theme-dusk .tab-item { color:#a9a69f; }
-.theme-dusk .tab-item.is-active { color:#dec8a7; }
-.theme-dusk .tab-add-button { background:linear-gradient(145deg,#f0e3ce,#cfb48d); border-color:#f4e6d0; box-shadow:0 12rpx 30rpx #0005,0 0 0 12rpx rgba(222,200,167,.065),inset 0 2rpx 3rpx #ffffff88; }
+.theme-dusk.tab-bar { background:linear-gradient(rgba(26,23,20,.90),rgba(18,16,14,.97)); border-top-color:rgba(236,224,206,.11); box-shadow:0 -14rpx 42rpx rgba(0,0,0,.35); }
+.theme-dusk .tab-item { color:#a99f93; }
+.theme-dusk .tab-item.is-active { color:#dfc7a4; }
+.theme-dusk .tab-add-button { background:linear-gradient(145deg,#f0e3ce,#cfb48d); border-color:#f6ebd9; box-shadow:0 14rpx 32rpx rgba(0,0,0,.45),0 0 0 12rpx rgba(223,199,164,.08),inset 0 2rpx 3rpx #ffffff88; }
 
 /* Shape change communicates selection; no extra backing or entry-only pop. */
 .tab-item.is-active .tab-icon-wrap { transform:none;animation:none; }

@@ -38,8 +38,8 @@ page {
   --ease-soft: cubic-bezier(.2,.7,.3,1);
 }
 .dusk {
-  --surface-page: #121315;
-  --surface-card: #242528;
-  --surface-elevated: #2b2c30;
-  --shadow-card: 0 14rpx 36rpx -16rpx rgba(0,0,0,.35);
+  --surface-page: #141210;
+  --surface-card: #221e1a;
+  --surface-elevated: #28231e;
+  --shadow-card: 0 18rpx 44rpx -18rpx rgba(0,0,0,.46);
 }

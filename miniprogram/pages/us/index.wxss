@@ -133,11 +133,11 @@
 .shared-photo-open > image { height: 100%; width: 100%; background: rgba(255,255,255,.4); }
 .shared-photo-shade {
   position: absolute;
-  top: 30%;
+  top: 22%;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(rgba(15, 17, 13, 0.03) 30%, rgba(15, 17, 13, 0.78));
+  background: linear-gradient(rgba(15, 17, 13, 0) 18%, rgba(15, 17, 13, 0.42) 62%, rgba(15, 17, 13, 0.84) 100%);
 }
 .shared-photo-copy {
   position: absolute;
@@ -148,6 +148,7 @@
   flex-direction: column;
   gap: 8rpx;
   color: #fff;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35);
 }
 .shared-photo-name { font-size: 24rpx; line-height: 30rpx; font-weight: 450; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .shared-photo-date { font-size: 20rpx; line-height: 28rpx; color: rgba(255, 255, 255, 0.94); }
@@ -183,8 +184,8 @@
   background: rgba(255, 255, 255, 0.6);
 }
 .dusk .avatar-blank {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(238,234,227,.18);
+  background: rgba(236, 224, 206, 0.08);
+  border-color: rgba(236, 224, 206, 0.16);
 }
 .identity-inline-loading {
   position: fixed;

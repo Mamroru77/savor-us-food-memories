@@ -13,13 +13,13 @@ vm.runInNewContext(fs.readFileSync('miniprogram/pages/map/index.js','utf8'),{
  Page:p=>spec=p,require:p=>({mapLayout:layout,mapCamera,imageCache:require('../miniprogram/utils/imageCache'),i18n:{copy:()=>({}),locale:()=> 'en'}}[p.split('/').pop()]||{}),
  wx:{getDeviceInfo:()=>({platform:'devtools'})},setTimeout:()=>1,clearTimeout:()=>{},
 });
-function harness(){
+function harness(mode){
  const memories=['a','b'].map(id=>({id,restaurant:id,tags:[],coordinates:[22.6,120.3]}));
  const p={...spec,active:true,disposed:false,markerGeneration:1,
-  data:{...spec.data,mapScale:13,selectedId:'a',clusterOpen:true,drawerPage:1},allMemories:memories,
+  data:{...spec.data,drawerRenderMode:mode||'native-callout',mapScale:13,selectedId:'a',clusterOpen:true,drawerPage:1},allMemories:memories,
   markerGroups:layout.group(memories,13,'a'),drawerRootId:'a',drawerProgress:.5,writes:[],cameraInputs:[],commands:[],
   setData(patch){if(Object.hasOwn(patch,bound)&&patch[bound]!==this.data[bound])this.cameraInputs.push(patch[bound]);this.writes.push(patch);Object.assign(this.data,patch);},
-  stopMarkerAnimation(){},stopDrawerReveal(){assert.fail('must preserve identical groups')},applyFilters(){assert.fail('must not regroup identical members')},
+  stopMarkerAnimation(){},stopDrawerReveal(){if(this.data.drawerRenderMode==='native-callout')assert.fail('must preserve identical groups');this.drawerProgress=0;},refreshStackFrame(){},applyFilters(){assert.fail('must not regroup identical members')},
  };
  p.mapCtx={getScale:o=>o.success({scale:13.32}),includePoints:o=>p.commands.push(o)};return p;
 }
@@ -31,9 +31,11 @@ test('reading actual fractional native zoom must not send it back through the ca
  assert.equal(p.data[bound],13);assert.equal(p.markerGroups,groups);assert.equal(p.commands.length,0);
 });
 test('gesture end keeps precision and drawer state without echoing a new camera input',()=>{
- const p=harness();p.onMapRegionChange({detail:{type:'begin'}});p.onMapRegionChange({detail:{type:'end',scale:14.25}});
+ const p=harness('native-callout');p.onMapRegionChange({detail:{type:'begin'}});p.onMapRegionChange({detail:{type:'end',scale:14.25}});
  assert.equal(p.data.mapScale,14.25);assert.equal(p.cameraInputs.length,0);assert.equal(p.data.clusterOpen,true);
  assert.equal(p.data.drawerPage,1);assert.equal(p.drawerProgress,.5);
+ const vo=harness('view-overlay');vo.onMapRegionChange({detail:{type:'begin',causedBy:'drag'}});vo.onMapRegionChange({detail:{type:'end',causedBy:'drag',scale:14.25}});
+ assert.equal(vo.data.mapScale,14.25);assert.equal(vo.cameraInputs.length,0);assert.equal(vo.data.clusterOpen,true);assert.equal(vo.drawerProgress,.5);
 });
 // A focus is a TRAVEL, not a command. The platform exposes no camera animation API, so the
 // travel is a short sequence of ordinary bound-centre writes; the contract this suite owns is

@@ -300,8 +300,8 @@
 .place-line { color:#253329; }
 .dusk .place-line { color:#b6b2aa; }
 
-.dusk .map-search, .dusk .recenter-map, .dusk .pending-bubble { background:rgba(37,38,42,.94); border-color:rgba(238,234,227,.12); }
-.dusk .pending-popover, .dusk .map-filter-menu { background:#2b2c30; border-color:rgba(238,234,227,.12); }
+.dusk .map-search, .dusk .recenter-map, .dusk .zoom-stepper, .dusk .poi-toggle, .dusk .pending-bubble { background:rgba(32,28,24,.94); border-color:rgba(236,224,206,.15); box-shadow:0 14rpx 32rpx -8rpx rgba(0,0,0,.46), inset 0 1rpx 0 rgba(255,246,232,.07); }
+.dusk .pending-popover, .dusk .map-filter-menu { background:#26211d; border-color:rgba(236,224,206,.15); box-shadow:0 18rpx 44rpx -12rpx rgba(0,0,0,.55); }
 /* The pearl fade holds its first 30% before decaying, but the dusk fade decayed from the
    very first pixel. The map tiles stay light in BOTH themes, so by the subtitle's line the
    dusk backdrop had fallen to ~#858a8d and the light muted subtitle sat at ~1.8:1 contrast;
@@ -309,8 +309,8 @@
    stop to 55% keeps a real dark backdrop under both header lines and brings the subtitle
    back to pearl's own measured contrast (worst 5.43:1 vs pearl 5.36:1) instead of darkening
    the whole map. */
-.dusk .map-top-fade { background:linear-gradient(rgba(18,19,21,.96) 55%,rgba(18,19,21,0)); }
-.dusk .filter-active { background:#5a4d3d; color:#f5f0e8; }
+.dusk .map-top-fade { background:linear-gradient(rgba(20,18,16,.96) 55%,rgba(20,18,16,0)); }
+.dusk .filter-active { background:rgba(223,199,164,.18); color:#dfc7a4; }
 
 /* Native 2D composition surface: off-screen, not display:none. */
 .marker-render-canvas { position:fixed; left:-1000px; top:0; width:256px; height:286px; pointer-events:none; opacity:0; }
@@ -319,7 +319,7 @@
 .place-collapse { position:absolute; left:36rpx; bottom:calc(var(--tab-clearance) + 24rpx); width:88rpx; height:88rpx; border-radius:24rpx; display:flex; align-items:center; justify-content:center; z-index:6; }
 .place-expand { position:absolute; left:32rpx; bottom:calc(var(--tab-clearance) + 20rpx); max-width:calc(100% - 64rpx); height:96rpx; padding:0 28rpx 0 100rpx; box-sizing:border-box; border-radius:30rpx; z-index:5; display:flex; align-items:center; }
 .place-expand-name { min-width:0; flex:1; font-size:28rpx; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dusk .place-expand { background:rgba(37,38,42,.96); color:#eeeae3; }
+.dusk .place-expand { background:rgba(32,28,24,.96); color:#f0eae1; border-color:rgba(236,224,206,.15); }
 
 /* One native callout owns every visible pin, including the root; coordinates stay real. */
 .pin-stack { position:relative; width:88px; }
@@ -423,12 +423,12 @@
 .map-filter-button { width:88rpx; height:88rpx; flex-shrink:0; position:relative; }
 .map-filter-button.filter-active { background:transparent; }
 .map-filter-button.filter-active::before { content:""; position:absolute; width:56rpx; height:62rpx; border-radius:50%; background:#d5dccf; }
-.dusk .map-filter-button.filter-active::before { background:#5a4d3d; }
+.dusk .map-filter-button.filter-active::before { background:rgba(223,199,164,.22); }
 .map-filter-button s-icon { position:relative; }
 .pending-close { min-width:88rpx; min-height:88rpx; box-sizing:border-box; justify-content:center; }
 .place-collapse-visual { width:56rpx; height:56rpx; box-sizing:border-box; border-radius:24rpx; display:flex; align-items:center; justify-content:center; transition:transform 320ms cubic-bezier(.333333,0,.666667,1); }
 .place-collapse.is-collapsed .place-collapse-visual { transform:rotate(180deg); }
-.dusk .place-collapse-visual { background:rgba(37,38,42,.96); color:#eeeae3; }
+.dusk .place-collapse-visual { background:rgba(32,28,24,.96); color:#f0eae1; border-color:rgba(236,224,206,.15); }
 .quiet .place-collapse-visual { transition:none; }
 /* Search uses the exact bottom-card material tokens; dimensions and Map geometry stay fixed. */
 .map-screen .map-search.content-card {

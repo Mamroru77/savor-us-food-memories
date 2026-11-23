@@ -22,8 +22,20 @@ let passed=0;function test(name,fn){fn();passed++;console.log('PASS '+name);}
 // but it is applied through the same travel token as a marker focus, so the acknowledgement that
 // reconciles the viewport is the TRAVEL SETTLE. Everything this test exists to protect (the
 // native scale refresh and the invalidation of the pre-camera region query) is unchanged.
-test('overview travel settle refreshes native scale and invalidates the pre-camera region query',()=>{
+test('overview travel settle refreshes native scale without pre-camera overlay query when collapsed',()=>{
  const h=harness(),p=h.p;p.recenter();
+ assert.equal(h.cameras.length,0,'the overview issues no native fit');
+ assert.ok(p.cameraTransition,'it starts a travel instead');
+ assert.equal(h.queries.length,0,'collapsed view-overlay issues no pre-camera projection query');
+ p.stepCameraTransition(p.cameraTransition.duration);
+ assert.equal(p.data.mapScale,13.8);
+ assert.equal(h.queries.length,1,'the settle issues one anchor query');
+ h.queries.shift().success(region);
+ assert.equal(p.data.stackPositionsReady,false,'collapsed overview keeps overlay unmounted');
+ assert.equal(h.cameras.length,0);
+});
+test('overview travel settle invalidates pre-camera region query and anchors projection when overlay is active',()=>{
+ const h=harness(),p=h.p;p.data.drawerRenderMode='native-callout';p.recenter();
  assert.equal(h.cameras.length,0,'the overview issues no native fit');
  assert.ok(p.cameraTransition,'it starts a travel instead');
  assert.equal(h.queries.length,1,'the pre-camera projection query is issued first');

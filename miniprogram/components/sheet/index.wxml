@@ -178,8 +178,8 @@
       <block wx:if="{{displayType === 'together'}}">
         <view class="settings-form">
           <view class="sheet-couple">
-            <block wx:if="{{state.profile.avatar}}">
-              <image class="sheet-couple-avatar" src="{{imageErrors[(state.profile.avatar)] ? '/images/jamie.jpg' : (state.profile.avatar)}}" mode="aspectFill" data-source="{{state.profile.avatar}}" binderror="onImageError" />
+            <block wx:if="{{state.profile.avatar && state.profile.avatar !== '/images/jamie.jpg' && state.profile.avatar !== '/images/alex.jpg' && !imageErrors[state.profile.avatar]}}">
+              <image class="sheet-couple-avatar" src="{{state.profile.avatar}}" mode="aspectFill" data-source="{{state.profile.avatar}}" binderror="onImageError" />
             </block>
             <block wx:else>
               <view class="sheet-couple-avatar sheet-couple-avatar-blank"><s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" /></view>
@@ -187,27 +187,26 @@
             <view class="sheet-couple-heart {{state.settings.loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{state.settings.loveSent ? copy.s59000d4666 : copy.sc279e1cef9}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
               <s-icon name="heart" size="47" color="{{state.settings.loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.75" />
             </view>
-            <block wx:if="{{partner}}">
-              <image class="sheet-couple-avatar" src="/images/alex.jpg" mode="aspectFill" />
-            </block>
-            <block wx:else>
+            <!-- A partner name supplies no verified avatar source. -->
               <view class="sheet-couple-avatar sheet-couple-avatar-blank"><s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" /></view>
-            </block>
           </view>
           <text class="together-message">{{copy.s82d4ff5478}}</text>
           <view class="form-field">
             <text class="form-label">{{copy.s2f7ee83252}}</text>
-            <input class="form-input profile-input {{focusedField === ('onPartnerInput-') ? 'is-focused' : ''}}" value="{{partner}}" maxlength="30" bindinput="onPartnerInput"  aria-label="{{copy.s2f7ee83252}}" placeholder-class="form-placeholder" data-focus-key="{{'onPartnerInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
+            <input class="form-input profile-input {{focusedField === ('onPartnerInput-') ? 'is-focused' : ''}}" value="{{partner}}" placeholder="{{copy.s827d30bafc}}" maxlength="30" bindinput="onPartnerInput"  aria-label="{{copy.s2f7ee83252}}" placeholder-class="form-placeholder" data-focus-key="{{'onPartnerInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" />
           </view>
           <view class="form-field">
             <text class="form-label">{{copy.s041d9188cd}}</text>
             <picker mode="date" value="{{since}}" end="{{today}}" bindchange="onSinceChange" aria-label="{{copy.s041d9188cd}}">
-              <view class="form-input picker-value">{{since}}</view>
+              <view class="form-input picker-value {{since ? '' : 'is-empty'}}">
+                <text class="picker-value-text">{{since || copy.sa8f6c41758}}</text>
+                <s-icon name="calendar-days" size="30" color="{{dusk ? '#b6b2aa' : '#777b71'}}" stroke="1.75" />
+              </view>
             </picker>
           </view>
           <text class="helper-note">{{copy.s0b17f5b5cf}}</text>
           <view class="primary-button" bindtap="onTogetherSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon name="heart" size="35" color="#ffffff" fill="#ffffff" stroke="1.75" />
+            <s-icon name="heart" size="35" color="{{dusk ? '#1b1713' : '#ffffff'}}" fill="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
             <text>{{copy.scd5faeb2e8}}</text>
           </view>
         </view>
@@ -234,7 +233,7 @@
             <memory-row dusk="{{dusk}}" locale="{{locale}}" wx:for="{{weeklyRows}}" wx:key="id" memory="{{item.memory}}" bind:open="onLibraryOpen" />
           </view>
           <view class="primary-button" bindtap="onWeeklyAdd" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon name="plus" size="42" color="#ffffff" stroke="1.75" />
+            <s-icon name="plus" size="42" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
             <text>{{copy.sdfe2df96a4}}</text>
           </view>
         </view>
@@ -243,7 +242,10 @@
       <!-- ================= JOURNEY ================= -->
       <block wx:if="{{displayType === 'journey'}}">
         <view class="journey-sheet">
-          <text class="journey-opening">{{copy.s97c392b68e}}<view />{{copy.se40c3da1e0}}</text>
+          <view class="journey-opening">
+            <text class="journey-opening-line">{{copy.s97c392b68e}}</text>
+            <text class="journey-opening-line">{{copy.se40c3da1e0}}</text>
+          </view>
           <text wx:if="{{!journeyStops.length}}" class="helper-note">{{copy.s4ac116fc17}}</text>
           <view class="journey-timeline">
             <view wx:for="{{journeyStops}}" wx:key="index" class="timeline-stop">
@@ -254,7 +256,7 @@
             </view>
           </view>
           <view class="primary-button" bindtap="onJourneyMap" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon name="map-pin" size="37" color="#ffffff" stroke="1.75" />
+            <s-icon name="map-pin" size="37" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
             <text>{{copy.s3736671dac}}</text>
           </view>
         </view>
@@ -285,7 +287,7 @@
             </view>
           </block>
           <view class="primary-button notifications-cta" bindtap="onMarkRead" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-            <s-icon name="bell" size="35" color="#ffffff" stroke="1.75" />
+            <s-icon name="bell" size="35" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
             <text>{{state.settings.notificationsRead ? copy.sd4dbec7a7e : copy.s1b83163bfd}}</text>
           </view>
         </view>
@@ -311,7 +313,7 @@
               <textarea class="form-textarea feedback-textarea {{focusedField === ('onFeedbackInput-') ? 'is-focused' : ''}}" value="{{feedbackMessage}}" placeholder="{{copy.sd07f89f750}}" maxlength="1000" bindinput="onFeedbackInput"  aria-label="{{copy.sd07f89f750}}" placeholder-class="form-placeholder" data-focus-key="{{'onFeedbackInput-'}}" bindfocus="onFieldFocus" bindblur="onFieldBlur" cursor-spacing="100" />
             </view>
             <view class="primary-button" bindtap="onFeedbackSave" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
-              <s-icon name="send" size="35" color="#ffffff" stroke="1.75" />
+              <s-icon name="send" size="35" color="{{dusk ? '#1b1713' : '#ffffff'}}" stroke="1.75" />
               <text>{{copy.s555a94f395}}</text>
             </view>
           </view>
@@ -321,5 +323,6 @@
       </block>
       <view class="sheet-end-space" aria-hidden="true" />
     </scroll-view>
+    <view class="sheet-scroll-fade" aria-hidden="true" />
   </view>
 </view>

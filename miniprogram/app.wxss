@@ -253,29 +253,29 @@ page {
 @keyframes savor-spin { to { transform: rotate(360deg); } }
 .spin { animation: savor-spin 0.9s linear infinite; }
 
-/* Nocturne — layered charcoal, warm paper text, one champagne accent.
+/* Warm Obsidian & Espresso — layered roasted charcoal, warm ivory ink, champagne CTA.
    Keep this token set distinct from the unchanged pearl/light theme. */
 .dusk {
-  --ink: #eeeae3; --muted: #b6b2aa;
-  --accent: #dec8a7;
-  --glass: linear-gradient(155deg,rgba(43,44,47,.90),rgba(28,29,32,.90));
-  --glass-border: rgba(238,234,227,.12);
-  --field: #1c1d20;
+  --ink: #f0eae1; --muted: #b8afa3;
+  --accent: #dfc7a4;
+  --glass: linear-gradient(155deg,rgba(38,33,29,.92),rgba(27,24,20,.92));
+  --glass-border: rgba(236,224,206,.13);
+  --field: #13110f;
   color:var(--ink);
-  background:radial-gradient(ellipse at 25% 0%,rgba(238,234,227,.065),transparent 58%),#121315;
+  background:radial-gradient(ellipse at 25% 0%,rgba(236,224,206,.08),transparent 60%),#141210;
 }
-.dusk .ambient-photo { opacity:.055; filter:blur(18px) grayscale(1); }
-.dusk .primary-button { background:linear-gradient(145deg,#5a4d3d,#483e32); color:#f5f0e8; border:1rpx solid rgba(222,200,167,.28); box-shadow:inset 0 1rpx 0 #ffffff14,0 10rpx 24rpx #0003; }
-.dusk .secondary-button { background:#2b2c30; color:var(--ink); border-color:var(--glass-border); }
+.dusk .ambient-photo { opacity:.08; filter:blur(18px) saturate(.35); }
+.dusk .primary-button { background:linear-gradient(145deg,#e8d7be,#d4bc98); color:#1b1713; border:1rpx solid rgba(255,248,236,.55); font-weight:500; box-shadow:inset 0 1rpx 0 rgba(255,255,255,.45),0 10rpx 26rpx -8rpx rgba(0,0,0,.45); }
+.dusk .secondary-button { background:#2c2722; color:var(--ink); border-color:var(--glass-border); }
 .dusk .form-input, .dusk .form-textarea, .dusk .date-input { color:var(--ink); background:var(--field); border-color:var(--glass-border); }
-.dusk .form-placeholder { color:#a9a69f; }
-.dusk .toggle-track { background:#48494e; }
-.dusk .toggle-track.on { background:#dec8a7; }
-.dusk .toggle-knob { background:#eeeae3; }
-.dusk .toggle-track.on .toggle-knob { background:#302a23; }
-.dusk .glass { background:var(--glass); border-color:var(--glass-border); box-shadow:0 18rpx 48rpx -18rpx #0008,inset 0 1rpx 0 #ffffff0d; }
+.dusk .form-placeholder { color:#9c9285; }
+.dusk .toggle-track { background:#3f3932; }
+.dusk .toggle-track.on { background:#dfc7a4; }
+.dusk .toggle-knob { background:#f0eae1; }
+.dusk .toggle-track.on .toggle-knob { background:#1b1713; }
+.dusk .glass { background:var(--glass); border-color:var(--glass-border); box-shadow:0 20rpx 52rpx -18rpx rgba(0,0,0,.58),inset 0 1rpx 0 rgba(255,246,232,.075); }
 .dusk .helper-note, .dusk .form-label { color:var(--muted); }
-.dusk .form-error { color:#ffc0aa; background:rgba(140,57,43,.24); }
+.dusk .form-error { color:#ffc4ae; background:rgba(154,64,46,.26); }
 
 /* Shared content-card material: one source for Home / Map / Us / Me.
    Search fields, transient popovers and photos intentionally remain separate. */
@@ -286,9 +286,9 @@ page {
   --content-card-blur: 20px;
 }
 .screen.dusk {
-  --content-card-bg: linear-gradient(155deg,rgba(43,44,47,.90),rgba(28,29,32,.90));
-  --content-card-border: rgba(238,234,227,.12);
-  --content-card-shadow: 0 22rpx 56rpx -22rpx rgba(0,0,0,.55), inset 0 1rpx 0 rgba(255,255,255,.065);
+  --content-card-bg: linear-gradient(155deg,rgba(38,33,29,.92),rgba(27,24,20,.92));
+  --content-card-border: rgba(236,224,206,.13);
+  --content-card-shadow: 0 22rpx 56rpx -22rpx rgba(0,0,0,.60), inset 0 1rpx 0 rgba(255,246,232,.08);
 }
 .screen .content-card {
   background: var(--content-card-bg);

@@ -1,2 +1,5 @@
 @import "../../styles/secondary.wxss";
-.space-scroll{height:100vh}.shared-media-photo{width:100%;height:320rpx;display:block;border-radius:24rpx;background:var(--field);margin:16rpx 0}
+.space-scroll{height:100vh}
+.space-page .title{display:none}
+.space-page .hint+.hint{margin-top:10rpx}
+.shared-media-photo{width:100%;height:320rpx;display:block;border-radius:24rpx;background:var(--field);margin:16rpx 0}

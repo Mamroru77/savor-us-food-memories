@@ -1,9 +1,12 @@
 .settings-form { display:flex; flex-direction:column; gap:35rpx; padding-bottom:10rpx; }
 .profile-input { min-height:92rpx; }
-.edit-avatar { width:195rpx; height:195rpx; position:relative; border-radius:50%; margin:8rpx auto 12rpx; padding:0; background:transparent; line-height:normal; }
+.edit-avatar { width:195rpx !important; min-width:0; max-width:195rpx; height:195rpx; position:relative; border-radius:0; overflow:visible; margin:8rpx auto 12rpx; padding:0; background:transparent; line-height:normal; flex-shrink:0; }
 .edit-avatar::after { border:0; }
-.edit-avatar-img { width:195rpx; height:195rpx; border-radius:50%; border:5rpx solid #fff; box-sizing:border-box; }
-.edit-avatar-badge { position:absolute; right:-8rpx; bottom:0; width:65rpx; height:65rpx; display:flex; align-items:center; justify-content:center; background:#eeefe7; border:5rpx solid #fff; border-radius:50%; box-sizing:border-box; }
-.theme-dusk-panel .edit-avatar-badge { background:#36373b; border-color:var(--glass-border, rgba(238,234,227,.12)); }
+.edit-avatar-img { display:block; width:195rpx; height:195rpx; border-radius:50%; border:5rpx solid #fff; box-sizing:border-box; overflow:hidden; box-shadow:0 6rpx 16rpx rgba(70, 75, 65, 0.12); background:rgba(255, 255, 255, 0.45); }
+.edit-avatar-blank { display:flex; align-items:center; justify-content:center; background:rgba(255, 255, 255, 0.72); }
+.theme-dusk-panel .edit-avatar-img { border-color:rgba(236,224,206,.16); }
+.theme-dusk-panel .edit-avatar-blank { background:rgba(236,224,206,.08); }
+.edit-avatar-badge { position:absolute; right:0; bottom:0; z-index:2; width:64rpx; height:64rpx; display:flex; align-items:center; justify-content:center; background:#eeefe7; border:5rpx solid #fff; border-radius:50%; box-sizing:border-box; box-shadow:0 4rpx 12rpx rgba(37, 43, 38, 0.16); }
+.theme-dusk-panel .edit-avatar-badge { background:#2c2722; border-color:rgba(236,224,206,.22); box-shadow:0 4rpx 14rpx rgba(0,0,0,.4); }
 .edit-avatar-custom { align-self:center; margin:0 auto 6rpx; padding:14rpx 28rpx; border-radius:999rpx; background:#eeefe7; color:#1b1c1a; font-size:24rpx; line-height:1.2; text-align:center; }
-.theme-dusk-panel .edit-avatar-custom { background:#36373b; color:#d7d1c7; }
+.theme-dusk-panel .edit-avatar-custom { background:#2c2722; color:#f0eae1; border:1rpx solid rgba(236,224,206,.13); }

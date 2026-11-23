@@ -2774,5 +2774,25 @@ module.exports = [
     "key": "s134635e9a2",
     "en": "Open Settings",
     "zh": "去设置"
+  },
+  {
+    "key": "s54f2dd9968",
+    "en": "Enter your name",
+    "zh": "输入你的昵称"
+  },
+  {
+    "key": "s827d30bafc",
+    "en": "Enter partner's name",
+    "zh": "输入伴侣的名字"
+  },
+  {
+    "key": "s50cc924dbf",
+    "en": "Set your name",
+    "zh": "设置你的昵称"
+  },
+  {
+    "key": "s997ee5da2f",
+    "en": "Tap to personalize your profile",
+    "zh": "点击右侧完善个人资料"
   }
 ];

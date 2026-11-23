@@ -35,6 +35,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.profile-name.is-placeholder {
+  font-size: 38rpx;
+  line-height: 50rpx;
+  letter-spacing: 0;
+  color: var(--muted, #565752);
+  opacity: 0.82;
+}
+.dusk .profile-name.is-placeholder { color: #b6b2aa; }
 .profile-bio {
   font-size: 27rpx;
   line-height: 38rpx;
@@ -44,6 +52,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.profile-bio.is-placeholder { font-size: 24rpx; opacity: 0.76; }
 .edit-profile-button {
   width: 78rpx;
   height: 78rpx;
@@ -115,7 +124,7 @@
 
 .dusk .profile-menu-row { border-bottom-color:rgba(238,234,227,.075); }
 .dusk .profile-menu-row:last-child { border-bottom-color:transparent; }
-.dusk .edit-profile-button { background:rgba(238,234,227,.075); border:1rpx solid rgba(238,234,227,.12); }
+.dusk .edit-profile-button { background:rgba(236,224,206,.08); border:1rpx solid rgba(236,224,206,.14); }
 
 .avatar-blank {
   display: flex;
@@ -124,8 +133,8 @@
   background: rgba(255, 255, 255, 0.6);
 }
 .dusk .avatar-blank {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(238,234,227,.18);
+  background: rgba(236, 224, 206, 0.08);
+  border-color: rgba(236, 224, 206, 0.16);
 }
 
 .profile-avatar.avatar-blank { width: 180rpx; height: 180rpx; }

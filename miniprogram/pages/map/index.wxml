@@ -26,18 +26,19 @@
     enable-rotate="{{false}}"
     enable-overlooking="{{false}}"
   >
-    <!-- The drawer ink only lives in the native callout under the native-callout renderer.
-         Under view-overlay the ordinary layer below owns it, and mounting a callout anyway
-         would keep the animated geometry on the native map bridge for nothing. -->
-    <cover-view slot="callout" wx:if="{{drawerRenderMode === 'native-callout'}}">
-      <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.frameHeight}}px">
+    <!-- Under native-callout the native map owns all drawer ink. Under view-overlay,
+         320ms/200ms animations run in the ordinary view layer below and once settled open
+         a single static customCallout takes over for that 1 open cluster so dragging keeps
+         it anchored at true native 60fps without disappearing. -->
+    <cover-view slot="callout" wx:if="{{drawerRenderMode === 'native-callout' || hybridCalloutRootId}}">
+      <cover-view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" wx:if="{{!drawer.overlayMode || drawer.hybridCallout}}" marker-id="{{drawer.markerId}}" class="native-stack" style="height:{{drawer.frameHeight}}px">
         <block wx:if="{{!drawer.down}}">
         <cover-image class="native-stack-toggle{{drawerCssMotion ? ' native-stack-toggle-motion' : ''}}" style="left:{{drawer.buttonBox.left}}px;top:{{drawer.frameHeight-drawer.height+drawer.buttonBox.top}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}{{drawerCssMotion ? ';transform:translate3d(0,' + (drawer.targetOpen ? 0 : drawer.toggleShiftY) + 'px,0)' : ''}}" src="{{dusk ? (drawer.targetOpen ? '/images/markers/stack-button-down-dusk.png' : '/images/markers/stack-button-up-dusk.png') : (drawer.targetOpen ? '/images/markers/stack-button-down.png' : '/images/markers/stack-button-up.png')}}" />
 
         <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row{{drawerCssMotion ? ' native-stack-row-motion' : ''}}" style="top:{{drawer.frameHeight-drawer.height+pin.top}}px;opacity:{{pin.opacity}};{{drawerCssMotion ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : pin.shiftY) + 'px,0);' : ''}}z-index:{{pin.layer}}">
           <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
         </cover-view>
-        <cover-view class="native-stack-root" style="top:{{drawer.frameHeight-drawer.height+drawer.rootTop}}px">
+        <cover-view wx:if="{{!drawer.overlayMode}}" class="native-stack-root" style="top:{{drawer.frameHeight-drawer.height+drawer.rootTop}}px">
           <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
         </cover-view>
         </block>
@@ -47,7 +48,7 @@
         <cover-view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="native-stack-row{{drawerCssMotion ? ' native-stack-row-motion' : ''}}" style="top:{{pin.top-drawer.rootTop}}px;opacity:{{pin.opacity}};{{drawerCssMotion ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : pin.shiftY) + 'px,0);' : ''}}z-index:{{pin.layer}}">
           <cover-image class="native-stack-photo" src="{{pin.iconPath}}" />
         </cover-view>
-        <cover-view class="native-stack-root" style="top:{{0}}px">
+        <cover-view wx:if="{{!drawer.overlayMode}}" class="native-stack-root" style="top:{{0}}px">
           <cover-image class="native-stack-photo" src="{{drawer.root.iconPath}}" />
         </cover-view>
         </block>
@@ -67,15 +68,15 @@
        transform, which keeps the map's own coordinate out of the drawer's clock. Each visual
        element carries its own tap, so there is no second transparent hit box to drift. -->
   <view class="map-stack-overlay" wx:if="{{stackPositionsReady && !mapError}}">
-    <view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" class="pin-stack{{drawer.overlayMode ? ' pin-stack-ink' : ''}}" style="left:{{drawer.screenX}}px;top:{{drawer.overlayMode ? drawer.overlayTop : drawer.screenY-drawer.height}}px;height:{{drawer.overlayMode ? drawer.overlayHeight : drawer.height}}px">
-      <view class="pin-stack-toggle{{drawer.transformDriver ? ' pin-stack-ink-toggle-motion' : ''}}" style="left:{{drawer.buttonBox.hitLeft}}px;width:{{drawer.buttonBox.hitWidth}}px;top:{{drawer.overlayMode ? drawer.overlayToggleTop : drawer.buttonBox.hitTop}}px;height:{{drawer.buttonBox.hitHeight}}px;{{drawer.transformDriver ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : drawer.toggleShiftY) + 'px,0);' : ''}}" data-root-id="{{drawer.rootId}}" bindtouchstart="onStackPress" bindtouchend="onStackRelease" bindtouchcancel="onStackRelease" catchtap="onDrawerToggle" data-index="{{drawer.markerId}}" aria-role="button" aria-expanded="{{drawer.targetOpen}}" aria-label="{{drawer.targetOpen ? copy.sd22536b714 : copy.sddcd11b118}}">
-        <image wx:if="{{drawer.overlayMode}}" class="pin-stack-toggle-glyph" style="left:{{drawer.toggleGlyphLeft}}px;top:{{drawer.toggleGlyphTop}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}" src="{{dusk ? drawer.toggleAssetDusk : drawer.toggleAsset}}" />
+    <view wx:for="{{mapDrawers}}" wx:key="rootId" wx:for-item="drawer" wx:if="{{!drawer.overlayMode || drawer.overlayMounted}}" class="pin-stack{{drawer.overlayMode ? ' pin-stack-ink' : ''}}" style="left:{{drawer.screenX}}px;top:{{drawer.overlayMode ? drawer.overlayTop : drawer.screenY-drawer.height}}px;height:{{drawer.overlayMode ? drawer.overlayHeight : drawer.height}}px">
+      <view class="pin-stack-toggle{{drawer.transformDriver ? ' pin-stack-ink-toggle-motion' : ''}}" style="left:{{drawer.buttonBox.hitLeft}}px;width:{{drawer.buttonBox.hitWidth}}px;top:{{drawer.overlayMode ? drawer.overlayToggleTop : drawer.buttonBox.hitTop}}px;height:{{drawer.buttonBox.hitHeight}}px;{{drawer.transformDriver ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : drawer.toggleShiftY) + 'px,0);' : ''}}{{drawer.fastMotion ? 'transition-duration:200ms;' : ''}}" data-root-id="{{drawer.rootId}}" bindtouchstart="onStackPress" bindtouchend="onStackRelease" bindtouchcancel="onStackRelease" catchtap="onDrawerToggle" data-index="{{drawer.markerId}}" aria-role="button" aria-expanded="{{drawer.targetOpen}}" aria-label="{{drawer.targetOpen ? copy.sd22536b714 : copy.sddcd11b118}}">
+        <image wx:if="{{drawer.overlayMode}}" class="pin-stack-toggle-glyph" style="left:{{drawer.toggleGlyphLeft}}px;top:{{drawer.toggleGlyphTop}}px;width:{{drawer.buttonBox.size}}px;height:{{drawer.buttonBox.size}}px;opacity:{{drawer.hybridInkHidden ? 0 : (pressedStackRoot === drawer.rootId ? 0.85 : 1)}}" src="{{dusk ? drawer.toggleAssetDusk : drawer.toggleAsset}}" />
       </view>
-      <view wx:if="{{drawer.stripOpen && drawer.pages > 1}}" class="pin-stack-pages" style="top:{{drawer.overlayMode ? drawer.overlayPageTop : (drawer.down ? drawer.rootTop+drawer.height-36-30*drawer.progress : 36)}}px;height:{{30 * drawer.progress}}px;opacity:{{drawer.progress}};pointer-events:{{drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'}}">
+      <view wx:if="{{drawer.stripOpen && drawer.pages > 1}}" class="pin-stack-pages" style="top:{{drawer.overlayMode ? drawer.overlayPageTop : (drawer.down ? drawer.rootTop+drawer.height-36-30*drawer.progress : 36)}}px;height:{{30 * drawer.progress}}px;opacity:{{drawer.hybridInkHidden ? 0 : drawer.progress}};pointer-events:{{drawer.targetOpen && drawer.progress >= 1 ? 'auto' : 'none'}}">
         <view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.s8e21e3af14}}" catchtap="onDrawerPage" data-step="-1"><image wx:if="{{drawer.overlayMode}}" class="pin-stack-page-glyph" src="/images/icons/lucide/chevron-left.png" /></view><view class="pin-stack-page-number">{{drawer.overlayMode ? drawer.pageLabel : ''}}</view><view class="pin-stack-page-arrow" aria-role="button" aria-label="{{copy.sb9cb5c2ebd}}" catchtap="onDrawerPage" data-step="1"><image wx:if="{{drawer.overlayMode}}" class="pin-stack-page-glyph" src="/images/icons/lucide/chevron-right.png" /></view>
       </view>
-      <view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="pin-stack-row{{drawer.transformDriver ? ' pin-stack-ink-motion' : ''}}" style="top:{{drawer.overlayMode ? pin.overlayRowTop : pin.top}}px;z-index:{{pin.layer}};pointer-events:{{pin.opacity > 0.2 ? 'auto' : 'none'}};{{drawer.transformDriver ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : pin.shiftY) + 'px,0);opacity:' + pin.opacity + ';' : ''}}" catchtap="onClusterPick" data-id="{{pin.id}}">
-        <image wx:if="{{drawer.overlayMode}}" class="pin-stack-photo" src="{{pin.iconPath}}" />
+      <view wx:for="{{drawer.rows}}" wx:key="id" wx:for-item="pin" class="pin-stack-row{{drawer.transformDriver ? ' pin-stack-ink-motion' : ''}}" style="top:{{drawer.overlayMode ? pin.overlayRowTop : pin.top}}px;z-index:{{pin.layer}};pointer-events:{{pin.opacity > 0.2 ? 'auto' : 'none'}};{{drawer.transformDriver ? 'transform:translate3d(0,' + (drawer.targetOpen ? 0 : pin.shiftY) + 'px,0);opacity:' + pin.opacity + ';' : ''}}{{drawer.fastMotion ? 'transition-duration:200ms;' : ''}}" catchtap="onClusterPick" data-id="{{pin.id}}">
+        <image wx:if="{{drawer.overlayMode}}" class="pin-stack-photo" style="{{drawer.hybridInkHidden ? 'opacity:0;' : ''}}" src="{{pin.iconPath}}" />
       </view>
       <view class="pin-stack-root" style="top:{{drawer.overlayMode ? drawer.overlayRootTop : drawer.rootTop}}px" catchtap="onStackRoot" data-id="{{drawer.rootId}}" />
     </view>

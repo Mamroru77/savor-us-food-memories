@@ -82,9 +82,9 @@
 .weekly-photo {
   position: absolute;
   right: 32rpx;
-  bottom: 32rpx;
-  width: 215rpx;
-  height: 215rpx;
+  bottom: 28rpx;
+  width: 196rpx;
+  height: 196rpx;
   border-radius: var(--radius-image);
   box-shadow: 0 12rpx 22rpx -15rpx #34312a;
   background: rgba(255, 255, 255, 0.4);

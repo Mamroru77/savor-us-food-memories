@@ -5,12 +5,15 @@ function lum(c){const ch=x=> x<=0.04045? x/12.92: Math.pow((x+0.055)/1.055,2.4);
 function contrast(a,b){return (Math.max(lum(a),lum(b))+0.05)/(Math.min(lum(a),lum(b))+0.05);}
 function blend(fg,alpha,bg){return fg.map((v,i)=> v*alpha+bg[i]*(1-alpha));}
 const white=[1,1,1];
-const darkBg=hexToRgb('2b2c2f');
+const darkBg=hexToRgb('1f1c18');
 assert(wxss.includes('.cuisine-chip'));
 assert(wxss.includes('.cuisine-chip.is-selected'));
+assert(wxss.includes('.is-dusk .cuisine-chip'));
 const tests=[
  {name:'light selected #49553a on rgba(216,222,199,0.4) over white',fg:hexToRgb('d8dec7'),alpha:0.4,bg:white,text:hexToRgb('49553a')},
- {name:'dark selected #dec8a7 on rgba(222,200,167,0.13) over #2b2c2f',fg:[222/255,200/255,167/255],alpha:0.13,bg:darkBg,text:hexToRgb('dec8a7')},
+ {name:'dark unselected #b8afa3 on #1c1916',fg:hexToRgb('1c1916'),alpha:1,bg:darkBg,text:hexToRgb('b8afa3')},
+ {name:'dark selected #dfc7a4 on rgba(223,199,164,0.14) over #1f1c18',fg:hexToRgb('dfc7a4'),alpha:0.14,bg:darkBg,text:hexToRgb('dfc7a4')},
+ {name:'dark primary CTA #1b1713 on #d4bc98',fg:hexToRgb('d4bc98'),alpha:1,bg:darkBg,text:hexToRgb('1b1713')},
  {name:'default #565752 on rgba(250,251,247,0.31) over white',fg:[250/255,251/255,247/255],alpha:0.31,bg:white,text:hexToRgb('565752')},
 ];
 for(const t of tests){

@@ -17,8 +17,8 @@
       <!-- together card -->
       <view class="together-card glass content-card">
         <view class="couple-avatars">
-          <block wx:if="{{avatar}}">
-          <image class="avatar" src="{{imageErrors[(avatar)] ? '/images/jamie.jpg' : (avatar)}}" mode="aspectFill"  data-source="{{avatar}}" binderror="onImageError" />
+          <block wx:if="{{avatar && avatar !== '/images/jamie.jpg' && avatar !== '/images/alex.jpg' && !imageErrors[avatar]}}">
+          <image class="avatar" src="{{avatar}}" mode="aspectFill"  data-source="{{avatar}}" binderror="onImageError" />
         </block>
         <block wx:else>
           <view class="avatar avatar-blank">
@@ -28,14 +28,10 @@
           <view class="couple-heart {{loveSent ? 'love-sent' : ''}}" bindtap="onLoveTap" aria-role="button" aria-label="{{loveSent ? copy.s59000d4666 : copy.sc279e1cef9}}" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
             <s-icon name="heart" size="47" color="{{loveSent ? '#e55d48' : '#f38d77'}}" fill="#f38d77" stroke="1.75" />
           </view>
-          <block wx:if="{{partner}}">
-          <image class="avatar" src="/images/alex.jpg" mode="aspectFill" />
-        </block>
-        <block wx:else>
+          <!-- A partner name supplies no verified avatar source. -->
           <view class="avatar avatar-blank">
             <s-icon name="user-round" size="60" color="{{dusk ? '#d7d1c7' : '#777b71'}}" stroke="1.75" />
           </view>
-        </block>
         </view>
         <view class="together-count" bindtap="onTogether" aria-role="button" hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100">
           <text class="together-label">{{copy.s5e084bb624}}</text>

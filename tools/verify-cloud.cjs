@@ -1123,17 +1123,17 @@ function nativeTabs(initial=0){
     assert(wxml.includes('sheetScrollHeight')); assert(wxml.indexOf('class="sheet-content') < wxml.indexOf('class="sheet-end-space"')); assert(wxml.indexOf('class="sheet-end-space"') < wxml.lastIndexOf('</scroll-view>')); // Outer scroll now contains a horizontal thumbnail scroller.
     assert(css.includes('.sheet-end-space { height: 72rpx'));
   });
-  await test('dark mode has layered charcoal surfaces and desaturated ambient depth without changing photos', () => {
+  await test('dark mode has layered warm obsidian surfaces and subtle warm ambient depth without changing photos', () => {
     const app=fs.readFileSync(path.join(mp,'app.wxss'),'utf8');
-    assert(app.includes('transparent 58%),#121315')); assert(app.includes('opacity:.055; filter:blur(18px) grayscale(1)'));
-    assert(app.includes('--content-card-bg: linear-gradient(155deg,rgba(43,44,47,.90),rgba(28,29,32,.90))'));
+    assert(app.includes('transparent 60%),#141210')); assert(app.includes('opacity:.08; filter:blur(18px) saturate(.35)'));
+    assert(app.includes('--content-card-bg: linear-gradient(155deg,rgba(38,33,29,.92),rgba(27,24,20,.92))'));
     assert(!app.includes('#293f30')); assert(!app.includes('saturate(.7)'));
-    const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxss'),'utf8'); assert(sheet.includes('background:linear-gradient(160deg,#303135,#25262a)'));
+    const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxss'),'utf8'); assert(sheet.includes('background:linear-gradient(160deg,#2a2520,#1f1c18)'));
     const tabs=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxss'),'utf8'); assert(tabs.includes('#cfb48d'));
   });
-  await test('Nocturne accents remain limited to interaction and dark fields are inset below the modal', () => {
+  await test('Warm Obsidian accents remain disciplined and dark fields are inset below the modal', () => {
     const sheet=fs.readFileSync(path.join(mp,'components/sheet/index.wxss'),'utf8');
-    assert(sheet.includes('--field:#1c1d20')); assert(sheet.includes('.theme-dusk-panel .personalization-reset { color:#dec8a7; }'));
+    assert(sheet.includes('--field:#13110f')); assert(sheet.includes('.theme-dusk-panel .personalization-reset { color:#dfc7a4; }'));
     const tabs=fs.readFileSync(path.join(mp,'custom-tab-bar/index.js'),'utf8'); assert(tabs.includes("next.dusk?'#302a23':'#111510'"));
     const me=fs.readFileSync(path.join(mp,'pages/me/index.wxss'),'utf8'); assert(me.includes('border-bottom-color:rgba(238,234,227,.075)'));
     assert(fs.readFileSync(path.join(mp,'app.wxss'),'utf8').includes('--content-card-blur: 20px'));

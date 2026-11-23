@@ -7,13 +7,13 @@ vm.runInNewContext(fs.readFileSync('miniprogram/pages/map/index.js','utf8'),{
  Page:p=>spec=p,require:p=>deps[p.split('/').pop()]||{},wx:{},
  setTimeout:(fn,ms)=>{const t={fn,ms};timers.push(t);return t;},clearTimeout:()=>{},
 });
-function page(){
+function page(mode){
  const list=['root','child'].map(id=>({id,restaurant:'User '+id,tags:[],city:'',country:'',coordinates:[22.6,120.3]}));
  const p={...spec,active:true,disposed:false,stackGesture:false,markerGeneration:1,
-  data:{...spec.data,mapScale:13,selectedId:'root',clusterOpen:true,drawerPage:1},
+  data:{...spec.data,drawerRenderMode:mode||'native-callout',mapScale:13,selectedId:'root',clusterOpen:true,drawerPage:1},
   allMemories:list,drawerRootId:'root',drawerProgress:.6,writes:[],queries:[],rebuilds:0,
   setData(x){this.writes.push(x);Object.assign(this.data,x);},
-  stopMarkerAnimation(){},stopDrawerReveal(){assert.fail('unchanged group must not collapse');},
+  stopMarkerAnimation(){},stopDrawerReveal(){if(this.data.drawerRenderMode==='native-callout')assert.fail('unchanged group must not collapse');this.drawerProgress=0;},refreshStackFrame(){},
   applyFilters(){this.rebuilds++;},
  };
  p.markerGroups=layout.group(list,13,'root');p.mapCtx={getScale:o=>p.queries.push(o)};return p;
@@ -54,6 +54,14 @@ test('idle fractional replies retain precision, groups, drawer and user coordina
  assert.equal(p.data.mapScale,13.63);assert.equal(p.markerGroups,groups);assert.equal(p.rebuilds,0);
  assert.equal(p.writes.length,1);assert.deepEqual(Object.keys(p.writes[0]),['mapScale']);
  assert.equal(p.data.clusterOpen,true);assert.equal(p.drawerProgress,.6);assert.equal(JSON.stringify(p.allMemories),before);
+});
+test('view-overlay drag preserves open drawer, fractional scale precision and zero rebuilds',()=>{
+ const p=page('view-overlay');p.readMapScale();const old=p.queries[0];
+ p.onMapRegionChange({detail:{type:'begin',causedBy:'drag'}});
+ assert.equal(p.data.clusterOpen,true);assert.equal(p.drawerProgress,.6);
+ p.onMapRegionChange({detail:{type:'end',causedBy:'drag',scale:14.25}});
+ assert.equal(p.data.mapScale,14.25);old.success({scale:12});
+ assert.equal(p.data.mapScale,14.25);assert.equal(p.rebuilds,0);assert.equal(p.data.clusterOpen,true);
 });
 console.log(`${passed} passed, ${failed} failed; synthetic race contract only, not proof of every DevTools scale discrepancy.`);
 if(failed)process.exitCode=1;

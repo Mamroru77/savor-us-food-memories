@@ -28,6 +28,6 @@ function copy(report){const index=i18n.locale()==='zh-CN'?0:1;const text={};Obje
 function sync(page,navigationTitle){let dusk=false;try{dusk=require('./store').get().settings.theme==='dusk';}catch(e){}
  page.setData({dusk,locale:i18n.locale(),uiText:copy()});
  try{if(navigationTitle&&wx.setNavigationBarTitle)wx.setNavigationBarTitle({title:i18n.t(navigationTitle)});}catch(e){}
- try{if(wx.setNavigationBarColor)wx.setNavigationBarColor({frontColor:dusk?'#ffffff':'#000000',backgroundColor:dusk?'#121315':'#eeece9'});}catch(e){}
+ try{if(wx.setNavigationBarColor)wx.setNavigationBarColor({frontColor:dusk?'#ffffff':'#000000',backgroundColor:dusk?'#141210':'#eeece9'});}catch(e){}
 }
 module.exports={copy,sync,onFieldFocus:feedback.onFieldFocus,onFieldBlur:feedback.onFieldBlur};

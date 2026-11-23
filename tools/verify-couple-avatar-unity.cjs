@@ -19,6 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
@@ -61,21 +62,59 @@ function sameBody(name, a, b, allowedExtra) {
   for (const prop of extra) assert.ok((allowedExtra || []).includes(prop), name + ': unexpected declaration in the sheet: ' + prop);
 }
 
-// ------------------------------------------------------------------ 1. same rule for who appears
-test('1 the sheet picks the couple the same way the Us card does', () => {
-  // Slot 1: my avatar, guarded, with a glyph placeholder when absent.
-  assert(/<block wx:if="\{\{state\.profile\.avatar\}\}">/.test(sheetWxml), '1 slot 1 must be guarded on the avatar');
-  assert(/<block wx:if="\{\{avatar\}\}">/.test(usWxml), '1 the Us card must still guard slot 1 on the avatar');
-  // Slot 2: the partner photo, guarded on a partner name - NOT on loveSent.
-  assert(/<block wx:if="\{\{partner\}\}">/.test(sheetWxml), '1 slot 2 must be guarded on the partner name');
-  assert(/<block wx:if="\{\{partner\}\}">/.test(usWxml), '1 the Us card must still guard slot 2 on the partner name');
-  // The old loveSent-driven photo swap must be gone for good.
-  assert(!sheetWxml.includes("state.settings.loveSent ? state.profile.avatar"), '1 the loveSent-driven avatar swap must not return');
-  assert(!sheetWxml.includes('152rpx'), '1 the old sheet-only avatar size must not return');
-  // No couple avatar <image> may render unconditionally: an empty src would draw a blank circle.
-  const coupleImages = [...sheetWxml.matchAll(/<image\b[^>]*sheet-couple-avatar[^>]*>/g)].map(m => m[0]);
-  assert.equal(coupleImages.length, 2, '1 exactly two couple avatar images must remain');
-  for (const tag of coupleImages) assert(tag.includes('/images/alex.jpg') || tag.includes('binderror='), '1 every couple avatar image must be guarded or fallback-capable: ' + tag);
+// Evaluate the actual row's conditional blocks and image bindings, not a second avatar selector.
+// This tiny projection supports these two rows only; it is not native WXML rendering evidence.
+function avatarSlots(row, context) {
+  const evaluate = expression => vm.runInNewContext(expression, context, {timeout:50});
+  const rendered = row.replace(/<block wx:if="\{\{([\s\S]*?)\}\}">([\s\S]*?)<\/block>\s*<block wx:else>([\s\S]*?)<\/block>/g,
+    (_, condition, yes, no) => evaluate(condition) ? yes : no);
+  assert(!/<block\b/.test(rendered), 'avatar projection must handle every conditional block');
+  return [...rendered.matchAll(/<image\b[^>]*>|<view\b[^>]*class="[^"]*avatar-blank[^"]*"[^>]*>/g)].map(([tag]) => {
+    if (tag.startsWith('<view')) return 'neutral';
+    assert(tag.includes('binderror="onImageError"'), 'every identity photo must handle load failure');
+    return tag.match(/\bsrc="([^"]*)"/)[1].replace(/\{\{([\s\S]*?)\}\}/g, (_, expression) => evaluate(expression));
+  });
+}
+
+// ------------------------------------------------------------------ 1. truthful identity, including failed and legacy sources
+test('1 both rows show real user photos or neutral defaults, independent of name and love', () => {
+  const rows = [
+    ['Us', usWxml.slice(usWxml.indexOf('<view class="couple-avatars">'), usWxml.indexOf('<view class="together-count"'))],
+    ['Together', sheetWxml.slice(sheetWxml.indexOf('<view class="sheet-couple">'), sheetWxml.indexOf('<text class="together-message">'))],
+  ];
+  const cases = [
+    {name:'both absent', avatar:'', partner:'', want:['neutral','neutral']},
+    {name:'real user only', avatar:'/user/real-avatar.jpg', partner:'', want:['/user/real-avatar.jpg','neutral']},
+    {name:'partner name only', avatar:'', partner:'A person', want:['neutral','neutral']},
+    {name:'real user and partner name', avatar:'/user/real-avatar.jpg', partner:'A person', want:['/user/real-avatar.jpg','neutral']},
+    {name:'failed real user photo', avatar:'/user/real-avatar.jpg', partner:'', failed:true, want:['neutral','neutral']},
+    {name:'failed photo and named partner', avatar:'/user/real-avatar.jpg', partner:'A person', failed:true, want:['neutral','neutral']},
+    {name:'legacy Jamie is not an identity', avatar:'/images/jamie.jpg', partner:'A person', want:['neutral','neutral']},
+    {name:'legacy Alex is not an identity', avatar:'/images/alex.jpg', partner:'', want:['neutral','neutral']},
+    {name:'unmodelled partner photo only', avatar:'', partner:'A person', partnerAvatar:'/user/partner.jpg', want:['neutral','neutral']},
+    {name:'unmodelled partner photo with real user', avatar:'/user/real-avatar.jpg', partner:'A person', partnerAvatar:'/user/partner.jpg', want:['/user/real-avatar.jpg','neutral']},
+  ];
+  const failures = [];
+  for (const [owner, row] of rows) for (const fixture of cases) for (const loveSent of [false,true]) for (const dusk of [false,true]) {
+    const context = {avatar:fixture.avatar, partner:fixture.partner, partnerAvatar:fixture.partnerAvatar, loveSent, dusk, imageErrors:{},
+      state:{profile:{avatar:fixture.avatar,partner:fixture.partner},settings:{loveSent}}};
+    if (fixture.failed) {
+      const image = row.match(/<image\b[^>]*>/)[0];
+      const binding = image.match(/\bdata-source="([^"]*)"/);
+      const source = binding ? binding[1].replace(/\{\{([\s\S]*?)\}\}/g, (_, expression) => vm.runInNewContext(expression,context)) : '';
+      require('../miniprogram/utils/uiFeedback').onImageError.call({data:context,setData:patch=>Object.assign(context,patch)}, {currentTarget:{dataset:{source}}});
+      assert.equal(context.avatar,fixture.avatar,'image failure must not mutate the avatar source');
+      assert.equal(context.state.profile.avatar,fixture.avatar,'image failure must not mutate profile data');
+    }
+    try { assert.deepEqual(avatarSlots(row,context),fixture.want); }
+    catch (error) { failures.push(owner+' / '+fixture.name+' / love='+loveSent+' / dusk='+dusk+': '+error.message); }
+  }
+  let page;
+  const stubs = {i18n:{copy:()=>({}),locale:()=> 'en'},data:{photos:{jamie:'/images/jamie.jpg'}},uiFeedback:{},store:{},metrics:{},memoryStats:{}};
+  vm.runInNewContext(usJs,{Page:definition=>{page=definition;},require:name=>stubs[path.basename(name)]});
+  if (page.data.avatar !== '' || page.data.partner !== '') failures.push('Us initial render must not seed Jamie/Alex identities');
+  assert.equal(failures.length,0,failures.join('\n'));
+  console.log('     80 isolated WXML projections passed; unsupported partner-avatar fields remain neutral.');
 });
 
 // The sheet reads the same values through its own minimal view model, so a raw byte comparison
@@ -130,8 +169,7 @@ test('5 the sheet view model stays minimal and this change added no state leaf',
   const used = [...new Set([...sheetWxml.matchAll(/\bstate\.([\w]+)\.([\w]+)/g)].map(m => m[1] + '.' + m[2]))].sort();
   assert.deepEqual(used, ['profile.avatar', 'settings.loveSent', 'settings.notificationsRead'], '5 the sheet may only read the three approved state leaves');
   assert(!sheetJs.includes('this.data.state'), '5 the component must not read the mirrored state back');
-  // The partner condition must come from the sheet's own form value, which refreshTogether seeds
-  // from profile.partner - that is the same rule the Us card applies to profile.partner.
+  // The form still edits the partner name; a name is not an avatar source.
   assert(/patch\.partner = state\.profile\.partner/.test(sheetJs), '5 the sheet partner field must be seeded from the profile');
 });
 

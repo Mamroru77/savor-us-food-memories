@@ -39,6 +39,12 @@ const ZOOM_MIN_SCALE = 3;
 const ZOOM_MAX_SCALE = 18;
 // A native scale this close to a whole level counts as being at that level.
 const ZOOM_LEVEL_EPSILON = 0.05;
+// Compact close duration when switching from an open cluster drawer to another marker so the
+// fold -> camera pan -> open handoff feels crisp while manual close stays at 320ms.
+const DRAWER_SWITCH_CLOSE_MS = 200;
+const DRAWER_CLOSE_SETTLE_PAD_MS = 20;
+// Skip pointless micro-panning when a tapped cluster is already within 24px of its framed slot.
+const CLUSTER_FOCUS_SKIP_PX = 24;
 
 // How long a Map session may go without re-reading the product data from the cloud.
 //
@@ -128,6 +134,7 @@ Page({
     // no gate depends on this default.
     // See docs/reviews/map-overlay-drawer-round4-20260926.md.
     drawerRenderMode: 'view-overlay',
+    hybridCalloutRootId: '',
     copy: i18n.copy(), locale: i18n.locale(),
     latitude: 48.8535, longitude: 2.3392,
     pendingCount: 0, demoMode: true, pendingExpanded: false,
@@ -279,8 +286,16 @@ Page({
     this.stackPositionRequest=(this.stackPositionRequest||0)+1;
     this.stopMarkerAnimation();
     this.stopDrawerReveal();
+    this.clearOverlayMotionTimer();
+    this.clearHybridHandoffTimer();
+    this.cancelPendingMapAction();
+    this.overlayMountRootId='';
+    this.overlayClosingFast=false;
+    this.overlayVisualOpen=false;
+    this.hybridCalloutActive=false;
+    this.hybridInkHidden=false;
     this.stopMarkerPhotoBatch();
-    this.setData({clusterOpen:false,mapDrawers:[],stackPositionsReady:false});
+    this.setData({clusterOpen:false,mapDrawers:[],stackPositionsReady:false,hybridCalloutRootId:''});
     this.deferredMapState=null;this.drawerResumeTarget=undefined;this.markerResumeNeeded=false;
     this.active=false;this.markerGeneration=(this.markerGeneration||0)+1;
     // A primary-tab switch is not an unload. The page instance, the <map> component, the WXML
@@ -397,30 +412,29 @@ Page({
     const groups=mapLayout.group(visible,this.data.mapScale,(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:selected && selected.id);
     const overlayMode=this.drawerOverlayMode();
     this.markerGroups=groups;
-    if(this.data.clusterOpen&&!groups.some(g=>g.memory.id===this.drawerRootId&&g.members.length>1))this.setData({clusterOpen:false,drawerPage:0});
+    if(this.data.clusterOpen&&!groups.some(g=>g.memory.id===this.drawerRootId&&g.members.length>1))this.setData(this.dismissOverlayDrawer({}));
     const representatives=groups.map(g=>g.memory);
     const previous=this.data.markers || [];
     const animation=[];
     const markers = representatives.map((memory, index) => {
       const isSelected = Boolean(selected && memory.id === selected.id);
+      const groupCount = groups[index].members.length;
+      const badgeCount = overlayMode && groupCount > 1 ? groupCount : 1;
       const old=previous.find(m=>m.memoryId===memory.id);
       const target=mapMarkers.style(isSelected);
-      if(groups[index].members.length>1){target.width=80;target.height=90;}
-      const cached=this.pinRenderer && this.pinRenderer.peek && this.pinRenderer.peek(memory,isSelected);
+      if(groupCount>1){target.width=80;target.height=90;}
+      const cached=this.pinRenderer && this.pinRenderer.peek && this.pinRenderer.peek(memory,isSelected,badgeCount);
       if(cached) target.iconPath=cached;
-      else if(old && old.groupCount===1 && old.stampSelected===isSelected) target.iconPath=old.iconPath;
+      else if(old && old.groupCount===groupCount && old.stampSelected===isSelected) target.iconPath=old.iconPath;
       // A stack anchor is transparent and 1px wide; it is never a singleton image/size.
       const from=old&&old.groupCount===1?old.width:48;
-      if(groups[index].members.length===1 && this.active && !this.data.quiet && Math.abs(from-target.width)>.1) {animation.push({index,from,to:target.width});target.width=from;target.height=from*286/256;}
-      if(groups[index].members.length>1){
+      if(groupCount===1 && this.active && !this.data.quiet && Math.abs(from-target.width)>.1) {animation.push({index,from,to:target.width});target.width=from;target.height=from*286/256;}
+      if(groupCount>1){
         if(overlayMode){
-          // The animated drawer left the native map, so the cluster needs a VISIBLE static
-          // marker: during a pan/zoom the ordinary overlay is hidden, and without this the
-          // whole group would blink out of existence. It reuses the root photo the drawer
-          // already composes, keeps the {x:0.5,y:1} anchor so the projected coordinate and
-          // the overlay frame stay in step, and adds no asset.
+          // The native marker bitmap now carries the cluster count badge directly at 60fps.
+          // Keep {x:0.5,y:1} anchor so the on-demand overlay frame aligns when opened.
           target.width=80;target.height=89;target.anchor={x:0.5,y:1};
-          target.iconPath=cached||mapMarkers.style(isSelected).iconPath;
+          target.iconPath=cached||(old && old.groupCount===groupCount && old.stampSelected===isSelected ? old.iconPath : mapMarkers.style(isSelected).iconPath);
         } else {
           // Legacy: a transparent 1px anchor; the native callout draws the entire stack.
           target.width=1;target.height=1;target.iconPath='/images/markers/stack-anchor.png';target.anchor={x:0.5,y:1};
@@ -431,10 +445,14 @@ Page({
       return Object.assign({
         stampSelected:isSelected, groupCount:groups[index].members.length,
         label:undefined,
-        // A callout exists to carry animated drawer ink. In overlay mode the ordinary view
-        // layer owns that ink, so the cluster must not mount one at all: the native marker
-        // data then stays constant for the whole 320ms and the map never re-lays-out.
-        customCallout:(groups[index].members.length>1&&!overlayMode)?{display:'ALWAYS',anchorX:0,anchorY:0}:undefined,
+        // In native-callout mode every cluster mounts a callout. In view-overlay mode
+        // collapsed clusters mount zero callouts, and only a single settled open cluster
+        // carries a static native callout so dragging keeps it anchored at 60fps.
+        customCallout:(groups[index].members.length>1&&!overlayMode)
+          ? {display:'ALWAYS',anchorX:0,anchorY:0}
+          : ((groups[index].members.length>1&&overlayMode&&this.hybridCalloutActive&&this.data.clusterOpen&&memory.id===this.drawerRootId&&old&&old.customCallout)
+            ? Object.assign({},old.customCallout)
+            : undefined),
         id: index,
         memoryId: memory.id,
         latitude: memory.coordinates[0],
@@ -537,12 +555,51 @@ Page({
   // Nothing here queues: a second tap cancels the running travel and re-seeds from the
   // CURRENT position, so the last intent always wins and the camera never finishes an
   // abandoned journey first.
-  focusMapCamera(coordinates) {
+  withFreshCameraCentre(fn) {
+    if (!this.cameraCentreStale || !this.mapCtx || !this.mapCtx.getRegion) { fn(); return; }
+    const req = this.cameraCentreSyncRequest = (this.cameraCentreSyncRequest || 0) + 1;
+    const run = () => {
+      if (req !== this.cameraCentreSyncRequest || !this.active || this.disposed || this.stackGesture) return;
+      fn();
+    };
+    this.mapCtx.getRegion({
+      success: region => {
+        const ne = region && region.northeast, sw = region && region.southwest;
+        if (ne && sw && Number.isFinite(ne.latitude) && Number.isFinite(sw.latitude) && Number.isFinite(ne.longitude) && Number.isFinite(sw.longitude)) {
+          this.cameraLiveCentre = [(ne.latitude + sw.latitude) / 2, (ne.longitude + sw.longitude) / 2];
+          this.cameraCentreStale = false;
+        }
+        run();
+      },
+      fail: () => { this.cameraCentreStale = false; run(); },
+    });
+  },
+  clusterDrawerHeight(group) {
+    const others = Math.max(1, (group && group.members ? group.members.length : 2) - 1);
+    const pages = Math.ceil(others / 3);
+    const bounds = mapStack.layout(Math.min(3, others), 1);
+    const reserve = pages > 1 ? 28 : 0;
+    const viewport = this.cameraViewport();
+    const buttonBox = mapStack.buttonGeometry(viewport.width || metrics.getMetrics().screenWidth, pages === 1);
+    return bounds.height + reserve - Math.min(0, buttonBox.hitTop);
+  },
+  clusterFocusCentre(group) {
     const scale = Number.isFinite(this.data.mapScale) ? this.data.mapScale : 13;
     const viewport = this.cameraViewport();
     const padding = this.cameraPadding();
-    const target = mapCamera.centreForPoint(coordinates, scale, viewport, padding);
-    this.startCameraTransition(target);
+    if (mapCamera.centreForCluster) {
+      return mapCamera.centreForCluster(group.memory.coordinates, scale, viewport, padding, this.clusterDrawerHeight(group));
+    }
+    return mapCamera.centreForPoint(group.memory.coordinates, scale, viewport, padding);
+  },
+  focusMapCamera(coordinates) {
+    this.withFreshCameraCentre(() => {
+      const scale = Number.isFinite(this.data.mapScale) ? this.data.mapScale : 13;
+      const viewport = this.cameraViewport();
+      const padding = this.cameraPadding();
+      const target = mapCamera.centreForPoint(coordinates, scale, viewport, padding);
+      this.startCameraTransition(target);
+    });
   },
 
   // ---- programmatic camera transition -------------------------------------------------
@@ -608,6 +665,7 @@ Page({
     if (transition.timer) { clearTimeout(transition.timer); transition.timer = null; }
     this.cameraTransition = null;
     this.cameraLiveCentre = transition.to;
+    this.cameraCentreStale = false;
     // One reconciliation, after the camera has settled — never per frame. This reuses the
     // existing imperative-command path: it re-projects the hit regions, re-reads the real
     // scale, adopts the real centre as the anchor and regroups only if the grouping changed.
@@ -637,7 +695,12 @@ Page({
   prefetchVisibleSelection() {
     const groups = this.markerGroups || [];
     if (this.pinRenderer && this.pinRenderer.prefetchSelected) {
-      this.pinRenderer.prefetchSelected(groups.map(group => group.memory), this.data.selectedId);
+      const overlayMode = this.drawerOverlayMode();
+      this.pinRenderer.prefetchSelected(
+        groups.map(group => group.memory),
+        this.data.selectedId,
+        groups.map(group => (overlayMode && group.members.length > 1 ? group.members.length : 1))
+      );
     }
     // P2, the other half of the same prediction: the selected-card PREVIEW of every marker the
     // user can see. It is serialized inside the image pipeline, so this can never compete with
@@ -676,6 +739,16 @@ Page({
     this.stackPositionRequest = (this.stackPositionRequest || 0) + 1;
     this.stackProjectionBusy = false;
     if (this.data.stackPositionsReady) this.setData({stackPositionsReady:false});
+    const pendingOpen = reason === 'focus' && this.pendingMapAction && this.pendingMapAction.type === 'cluster-open'
+      ? this.pendingMapAction : null;
+    if (pendingOpen) {
+      this.pendingMapAction = null;
+      const openIndex = (this.markerGroups || []).findIndex(g => g.memory.id === pendingOpen.rootId && g.members.length > 1);
+      if (openIndex >= 0) {
+        this.cameraClusterOpenSettledAt = Date.now();
+        this.prepareClusterOpenForProjection(openIndex);
+      }
+    }
     // A fit or a focus moves the native centre without moving the bound props, and the
     // scale reply below re-asserts them: track the anchor to that same native viewport
     // first, or applying the new scale silently pulls the view back to the previous
@@ -685,17 +758,24 @@ Page({
     // 顺序保持既有可观察时序（本帧内同步刷新缩放与投影），锚点仅追加一次只读对齐。
     // 只对齐一次：由下面 syncStackPositions 已发起的那次 getRegion 回复消费，
     // 不额外查询、不新增定时器、不下发新的相机指令。
-    this.cameraAnchorPending = reason === 'overview' || reason === 'focus';
+    this.cameraAnchorPending = pendingOpen ? false : (reason === 'overview' || reason === 'focus');
     this.prefetchVisibleSelection();
     this.rebindReadyMarkerPhotos();
     this.readMapScale();
     this.syncStackPositions();
   },
 
-  // Project transparent hit regions only, once the native camera has settled.
-  // Project real coordinates from the actual native viewport, never data.latitude.
+  // Project overlay hit/drawer coordinates on demand once the native camera has settled.
+  // In view-overlay mode collapsed clusters carry their count badge natively on the marker
+  // bitmap, so pure pans perform zero getRegion IPC and mount zero overlay nodes.
   syncStackPositions() {
     if(!this.active||this.stackGesture||!this.mapCtx||!this.mapCtx.getRegion){this.cameraAnchorPending=false;return;}
+    const overlayMode=this.drawerOverlayMode();
+    const needsOverlay=!overlayMode||Boolean(this.data.clusterOpen)||Boolean(this.drawerProgress>0)||Boolean(this.overlayMountRootId);
+    if(!needsOverlay&&!this.cameraAnchorPending){
+      if(this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
+      return;
+    }
     if(this.stackProjectionBusy){this.cameraAnchorPending=false;return;}
     this.stackProjectionBusy=true;
     const request=this.stackPositionRequest=(this.stackPositionRequest||0)+1;
@@ -706,7 +786,22 @@ Page({
       // where the camera ACTUALLY is — after a user pan the bound props are stale, and a
       // travel seeded from them would jump on its first frame.
       const ne0=region&&region.northeast,sw0=region&&region.southwest;
-      if(ne0&&sw0&&Number.isFinite(ne0.latitude)&&Number.isFinite(sw0.latitude)&&Number.isFinite(ne0.longitude)&&Number.isFinite(sw0.longitude))this.cameraLiveCentre=[(ne0.latitude+sw0.latitude)/2,(ne0.longitude+sw0.longitude)/2];
+      if(ne0&&sw0&&Number.isFinite(ne0.latitude)&&Number.isFinite(sw0.latitude)&&Number.isFinite(ne0.longitude)&&Number.isFinite(sw0.longitude)){this.cameraLiveCentre=[(ne0.latitude+sw0.latitude)/2,(ne0.longitude+sw0.longitude)/2];this.cameraCentreStale=false;}
+      const stillNeedsOverlay=!this.drawerOverlayMode()||Boolean(this.data.clusterOpen)||Boolean(this.drawerProgress>0)||Boolean(this.overlayMountRootId);
+      if(!stillNeedsOverlay){
+        const anchor={};
+        if(this.cameraAnchorPending){
+          this.cameraAnchorPending=false;
+          if(ne0&&sw0){
+            const latitude=(ne0.latitude+sw0.latitude)/2,longitude=(ne0.longitude+sw0.longitude)/2;
+            if(Math.abs(latitude-this.data.latitude)>1e-7||Math.abs(longitude-this.data.longitude)>1e-7){anchor.latitude=latitude;anchor.longitude=longitude;}
+          }
+        }
+        if(this.data.stackPositionsReady)anchor.stackPositionsReady=false;
+        if(Object.keys(anchor).length)this.setData(anchor);
+        finish();
+        return;
+      }
       this.createSelectorQuery().select('#savor-map').boundingClientRect(rect=>{
         if(!rect||!this.active||this.disposed||request!==this.stackPositionRequest){finish();return;}
         const positions={};
@@ -727,8 +822,22 @@ Page({
             if(Math.abs(latitude-this.data.latitude)>1e-7||Math.abs(longitude-this.data.longitude)>1e-7){anchor.latitude=latitude;anchor.longitude=longitude;}
           }
         }
-        this.setData(Object.assign({stackPositionsReady:Object.keys(positions).length>0},anchor));
-        this.refreshStackFrame();finish();
+        const mapDrawers=this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId);
+        const readyPatch=Object.assign({stackPositionsReady:Object.keys(positions).length>0,mapDrawers},anchor);
+        mapDrawers.forEach(d=>{
+          const marker=(this.data.markers||[])[d.markerId];
+          const expectedAnchorY=d.overlayMode?d.calloutOffset+mapStack.HEIGHT:d.calloutOffset;
+          if((!d.overlayMode||d.hybridCallout)&&marker&&marker.customCallout&&marker.customCallout.anchorY!==expectedAnchorY)readyPatch['markers['+d.markerId+'].customCallout.anchorY']=expectedAnchorY;
+        });
+        const pendingRoot=this.drawerOverlayMode()&&this.data.clusterOpen&&this.overlayMountRootId===this.drawerRootId&&!this.overlayVisualOpen?this.drawerRootId:'';
+        const quietHandoffRoot=this.drawerOverlayMode()&&this.data.clusterOpen&&this.overlayMountRootId===this.drawerRootId&&this.overlayVisualOpen&&!this.hybridCalloutActive?this.drawerRootId:'';
+        this.setData(readyPatch,()=>{
+          if(!this.active||this.disposed||this.stackGesture)return;
+          if(pendingRoot)this.scheduleOverlayOpenFlip(pendingRoot);
+          else if(quietHandoffRoot)this.scheduleHybridHandoff(quietHandoffRoot,32);
+          this.renderDrawerPhotos(this.markerGeneration);
+        });
+        finish();
       }).exec();
     },fail:finish});
   },
@@ -747,7 +856,9 @@ Page({
     const staticFrame=Boolean(this.data.drawerCssMotion)||overlayMode;
     return groups.map((g,index)=>{
       if(g.members.length<2)return null;
-      const targetOpen=this.data.clusterOpen&&g.memory.id===this.drawerRootId;
+      const logicalOpen=this.data.clusterOpen&&g.memory.id===this.drawerRootId;
+      const overlayMounted=!overlayMode||g.memory.id===this.overlayMountRootId||logicalOpen;
+      const targetOpen=(overlayMode&&this.overlayMountRootId===g.memory.id)?Boolean(this.overlayVisualOpen):logicalOpen;
       const progress=g.memory.id===this.drawerRootId?this.drawerProgress||0:0;
       const open=staticFrame?true:(targetOpen||progress>0);
       const others=g.members.filter(m=>m.id!==g.memory.id),pages=Math.ceil(others.length/3);
@@ -814,7 +925,10 @@ Page({
         // own to preserve, and mounting a strip in every closed cluster would add views to the
         // very layer being measured, so it follows targetOpen instead.
         stripOpen:staticFrame?targetOpen:open,
-        overlayMode,transformDriver:staticFrame,overlayTop,overlayHeight,overlayRootTop,overlayToggleTop,overlayPageTop,
+        overlayMode,overlayMounted,
+        hybridCallout:Boolean(overlayMode&&this.hybridCalloutActive&&this.data.clusterOpen&&g.memory.id===this.drawerRootId),
+        hybridInkHidden:Boolean(overlayMode&&this.hybridInkHidden&&g.memory.id===this.drawerRootId),
+        fastMotion:Boolean(overlayMode&&this.overlayClosingFast&&g.memory.id===this.overlayMountRootId),transformDriver:staticFrame,overlayTop,overlayHeight,overlayRootTop,overlayToggleTop,overlayPageTop,
         // The visible toggle is a 32px glyph inside a 44px target, so it owns its own tap
         // instead of leaving a second transparent hit box behind it.
         toggleGlyphLeft:buttonBox.left-buttonBox.hitLeft,toggleGlyphTop:buttonBox.top-buttonBox.hitTop,
@@ -826,10 +940,11 @@ Page({
   renderDrawerPhotos(generation) {
     if(!this.pinRenderer||!this.active||this.stackGesture)return;
     const renderer=this.pinRenderer,tasks=[];
-    // In view-overlay mode the cluster root is drawn by the native marker, so composing a
-    // second copy for the drawer would be a wasted canvas job per cluster.
+    // In view-overlay mode the cluster root is drawn by the native marker, and collapsed
+    // drawers stay unmounted, so only an open drawer needs row photos.
     const overlayMode=this.drawerOverlayMode();
-    this.data.mapDrawers.forEach(drawer=>(overlayMode?[]:[drawer.root]).concat(drawer.targetOpen?drawer.rows:[]).forEach(pin=>{
+    if(overlayMode&&!this.data.clusterOpen&&!(this.drawerProgress>0))return;
+    this.data.mapDrawers.forEach(drawer=>(overlayMode?[]:[drawer.root]).concat((drawer.targetOpen||(overlayMode&&drawer.overlayMounted&&this.data.clusterOpen))?drawer.rows:[]).forEach(pin=>{
       const memory=(this.allMemories||[]).find(m=>m.id===pin.id);if(!memory)return;
       const cached=renderer.peek&&renderer.peek(memory,pin.selected);
       if(cached===pin.iconPath)return;
@@ -852,7 +967,8 @@ Page({
     const mapDrawers=this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId),patch={mapDrawers};
     mapDrawers.forEach(d=>{
       const marker=(this.data.markers||[])[d.markerId];
-      if(marker&&marker.customCallout&&marker.customCallout.anchorY!==d.calloutOffset)patch['markers['+d.markerId+'].customCallout.anchorY']=d.calloutOffset;
+      const expectedAnchorY=d.overlayMode?d.calloutOffset+mapStack.HEIGHT:d.calloutOffset;
+      if((!d.overlayMode||d.hybridCallout)&&marker&&marker.customCallout&&marker.customCallout.anchorY!==expectedAnchorY)patch['markers['+d.markerId+'].customCallout.anchorY']=expectedAnchorY;
     });
     this.setData(patch,done);
   },
@@ -874,20 +990,303 @@ Page({
     this.setData({pressedStackRoot:e.currentTarget.dataset.rootId || ''});
   },
   onStackRelease() { if(this.data.pressedStackRoot)this.setData({pressedStackRoot:''}); },
+  clearOverlayMotionTimer() {
+    if(this.overlayMotionTimer){clearTimeout(this.overlayMotionTimer);this.overlayMotionTimer=null;}
+  },
+  clearHybridHandoffTimer() {
+    if(this.hybridHandoffTimer){clearTimeout(this.hybridHandoffTimer);this.hybridHandoffTimer=null;}
+  },
+  cancelPendingMapAction() {
+    this.pendingMapAction=null;
+    this.cameraCentreSyncRequest=(this.cameraCentreSyncRequest||0)+1;
+  },
+  clearHybridCalloutState(patch) {
+    this.clearHybridHandoffTimer();
+    const had=Boolean(this.hybridCalloutActive||this.data.hybridCalloutRootId);
+    this.hybridCalloutActive=false;
+    this.hybridInkHidden=false;
+    const target=patch||{};
+    if(this.data.hybridCalloutRootId)target.hybridCalloutRootId='';
+    if(had&&this.drawerOverlayMode()&&(this.data.markers||[]).some(m=>m&&m.customCallout)){
+      target.markers=(this.data.markers||[]).map(m=>m&&m.customCallout?Object.assign({},m,{customCallout:undefined}):m);
+    }
+    return target;
+  },
+  // Hand off a settled open cluster in view-overlay mode to a single static native
+  // customCallout so dragging the map keeps the expanded stack locked to the marker at
+  // true 60fps without ever disappearing. WebView ink overlaps for 48ms before hiding
+  // so the native layer paints first with zero visible flicker.
+  mountHybridCallout(rootId, hideInkNow) {
+    if(!this.drawerOverlayMode()||!this.active||this.disposed)return false;
+    if(!this.data.clusterOpen||this.drawerRootId!==rootId)return false;
+    const markers=this.data.markers||[];
+    const mIdx=markers.findIndex(m=>m&&m.memoryId===rootId);
+    if(mIdx<0)return false;
+    this.clearHybridHandoffTimer();
+    this.hybridCalloutActive=true;
+    this.hybridInkHidden=Boolean(hideInkNow);
+    const mapDrawers=this.buildDrawers(this.markerGroups||[],markers,this.data.selectedId);
+    const d=mapDrawers.find(item=>item&&item.rootId===rootId);
+    if(!d){this.hybridCalloutActive=false;this.hybridInkHidden=false;return false;}
+    const anchorY=d.calloutOffset+mapStack.HEIGHT;
+    const nextMarkers=markers.map((m,i)=>{
+      if(i===mIdx)return Object.assign({},m,{customCallout:{display:'ALWAYS',anchorX:0,anchorY}});
+      if(m&&m.customCallout)return Object.assign({},m,{customCallout:undefined});
+      return m;
+    });
+    this.setData({hybridCalloutRootId:rootId,markers:nextMarkers,mapDrawers});
+    if(!hideInkNow){
+      this.hybridHandoffTimer=setTimeout(()=>{
+        this.hybridHandoffTimer=null;
+        if(!this.active||this.disposed||!this.data.clusterOpen||!this.hybridCalloutActive||this.drawerRootId!==rootId)return;
+        this.hybridInkHidden=true;
+        this.refreshStackFrame();
+      },48);
+    }
+    return true;
+  },
+  scheduleHybridHandoff(rootId, delayMs) {
+    if(!this.drawerOverlayMode()||!this.active||this.disposed)return;
+    this.clearHybridHandoffTimer();
+    this.hybridHandoffTimer=setTimeout(()=>{
+      this.hybridHandoffTimer=null;
+      if(!this.active||this.disposed||this.stackGesture)return;
+      if(!this.data.clusterOpen||this.drawerRootId!==rootId||this.overlayMountRootId!==rootId||!this.overlayVisualOpen)return;
+      this.mountHybridCallout(rootId,false);
+    },Number.isFinite(delayMs)?delayMs:(mapStack.DURATION+20));
+  },
+  // Reverse handoff before a close animation: bring WebView ink back on top of the static
+  // native callout for one frame (~32ms), then remove the native callout and trigger the
+  // smooth 320ms/200ms WebView CSS collapse transition with zero flicker.
+  beginOverlayCloseFromHybrid(rootId, onReady) {
+    this.clearHybridHandoffTimer();
+    if(!this.hybridCalloutActive&&!this.data.hybridCalloutRootId){
+      onReady();
+      return;
+    }
+    this.hybridInkHidden=false;
+    this.refreshStackFrame();
+    this.overlayMotionTimer=setTimeout(()=>{
+      this.overlayMotionTimer=null;
+      if(this.disposed||this.data.clusterOpen||this.overlayMountRootId!==rootId)return;
+      const clearPatch=this.clearHybridCalloutState({});
+      if(Object.keys(clearPatch).length)this.setData(clearPatch);
+      onReady();
+    },32);
+  },
+  scheduleOverlayOpenFlip(rootId) {
+    this.clearOverlayMotionTimer();
+    // Wait two display frames (~32ms) after the collapsed start frame commits to the WebView
+    // so CSS transitions always observe the collapsed -> open transform/opacity delta.
+    this.overlayMotionTimer=setTimeout(()=>{
+      this.overlayMotionTimer=null;
+      if(!this.active||this.disposed||this.stackGesture)return;
+      if(!this.data.clusterOpen||this.drawerRootId!==rootId||this.overlayMountRootId!==rootId)return;
+      if(this.overlayVisualOpen)return;
+      this.overlayVisualOpen=true;
+      this.refreshStackFrame();
+      this.scheduleHybridHandoff(rootId,mapStack.DURATION+20);
+    },32);
+  },
+  dismissOverlayDrawer(patch) {
+    this.clearOverlayMotionTimer();
+    this.cancelPendingMapAction();
+    this.stopDrawerReveal();
+    this.drawerResumeTarget=undefined;
+    this.overlayMountRootId='';
+    this.overlayClosingFast=false;
+    this.overlayVisualOpen=false;
+    const target=this.clearHybridCalloutState(patch||{});
+    target.clusterOpen=false;
+    target.drawerPage=0;
+    if(this.data.stackPositionsReady)target.stackPositionsReady=false;
+    return target;
+  },
+  shouldAnimateSwitchClose() {
+    return Boolean(
+      this.drawerOverlayMode() &&
+      this.drawerTransformDriver() &&
+      this.active &&
+      !this.data.quiet &&
+      this.data.stackPositionsReady &&
+      this.overlayMountRootId
+    );
+  },
+  // Fold the currently open drawer smoothly in place (200ms) on the still map before panning
+  // the camera to the newly tapped marker, so the overlay never detaches mid-pan.
+  scheduleSwitchClose(action) {
+    this.pendingMapAction=action;
+    if(this.overlayClosingFast&&this.overlayMotionTimer)return;
+    const closingRoot=this.overlayMountRootId;
+    this.clearOverlayMotionTimer();
+    this.stopDrawerReveal();
+    this.drawerProgress=0;
+    this.overlayClosingFast=true;
+    this.setData({clusterOpen:false,drawerPage:0});
+    this.beginOverlayCloseFromHybrid(closingRoot,()=>{
+      if(this.disposed||!this.active||this.stackGesture||this.data.clusterOpen||this.overlayMountRootId!==closingRoot)return;
+      this.overlayVisualOpen=false;
+      this.refreshStackFrame();
+      this.overlayMotionTimer=setTimeout(()=>{
+        this.overlayMotionTimer=null;
+        if(this.disposed||!this.active||this.stackGesture)return;
+        if(this.overlayMountRootId===closingRoot){
+          this.overlayMountRootId='';
+          this.overlayClosingFast=false;
+          this.overlayVisualOpen=false;
+          const mapDrawers=this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId);
+          this.setData(this.clearHybridCalloutState({stackPositionsReady:false,mapDrawers}));
+        }
+        const next=this.pendingMapAction;
+        this.pendingMapAction=null;
+        this.executePendingMapAction(next);
+      },DRAWER_SWITCH_CLOSE_MS+DRAWER_CLOSE_SETTLE_PAD_MS);
+    });
+  },
+  executePendingMapAction(action) {
+    if(!action||!this.active||this.disposed||this.stackGesture)return;
+    if(action.type==='singleton'){
+      this.selectMapMemory(action.memoryId);
+      return;
+    }
+    if(action.type==='cluster-pan'){
+      this.focusAndOpenClusterById(action.rootId);
+    }
+  },
+  // Prepare a cluster drawer to mount its collapsed start frame on the upcoming projection
+  // inside onCameraViewportReady (reusing that single getRegion reply with zero extra IPC).
+  prepareClusterOpenForProjection(index) {
+    const g=this.markerGroups&&this.markerGroups[index];
+    if(!g||g.members.length<2)return;
+    const overlayMode=this.drawerOverlayMode();
+    const transformDriver=this.drawerTransformDriver();
+    const canAnimate=this.active&&!this.data.quiet;
+    this.clearOverlayMotionTimer();
+    this.stopDrawerReveal();
+    this.drawerRootId=g.memory.id;
+    this.drawerProgress=(transformDriver||!canAnimate)?1:0;
+    this.overlayMountRootId=overlayMode?g.memory.id:'';
+    this.overlayClosingFast=false;
+    this.overlayVisualOpen=overlayMode?!canAnimate:true;
+    const openPatch=this.clearHybridCalloutState({
+      clusterOpen:true,
+      drawerPage:0,
+      clusterChoices:g.members.map(m=>({id:m.id,restaurant:m.restaurant,dateLabel:data.formatDate(m.date)})),
+    });
+    this.setData(openPatch);
+    if(!this.mapCtx||!this.mapCtx.getRegion){
+      this.refreshStackFrame(()=>{
+        if(overlayMode&&transformDriver&&canAnimate&&!this.overlayVisualOpen)this.scheduleOverlayOpenFlip(g.memory.id);
+        this.renderDrawerPhotos(this.markerGeneration);
+      });
+    }
+  },
+  focusAndOpenClusterById(rootId) {
+    const groups=this.markerGroups||[];
+    const initialIndex=groups.findIndex(g=>g.memory.id===rootId&&g.members.length>1);
+    if(initialIndex<0)return;
+    const scale=Number.isFinite(this.data.mapScale)?this.data.mapScale:13;
+    this.withFreshCameraCentre(()=>{
+      if(!this.active||this.disposed||this.stackGesture)return;
+      const index=(this.markerGroups||[]).findIndex(g=>g.memory.id===rootId&&g.members.length>1);
+      if(index<0)return;
+      const group=this.markerGroups[index];
+      const target=this.clusterFocusCentre(group);
+      const dist=mapCamera.panPixels(this.cameraCentre(),target,scale);
+      if(this.data.quiet||!Number.isFinite(dist)||dist<CLUSTER_FOCUS_SKIP_PX){
+        this.onDrawerToggle({currentTarget:{dataset:{index}}});
+        return;
+      }
+      this.pendingMapAction={type:'cluster-open',rootId};
+      this.startCameraTransition(target);
+    });
+  },
   onDrawerToggle(e) {
     const index=Number(e.currentTarget.dataset.index),g=this.markerGroups&&this.markerGroups[index];
     if(!g||g.members.length<2)return;
     const same=this.drawerRootId===g.memory.id;
     const from=same?this.drawerProgress||0:0;
     const open=!(same&&this.data.clusterOpen);
-    this.stopDrawerReveal();this.drawerProgress=from;this.drawerRootId=g.memory.id;
+    const overlayMode=this.drawerOverlayMode();
     const transformDriver=this.drawerTransformDriver();
-    this.setData({clusterOpen:open,drawerPage:same&&from>0?(this.data.drawerPage||0):0,clusterChoices:g.members.map(m=>({id:m.id,restaurant:m.restaurant,dateLabel:data.formatDate(m.date)}))});
+    const alreadyMountedHere=overlayMode&&transformDriver&&this.overlayMountRootId===g.memory.id&&this.data.stackPositionsReady;
+    this.clearOverlayMotionTimer();
+    this.clearHybridHandoffTimer();
+    this.stopDrawerReveal();this.drawerProgress=from;this.drawerRootId=g.memory.id;
+    const togglePatch={clusterOpen:open,drawerPage:same&&from>0?(this.data.drawerPage||0):0,clusterChoices:g.members.map(m=>({id:m.id,restaurant:m.restaurant,dateLabel:data.formatDate(m.date)}))};
     if(!this.active||this.data.quiet)this.drawerProgress=open?1:0;
     // A transform driver has no frame loop: progress IS the target state and the transition
-    // supplies everything in between, so it must be set before the one rebuild below.
+    // supplies everything in between, so it must be set before the rebuild below.
     if(transformDriver)this.drawerProgress=open?1:0;
-    // Opening a drawer does not change restaurants, native markers or the camera.
+
+    if(overlayMode&&transformDriver){
+      const canAnimate=this.active&&!this.data.quiet;
+      if(open){
+        this.overlayClosingFast=false;
+        if(alreadyMountedHere){
+          // Re-tapped while mid-closing: already anchored at the right coordinates, reverse smoothly.
+          this.overlayVisualOpen=true;
+          this.setData(togglePatch);
+          this.refreshStackFrame(()=>{
+            this.scheduleHybridHandoff(g.memory.id,mapStack.DURATION+20);
+            this.renderDrawerPhotos(this.markerGeneration);
+          });
+          return;
+        }
+        // Switching from another open cluster directly via toggle: clear old hybrid callout & overlay.
+        this.clearHybridCalloutState(togglePatch);
+        if(this.data.stackPositionsReady)togglePatch.stackPositionsReady=false;
+        this.overlayMountRootId=g.memory.id;
+        this.overlayVisualOpen=!canAnimate;
+        this.setData(togglePatch);
+        if(this.mapCtx&&this.mapCtx.getRegion){
+          // Opening a drawer never moves or anchors the camera; clear any leftover anchor flag
+          // so the on-demand projection cannot write latitude/longitude and trigger regionchange.
+          this.cameraAnchorPending=false;
+          this.syncStackPositions();
+        } else {
+          this.refreshStackFrame(()=>{
+            if(canAnimate&&!this.overlayVisualOpen)this.scheduleOverlayOpenFlip(g.memory.id);
+            else if(!canAnimate&&this.active)this.scheduleHybridHandoff(g.memory.id,32);
+            this.renderDrawerPhotos(this.markerGeneration);
+          });
+        }
+        return;
+      }
+      // Manual closing in view-overlay mode: hand back from static native callout to WebView
+      // ink with 1-frame overlap, play the full 320ms collapse transition, then unmount.
+      if(canAnimate&&alreadyMountedHere){
+        const closingRoot=g.memory.id;
+        this.overlayClosingFast=false;
+        this.setData(togglePatch);
+        this.beginOverlayCloseFromHybrid(closingRoot,()=>{
+          if(this.disposed||this.data.clusterOpen||this.overlayMountRootId!==closingRoot)return;
+          this.overlayVisualOpen=false;
+          this.refreshStackFrame();
+          this.overlayMotionTimer=setTimeout(()=>{
+            this.overlayMotionTimer=null;
+            if(this.disposed||this.data.clusterOpen||this.overlayMountRootId!==closingRoot)return;
+            this.overlayMountRootId='';
+            this.overlayClosingFast=false;
+            this.overlayVisualOpen=false;
+            const mapDrawers=this.buildDrawers(this.markerGroups||[],this.data.markers,this.data.selectedId);
+            this.setData(this.clearHybridCalloutState({stackPositionsReady:false,mapDrawers}));
+          },mapStack.DURATION+30);
+        });
+        return;
+      }
+      this.overlayMountRootId='';
+      this.overlayClosingFast=false;
+      this.overlayVisualOpen=false;
+      this.clearHybridCalloutState(togglePatch);
+      if(this.data.stackPositionsReady)togglePatch.stackPositionsReady=false;
+      this.setData(togglePatch);
+      this.refreshStackFrame();
+      return;
+    }
+
+    // Legacy native-callout / JS frame loop branch.
+    this.setData(togglePatch);
     this.refreshStackFrame(()=>{
       if(!transformDriver&&this.active&&!this.data.quiet)this.startDrawerReveal(open?1:0);
       this.renderDrawerPhotos(this.markerGeneration);
@@ -947,24 +1346,29 @@ Page({
   // discarding the result then leaves the bundled fallback on screen even though the
   // photo exists. Re-validate the CURRENT object instead, and always look the marker
   // up by memoryId so a regrouped index can never receive another restaurant's photo.
-  markerPhotoTarget(memoryId, source, selected) {
-    if(this.markerPhotoSkipReason(memoryId,source,selected))return -1;
+  markerPhotoTarget(memoryId, source, selected, badgeCount) {
+    if(this.markerPhotoSkipReason(memoryId,source,selected,badgeCount))return -1;
     return (this.markerGroups||[]).findIndex(g=>g.memory.id===memoryId);
   },
   // Why a finished photo may not be bound, in the vocabulary the device trace reports.
   // Same checks as markerPhotoTarget, but named so a real-device run can tell "the photo
   // never rendered" apart from "it rendered and the map was in a different state".
-  markerPhotoSkipReason(memoryId, source, selected) {
+  markerPhotoSkipReason(memoryId, source, selected, badgeCount) {
     const groups=this.markerGroups||[];
     const index=groups.findIndex(g=>g.memory.id===memoryId);
     if(index<0)return 'superseded';
     // A cluster anchor is invisible under the native callout, so an individual photo must
     // never be painted onto it. Under the ordinary overlay the same marker IS the cluster's
-    // visible root, and this is the only path that can hand it its photo.
-    if(groups[index].members.length!==1&&!this.drawerOverlayMode())return 'clustered';
+    // visible root, and carries the baked cluster count badge directly on its bitmap.
+    const overlayMode=this.drawerOverlayMode();
+    if(groups[index].members.length!==1&&!overlayMode)return 'clustered';
     const current=(this.data.markers||[])[index];
     if(!current||current.memoryId!==memoryId)return 'superseded';
     if(Boolean(current.stampSelected)!==Boolean(selected))return 'superseded';
+    if(badgeCount!==undefined){
+      const currentBadge=overlayMode&&groups[index].members.length>1?groups[index].members.length:1;
+      if(currentBadge!==badgeCount)return 'superseded';
+    }
     if(mapMarkers.photoFor(groups[index].memory)!==source)return 'source-changed';
     return '';
   },
@@ -977,15 +1381,24 @@ Page({
   applyMarkerPhotos(entries) {
     if(!entries.length)return false;
     const markers=this.data.markers.map(m=>Object.assign({},m));
+    const overlayMode=this.drawerOverlayMode();
     let changed=false;
     entries.forEach(entry=>{
       const index=markers.findIndex(m=>m.memoryId===entry.memoryId);
       if(index<0||markers[index].iconPath===entry.path)return;
       // A queued photo waits up to one frame before it is published, so re-check the
-      // render variant: a selection change in that window must not bind the wrong stamp.
+      // render variant: a selection or cluster-count change in that window must not bind
+      // the wrong stamp or stale count badge.
       if(entry.selected!==undefined&&Boolean(markers[index].stampSelected)!==Boolean(entry.selected)){
         this.traceMarker(entry.jobId,{applyResult:'superseded'});
         return;
+      }
+      if(entry.badgeCount!==undefined){
+        const currentBadge=overlayMode&&markers[index].groupCount>1?markers[index].groupCount:1;
+        if(currentBadge!==entry.badgeCount){
+          this.traceMarker(entry.jobId,{applyResult:'superseded'});
+          return;
+        }
       }
       markers[index].iconPath=entry.path;
       changed=true;
@@ -999,10 +1412,10 @@ Page({
   },
   // One bridge write per display frame, at most. A selected photo flushes immediately:
   // it is the marker the user is looking at, so it never waits behind a normal batch.
-  queueMarkerPhoto(memoryId,path,selected,jobId,stale) {
+  queueMarkerPhoto(memoryId,path,selected,jobId,stale,badgeCount) {
     if(!path)return;
     if(!this.markerPhotoPending)this.markerPhotoPending=new Map();
-    this.markerPhotoPending.set(memoryId,{path:path,selected:Boolean(selected),jobId:jobId,stale:Boolean(stale)});
+    this.markerPhotoPending.set(memoryId,{path:path,selected:Boolean(selected),badgeCount:badgeCount,jobId:jobId,stale:Boolean(stale)});
     this.scheduleMarkerPhotoFlush(Boolean(selected));
   },
   // Cache hits are already resolved, so they are published together in one write.
@@ -1013,7 +1426,7 @@ Page({
     entries.forEach(entry=>{
       if(!entry.path)return;
       this.markerPhotoPending.set(entry.memoryId,{path:entry.path,selected:Boolean(entry.selected),
-        jobId:entry.jobId,stale:Boolean(entry.stale)});
+        badgeCount:entry.badgeCount,jobId:entry.jobId,stale:Boolean(entry.stale)});
       if(entry.selected)selected=true;
     });
     this.scheduleMarkerPhotoFlush(selected);
@@ -1036,7 +1449,7 @@ Page({
     this.markerPhotoPending=new Map();
     this.markerPhotoFlushAt=Date.now();
     const entries=[];
-    pending.forEach((value,memoryId)=>entries.push({memoryId,path:value.path,selected:value.selected,jobId:value.jobId,stale:value.stale}));
+    pending.forEach((value,memoryId)=>entries.push({memoryId,path:value.path,selected:value.selected,badgeCount:value.badgeCount,jobId:value.jobId,stale:value.stale}));
     return this.applyMarkerPhotos(entries);
   },
   stopMarkerPhotoBatch() {
@@ -1047,21 +1460,45 @@ Page({
   // existing event points (region end, grouping settle, job completion) - never a timer.
   rebindReadyMarkerPhotos() {
     if(!this.pinRenderer||!this.active||this.disposed||this.stackGesture)return false;
+    const overlayMode=this.drawerOverlayMode();
     const groups=this.markerGroups||[],entries=[];
     groups.forEach((group,index)=>{
-      if(group.members.length!==1)return;
+      if(group.members.length!==1&&!overlayMode)return;
       const current=(this.data.markers||[])[index];
       if(!current||current.memoryId!==group.memory.id)return;
-      const path=this.pinRenderer.peek&&this.pinRenderer.peek(group.memory,current.stampSelected);
+      const badgeCount=overlayMode&&group.members.length>1?group.members.length:1;
+      const path=this.pinRenderer.peek&&this.pinRenderer.peek(group.memory,current.stampSelected,badgeCount);
       if(!path||path===current.iconPath)return;
       // This is the rebound case by definition: a photo that was already composed but
       // never bound to the marker that still wants it. It gets its own trace token so a
       // device run can tell "composed late" apart from "composed but never published".
-      entries.push({memoryId:group.memory.id,path:path,selected:current.stampSelected,stale:true,
+      entries.push({memoryId:group.memory.id,path:path,selected:current.stampSelected,badgeCount:badgeCount,stale:true,
         result:'ready-cache-rebound',
-        jobId:this.pinRenderer.traceJobId&&this.pinRenderer.traceJobId(group.memory,current.stampSelected)});
+        jobId:this.pinRenderer.traceJobId&&this.pinRenderer.traceJobId(group.memory,current.stampSelected,badgeCount)});
     });
     return this.applyMarkerPhotos(entries);
+  },
+  // Whether any currently visible marker still needs photo composition or cache rebinding.
+  // Used by onMapRegionChange(end) so a pure pan with already-composed markers skips all
+  // post-gesture timers and bridge writes completely.
+  hasUnboundMarkerPhotos() {
+    if(!this.pinRenderer||!this.active||this.disposed)return false;
+    const overlayMode=this.drawerOverlayMode();
+    const groups=this.markerGroups||[];
+    const markers=this.data.markers||[];
+    for(let index=0;index<groups.length;index++){
+      const group=groups[index];
+      if(!group||!group.memory)continue;
+      if(group.members.length!==1&&!overlayMode)continue;
+      const source=mapMarkers.photoFor(group.memory);
+      if(!source||(data.isSafeImage&&!data.isSafeImage(source)))continue;
+      const current=markers[index];
+      if(!current||current.memoryId!==group.memory.id)continue;
+      const badgeCount=overlayMode&&group.members.length>1?group.members.length:1;
+      const cached=this.pinRenderer.peek&&this.pinRenderer.peek(group.memory,current.stampSelected,badgeCount);
+      if(!cached||current.iconPath!==cached)return true;
+    }
+    return false;
   },
   renderMarkerPhotos(visible, selectedId, generation) {
     if (!this.pinRenderer || !this.active || this.stackGesture) return;
@@ -1072,27 +1509,39 @@ Page({
     // `generation` is kept for call-site compatibility; it is deliberately NOT the
     // apply gate any more (see markerPhotoTarget).
     // Singletons are the only markers the native callout can enhance. In view-overlay mode
-    // the cluster's own marker is its visible root, so its representative joins the batch.
+    // the cluster's own marker is its visible root, so its representative joins the batch
+    // with its native cluster count badge baked into the bitmap.
     const overlayMode=this.drawerOverlayMode();
-    const ordered=visible.map((m,index)=>({m,index})).filter(({index})=>overlayMode||!this.markerGroups||this.markerGroups[index].members.length===1).sort((a,b)=>Number(b.m.id===selectedId)-Number(a.m.id===selectedId));
+    const groups=this.markerGroups||[];
+    const markers=this.data.markers||[];
+    const ordered=visible.map((m,index)=>({
+      m,
+      index,
+      groupCount:groups[index]?groups[index].members.length:1,
+    })).filter(({groupCount})=>overlayMode||groupCount===1)
+      .sort((a,b)=>Number(b.m.id===selectedId)-Number(a.m.id===selectedId));
     const already=[];
-    ordered.forEach(({m})=>{
+    ordered.forEach(({m,index,groupCount})=>{
       const selected=m.id===selectedId,source=mapMarkers.photoFor(m);
-      const cached=renderer.peek&&renderer.peek(m,selected);
+      const badgeCount=overlayMode&&groupCount>1?groupCount:1;
+      const cached=renderer.peek&&renderer.peek(m,selected,badgeCount);
       if(cached){
-        already.push({memoryId:m.id,path:cached,selected:selected,stale:true,
-          jobId:renderer.traceJobId&&renderer.traceJobId(m,selected)});
+        const current=markers[index];
+        if(!current||current.memoryId!==m.id||current.iconPath!==cached){
+          already.push({memoryId:m.id,path:cached,selected:selected,badgeCount:badgeCount,stale:true,
+            jobId:renderer.traceJobId&&renderer.traceJobId(m,selected,badgeCount)});
+        }
         return;
       }
-      const job=renderer.render(m,selected);
+      const job=renderer.render(m,selected,badgeCount);
       job.then(path=>{
         const jobId=job&&job.traceJobId;
         if(!this.active || this.disposed || renderer!==this.pinRenderer) { this.traceMarker(jobId,{applyResult:'disposed'}); return; }
         if(this.stackGesture) { this.traceMarker(jobId,{applyResult:'gesture-deferred'}); return; }
-        const skip=this.markerPhotoSkipReason(m.id,source,selected);
+        const skip=this.markerPhotoSkipReason(m.id,source,selected,badgeCount);
         if(skip) { this.traceMarker(jobId,{applyResult:skip}); return; }
         // A generation bump that left this marker unchanged must not cost it its photo.
-        this.queueMarkerPhoto(m.id,path,selected,jobId,generation!==this.markerGeneration);
+        this.queueMarkerPhoto(m.id,path,selected,jobId,generation!==this.markerGeneration,badgeCount);
       }).catch(()=>{});
     });
     if(already.length)this.queueMarkerPhotoBatch(already);
@@ -1179,6 +1628,7 @@ Page({
     this.zoomPendingTarget = target;
     // A zoom is the user taking the camera: a travel still in flight was aimed at the old
     // scale, so it stops here instead of fighting the new level.
+    this.cancelPendingMapAction();
     this.cancelCameraTransition();
     // The guard above compares against the NATIVE level, never against the bound
     // value. When a pinch leaves the native scale on 13.4 while the binding already
@@ -1214,33 +1664,81 @@ Page({
     // own writes are ignored outright and reconciled once, when the camera settles.
     // A real finger always outranks the transition: a gesture cancels it and falls through
     // to the normal path unchanged.
+    const causedBy=e&&e.detail&&e.detail.causedBy;
+    const isUserGesture=causedBy==='gesture'||causedBy==='drag'||causedBy==='scale';
     if (this.cameraTransition) {
-      const causedBy=e&&e.detail&&e.detail.causedBy;
-      if(causedBy==='gesture'||causedBy==='drag'||causedBy==='scale')this.cancelCameraTransition();
+      if(isUserGesture)this.cancelCameraTransition();
       else return;
     }
+    // Ignore trailing asynchronous regionchange echoes emitted by our own final programmatic
+    // latitude/longitude frame right after landing on a cluster to open it; real user gestures
+    // always pass through immediately.
+    if (!isUserGesture && this.data.clusterOpen && this.cameraClusterOpenSettledAt && (Date.now() - this.cameraClusterOpenSettledAt) < 500) {
+      return;
+    }
+    const overlayMode=this.drawerOverlayMode();
     clearTimeout(this.stackAlignTimer);this.stackAlignTimer=null;
     this.stackPositionRequest=(this.stackPositionRequest||0)+1;
     this.stackProjectionBusy=false;
     this.onStackRelease();
-    // Only hit regions disappear. Native callouts stay anchored and visible.
-    if(this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
     if(phase==='begin') {
       // A scale reply from before the gesture must never write camera props during it.
       this.scaleRequest=(this.scaleRequest||0)+1;
-      // A finger outranks a settling zoom command.
+      // A finger outranks a settling zoom command or queued drawer-switch handoff.
       this.cancelZoomCommand(e);
+      if(causedBy!=='update'){
+        this.cameraCentreStale=true;
+        this.cancelPendingMapAction();
+      }
       this.stackGesture=true;
-      if(this.drawerAnimating){this.drawerResumeTarget=this.data.clusterOpen?1:0;this.pauseDrawerReveal();}
+      if(overlayMode){
+        // In view-overlay mode collapsed clusters carry zero overlay DOM, so starting a
+        // drag while closed performs zero setData work. An already-open cluster stays
+        // logically open across a pan (only hiding its projected overlay during movement
+        // and re-anchoring once at drag end), while a drawer that was already closing
+        // finishes dismissing cleanly on drag begin.
+        if(causedBy!=='update'){
+          if(this.data.clusterOpen){
+            this.clearOverlayMotionTimer();
+            this.overlayClosingFast=false;
+            if(this.overlayMountRootId===this.drawerRootId)this.overlayVisualOpen=true;
+            // Ensure the single static native customCallout is mounted immediately if the user
+            // started dragging before the 320ms open animation finished, so the expanded stack
+            // stays continuously visible at 60fps throughout the entire drag.
+            if(!this.hybridCalloutActive&&this.drawerRootId)this.mountHybridCallout(this.drawerRootId,true);
+            else if(!this.hybridInkHidden){this.clearHybridHandoffTimer();this.hybridInkHidden=true;}
+            if(this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
+          } else if(this.drawerProgress>0||this.drawerAnimating||this.overlayMountRootId||this.overlayMotionTimer||this.hybridCalloutActive){
+            this.setData(this.dismissOverlayDrawer({}));
+            this.refreshStackFrame();
+          } else if(this.data.stackPositionsReady){
+            this.setData({stackPositionsReady:false});
+          }
+        }
+      } else {
+        // Legacy callout mode: only hit regions disappear; native callouts stay anchored.
+        if(this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
+        if(this.drawerAnimating){this.drawerResumeTarget=this.data.clusterOpen?1:0;this.pauseDrawerReveal();}
+      }
       this.markerResumeNeeded=this.markerResumeNeeded||!!this.markerAnimation;this.stopMarkerAnimation();
       return;
     }
+    if(!overlayMode&&this.data.stackPositionsReady)this.setData({stackPositionsReady:false});
     this.stackGesture=false;
     // A gesture can bump the generation while photos are still composing; the region
     // end is exactly where those ready results must be bound. No polling timer.
     this.rebindReadyMarkerPhotos();
     this.readMapScale(e && e.detail && e.detail.scale);
-    if(this.active&&!this.disposed) {
+    const needsSettle=Boolean(
+      this.deferredMapState ||
+      this.markerResumeNeeded ||
+      !overlayMode ||
+      this.data.clusterOpen ||
+      this.drawerProgress > 0 ||
+      this.drawerResumeTarget !== undefined ||
+      this.hasUnboundMarkerPhotos()
+    );
+    if(this.active&&!this.disposed&&needsSettle) {
       this.stackAlignTimer=setTimeout(()=>{
         this.stackAlignTimer=null;
         if(!this.active||this.disposed||this.stackGesture)return;
@@ -1248,10 +1746,11 @@ Page({
         if(state)this.syncState(store.get());
         else if(this.markerResumeNeeded)this.applyFilters(this.data.query,this.data.filter,this.data.selectedId,'preserve');
         this.markerResumeNeeded=false;
-        this.syncStackPositions();
+        const needOverlay=!this.drawerOverlayMode()||Boolean(this.data.clusterOpen)||Boolean(this.drawerProgress>0);
+        if(needOverlay)this.syncStackPositions();
         this.rebindReadyMarkerPhotos();
-        this.renderDrawerPhotos(this.markerGeneration);
-        this.renderMarkerPhotos((this.markerGroups||[]).map(g=>g.memory),this.data.selectedId,this.markerGeneration);
+        if(needOverlay)this.renderDrawerPhotos(this.markerGeneration);
+        if(this.hasUnboundMarkerPhotos())this.renderMarkerPhotos((this.markerGroups||[]).map(g=>g.memory),this.data.selectedId,this.markerGeneration);
         if(this.drawerResumeTarget!==undefined){const target=this.data.clusterOpen?1:0;this.drawerResumeTarget=undefined;if(Math.abs((this.drawerProgress||0)-target)>.001)this.startDrawerReveal(target);}
       },80);
     }
@@ -1279,8 +1778,8 @@ Page({
       }
       // A distant group may split while the open group remains identical.
       const keepDrawer=this.data.clusterOpen&&same(previous.find(g=>g.memory.id===this.drawerRootId),groups.find(g=>g.memory.id===this.drawerRootId));
-      if(!keepDrawer)this.stopDrawerReveal();
-      this.setData(keepDrawer?{mapScale:nextScale}:{mapScale:nextScale,clusterOpen:false,drawerPage:0});
+      if(!keepDrawer)this.setData(this.dismissOverlayDrawer({mapScale:nextScale}));
+      else this.setData({mapScale:nextScale});
       this.applyFilters(this.data.query,this.data.filter,this.data.selectedId,'preserve');
     };
     // While a zoom command is in flight the event payload is not trustworthy: some
@@ -1295,25 +1794,57 @@ Page({
   onMarkerTap(event) {
     const index=event.detail.markerId,group=this.markerGroups && this.markerGroups[index];
     if(group && group.members.length>1) {
-      if(this.data.clusterOpen&&this.drawerRootId===group.memory.id)this.selectMapMemory(group.memory.id,true);
-      else this.onDrawerToggle({currentTarget:{dataset:{index}}});return;
+      // Tapping the currently open cluster's own root selects its representative card
+      // while keeping the drawer open.
+      if(this.data.clusterOpen&&this.drawerRootId===group.memory.id){
+        this.selectMapMemory(group.memory.id,true);
+        return;
+      }
+      // Tapping a cluster while it is mid-closing reverses it smoothly back open in place.
+      if(this.drawerOverlayMode()&&this.overlayMountRootId===group.memory.id&&this.data.stackPositionsReady){
+        this.cancelPendingMapAction();
+        this.overlayClosingFast=false;
+        this.onDrawerToggle({currentTarget:{dataset:{index}}});
+        return;
+      }
+      // Switching from another open cluster: smoothly fold the old drawer in 200ms on the
+      // still map first, then glide the camera to the new cluster's drawer-framed anchor.
+      if(this.shouldAnimateSwitchClose()){
+        this.cancelCameraTransition();
+        this.scheduleSwitchClose({type:'cluster-pan',rootId:group.memory.id});
+        return;
+      }
+      this.cancelPendingMapAction();
+      this.focusAndOpenClusterById(group.memory.id);
+      return;
     }
     const memoryId=this.visibleIds && this.visibleIds[index];
-    if(memoryId) this.selectMapMemory(memoryId);
+    if(!memoryId)return;
+    // Tapping a singleton while a cluster drawer is open: fold the drawer smoothly in 200ms
+    // on the still map first, then switch card and glide the camera to the singleton.
+    if(this.shouldAnimateSwitchClose()){
+      this.cancelCameraTransition();
+      this.scheduleSwitchClose({type:'singleton',memoryId});
+      return;
+    }
+    this.cancelPendingMapAction();
+    this.selectMapMemory(memoryId);
   },
   selectMapMemory(memoryId,keepDrawer) {
     if(!(this.allMemories||[]).some(m=>m.id===memoryId)) return;
-    this.setData({selectedId:memoryId,cardCollapsed:false,clusterOpen:Boolean(keepDrawer&&this.data.clusterOpen)});
+    const keep=Boolean(keepDrawer&&this.data.clusterOpen);
+    const patch={selectedId:memoryId,cardCollapsed:false,clusterOpen:keep};
+    if(!keep)this.dismissOverlayDrawer(patch);
+    this.setData(patch);
     this.applyFilters(this.data.query,this.data.filter,memoryId);
   },
   onClusterPick(e) { if(!this.data.clusterOpen)return;const id=e.currentTarget.dataset.id;if(!this.data.clusterChoices.some(m=>m.id===id))return;this.selectMapMemory(id,true); },
-  onClusterClose() { const index=(this.markerGroups||[]).findIndex(g=>g.memory.id===this.drawerRootId);if(this.data.clusterOpen&&index>=0){this.onDrawerToggle({currentTarget:{dataset:{index}}});return;}this.stopDrawerReveal();this.setData({clusterOpen:false});this.refreshStackFrame(); },
+  onClusterClose() { const index=(this.markerGroups||[]).findIndex(g=>g.memory.id===this.drawerRootId);if(this.data.clusterOpen&&index>=0){this.onDrawerToggle({currentTarget:{dataset:{index}}});return;}this.setData(this.dismissOverlayDrawer({}));this.refreshStackFrame(); },
   onTogglePlaceCard() { this.setData({cardCollapsed:!this.data.cardCollapsed}); },
 
   onQuery(event) {
-    this.stopDrawerReveal();
     const query = event.detail.value;
-    this.setData({ query: query, showFilters: false, clusterOpen:false });
+    this.setData(this.dismissOverlayDrawer({ query: query, showFilters: false }));
     this.applyFilters(query, this.data.filter, this.data.selectedId);
   },
 
@@ -1322,15 +1853,13 @@ Page({
   },
 
   onFilterPick(event) {
-    this.stopDrawerReveal();
     const value = event.currentTarget.dataset.value;
-    this.setData({ filter: value, showFilters: false, clusterOpen:false });
+    this.setData(this.dismissOverlayDrawer({ filter: value, showFilters: false }));
     if (value === 'all' && !this.data.query) this.recenter();
     else this.applyFilters(this.data.query, value, this.data.selectedId);
   },
 
   recenter() {
-    this.stopDrawerReveal();
     // An overview must not silently move the selection: keep the memory the
     // reader is on while it stays visible, so card and map agree afterwards.
     // visibleIds is the native marker-index mapping (roots only). A selected
@@ -1338,7 +1867,7 @@ Page({
     const visibleChild = (this.markerGroups || []).some(g => (g.members || []).some(m => m.id === this.data.selectedId));
     const keep = (this.visibleIds || []).indexOf(this.data.selectedId) >= 0 || visibleChild
       ? this.data.selectedId : 'comptoir';
-    this.setData({ query: '', filter: 'all', selectedId: keep, showFilters: false, clusterOpen:false });
+    this.setData(this.dismissOverlayDrawer({ query: '', filter: 'all', selectedId: keep, showFilters: false }));
     this.applyFilters('', 'all', keep, 'overview');
   },
 

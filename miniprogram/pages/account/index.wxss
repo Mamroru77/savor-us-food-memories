@@ -1,2 +1,10 @@
 @import "../../styles/secondary.wxss";
-.account{display:flex;flex-direction:column;gap:20rpx}.account .title{margin:0}.account>button{margin:0}.account>.notice{margin-top:8rpx}
+.account{display:flex;flex-direction:column;gap:20rpx}
+.account .title{display:none}
+.account-meta{display:flex;flex-direction:column;gap:12rpx}
+.account-partition{display:inline-flex;align-self:flex-start;padding:8rpx 18rpx;border-radius:999rpx;background:rgba(112,121,101,.1);font-size:23rpx;line-height:32rpx;color:var(--ink)}
+.account.dusk .account-partition{background:rgba(238,234,227,.1)}
+.account .card{margin-top:8rpx}
+.account-primary-card button{min-height:96rpx;background:linear-gradient(150deg,#31322f,#181a17);color:#fff;border:2rpx solid rgba(255,255,255,.8);border-radius:60rpx;font-weight:500;box-shadow:0 8rpx 18rpx -8rpx rgba(17,17,17,.25)}
+.account.dusk .account-primary-card button{background:linear-gradient(145deg,#e8d7be,#d4bc98);color:#1b1713;border-color:rgba(255,248,236,.55);box-shadow:0 10rpx 24rpx -8rpx rgba(0,0,0,.42),inset 0 1rpx 0 rgba(255,255,255,.45)}
+.account>.notice{margin-top:8rpx}

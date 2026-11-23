@@ -1,4 +1,15 @@
 @import "../../styles/secondary.wxss";
 
-.workspace-summary { padding:24rpx 0; border-bottom:1rpx solid var(--border,rgba(120,120,110,.2)); margin-bottom:24rpx; }
+.tools .title { display:none; }
+.workspace-summary {
+  padding: 20rpx 24rpx;
+  margin: 20rpx 0 8rpx;
+  border-radius: 24rpx;
+  background: rgba(112, 121, 101, 0.08);
+  border: 1rpx solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.dusk .workspace-summary { background: rgba(238, 234, 227, 0.06); }
 

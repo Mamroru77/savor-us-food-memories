@@ -190,7 +190,7 @@ async function test(name, fn) {
   catch (error) { failures.push(name); console.error('FAIL ' + name + '\n  ' + String(error && error.message).split('\n')[0]); }
 }
 
-// D1 — the whole point: an overlay-mode open must not cross the native map bridge.
+// D1 — the whole point: an overlay-mode open must not emit per-frame animation patches.
 tests.push(() => test('D1 an overlay-driven open costs no frame writes', async () => {
   resetClock();
   const spec = loadPage();
@@ -200,27 +200,34 @@ tests.push(() => test('D1 an overlay-driven open costs no frame writes', async (
   const frames = frameWrites(p).length;
   console.log('    measured: overlay open -> ' + drawerWrites(p).length + ' drawer write(s), ' + frames + ' of them frame writes');
   assert.equal(frames, 0, 'the overlay driver must never emit a frame patch, saw ' + frames);
-  assert.ok(drawerWrites(p).length <= 3, 'an overlay open must cost O(1) drawer writes, saw ' + drawerWrites(p).length);
+  assert.ok(drawerWrites(p).length <= 4, 'an overlay open + static hybrid handoff must stay O(1) writes, saw ' + drawerWrites(p).length);
   assert.equal(p.data.mapDrawers[0].targetOpen, true, 'the logical state must still flip');
 }));
 
-// D2 — with the ink gone from the callout, no animation step may touch the marker array.
-// A marker write here would mean the native map is being asked to re-lay-out mid-motion.
-tests.push(() => test('D2 opening and closing never writes the markers array', async () => {
+// D2 — during the 320ms motion itself no step may touch the marker array; only the
+// settled static hybrid handoff (1 mount on open, 1 clear on close) touches customCallout.
+tests.push(() => test('D2 drawer motion writes zero marker frames; hybrid handoff is strictly O(1) at rest', async () => {
   resetClock();
   const spec = loadPage();
   const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
   const tap = () => p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  tap();
+  await pumpClock(300);
+  assert.equal(markerWrites(p).length, 0, 'the 320ms expand animation must issue 0 marker writes, saw ' + markerWrites(p).length);
+  await runClock();
+  const afterOpen1 = markerWrites(p).length;
+  assert.equal(afterOpen1, 1, 'settled open mounts exactly 1 static hybrid callout, saw ' + afterOpen1);
   tap(); await runClock();
-  tap(); await runClock();
+  assert.equal(p.data.markers[0].customCallout, undefined, 'closing clears the static hybrid callout');
   tap(); await runClock();
   const writes = markerWrites(p).length;
-  console.log('    measured: 3 toggles -> ' + writes + ' marker write(s)');
-  assert.equal(writes, 0, 'drawer motion must not write the markers array, saw ' + writes);
+  console.log('    measured: 3 toggles -> ' + writes + ' static handoff marker write(s) (0 during motion)');
+  assert.ok(writes <= 4, '3 full toggles must stay O(1) static handoff writes, saw ' + writes);
 }));
 
-// D3 — overlay mode must not hand the native map a callout that carries animation.
-tests.push(() => test('D3 overlay mode gives the cluster no animated customCallout', async () => {
+// D3 — collapsed clusters in view-overlay mode carry no customCallout, and the callout
+// slot is strictly gated on native-callout or the single settled hybridCalloutRootId.
+tests.push(() => test('D3 overlay mode gives collapsed clusters no customCallout and gates slot strictly', async () => {
   resetClock();
   const spec = loadPage();
   const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
@@ -228,11 +235,8 @@ tests.push(() => test('D3 overlay mode gives the cluster no animated customCallo
   assert.equal(p.data.markers.length, 1, 'the four nearby memories must group into one cluster');
   assert.equal(p.markerGroups[0].members.length, 4, 'the cluster must own all four members');
   const marker = p.data.markers[0];
-  // Overlay mode must not hand the native map a callout at all. (The 2026-10-02 disclosure round
-  // briefly made an exception for the selected marker; that round is WITHDRAWN and the disclosure
-  // control lives in the bottom card again, so the original contract is restored verbatim.)
   assert.equal(marker.customCallout, undefined,
-    'overlay mode must not mount a callout for the animated drawer, got ' + JSON.stringify(marker.customCallout));
+    'collapsed overlay cluster must not mount a customCallout, got ' + JSON.stringify(marker.customCallout));
   // And the native-callout arm must still mount it, or the two arms are not an A/B.
   resetClock();
   const native = makePage(loadPage(), 4, 900, { mode: 'native-callout', cssMotion: true });
@@ -240,8 +244,8 @@ tests.push(() => test('D3 overlay mode gives the cluster no animated customCallo
   assert.ok(native.data.markers[0].customCallout,
     'the native-callout arm must keep its callout');
   const w = fs.readFileSync(WXML, 'utf8');
-  assert.ok(w.includes("slot=\"callout\" wx:if=\"{{drawerRenderMode === 'native-callout'}}\""),
-    'the callout block must be gated on native-callout mode');
+  assert.ok(w.includes("slot=\"callout\" wx:if=\"{{drawerRenderMode === 'native-callout' || hybridCalloutRootId}}\""),
+    'the callout block must be gated strictly on native-callout mode or the single hybrid open cluster');
 }));
 
 // D4 — the overlay must reach exactly the native callout's pixels, computed independently
@@ -342,8 +346,8 @@ tests.push(() => test('D7 during a gesture the overlay hides but the cluster roo
     'the native-callout arm must keep the legacy anchor art');
 }));
 
-// D8 — one projection after the gesture, never one per frame.
-tests.push(() => test('D8 settling after a gesture projects exactly once', async () => {
+// D8 — collapsed pure pan issues zero getRegion IPC; opening a cluster projects once on demand.
+tests.push(() => test('D8 collapsed pan issues zero getRegion while opening projects once on demand', async () => {
   resetClock();
   const spec = loadPage();
   const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
@@ -355,41 +359,73 @@ tests.push(() => test('D8 settling after a gesture projects exactly once', async
     getScale: opt => opt.fail && opt.fail(),
   };
   p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
-  p.onMapRegionChange({ detail: { type: 'end' } });
+  p.data.stackPositionsReady = false;
+  p.onMapRegionChange({ detail: { type: 'begin', causedBy: 'drag' } });
+  p.onMapRegionChange({ detail: { type: 'end', causedBy: 'drag', scale: p.data.mapScale } });
   await runClock();
-  assert.equal(queries.length, 1, 'a settle must issue exactly one getRegion, saw ' + queries.length);
+  assert.equal(queries.length, 0, 'collapsed pure pan must issue zero getRegion queries, saw ' + queries.length);
+  assert.equal(p.data.stackPositionsReady, false, 'collapsed overlay must remain unmounted after pan');
+
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  await runClock();
+  assert.equal(queries.length, 1, 'opening a cluster must issue exactly one on-demand getRegion, saw ' + queries.length);
   queries.shift().success(region);
   await runClock();
-  assert.equal(p.data.stackPositionsReady, true, 'the overlay must come back after the settle');
+  assert.equal(p.data.stackPositionsReady, true, 'the overlay must mount once the opened cluster projects');
   const anchor = projection.project(p.allMemories[0].coordinates, region, rect);
   const d = p.data.mapDrawers[0];
-  assert.equal(d.screenX, anchor.x - 44, 'the overlay must be re-anchored on the new projection');
-  assert.equal(d.screenY, anchor.y, 'the overlay must be re-anchored on the new projection');
+  assert.equal(d.screenX, anchor.x - 44, 'the overlay must be anchored on the projected coordinate');
+  assert.equal(d.screenY, anchor.y, 'the overlay must be anchored on the projected coordinate');
 }));
 
-// D9 — restoring an open drawer must not replay the opening animation.
-tests.push(() => test('D9 a drawer open before a gesture comes back open without replaying', async () => {
+// D9 — dragging while an overlay drawer is open hides the projected overlay during movement
+// and re-anchors it open at the new position once the drag settles, without replaying open animation.
+tests.push(() => test('D9 dragging while a drawer is open preserves open state and re-anchors without replaying', async () => {
   resetClock();
   const spec = loadPage();
   const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const queries = [];
+  const rect = { left: 0, top: 0, width: 375, height: 700 };
+  const region = { southwest: { latitude: 48.0, longitude: 2.0 }, northeast: { latitude: 49.0, longitude: 3.0 } };
+  const movedRegion = { southwest: { latitude: 48.1, longitude: 2.1 }, northeast: { latitude: 49.1, longitude: 3.1 } };
+  p.mapCtx = {
+    getRegion: opt => { queries.push(opt); },
+    getScale: opt => opt.fail && opt.fail(),
+  };
+  p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
   p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  assert.equal(queries.length, 1, 'opening must issue one projection query');
+  queries.shift().success(region);
   await runClock();
-  assert.equal(p.data.mapDrawers[0].targetOpen, true, 'the drawer must start open');
+  assert.equal(p.data.clusterOpen, true, 'the drawer must start open');
+  assert.equal(p.data.mapDrawers[0].targetOpen, true, 'the drawer must start logically open');
   const openedHeight = p.data.mapDrawers[0].height;
+  queries.length = 0;
   const before = p.writes.length;
 
-  p.onMapRegionChange({ detail: { type: 'begin' } });
+  p.onMapRegionChange({ detail: { type: 'begin', causedBy: 'drag' } });
   await runClock();
-  p.onMapRegionChange({ detail: { type: 'end' } });
+  assert.equal(p.data.clusterOpen, true, 'drag begin must keep an already-open cluster open');
+  assert.equal(p.data.stackPositionsReady, false, 'drag begin must hide screen-space overlay during movement');
+
+  p.onMapRegionChange({ detail: { type: 'end', causedBy: 'drag', scale: p.data.mapScale } });
+  await runClock();
+  assert.equal(queries.length, 1, 'settling with an open drawer must re-project once, saw ' + queries.length);
+  queries.shift().success(movedRegion);
   await runClock();
 
   const d = p.data.mapDrawers[0];
-  assert.equal(d.targetOpen, true, 'the drawer must still be logically open after the gesture');
+  const movedAnchor = projection.project(p.allMemories[0].coordinates, movedRegion, rect);
+  assert.equal(p.data.stackPositionsReady, true, 'the open overlay must return once re-projected');
+  assert.equal(d.overlayMounted, true, 'the open drawer must remain mounted');
+  assert.equal(d.targetOpen, true, 'the drawer must come back directly open without replaying expand');
   assert.equal(d.height, openedHeight, 'the restored drawer must be at its open geometry');
-  assert.ok(d.rows.every(r => r.opacity === 1), 'the restored drawer must be fully open, not mid-animation');
+  assert.equal(d.screenX, movedAnchor.x - 44, 'the restored drawer must re-anchor at the new screenX');
+  assert.equal(d.screenY, movedAnchor.y, 'the restored drawer must re-anchor at the new screenY');
+  assert.ok(d.rows.every(r => r.opacity === 1), 'restored rows must be immediately opaque');
   assert.equal(frameWrites(p).length, 0, 'a restore must not start a frame loop');
   assert.equal(p.drawerResumeTarget, undefined, 'an overlay drawer must not queue a replay');
-  assert.ok(p.writes.length - before <= 6, 'a gesture round-trip must stay O(1) writes, saw ' + (p.writes.length - before));
+  assert.ok(p.writes.length - before <= 4, 'a drag round-trip must stay O(1) writes, saw ' + (p.writes.length - before));
 }));
 
 // D10 — both orientations must reproduce the old implementation pixel for pixel.
@@ -637,12 +673,303 @@ tests.push(() => test('D18 the overlay button draws no CSS circle behind the ass
   assert.equal(/cover-image/.test(block), false, 'the overlay must never use cover-image');
   assert.equal(/<s-icon[^>]*chevron/.test(block), false, 'the overlay must not substitute an icon font chevron');
   // Pressed feedback and the untouched hit box must survive the visual restoration.
-  assert.ok(block.includes("opacity:{{pressedStackRoot === drawer.rootId ? 0.85 : 1}}"),
+  assert.ok(block.includes("pressedStackRoot === drawer.rootId ? 0.85 : 1"),
     'the original pressed opacity must be preserved');
   assert.ok(block.includes('left:{{drawer.buttonBox.hitLeft}}px') && block.includes('width:{{drawer.buttonBox.hitWidth}}px'),
     'the hit box must keep using buttonBox.hitLeft/hitWidth');
   assert.ok(block.includes('height:{{drawer.buttonBox.hitHeight}}px'),
     'the hit box must keep using buttonBox.hitHeight');
+}));
+
+// D19 — Pure pan regression gate: with composed markers and collapsed clusters, a pan
+// must execute ZERO getRegion IPC, ZERO setData writes, ZERO timers, and keep overlay unmounted.
+tests.push(() => test('D19 pure pan with composed markers triggers zero getRegion, zero setData, zero timers', async () => {
+  resetClock();
+  const spec = loadPage();
+  const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const composed = new Map();
+  const keyOf = (m, s, c) => m.id + '|' + Boolean(s) + '|' + (Number(c) > 1 ? Number(c) : 1);
+  p.pinRenderer = {
+    peek: (m, s, c) => composed.get(keyOf(m, s, c)),
+    render: (m, s, c) => {
+      const out = '/tmp/pin-' + keyOf(m, s, c) + '.png';
+      composed.set(keyOf(m, s, c), out);
+      return Promise.resolve(out);
+    },
+  };
+  await buildMarkers(p);
+  assert.equal(p.data.markers[0].iconPath, '/tmp/pin-root|true|4.png',
+    'cluster root must receive its count-badged native bitmap');
+  assert.equal(p.data.stackPositionsReady, false,
+    'collapsed map must keep stackPositionsReady false');
+
+  const queries = [];
+  p.mapCtx = {
+    getRegion: opt => { queries.push(opt); },
+    getScale: opt => opt.fail && opt.fail(),
+  };
+  const writesBefore = p.writes.length;
+  const timersBefore = timerSeq;
+  p.onMapRegionChange({ detail: { type: 'begin', causedBy: 'drag' } });
+  p.onMapRegionChange({ detail: { type: 'end', causedBy: 'drag', scale: p.data.mapScale } });
+  await runClock();
+
+  assert.equal(queries.length, 0, 'pure pan must issue 0 getRegion queries, saw ' + queries.length);
+  assert.equal(p.writes.length - writesBefore, 0,
+    'pure pan must emit 0 setData writes, saw ' + (p.writes.length - writesBefore));
+  assert.equal(timerSeq - timersBefore, 0,
+    'pure pan must schedule 0 timers, saw ' + (timerSeq - timersBefore));
+  assert.equal(p.data.stackPositionsReady, false,
+    'collapsed overlay must remain unmounted throughout pure pan');
+}));
+
+// D20 — Native cluster count badge contract & single-drawer WXML mount gate.
+tests.push(() => test('D20 native cluster count badge helper and WXML closed-cluster unmount gate', async () => {
+  const realMarkers = require(path.join(REPO, 'miniprogram', 'utils', 'mapMarkers'));
+  assert.equal(realMarkers.clusterBadge(0), '');
+  assert.equal(realMarkers.clusterBadge(1), '');
+  assert.equal(realMarkers.clusterBadge(2), '2');
+  assert.equal(realMarkers.clusterBadge(9), '9');
+  assert.equal(realMarkers.clusterBadge(10), '9+');
+  assert.equal(realMarkers.clusterBadge(42), '9+');
+
+  const w = fs.readFileSync(WXML, 'utf8');
+  const overlay = w.slice(w.indexOf('class="map-stack-overlay"'));
+  const block = overlay.slice(0, overlay.indexOf('<!-- offline'));
+  assert.ok(block.includes('wx:if="{{!drawer.overlayMode || drawer.overlayMounted}}"'),
+    'overlay .pin-stack must unmount collapsed clusters in view-overlay mode');
+}));
+
+// D21 — Open & close CSS transition choreography:
+//   Open mounts the collapsed start frame first so CSS transitions play smoothly,
+//   and close keeps the single drawer mounted for the 320ms transition before unmounting.
+tests.push(() => test('D21 open mounts collapsed start frame first and close waits 320ms before unmount', async () => {
+  resetClock();
+  const spec = loadPage();
+  const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const queries = [];
+  const rect = { left: 0, top: 0, width: 375, height: 700 };
+  const region = { southwest: { latitude: 48.0, longitude: 2.0 }, northeast: { latitude: 49.0, longitude: 3.0 } };
+  p.mapCtx = {
+    getRegion: opt => { queries.push(opt); },
+    getScale: opt => opt.fail && opt.fail(),
+  };
+  p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
+
+  // Open: getRegion reply mounts collapsed start frame (overlayMounted: true, targetOpen: false)
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await pumpClock(10);
+  assert.equal(p.data.stackPositionsReady, true, 'start frame must be mounted on screen');
+  assert.equal(p.data.mapDrawers[0].overlayMounted, true, 'active cluster must be mounted on start frame');
+  assert.equal(p.data.mapDrawers[0].targetOpen, false, 'start frame must begin collapsed so CSS transition triggers');
+  assert.ok(p.data.mapDrawers[0].rows.every(r => r.opacity === 0), 'start frame rows must begin transparent');
+
+  // After ~32ms commit window, targetOpen flips true to trigger the 320ms expand transition
+  await runClock();
+  assert.equal(p.data.mapDrawers[0].targetOpen, true, 'drawer must transition to open after start frame commits');
+  assert.ok(p.data.mapDrawers[0].rows.every(r => r.opacity === 1), 'open rows must be opaque');
+
+  // Close: must stay mounted during the 320ms collapse CSS transition, then unmount cleanly
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  await pumpClock(150);
+  assert.equal(p.data.clusterOpen, false, 'logical clusterOpen flips false immediately');
+  assert.equal(p.data.stackPositionsReady, true, 'overlay must stay mounted during the 320ms collapse transition');
+  assert.equal(p.data.mapDrawers[0].overlayMounted, true, 'closing drawer must stay mounted mid-transition');
+  assert.equal(p.data.mapDrawers[0].targetOpen, false, 'closing drawer must target collapsed CSS state');
+  assert.ok(p.data.mapDrawers[0].rows.every(r => r.opacity === 0), 'closing rows must transition to transparent');
+
+  // Once the 320ms transition completes, overlay unmounts back to zero-cost state
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, false, 'overlay must unmount once close transition finishes');
+  assert.equal(p.data.mapDrawers[0].overlayMounted, false, 'drawer must report unmounted after close finishes');
+}));
+
+// D22 — Switching from an open cluster to another singleton or another cluster plays a
+// compact 200ms smooth close on the still map first (zero detachment), then glides the camera
+// to the newly tapped target and (for clusters) unfolds it smoothly after landing.
+tests.push(() => test('D22 switching markers folds open drawer in 200ms first, then glides camera cleanly', async () => {
+  resetClock();
+  const spec = loadPage();
+  const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const singleton = { id: 'solo', restaurant: 'Solo', date: '2026-01-02', coordinates: [48.92, 2.42], photo: 'wxfile://tmp/solo.jpg' };
+  const clusterB = [
+    { id: 'b0', restaurant: 'B0', date: '2026-01-03', coordinates: [48.95, 2.45], photo: 'wxfile://tmp/b0.jpg' },
+    { id: 'b1', restaurant: 'B1', date: '2026-01-04', coordinates: [48.95, 2.45], photo: 'wxfile://tmp/b1.jpg' },
+  ];
+  p.allMemories = p.allMemories.concat([singleton], clusterB);
+  p.markerGroups = [
+    p.markerGroups[0],
+    { memory: singleton, members: [singleton] },
+    { memory: clusterB[0], members: clusterB },
+  ];
+  p.visibleIds = ['root', 'solo', 'b0'];
+  p.data.latitude = 48.85; p.data.longitude = 2.34;
+  p.cameraViewport = () => ({ width: 375, height: 812, safeBottom: 34 });
+  p.cameraPadding = () => [180, 74, 250, 0];
+  const queries = [];
+  const rect = { left: 0, top: 0, width: 375, height: 812 };
+  const region = { southwest: { latitude: 48.0, longitude: 2.0 }, northeast: { latitude: 49.0, longitude: 3.0 } };
+  p.mapCtx = {
+    getRegion: opt => { queries.push(opt); },
+    getScale: opt => opt.fail && opt.fail(),
+  };
+  p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
+
+  // Open cluster 0 fully
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, true);
+  assert.equal(p.data.clusterOpen, true);
+
+  // Case A: tap another singleton -> 200ms compact smooth close on still map FIRST, then pan
+  p.onMarkerTap({ detail: { markerId: 1 } });
+  await pumpClock(100);
+  assert.equal(p.data.stackPositionsReady, true, 'old drawer must stay mounted during 200ms close animation');
+  assert.equal(p.data.mapDrawers[0].fastMotion, true, 'switch-close must engage compact 200ms duration');
+  assert.equal(p.data.mapDrawers[0].targetOpen, false, 'old drawer must fold toward closed pose');
+  assert.equal(p.cameraTransition, undefined, 'camera must stay still while old drawer folds');
+  assert.equal(p.data.selectedId, 'root', 'selection switches cleanly once fold finishes');
+
+  // At ~220ms old drawer unmounts, singleton becomes selected, and smooth camera travel runs
+  await pumpClock(240);
+  assert.equal(p.data.stackPositionsReady, false, 'old drawer must unmount before camera travel');
+  assert.equal(p.data.selectedId, 'solo', 'singleton must be selected after fold completes');
+  assert.ok(p.cameraTransition, 'camera must glide smoothly to the tapped singleton');
+  await runClock();
+  if (queries.length) queries.shift().success(region);
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, false, 'singleton selection keeps overlay unmounted');
+
+  // Case B: re-open cluster 0, then tap cluster B -> 200ms close A -> glide to cluster B -> unfold B
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, true);
+  assert.equal(p.drawerRootId, 'root');
+  const cardBeforeClusterTap = p.data.selectedId;
+
+  p.onMarkerTap({ detail: { markerId: 2 } });
+  await pumpClock(100);
+  assert.equal(p.data.stackPositionsReady, true, 'cluster A must fold smoothly in 200ms before panning to B');
+  assert.equal(p.data.mapDrawers[0].fastMotion, true, 'cluster switch must use 200ms fastMotion');
+  assert.equal(p.cameraTransition, null, 'camera must not pan while cluster A is still folding');
+
+  // Wait for 200ms close + start of camera travel to cluster B's drawer-framed anchor
+  await pumpClock(240);
+  assert.equal(p.data.stackPositionsReady, false, 'cluster A must be unmounted during camera travel');
+  assert.ok(p.cameraTransition, 'camera must travel to cluster B');
+  await runClock();
+  assert.equal(queries.length, 1, 'landing on cluster B must issue one projection query');
+  queries.shift().success(region);
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, true, 'cluster B must mount after camera settles');
+  assert.equal(p.data.mapDrawers.filter(d => d.overlayMounted).length, 1, 'only cluster B may be mounted');
+  const mountedB = p.data.mapDrawers.find(d => d.overlayMounted);
+  assert.equal(mountedB.rootId, 'b0', 'mounted cluster must be cluster B');
+  assert.equal(mountedB.targetOpen, true, 'cluster B must finish open');
+  assert.equal(p.data.selectedId, cardBeforeClusterTap, 'tapping a cluster must keep bottom card unchanged');
+}));
+
+// D23 — Drawer-framed cluster camera geometry, <24px skip, gesture cancel & reduceMotion.
+tests.push(() => test('D23 cluster framing clears bottom card, <24px skips travel, drag cancels handoff', async () => {
+  const realCamera = require(path.join(REPO, 'miniprogram', 'utils', 'mapCamera'));
+  const vp = { width: 375, height: 812, safeBottom: 34 };
+  const pad = [180, 74, 250, 0];
+  const usableMidY = realCamera.usableCentre(vp, pad).y;
+  const anchorY = realCamera.clusterAnchorY(vp, pad, 265);
+  assert.ok(anchorY > usableMidY, 'fitting upward cluster anchor must shift below midpoint for clear sky');
+  assert.ok(anchorY <= vp.height - pad[2] - 12, 'cluster anchor must keep >=12px clearance above bottom card');
+  const tallAnchorY = realCamera.clusterAnchorY(vp, pad, 464);
+  assert.ok(tallAnchorY < usableMidY, 'tall cluster exceeding band height must anchor near top so downward rows stay visible');
+  assert.ok(tallAnchorY >= pad[0] + 89, 'top-anchored tall cluster root must clear the search bar');
+
+  // Verify drag mid-200ms-switch-close cancels pending singleton/cluster handoff immediately
+  resetClock();
+  const spec = loadPage();
+  const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const singleton = { id: 'solo', restaurant: 'Solo', date: '2026-01-02', coordinates: [48.92, 2.42], photo: 'wxfile://tmp/solo.jpg' };
+  p.allMemories = p.allMemories.concat([singleton]);
+  p.markerGroups = [p.markerGroups[0], { memory: singleton, members: [singleton] }];
+  p.visibleIds = ['root', 'solo'];
+  const queries = [];
+  const rect = { left: 0, top: 0, width: 375, height: 812 };
+  const region = { southwest: { latitude: 48.0, longitude: 2.0 }, northeast: { latitude: 49.0, longitude: 3.0 } };
+  p.mapCtx = { getRegion: opt => queries.push(opt), getScale: opt => opt.fail && opt.fail() };
+  p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await runClock();
+
+  p.onMarkerTap({ detail: { markerId: 1 } });
+  await pumpClock(80);
+  p.onMapRegionChange({ detail: { type: 'begin', causedBy: 'drag' } });
+  p.onMapRegionChange({ detail: { type: 'end', causedBy: 'drag', scale: p.data.mapScale } });
+  await runClock();
+  assert.equal(p.data.selectedId, 'root', 'user drag mid-fold must cancel pending switch handoff');
+  assert.equal(p.data.stackPositionsReady, false, 'overlay must stay cleanly unmounted after drag');
+  assert.equal(p.cameraCentreStale, true, 'user drag must mark camera centre stale for next tap');
+
+  // Verify reduceMotion (quiet) skips 200ms close wait and switches immediately
+  p.data.quiet = true;
+  p.cameraCentreStale = false;
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await runClock();
+  p.onMarkerTap({ detail: { markerId: 1 } });
+  assert.equal(p.data.selectedId, 'solo', 'quiet mode must switch immediately without 200ms animation wait');
+  assert.equal(p.data.stackPositionsReady, false, 'quiet mode must unmount old drawer immediately');
+}));
+
+// D24 — Hybrid static native customCallout handoff:
+//   320ms animation runs purely in WebView overlay (zero customCallout), then hands off to a
+//   single static native customCallout with exact anchorY = calloutOffset + 89 so dragging
+//   keeps the expanded cluster continuously visible at 60fps while only hit regions hide.
+tests.push(() => test('D24 hybrid static customCallout keeps open cluster continuously visible during drag', async () => {
+  resetClock();
+  const spec = loadPage();
+  const p = makePage(spec, 4, 900, { mode: 'view-overlay' });
+  const queries = [];
+  const rect = { left: 0, top: 0, width: 375, height: 700 };
+  const region = { southwest: { latitude: 48.0, longitude: 2.0 }, northeast: { latitude: 49.0, longitude: 3.0 } };
+  p.mapCtx = { getRegion: opt => queries.push(opt), getScale: opt => opt.fail && opt.fail() };
+  p.createSelectorQuery = () => ({ select: () => ({ boundingClientRect: cb => ({ exec: () => cb(rect) }) }) });
+
+  // During 320ms expand animation: no customCallout yet
+  p.data.markers[0].customCallout = undefined;
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  queries.shift().success(region);
+  await pumpClock(200);
+  assert.equal(p.data.hybridCalloutRootId, '', 'no hybrid customCallout may mount mid-320ms-expand');
+  assert.equal(p.data.markers[0].customCallout, undefined, 'marker must stay free of customCallout mid-expand');
+
+  // After expand settles: single static customCallout mounts with exact anchorY = calloutOffset + 89
+  await runClock();
+  assert.equal(p.data.hybridCalloutRootId, 'root', 'settled open cluster must mount static hybrid callout');
+  assert.ok(p.data.markers[0].customCallout, 'open cluster marker must carry static customCallout');
+  assert.equal(p.data.markers[0].customCallout.anchorY, p.data.mapDrawers[0].calloutOffset + stack.HEIGHT,
+    'hybrid anchorY must offset by 89px root marker height for pixel-exact alignment');
+  assert.equal(p.data.mapDrawers[0].hybridInkHidden, true, 'WebView ink must hide after overlap commit');
+
+  // During drag: hit overlay hides (stackPositionsReady=false), native customCallout STAYS MOUNTED!
+  p.onMapRegionChange({ detail: { type: 'begin', causedBy: 'drag' } });
+  assert.equal(p.data.stackPositionsReady, false, 'only transparent hit overlay hides during drag');
+  assert.equal(p.data.hybridCalloutRootId, 'root', 'native customCallout slot must stay mounted during drag');
+  assert.ok(p.data.markers[0].customCallout, 'native marker customCallout must stay visible during drag');
+  p.onMapRegionChange({ detail: { type: 'end', causedBy: 'drag', scale: p.data.mapScale } });
+  await runClock();
+  queries.shift().success(region);
+  await runClock();
+  assert.equal(p.data.stackPositionsReady, true, 'hit overlay returns after drag end');
+  assert.equal(p.data.hybridCalloutRootId, 'root', 'hybrid callout remains steady across drag end');
+
+  // Manual close: hands back to WebView ink, plays 320ms collapse, clears customCallout cleanly
+  p.onDrawerToggle({ currentTarget: { dataset: { index: 0 } } });
+  await runClock();
+  assert.equal(p.data.hybridCalloutRootId, '', 'closing must unmount callout slot');
+  assert.equal(p.data.markers[0].customCallout, undefined, 'closing must clear marker customCallout');
+  assert.equal(p.data.stackPositionsReady, false, 'closing must unmount overlay back to zero-cost state');
 }));
 
 (async () => {
