@@ -1,1 +1,1 @@
-{"navigationStyle":"default","navigationBarTitleText":"双人空间","usingComponents":{"s-identity-gate":"/components/identity-gate/index"}}
+{"navigationStyle":"default","navigationBarTitleText":"双人空间","usingComponents":{"s-identity-gate":"/components/identity-gate/index","s-space-together":"/components/space-together/index"}}

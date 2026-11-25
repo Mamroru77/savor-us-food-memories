@@ -34,10 +34,10 @@ Page({
   },
 
   onLoad() {
-    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
-
     this.visible=false;this.alive=true;
-    this.setData({ headerTop: metrics.getMetrics().headerTop });
+    const patch = { headerTop: metrics.getMetrics().headerTop };
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) { patch.menuButtonTop=rect.top; patch.menuButtonHeight=rect.height; patch.menuButtonBorderRadius=rect.height/2; } } catch(e){}
+    this.setData(patch);
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
   },
 
@@ -52,10 +52,7 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
-    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
-
     this.visible=true;
-    this.setData({imageErrors:{},focusedField:'',headerTop:metrics.getMetrics(true).headerTop});
     // Tab bar contract: every tab page pushes selected + theme + quiet.
     const state = store.get();
     this._tabAppearance = {
@@ -64,6 +61,9 @@ Page({
     };
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.showSelection(0, this._tabAppearance);
+    const patch = { imageErrors: {}, focusedField: '', headerTop: metrics.getMetrics(true).headerTop };
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) { patch.menuButtonTop=rect.top; patch.menuButtonHeight=rect.height; patch.menuButtonBorderRadius=rect.height/2; } } catch(e){}
+    this.setData(patch);
     this.syncState(state);
     return store.syncCloud().catch(error => {
       if(!this.alive || !this.visible || ['DIAGNOSTIC_MODE','IDENTITY_LOCKED','STALE_IDENTITY'].includes(error.code))return;

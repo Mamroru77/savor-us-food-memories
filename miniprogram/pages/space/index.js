@@ -1,7 +1,7 @@
 const secondaryUI=require('../../utils/secondaryUI');
 const i18n=require('../../utils/i18n');
 const identity=require('../../utils/identity'),spaces=require('../../utils/spaces'),copy=require('../../utils/spaceCopy');
-const store=require('../../utils/store'),media=require('../../utils/sharedMedia'),photos=require('../../utils/photos');
+const store=require('../../utils/store'),media=require('../../utils/sharedMedia'),photos=require('../../utils/photos'),localDate=require('../../utils/localDate');
 Page({
  onFieldFocus:secondaryUI.onFieldFocus,onFieldBlur:secondaryUI.onFieldBlur,
  data:{locked:true,busy:false,pending:false,mediaPending:false,labels:copy(),copy:i18n.copy(),space:null,invitation:null,wishes:[],meals:[],publishCandidates:[],message:'',inviteText:'',wishTitle:'',wishNote:'',userId:''},
@@ -41,9 +41,10 @@ Page({
  revokeInvite(){if(this.data.invitation)this.perform('revokeInvite',{token:this.data.invitation.token});},
  async acceptInvite(){
   if(this.data.busy)return;const lease=identity.lease();
-  try{const token=spaces.parseToken(this.data.inviteText);await spaces.preview(token);identity.assertLease(lease);this.confirm(copy().joinConsent,()=>this.perform('acceptInvite',{token,consent:true}));}
+  try{const token=spaces.parseToken(this.data.inviteText);await spaces.preview(token);identity.assertLease(lease);this.confirm(copy().joinConsent,()=>this.perform('acceptInvite',{token,consent:true,clientDate:localDate.today()}));}
   catch(e){if(identity.isCurrent(lease))this.setData({message:copy().error+(e.code||e.message)});}
  },
+ onSaveTogetherSince(e){const date=e&&e.detail&&e.detail.date;if(!date)return;try{this.perform('setTogetherSince',{...this.scope(),togetherSince:date});}catch(err){this.setData({message:err.message});}},
  confirm(content,fn){const token=identity.lease();wx.showModal({title:copy().confirm,content,success:r=>{if(r.confirm&&identity.isCurrent(token)&&this.active)fn();}});},
  leave(){try{const scope=this.scope();this.confirm(copy().leaveConsent,()=>this.perform('leave',{...scope,consent:true}));}catch(e){this.setData({message:e.message});}},
  addWish(){try{this.perform('addWish',{...this.scope(),title:this.data.wishTitle,note:this.data.wishNote});}catch(e){this.setData({message:e.message});}},

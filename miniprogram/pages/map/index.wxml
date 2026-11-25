@@ -190,7 +190,7 @@
     <view class="place-open" bindtap="onPlaceOpen" aria-role="button" aria-label="{{copy.sbbc297130e}} {{selected.restaurant}}">
       <view class="place-copy">
         <text class="place-name">{{selected.restaurant}}</text>
-        <text class="place-line">{{selected.categoryLabel}}</text>
+        <text wx:if="{{selected.categoryLabel}}" class="place-line">{{selected.categoryLabel}}</text>
         <text class="place-line">{{distanceLabel}}</text>
         <text class="place-date">{{selected.dateLabel}}</text>
       </view>
@@ -199,7 +199,7 @@
     <view class="place-location-actions">
       <text bindtap="onCorrectLocation" aria-role="button" aria-label="{{copy.sddc6088f76}}">{{copy.s48e09e45c5}}</text><text bindtap="onNavigate" aria-role="button" aria-label="{{copy.s5da3945bd1}}">{{copy.se56f29da2a}}</text>
     </view>
-    <view class="bookmark-place" bindtap="onBookmark" aria-role="button" aria-label="{{selectedSaved ? copy.s98678978a3 : copy.s39cf30fa7c}}">
+    <view class="bookmark-place {{selectedSaved ? 'is-saved' : ''}}" bindtap="onBookmark" aria-role="button" aria-label="{{selectedSaved ? copy.s98678978a3 : copy.s39cf30fa7c}}">
       <s-icon color="{{dusk ? '#eeeae3' : '#1b1c1a'}}" name="bookmark" size="37" fill="{{selectedSaved ? (dusk ? '#eeeae3' : '#1b1c1a') : 'none'}}" stroke="1.75" />
     </view>
   </view>

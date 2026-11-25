@@ -4,7 +4,12 @@ const ACCOUNTS='savor_accounts',INVITES='savor_invites',SPACES='savor_spaces',WI
 const fail=code=>{const e=new Error(code);e.code=code;throw e;};
 const text=(value,max)=>typeof value==='string'?value.trim().slice(0,max):'';
 const operation=value=>{if(typeof value!=='string'||!/^[A-Za-z0-9_-]{8,100}$/.test(value))fail('INVALID_OPERATION_ID');return value;};
-const publicSpace=s=>s?{id:s._id,version:s.version,status:s.status,createdAt:s.createdAt,members:s.members.map(m=>({userId:m.userId}))}:null;
+const dateFromMs=ms=>new Date(ms+8*3600000).toISOString().slice(0,10);
+const dateOrdinal=value=>{if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return NaN;const p=value.split('-').map(Number);const n=Date.UTC(p[0],p[1]-1,p[2]);return new Date(n).toISOString().slice(0,10)===value?n/86400000:NaN;};
+const MIN_TOGETHER_ORDINAL=dateOrdinal('1900-01-01');
+const validTogetherDate=(value,nowMs)=>{const n=dateOrdinal(value);return Number.isFinite(n)&&n>=MIN_TOGETHER_ORDINAL&&n<=dateOrdinal(dateFromMs(nowMs))+1;};
+const spaceTogetherSince=s=>s&&Number.isFinite(dateOrdinal(s.togetherSince))?s.togetherSince:(s&&Number.isFinite(s.createdAt)?dateFromMs(s.createdAt):'');
+const publicSpace=s=>s?{id:s._id,version:s.version,status:s.status,createdAt:s.createdAt,togetherSince:spaceTogetherSince(s),togetherRevision:Number.isInteger(s.togetherRevision)?s.togetherRevision:0,members:s.members.map(m=>({userId:m.userId}))}:null;
 function createHandler({context,repository,now=Date.now,random=()=>crypto.randomBytes(32).toString('hex')}){
  return async function handle(event={}){
   const wx=context();if(!wx.OPENID||!wx.APPID)return {success:false,code:'UNAUTHENTICATED'};
@@ -61,7 +66,9 @@ function createHandler({context,repository,now=Date.now,random=()=>crypto.random
     if(i.status!=='pending'||i.expiresAt<=time||i.ownerUserId===actor.userId)fail('INVITE_UNAVAILABLE');
     if(await active())fail('ALREADY_BOUND');
     const owner=await tx.get(ACCOUNTS,i.ownerAccountKey);if(!owner||owner.userId!==i.ownerUserId||owner.activeSpaceId||owner.pendingInviteId!==i._id)fail('INVITE_UNAVAILABLE');
-    const id='s_'+hash(i._id),space={_id:id,status:'active',version:1,createdAt:time,members:[{userId:owner.userId,accountKey:i.ownerAccountKey},{userId:actor.userId,accountKey}],wishIds:[],mealIds:[]};
+    const serverToday=dateFromMs(time);
+    const togetherSince=validTogetherDate(event.clientDate,time)&&Math.abs(dateOrdinal(event.clientDate)-dateOrdinal(serverToday))<=1?event.clientDate:serverToday;
+    const id='s_'+hash(i._id),space={_id:id,status:'active',version:1,createdAt:time,togetherSince,togetherRevision:0,togetherOperations:[],members:[{userId:owner.userId,accountKey:i.ownerAccountKey},{userId:actor.userId,accountKey}],wishIds:[],mealIds:[]};
     if(actor.pendingInviteId){const own=await tx.get(INVITES,actor.pendingInviteId);if(own&&own.status==='pending')await tx.set(INVITES,own._id,{...own,status:'revoked',revokedAt:time});}
     await tx.set(SPACES,id,space);
     await tx.set(ACCOUNTS,i.ownerAccountKey,{...owner,activeSpaceId:id,pendingInviteId:null,membershipVersion:(owner.membershipVersion||0)+1});
@@ -78,6 +85,14 @@ function createHandler({context,repository,now=Date.now,random=()=>crypto.random
     await tx.set(SPACES,s._id,{...s,status:'closed',version:s.version+1,closedAt:time});return ok({closed:true});
    }
    const s=await active(true);
+   if(event.action==='setTogetherSince'){
+    operation(event.operationId);
+    const ops=Array.isArray(s.togetherOperations)?s.togetherOperations:[];
+    if(ops.includes(receipt))return ok({space:publicSpace(s)});
+    if(!validTogetherDate(event.togetherSince,time))fail('INVALID_DATE');
+    const next={...s,togetherSince:event.togetherSince,togetherUpdatedAt:time,togetherUpdatedBy:actor.userId,togetherRevision:(Number.isInteger(s.togetherRevision)?s.togetherRevision:0)+1,togetherOperations:ops.concat(receipt).slice(-64)};
+    await tx.set(SPACES,s._id,next);return ok({space:publicSpace(next)});
+   }
    if(event.action==='list'){
     const wishes=[],meals=[];
     for(const id of s.wishIds){const w=await tx.get(WISHES,id);if(w&&w.status!=='deleted')wishes.push(w);}

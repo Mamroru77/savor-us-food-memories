@@ -525,5 +525,185 @@ test('F4 this round added no new bound camera channel to the frozen template', (
   assert.equal((wxml.match(/\blongitude="\{\{/g) || []).length, 1, 'exactly one bound longitude');
 });
 
+// ---- initial high-frequency hotspot positioning --------------------------------
+function confirmedMemory(id, coordinates, extra) {
+  return Object.assign(memory(id, coordinates, extra), {
+    cloudId: 'cloud-' + id,
+    locationSource: 'tencent-picker',
+    coordinateSystem: 'gcj02',
+    geoConfirmed: true,
+  });
+}
+
+test('H1 mapCamera.hotspot picks the highest-frequency neighborhood and ignores distant outliers', () => {
+  assert.equal(typeof camera.hotspot, 'function', 'mapCamera.hotspot must be exported');
+  const items = [
+    confirmedMemory('newest-trip', [31.1260, 121.3605]),
+    confirmedMemory('taicang-1', [31.4600, 121.1392]),
+    confirmedMemory('taicang-2', [31.4604, 121.1377]),
+    confirmedMemory('taicang-3', [31.4596, 121.1381]),
+    confirmedMemory('taicang-4', [31.4807, 121.1562]),
+    confirmedMemory('taicang-5', [31.4251, 121.1380]),
+  ];
+  const plan = camera.hotspot(items, VIEWPORT, EXPECTED_PADDING);
+  assert.ok(plan, 'hotspot returns a camera plan');
+  assert.equal(plan.selected.id, 'taicang-1', 'picks most recent inside the densest 0.5km core of the winning 15km neighborhood');
+  assert.equal(plan.count, 5, 'excludes 43km distant single outlier');
+  assert.ok(plan.level >= 11 && plan.level <= 15, 'frames Taicang at neighborhood zoom, not metropolis scale 10; got ' + plan.level);
+  const corners = camera.cornersFor(plan.rawCentre, plan.level, VIEWPORT, EXPECTED_PADDING);
+  const box = camera.bounds(corners.map(c => [c.latitude, c.longitude]));
+  for (const m of items.slice(1)) {
+    assert.ok(m.coordinates[1] >= box.west - 1e-9 && m.coordinates[1] <= box.east + 1e-9, `${m.id} lng inside unobstructed viewport box`);
+    assert.ok(m.coordinates[0] >= box.south - 1e-9 && m.coordinates[0] <= box.north + 1e-9, `${m.id} lat inside unobstructed viewport box`);
+  }
+  const composed = camera.centreForPoint(plan.rawCentre, plan.level, VIEWPORT, EXPECTED_PADDING);
+  assert.ok(Math.abs(plan.centre[0] - composed[0]) < 1e-9 && Math.abs(plan.centre[1] - composed[1]) < 1e-9);
+
+  // Midpoint trap: a sparse restaurant halfway between two clusters must not outscore a tight plaza hub
+  const midpointItems = [
+    confirmedMemory('wanda-1', [31.4600, 121.1392]),
+    confirmedMemory('wanda-2', [31.4604, 121.1377]),
+    confirmedMemory('wanda-3', [31.4596, 121.1381]),
+    confirmedMemory('wanda-4', [31.4601, 121.1370]),
+    confirmedMemory('midpoint', [31.4559, 121.1351]),
+    confirmedMemory('south-1', [31.4493, 121.1271]),
+    confirmedMemory('south-2', [31.4434, 121.1290]),
+  ];
+  const midpointPlan = camera.hotspot(midpointItems, VIEWPORT, EXPECTED_PADDING);
+  assert.equal(midpointPlan.selected.id, 'wanda-1', 'tight plaza hub outscores sparse midpoint bridging south pins');
+});
+
+test('H2 mapCamera.hotspot tie-breaks by recency, clamps tight spots to 15, and degrades cleanly at height=0', () => {
+  const tied = [
+    confirmedMemory('nj-1', [32.0600, 118.7960]),
+    confirmedMemory('nj-2', [32.0610, 118.7970]),
+    confirmedMemory('sz-1', [31.2980, 120.5850]),
+    confirmedMemory('sz-2', [31.2990, 120.5860]),
+  ];
+  const win = camera.hotspot(tied, VIEWPORT, EXPECTED_PADDING);
+  assert.equal(win.selected.id, 'nj-1', 'tie-breaks equal cluster counts by recency');
+
+  const single = camera.hotspot([confirmedMemory('only', [31.4600, 121.1392])], VIEWPORT, EXPECTED_PADDING);
+  assert.equal(single.level, 15, 'clamps tight/single point to HOTSPOT_MAX_SCALE=15');
+
+  assert.equal(camera.hotspot([], VIEWPORT, EXPECTED_PADDING), null);
+  assert.equal(camera.hotspot([memory('bad', [NaN, 'x'])], VIEWPORT, EXPECTED_PADDING), null);
+
+  const zeroHeight = camera.hotspot([confirmedMemory('a', [31.46, 121.13]), confirmedMemory('b', [31.47, 121.14])], { width: 375, height: 0, safeBottom: 0 }, [180, 65, 312, 0]);
+  assert.equal(zeroHeight.level, 13, 'height=0 falls back to level 13 instead of clamping to min scale');
+  assert.deepEqual(zeroHeight.centre, zeroHeight.rawCentre);
+});
+
+test('H3 cold first open via applyFilters initial lands directly on hotspot with zero Paris pan and cameraAnchorPending=false', () => {
+  const items = [
+    confirmedMemory('newest-trip', [31.1260, 121.3605]),
+    confirmedMemory('taicang-1', [31.4600, 121.1392]),
+    confirmedMemory('taicang-2', [31.4604, 121.1377]),
+    confirmedMemory('taicang-3', [31.4596, 121.1381]),
+    confirmedMemory('taicang-4', [31.4807, 121.1562]),
+    confirmedMemory('taicang-5', [31.4251, 121.1380]),
+  ];
+  const h = page({ memories: items, data: { latitude: 48.8535, longitude: 2.3392, selected: null, selectedId: 'comptoir' } });
+  h.p.initialViewportPositioned = false;
+  const expectedHotspot = camera.hotspot(items, h.p.cameraViewport(), h.p.cameraPadding());
+
+  h.p.applyFilters('', 'all', '', 'initial');
+
+  assert.equal(h.p.initialViewportPositioned, true);
+  assert.equal(h.p.cameraTransition, null, 'must land directly without 640ms cross-Eurasia pan');
+  assert.equal(h.p.cameraAnchorPending, false, 'cold initial land must not pull back to stale region');
+  assert.equal(h.p.data.selectedId, 'taicang-1');
+  assert.ok(Math.abs(h.p.data.latitude - expectedHotspot.centre[0]) < 1e-9);
+  assert.ok(Math.abs(h.p.data.longitude - expectedHotspot.centre[1]) < 1e-9);
+  assert.equal(h.p.data.commandScale, expectedHotspot.level);
+  assert.equal(h.p.data.mapScale, expectedHotspot.level);
+  assert.ok(Math.abs(h.p.cameraLiveCentre[0] - expectedHotspot.centre[0]) < 1e-9);
+  assert.ok(Math.abs(h.p.cameraLiveCentre[1] - expectedHotspot.centre[1]) < 1e-9);
+});
+
+test('H4 onLoad pre-seeds cached hotspot before first render and first syncState skips redundant pan', () => {
+  const items = [
+    confirmedMemory('newest-trip', [31.1260, 121.3605]),
+    confirmedMemory('taicang-1', [31.4600, 121.1392]),
+    confirmedMemory('taicang-2', [31.4604, 121.1377]),
+    confirmedMemory('taicang-3', [31.4596, 121.1381]),
+    confirmedMemory('taicang-4', [31.4807, 121.1562]),
+    confirmedMemory('taicang-5', [31.4251, 121.1380]),
+  ];
+  const origGet = deps.store.get;
+  const origRev = deps.store.revision;
+  const origId = deps.identity.snapshot;
+  const state = { memories: items, settings: { theme: 'light', reduceMotion: false, showNativePoi: true }, identity: { userId: 'u_hotspot' } };
+  deps.store.get = () => state;
+  deps.store.revision = () => 7;
+  deps.identity.snapshot = () => ({ locked: false, userId: 'u_hotspot' });
+  try {
+    const h = page({ memories: [], data: { latitude: 48.8535, longitude: 2.3392, selected: null, selectedId: 'comptoir' } });
+    h.p.renderedRevision = undefined;
+    h.p.onLoad();
+    assert.ok(Math.abs(h.p.data.latitude - 31.45) < 0.05, 'onLoad pre-seeds Taicang latitude off Paris immediately');
+    assert.ok(Math.abs(h.p.data.longitude - 121.14) < 0.05, 'onLoad pre-seeds Taicang longitude immediately');
+    assert.equal(h.p.data.selectedId, 'taicang-1');
+    assert.equal(h.p.cameraTransition, null);
+
+    h.p.syncState(state);
+    assert.equal(h.p.initialViewportPositioned, true);
+    assert.equal(h.p.cameraTransition, null, 'initial syncState must not trigger focusMapCamera travel');
+    assert.equal(h.p.data.selectedId, 'taicang-1');
+    assert.ok(Math.abs(h.p.data.latitude - 31.45) < 0.05);
+  } finally {
+    deps.store.get = origGet;
+    deps.store.revision = origRev;
+    deps.identity.snapshot = origId;
+  }
+});
+
+test('H5 empty boot waits for real memories, later tap travels normally, and account switch resets hotspot', () => {
+  const taicang = [
+    confirmedMemory('newest-trip', [31.1260, 121.3605]),
+    confirmedMemory('taicang-1', [31.4600, 121.1392]),
+    confirmedMemory('taicang-2', [31.4604, 121.1377]),
+    confirmedMemory('taicang-3', [31.4596, 121.1381]),
+    confirmedMemory('taicang-4', [31.4807, 121.1562]),
+    confirmedMemory('taicang-5', [31.4251, 121.1380]),
+  ];
+  const beijing = [
+    confirmedMemory('bj-1', [39.9042, 116.4074]),
+    confirmedMemory('bj-2', [39.9050, 116.4080]),
+  ];
+  const h = page({ memories: [], data: { latitude: 48.8535, longitude: 2.3392, selected: null, selectedId: 'comptoir' } });
+  h.p.renderedRevision = undefined;
+  const origRev = deps.store.revision;
+  let rev = 1;
+  deps.store.revision = () => rev;
+  try {
+    h.p.syncState({ memories: [], settings: {}, identity: { userId: 'u_a' } });
+    assert.notEqual(h.p.initialViewportPositioned, true, 'empty/demo boot waits for real memories');
+
+    rev = 2;
+    h.p.syncState({ memories: taicang, settings: {}, identity: { userId: 'u_a' } });
+    assert.equal(h.p.initialViewportPositioned, true);
+    assert.equal(h.p.cameraTransition, null);
+    assert.equal(h.p.data.selectedId, 'taicang-1');
+    assert.ok(Math.abs(h.p.data.latitude - 31.45) < 0.05);
+
+    // Later marker tap still launches smooth A->B cameraTransition
+    const outlierIdx = h.p.markerGroups.findIndex(g => g.memory.id === 'newest-trip');
+    assert.ok(outlierIdx >= 0);
+    h.p.onMarkerTap({ detail: { markerId: outlierIdx } });
+    assert.ok(h.p.cameraTransition, 'subsequent user tap still travels smoothly');
+
+    // Account switch resets initialViewportPositioned and lands directly on account B's hotspot
+    rev = 3;
+    h.p.syncState({ memories: beijing, settings: {}, identity: { userId: 'u_b' } });
+    assert.equal(h.p.initialViewportPositioned, true);
+    assert.equal(h.p.cameraTransition, null);
+    assert.equal(h.p.data.selectedId, 'bj-1');
+    assert.ok(Math.abs(h.p.data.latitude - 39.90) < 0.05);
+  } finally {
+    deps.store.revision = origRev;
+  }
+});
+
 console.log(passed + ' passed, ' + failed + ' failed; production methods and production geometry, synthetic native replies. No motion claim: the platform exposes no camera animation API.');
 if (failed) process.exitCode = 1;

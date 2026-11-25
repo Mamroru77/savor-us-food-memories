@@ -40,11 +40,10 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
    h.tap(b,to);assert.equal(h.calls.length,1);assert.equal(h.timers.length,0);assert.equal(JSON.stringify([b.data,peer.data]),before);
   }
  });
- await test('parking preserves unchanged icon commands while updating the two selected endpoints',()=>{
-  const h=controller(),visible=h.bar(),cached=h.bar();visible.showSelection(2);const prior=cached.data.viewState.icons;
-  h.setRoute(3);visible.showSelection(3);const next=cached.data.viewState.icons;
-  for(const i of [0,1,4])assert.equal(next[i],prior[i]);for(const i of [2,3])assert.notEqual(next[i],prior[i]);
-  assert.equal(next[2].name,'utensils');assert.equal(next[3].name,'users-round');
+ await test('Zero-Rewind route isolation keeps peer bars frozen without cross-WebView parking overwrites',()=>{
+  const h=controller(),add=h.bar();h.setRoute(3);const us=h.bar();add.showSelection(2);const prior=clone(us.data.viewState);
+  us.showSelection(3);assert.equal(add.data.selected,2);assert.equal(add.data.viewState.icons[2].name,'utensils-crossed');
+  assert.equal(us.data.viewState.icons[3].name,'users-round');assert.deepEqual(clone(us.data.viewState),prior);
  });
  await test('parked ready renderer does not arm a timeout while background image callbacks are suspended',async()=>{
   const c=morph({deferStatic:true});c.receive(command(310,0,false,'users-round','users-round'));
@@ -65,30 +64,30 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
    assert(r.durationMs>=480&&r.durationMs<=480+delay+32);assert.equal(c.maxOutstanding,1);assert.equal(c.data.staticName,'map-pinned');assert.equal(c.data.painting,false);spec.lifetimes.detached.call(c);
   });
  }
- await test('vbug5 cached Us endpoints are parked to Add before the next Us command',()=>{
-  const h=controller(),add=h.bar(),us=h.bar();h.setRoute(3);us.showSelection(3);h.setRoute(2);add.showSelection(2);
-  assert.equal(us.data.entryActive,false);assert.equal(us.data.viewState.icons[2].name,'utensils-crossed');assert.equal(us.data.viewState.icons[3].name,'users');
-  const parked=clone(us.data.viewState);h.tap(add,3);h.setRoute(3);us.showSelection(3);
-  for(let i=0;i<5;i++)assert.equal(parked.icons[i].name,us.data.viewState.icons[i].fromName);
-  assert.equal(us.data.entryActive,true);assert.equal(add.data.entryActive,false);assert.equal(h.calls.length,1);
+ await test('cached Us endpoints remain permanently on Us active icon with zero backward rewind',()=>{
+  const h=controller(),add=h.bar();h.setRoute(3);const us=h.bar();us.showSelection(3);h.setRoute(2);add.showSelection(2);
+  assert.equal(us.data.entryActive,true);assert.equal(us.data.viewState.icons[2].name,'utensils');assert.equal(us.data.viewState.icons[3].name,'users-round');
+  const frozen=clone(us.data.viewState);h.tap(add,3);h.setRoute(3);us.showSelection(3);
+  for(let i=0;i<5;i++){assert.equal(us.data.viewState.icons[i].fromName,us.data.viewState.icons[i].name);assert.equal(us.data.viewState.icons[i].name,frozen.icons[i].name);}
+  assert.equal(us.data.enterPulse,1);assert.equal(add.data.selected,2);assert.equal(h.calls.length,1);
  });
- await test('all five forward and cached reverse destinations have parked endpoints matching their next origins',()=>{
-  const h=controller(),bars=[h.bar(),h.bar(),h.bar(),h.bar(),h.bar()];h.setRoute(0);bars[0].showSelection(0);
+ await test('all five forward and cached reverse destinations hold own endpoints and alternate GPU pulse',()=>{
+  const h=controller(),bars=[0,1,2,3,4].map(r=>{h.setRoute(r);return h.bar();});h.setRoute(0);bars[0].showSelection(0);
   let from=0;for(const to of [1,2,3,4,3,2,1,0]){
-   const before=clone(bars[to].data.viewState);h.tap(bars[from],to);h.setRoute(to);bars[to].showSelection(to);h.calls.at(-1).success();
-   for(let i=0;i<5;i++)assert.equal(before.icons[i].name,bars[to].data.viewState.icons[i].fromName);
-   assert.equal(bars[to].data.entryActive,true);for(let i=0;i<5;i++)if(i!==to)assert.equal(bars[i].data.entryActive,false);from=to;
+   const priorPulse=bars[to].data.enterPulse||0;h.tap(bars[from],to);h.setRoute(to);bars[to].showSelection(to);h.calls.at(-1).success();
+   for(let i=0;i<5;i++){assert.equal(bars[to].data.viewState.icons[i].fromName,bars[to].data.viewState.icons[i].name);}
+   assert.notEqual(bars[to].data.enterPulse,priorPulse,'enterPulse alternates on arrival');assert.equal(bars[to].data.entryActive,true);from=to;
   }assert.equal(h.calls.length,8);
  });
- await test('new precreated bar after confirmed page inherits current endpoints without replaying old origin',()=>{
+ await test('new precreated bar after confirmed page inherits current endpoints without bouncing',()=>{
   const h=controller(),source=h.bar();h.tap(source,3);h.setRoute(3);source.showSelection(3);const future=h.bar();
-  assert.equal(future.data.entryActive,false);assert.equal(future.data.viewState.icons[2].name,'utensils');assert.equal(future.data.viewState.icons[2].fromName,'utensils');
+  assert.equal(future.data.entryActive,false);assert.equal(future.data.enterPulse,0);assert.equal(future.data.viewState.icons[2].name,'utensils');assert.equal(future.data.viewState.icons[2].fromName,'utensils');
   assert.equal(future.data.viewState.icons[3].name,'users-round');assert.equal(future.data.viewState.icons[3].fromName,'users-round');
  });
- await test('cached park failure cannot abort current show or a later native tap',()=>{
+ await test('peer failure or isolated bar errors cannot affect current show or a later native tap',()=>{
   const h=controller(),a=h.bar(),b=h.bar();b.setData=()=>{throw Error('cached view unavailable');};a.showSelection(2);h.tap(a,3);assert.equal(h.calls.length,1);assert.equal(a.data.entryActive,true);
  });
- await test('repeated current show does not republish already parked background bars',()=>{
+ await test('repeated current show preserves dedupe without republishing',()=>{
   const h=controller(),a=h.bar(),b=h.bar();a.showSelection(2);const rev=b.data.viewState.revision;a.showSelection(2);assert.equal(b.data.viewState.revision,rev);
  });
  await test('parked icons do not create SVG motion and keep artwork present',()=>{
@@ -196,8 +195,8 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   const c=morph({deferStatic:true});c.receive(command(51,51,true));let acks=0;c.acceptPresentation(command(51,51,true),()=>acks++);await new Promise(r=>setTimeout(r,1250));
   assert.equal(acks,1);assert.equal(c.data.fallbackOnly,true);assert.equal(fallback(c),'lucide-utensils');assert.equal(c._staticWaitTimer,null);assert.equal(c.reports.at(-1).reason,'svg-static-timeout');c.destroy();
  });
- await test('source is not prepublished as destination and fresh destination starts active',()=>{
-  const h=controller(),source=h.bar(),before=clone(source.data);h.tap(source,3);source.seedTransition();assert.deepEqual(clone(source.data),before);h.setRoute(3);const target=h.bar();assert.equal(target.data.selected,3);assert.equal(target.data.entryActive,true);assert.equal(target.data.transitionFrom,2);target.showSelection(3);target.seedTransition();assert.equal(target.data.entryActive,true);
+ await test('source keeps active route state and destination arrives without backward rewind',()=>{
+  const h=controller(),source=h.bar(),before=clone(source.data);h.tap(source,3);source.seedTransition();assert.deepEqual(clone(source.data),before);h.setRoute(3);const target=h.bar();assert.equal(target.data.selected,3);assert.equal(target.data.entryActive,true);assert.equal(target.data.transitionFrom,2);assert.equal(target.data.enterPulse,1);target.showSelection(3);target.seedTransition();assert.equal(target.data.entryActive,true);
  });
  await test('video sequence Add -> Us -> Me rejects late Us selection and late Us theme callbacks',()=>{
   const h=controller(),b=h.bar();h.tap(b,3);h.setRoute(3);b.showSelection(3);h.calls[0].success();const old=b.data.viewState;
@@ -207,11 +206,8 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
  });
  await test('neither old nor new parent callbacks imperatively dispatch to queried children',()=>{
   const h=controller(),b=h.bar(true);b.flush();
-  // The mount already published selected:2/active:true, and a publish whose visual payload repeats
-  // the previous one is now deduped, so showSelection(2) would queue no ack at all. Start from the
-  // parked state a cached bar sits in so this stays a real transition; the assertions are unchanged.
-  b.publish({selected:2,transitionFrom:2,entryKey:0,entryActive:false,presentationReady:true});b.flush();
-  let queried=0;b.selectAllComponents=()=>{queried++;throw Error('not required');};b.showSelection(2);const older=b.acks.shift();b.updateAppearance(2,{dusk:true});b.flush();older();assert.equal(queried,0);assert.equal(b.data.viewState.icons[2].name,'utensils-crossed');
+  let queried=0;b.selectAllComponents=()=>{queried++;throw Error('not required');};
+  h.tap(b,3);h.setRoute(3);b.showSelection(3);const older=b.acks.shift();b.updateAppearance(3,{dusk:true});b.flush();older();assert.equal(queried,0);assert.equal(b.data.viewState.icons[3].name,'users-round');
  });
  await test('stale property delivery and stale first-frame callbacks cannot overwrite the latest accepted command',()=>{
   const c=morph({deferFrame:true});const a=command(10,10,true);c.receive(a);const oldGeneration=c._generation,oldAck=c.frames.shift();
@@ -260,10 +256,10 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
   const h=controller(),b=h.bar();h.tap(b,2);h.tap(b,99);assert.equal(h.calls.length,0);const log=b.getTransitionTrace();assert(log.some(r=>r.event==='tap-noop'&&r.reason==='already-on-route'));assert(log.some(r=>r.event==='tap-rejected'&&r.reason==='invalid-index'));
  });
  await test('debug output identifies the queried instance rather than assuming the last global trace row is visible',()=>{
-  const h=controller(),a=h.bar(),b=h.bar();const info=a.getTransitionDebug();assert.equal(info.bar,a._instanceId);assert.notEqual(info.bar,b._instanceId);assert.equal(info.schema,'nav-independent-v1');a.onMorphReport({currentTarget:{dataset:{index:2}},detail:{mode:'static-fallback',entryKey:7,reason:'svg-static-timeout'}});assert.equal(a.getTransitionTrace().filter(r=>r.event==='icon').at(-1).reason,'svg-static-timeout');
+  const h=controller(),a=h.bar(),b=h.bar();const info=a.getTransitionDebug();assert.equal(info.bar,a._instanceId);assert.notEqual(info.bar,b._instanceId);assert.equal(info.schema,'nav-independent-v1');a.trace('icon',{index:2,mode:'direct-icon',entryKey:7});assert.equal(a.getTransitionTrace().filter(r=>r.event==='icon').at(-1).mode,'direct-icon');
  });
  await test('precreated bar after explicit show inherits language and current static endpoint',()=>{
-  const h=controller(),a=h.bar();h.tap(a,4);h.setRoute(4);a.showSelection(4,{labels:['回忆','地图','记录','我们','我的'],dusk:true,quiet:false});const me=h.bar();assert.equal(me.data.labels[4],'我的');assert.equal(me.data.entryActive,false);assert.equal(me.data.viewState.icons[4].fromName,'user-round');assert.equal(me.data.viewState.icons[4].name,'user-round');assert.equal(me.data.dusk,true);
+  const h=controller(),a=h.bar();h.tap(a,4);h.setRoute(4);a.showSelection(4,{labels:['回忆','地图','记录','我们','我的'],dusk:true,quiet:false});const me=h.bar();assert.equal(me.data.labels[4],'我的');assert.equal(me.data.entryActive,false);assert.equal(me.data.enterPulse,0);assert.equal(me.data.viewState.icons[4].fromName,'user-round');assert.equal(me.data.viewState.icons[4].name,'user-round');assert.equal(me.data.dusk,true);
  });
  await test('view publication failure cannot prevent a valid click from calling native navigation',()=>{
   const h=controller(),b=h.bar();b.setData=()=>{throw Error('mock view failure');};b.selectAllComponents=()=>{throw Error('mock child query failure');};h.tap(b,4);assert.equal(h.calls.length,1);
@@ -292,8 +288,8 @@ function fallback(c){const w=fs.readFileSync(path.join(mp,'components/morph-icon
  await test('detached component cannot start a retained request after a late static load',()=>{
   const c=morph({deferStatic:true});c.receive(command(76,76,true));c.receive(command(77,76,true));c.destroy();while(c.statics.length)c.statics.shift()();assert(!c._svgMotion);assert.equal(c._timer,null);assert.equal(c._staticWaitTimer,null);
  });
- await test('tab template has one atomic command input, revision-gated frames, and no independent endpoint props',()=>{
-  const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert.equal((w.match(/presentation="\{\{viewState.icons\[index\]\}\}"/g)||[]).length,2);assert(!/from-name=|entry-key=|entry-active=/.test(w));assert(w.includes('viewState.selected === index'));
+ await test('tab template renders declarative <s-icon> with zero <s-morph> or warm preloader',()=>{
+  const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert.equal((w.match(/<s-icon /g)||[]).length,2);assert(!w.includes('<s-morph'));assert(!/from-name=|entry-key=|entry-active=/.test(w));assert(w.includes('viewState.selected === index'));
   const child=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(child.includes('renderRevision === viewCommand.revision'));assert(child.includes('settledEntryKey === viewCommand.key'));assert(!child.split('<block wx:else>')[0].includes('<s-icon'));assert(child.includes('bindload="staticLoaded"'));
  });
  console.log(`${count}/${count} delayed Tab handoff checks passed. Native compositor/device acceptance NOT_EXECUTED.`);

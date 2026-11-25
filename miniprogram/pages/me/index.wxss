@@ -83,14 +83,16 @@
 }
 .profile-stats .stat { flex: 1; font-size: 25rpx; line-height: 38rpx; align-items: center; gap: 8rpx; }
 .me-divided { border-left: 1rpx solid rgba(111, 115, 112, 0.045); }
-.me-strong { font-size: 70rpx; line-height: 80rpx; letter-spacing: -1rpx; }
+.me-strong { font-size: 70rpx; line-height: 80rpx; letter-spacing: -1rpx; font-variant-numeric: tabular-nums; }
 .memory-chart {
   position: absolute;
-  bottom: 24rpx;
-  left: 38rpx;
-  width: calc(100% - 76rpx);
+  bottom: 16rpx;
+  left: 24rpx;
+  width: calc(100% - 48rpx);
   height: 80rpx;
+  opacity: 0.94;
 }
+.dusk .memory-chart { opacity: 0.72; }
 
 .profile-menu {
   margin-top: var(--space-lg);

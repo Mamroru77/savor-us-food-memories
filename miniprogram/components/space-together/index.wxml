@@ -1,0 +1,12 @@
+<view wx:if="{{space}}" class="card space-together-card">
+  <text class="heading">{{labels.togetherTitle}}</text>
+  <text wx:if="{{daysSummary}}" class="hint">{{daysSummary}}</text>
+  <picker mode="date" value="{{draftDate}}" end="{{today}}" disabled="{{busy || pending}}" bindchange="onDateChange" aria-label="{{labels.togetherDate}}">
+    <view class="field space-together-picker">
+      <text class="space-together-date {{draftDate ? '' : 'secondary-placeholder'}}">{{draftDate || labels.togetherChoose}}</text>
+      <s-icon name="calendar-days" size="30" color="{{dusk ? '#b6b2aa' : '#777b71'}}" stroke="1.75" />
+    </view>
+  </picker>
+  <text class="hint">{{labels.togetherHint}}</text>
+  <button hover-class="ui-pressed" hover-start-time="0" hover-stay-time="100" class="ui-primary {{(busy || pending || !draftDate || draftDate === savedDate) ? 'ui-disabled' : ''}}" bindtap="onSaveTap" disabled="{{busy || pending || !draftDate || draftDate === savedDate}}">{{labels.togetherSave}}</button>
+</view>

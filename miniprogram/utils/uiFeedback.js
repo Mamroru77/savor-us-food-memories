@@ -12,4 +12,8 @@ function onImageError(event) {
   errors[source]=true;
   this.setData({imageErrors:errors});
 }
-module.exports={onFieldFocus,onFieldBlur,onImageError};
+function tapHaptic(quiet) {
+  if (quiet || typeof wx === 'undefined' || !wx || typeof wx.vibrateShort !== 'function') return;
+  try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
+}
+module.exports={onFieldFocus,onFieldBlur,onImageError,tapHaptic};

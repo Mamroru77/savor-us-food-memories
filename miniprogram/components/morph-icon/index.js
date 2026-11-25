@@ -10,7 +10,9 @@ let diagnosticSerial=0;
 // The point is only to rasterise the static endpoint SVGs the morph will ask for, so the first
 // tap does not have to wait for a cold decode. No frames are generated and no morph is run here.
 const WARM_BATCH = 2;
+const FRAME_CACHE_LIMIT = 240;
 const warmState = new Map();
+const frameCache = new Map();
 function warmClaim(uris){
   const out=[];
   for(const uri of uris){ if(!uri||warmState.has(uri))continue; warmState.set(uri,'loading'); out.push(uri); }
@@ -22,6 +24,37 @@ function warmSnapshot(){
   warmState.forEach((v,k)=>{out[v]++;out.uris.push({uri:k,state:v});});
   return out;
 }
+function morphEase(t){
+  const u=Math.max(0,Math.min(1,t)),inv=1-u;
+  return 0.35*(u*u*(3-2*u))+0.65*(1-inv*inv);
+}
+function stepMsFor(duration){
+  return duration<=350?Math.max(20,Math.min(24,Math.round(duration/15))):32;
+}
+function parseHex(hex){
+  const s=String(hex||'').replace('#','');
+  if(s.length!==6)return null;
+  const n=parseInt(s,16);
+  return Number.isFinite(n)?[(n>>16)&255,(n>>8)&255,n&255]:null;
+}
+function lerpColor(fromHex,toHex,t){
+  if(!fromHex||fromHex===toHex||t>=1)return toHex;
+  if(t<=0)return fromHex;
+  const a=parseHex(fromHex),b=parseHex(toHex);
+  if(!a||!b)return toHex;
+  const k=Math.max(0,Math.min(1,t));
+  const h=v=>Math.round(v).toString(16).padStart(2,'0');
+  return '#'+h(a[0]+(b[0]-a[0])*k)+h(a[1]+(b[1]-a[1])*k)+h(a[2]+(b[2]-a[2])*k);
+}
+function encodeMorphFrame(subs,color,cacheKey){
+  if(cacheKey&&frameCache.has(cacheKey))return frameCache.get(cacheKey);
+  const uri=frameSvg(subs,color);
+  if(cacheKey){
+    if(frameCache.size>=FRAME_CACHE_LIMIT){const oldest=frameCache.keys().next().value;frameCache.delete(oldest);}
+    frameCache.set(cacheKey,uri);
+  }
+  return uri;
+}
 // Morphicons' own spring presets. A caller that names one gets a per-frame integrated
 // curve and a timeline that ends when the spring settles; callers that name nothing keep
 // the previous fixed-duration smoothstep exactly as before.
@@ -31,7 +64,7 @@ try{engine=require('../../utils/morphEngine');}catch(e){/* Static SVG fallback r
 Component({
   properties:{presentation:{type:Object,value:null},warm:{type:Array,value:null},entryActive:{type:Boolean,value:true},duration:{type:Number,value:380},spring:{type:String,value:''},renderer:{type:String,value:'canvas'},fromName:{type:String,value:''},entryKey:{type:Number,value:0},name:{type:String,value:'house'},size:{type:Number,value:112},color:{type:String,value:'#34483c'},quiet:{type:Boolean,value:false}},
   data:{viewCommand:null,renderRevision:0,fallbackOnly:false,settledEntryKey:0,staticName:'',ready:false,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[],warmSlots:[]},
-  observers:{presentation:function(command){if(command)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
+  observers:{presentation:function(command){if(command&&this._alive)this.acceptPresentation(command);},'name, quiet, color, fromName, entryKey':function(){
     if(this._acceptedCommand||this.data.presentation)return;
     const signature=JSON.stringify([this.data.name,this.data.quiet,this.data.color,this.data.fromName,this.data.entryKey]);
     if(signature===this._inputSignature)return;
@@ -68,6 +101,11 @@ Component({
     startWarm(){
       if(this._warmStarted||!this._alive)return;
       this._warmStarted=true;
+      if(engine){
+        for(const entry of (this.data.warm||[])){
+          if(entry&&entry.name){try{engine.sample(entry.name);}catch(e){}}
+        }
+      }
       this._warmQueue=warmClaim(this.warmUris());
       this.recordRender('warm-start',{claimed:this._warmQueue.length});
       this.pumpWarm();
@@ -167,11 +205,48 @@ Component({
       this._commandWaiters=this._commandWaiters||[];
       this._acceptedCommand=command;if(done)this._commandWaiters.push(done);
       const sameEntry=old&&old.key===command.key;
-      const sameVisual=sameEntry&&old.name===command.name&&old.fromName===command.fromName&&old.quiet===command.quiet&&old.color===command.color&&old.active===command.active;
-      if(!sameVisual){if(sameEntry&&this.data.painting&&this._displayed&&engine)this._current=engine.copy(this._displayed);this.cancel();this.clearSurface();}
-      const viewCommand=Object.assign({},command,{originSrc:iconSvg(command.fromName,{stroke:command.color,strokeWidth:1.75}),targetSrc:iconSvg(command.name,{stroke:command.color,strokeWidth:1.75})});
+      const originColor=command.fromColor||command.color;
+      const prevOriginColor=old?(old.fromColor||old.color):'';
+      const sameVisual=sameEntry&&old.name===command.name&&old.fromName===command.fromName&&old.quiet===command.quiet&&old.color===command.color&&prevOriginColor===originColor&&old.active===command.active;
+      const isCanonical=!(sameEntry&&this.data.painting&&this._displayed);
+      if(!sameVisual){if(!isCanonical&&engine)this._current=engine.copy(this._displayed);this.cancel();this.clearSurface();}
+      const viewCommand=Object.assign({},command,{originSrc:iconSvg(command.fromName,{stroke:originColor,strokeWidth:1.75}),targetSrc:iconSvg(command.name,{stroke:command.color,strokeWidth:1.75})});
       const patch={viewCommand,name:command.name,fromName:command.fromName,entryKey:command.key,
         entryActive:command.active,quiet:command.quiet,color:command.color,duration:command.duration};
+      const targetStatic=command.quiet||this.data.fallbackOnly||!command.key||(command.active&&this.data.settledEntryKey===command.key);
+      const expectedStaticSrc=targetStatic?viewCommand.targetSrc:viewCommand.originSrc;
+      const staticWarm=warmState.get(expectedStaticSrc)==='ready';
+      if(staticWarm)this._loadedStaticSrc=expectedStaticSrc;
+      const canUnhide=!this._hidden||command.revision>(this._hiddenAfterRevision||0);
+      const svgCapable=this._svgReady||(this.data.renderer==='svg'&&staticWarm);
+      const fastMorph=!sameVisual&&staticWarm&&svgCapable&&this._alive&&
+        command.active&&!command.quiet&&!this.data.fallbackOnly&&canUnhide&&
+        command.key&&command.fromName&&command.fromName!==command.name&&engine;
+      if(fastMorph){
+        this._svgReady=true;
+        this._setupComplete=true;
+        patch.ready=true;
+        this._hidden=false;
+        this._appliedSignature=JSON.stringify([command.name,command.quiet,command.color,originColor,command.fromName,command.key]);
+        if(isCanonical){this._entryKey=command.key;this._current=engine.copy(engine.sample(command.fromName));}
+        this._settledName=null;
+        const planning=Date.now(),state=engine.plan(this._current,command.name),planMs=Date.now()-planning;
+        const setup=this.createSvgMotion(state,planMs,{duration:command.duration,color:command.color,fromColor:originColor,entryKey:command.key,fromName:command.fromName,canonical:isCanonical,deferredMerge:true,revision:command.revision});
+        Object.assign(patch,setup.firstPatch);
+        this._commandNeedsMove=false;
+        if(this._staticWaitTimer!=null)clearTimeout(this._staticWaitTimer);
+        this.setData(patch,()=>{
+          if(this._acceptedCommand!==command)return;
+          this._commandViewCommitted=command.revision;
+          this._commandCommitted=command.revision;
+          this.recordRender('view-commit');
+          this.recordRender('command-ready');
+          if(this._staticWaitTimer!=null)clearTimeout(this._staticWaitTimer);this._staticWaitTimer=null;
+          const pending=this._commandWaiters||[];this._commandWaiters=[];pending.forEach(fn=>fn());
+          setup.onFirstCommit();
+        });
+        return;
+      }
       if(!sameVisual)Object.assign(patch,{painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]});
       // Bind the entire logical state and its fallback in ONE child view update.
       // Stale frame commits retain their old renderRevision and cannot cover this command.
@@ -218,7 +293,7 @@ Component({
         // Genuine renderer/image failure is terminal for this instance. A late
         // ready callback must not animate from an origin after fallback showed target.
         if(this.data.fallbackOnly)return;
-        this._svgReady=true;this.setData({ready:true});this.armStaticWait();
+        this._svgReady=true;if(!this.data.ready)this.setData({ready:true});this.armStaticWait();
         if(this._acceptedCommand)this.startCommittedCommand();else this.move(!this.data.entryKey);return;
       }
       this.createSelectorQuery().select('#morph-canvas').fields({node:true,size:true}).exec(result=>{
@@ -247,12 +322,19 @@ Component({
         m.visibleAt=Date.now();this.recordRender('first-frame-reveal-commit');this.triggerEvent('report',{mode:'start',entryKey:m.entryKey,name:this.data.name,requestedDurationMs:m.duration});m.next();
       });
     },
-    startSvg(state,planMs){
+    createSvgMotion(state,planMs,opts={}){
       const generation=this._generation;
-      const duration=Math.max(160,Math.min(1200,Number(this.data.duration)||380));
-      const m={generation,entryKey:this.data.entryKey,duration,elapsed:0,frames:0,queuedAt:Date.now(),visibleAt:null,loaded:false,committed:false,started:false,spring:springFor(this.data.spring),springSettled:false};
+      const duration=Math.max(160,Math.min(1200,Number(opts.duration!=null?opts.duration:this.data.duration)||380));
+      const color=opts.color||this.data.color;
+      const fromColor=opts.fromColor||color;
+      const entryKey=opts.entryKey!=null?opts.entryKey:this.data.entryKey;
+      const fromName=opts.fromName!=null?opts.fromName:this.data.fromName;
+      const canonical=opts.canonical!==false&&!!fromName&&fromName!==state.name;
+      const stepMs=stepMsFor(duration);
+      const m={generation,entryKey,duration,elapsed:0,frames:0,queuedAt:Date.now(),visibleAt:null,loaded:false,committed:false,started:false,spring:springFor(this.data.spring),springSettled:false};
       this._svgMotion=m;this._frameMetrics={frames:0,encodeTotalMs:0,encodeMaxMs:0,commitTotalMs:0,commitMaxMs:0,intervalMaxMs:0};this.recordRender('motion-created');
       const valid=()=>this._alive&&!this._hidden&&this._svgReady&&this._generation===generation&&this._svgMotion===m;
+      const cacheKeyFor=ease=>(canonical&&!m.spring)?fromName+'|'+state.name+'|'+fromColor+'|'+color+'|'+Math.round(ease*1000):'';
       const finish=()=>{
         if(!valid())return;
         this._current=engine.copy(engine.sample(state.name));this._settledName=state.name;
@@ -260,20 +342,23 @@ Component({
         this.setData({settledEntryKey:m.entryKey,staticName:state.name,painting:false,frameSrc:'',frameVisible:false,loadingSrc:'',frameSlots:[]});
         this.triggerEvent('report',{mode:'complete',entryKey:m.entryKey,name:state.name,frames:m.frames,durationMs:Date.now()-m.visibleAt,requestedDurationMs:duration,firstFrameWaitMs:m.visibleAt-m.queuedAt,planMs,scheduler:'svg-timer',clock:'first-image-load',timing:'wall-clock',frameBudgetMs:m.elapsed});
       };
+      const nextEase=()=>{
+        if(m.spring){const r=springStep(m.spring,1/60);m.springSettled=r.settled;return r.ease;}
+        return morphEase(m.elapsed/duration);
+      };
       const send=first=>{
-        if(!valid())return;
+        if(!valid())return null;
         try{
-          let ease;
-          if(m.spring){const r=springStep(m.spring,1/60);ease=r.ease;m.springSettled=r.settled;}
-          else{const t=m.elapsed/duration;ease=t*t*(3-2*t);}
+          const ease=nextEase();
+          const frameColor=lerpColor(fromColor,color,ease);
           this._current=engine.copy(engine.frame(state,ease));m.frames++;
-          this.paint(this._current,()=>{
+          return this.paint(this._current,()=>{
             if(!valid())return;
             if(first){m.committed=true;this.beginSvg();}
             else if((m.spring?m.springSettled:m.elapsed>=duration)||m.frames>60)finish();
             else m.next();
-          },first);
-        }catch(e){this.canvasError();}
+          },first,{color:frameColor,cacheKey:cacheKeyFor(ease),revision:opts.revision,deferredMerge:first&&opts.deferredMerge});
+        }catch(e){this.canvasError();return null;}
       };
       m.next=()=>{
         if(!valid())return;
@@ -281,7 +366,7 @@ Component({
         // Keep one outstanding frame; after a slow commit, skip overdue samples
         // rather than adding another full delay and stretching the whole morph.
         const now=Math.max(m.elapsed,Date.now()-m.visibleAt);
-        const due=Math.min(duration,(Math.floor(now/32)+1)*32);
+        const due=Math.min(duration,(m.frames===1&&now<16)?16:(Math.floor(now/stepMs)+1)*stepMs);
         this._timer=setTimeout(()=>{
           this._timer=null;if(!valid())return;
           m.elapsed=Math.min(duration,Math.max(m.elapsed,Date.now()-m.visibleAt));send(false);
@@ -290,7 +375,15 @@ Component({
       this._firstFrameTimer=setTimeout(()=>{
         if(valid()&&!m.started)this.canvasError('svg-first-frame-timeout');
       },1200);
+      if(opts.deferredMerge){
+        const prep=send(true);
+        return {firstPatch:prep.patch,onFirstCommit:prep.onCommit};
+      }
       send(true);
+      return null;
+    },
+    startSvg(state,planMs,fromName,canonical,fromColor){
+      return this.createSvgMotion(state,planMs,{fromName:fromName!=null?fromName:this.data.fromName,fromColor:fromColor||this.data.color,canonical:canonical!==false});
     },
     svgError(event){const id=event&&event.currentTarget&&event.currentTarget.dataset.generation;if(id!=null&&Number(id)!==this._generation)return;if(this.data.renderer==='svg'&&this.data.painting)this.canvasError();},
     canvasError(reason){this.recordRender('fallback-enter',{reason:typeof reason==='string'?reason:'renderer-error'});this.cancel();this.clearSurface();this._ctx=null;this._svgReady=false;if(this._alive){this.setData({fallbackOnly:true,settledEntryKey:this.data.entryKey,staticName:this.data.name,ready:false,painting:false,frameSrc:''});this.triggerEvent('report',{mode:'static-fallback',entryKey:this.data.entryKey,reason:typeof reason==='string'?reason:this.data.renderer==='svg'?'svg-frame-unavailable':'canvas-unavailable'});}},
@@ -326,25 +419,33 @@ Component({
         },48);
       }else this._timer=setTimeout(deliver,16);
     },
-    paint(subs,onCommit,first){
+    paint(subs,onCommit,first,opts={}){
       if(this.data.renderer==='svg'){
         // At most one outstanding image update per icon; never queue frame backlogs.
-        if(this._svgFlight)return;
+        if(this._svgFlight)return null;
         const flight={},generation=this._generation,shown=engine.copy(subs);
-        const encodedAt=Date.now(),src=frameSvg(shown,this.data.color);this._svgFlight=flight;
+        const color=opts.color||this.data.color;
+        const encodedAt=Date.now(),src=encodeMorphFrame(shown,color,opts.cacheKey||'');this._svgFlight=flight;
         const queuedAt=Date.now(),metrics=this._frameMetrics;
         if(metrics){const cost=queuedAt-encodedAt;metrics.frames++;metrics.encodeTotalMs+=cost;metrics.encodeMaxMs=Math.max(metrics.encodeMaxMs,cost);}
         if(first)this.recordRender('first-frame-queued');
-        const patch={painting:true,frameSrc:src,renderRevision:this.data.viewCommand?this.data.viewCommand.revision:0};
-        if(first)Object.assign(patch,{frameSlots:[{id:generation}],frameVisible:false,loadingSrc:src});
-        this.setData(patch,()=>{
+        const revision=opts.revision!=null?opts.revision:(this.data.viewCommand?this.data.viewCommand.revision:0);
+        const patch={painting:true,frameSrc:src,renderRevision:revision};
+        if(first){
+          Object.assign(patch,{frameSlots:[{id:generation}],frameVisible:false});
+          if(!this.data.viewCommand&&!opts.deferredMerge)patch.loadingSrc=src;
+        }
+        const handleCommit=()=>{
           if(this._svgFlight!==flight)return;
           this._svgFlight=null;
           if(metrics){const now=Date.now(),cost=now-queuedAt;metrics.commitTotalMs+=cost;metrics.commitMaxMs=Math.max(metrics.commitMaxMs,cost);
             if(metrics.lastCommitAt)metrics.intervalMaxMs=Math.max(metrics.intervalMaxMs,now-metrics.lastCommitAt);metrics.lastCommitAt=now;}
           if(first)this.recordRender('first-frame-view-commit');
           if(this._alive&&!this._hidden&&generation===this._generation){this._displayed=shown;if(onCommit)onCommit();}
-        });return;
+        };
+        if(opts.deferredMerge)return {patch,onCommit:handleCommit};
+        this.setData(patch,handleCommit);
+        return null;
       }
       const ctx=this._ctx,c=this._canvas;
       ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);
@@ -356,20 +457,25 @@ Component({
       const signature=JSON.stringify([this.data.name,this.data.quiet,this.data.color,this.data.fromName,this.data.entryKey]);
       if(!immediate&&signature===this._appliedSignature&&(this.data.painting||this._settledName===this.data.name))return;
       this._appliedSignature=signature;
-      if(this.data.renderer==='svg'&&this.data.painting&&this._displayed)this._current=engine.copy(this._displayed);
+      const wasPainting=this.data.renderer==='svg'&&this.data.painting&&this._displayed;
+      if(wasPainting)this._current=engine.copy(this._displayed);
       this.cancel();
       const generation=this._generation,entryKey=this.data.entryKey;
       try{
+        let freshStart=!wasPainting;
         if(this.data.entryKey&&this.data.entryKey!==this._entryKey&&this.data.fromName){
-          this._entryKey=this.data.entryKey;this._current=engine.copy(engine.sample(this.data.fromName));this._settledName=this.data.fromName;
+          this._entryKey=this.data.entryKey;this._current=engine.copy(engine.sample(this.data.fromName));this._settledName=this.data.fromName;freshStart=true;
         }
         if(immediate||this.data.quiet||!this._current||this._settledName===this.data.name){
           this._current=engine.copy(engine.sample(this.data.name));this._settledName=this.data.name;
           this.clearSurface();this._displayed=null;this.setData({settledEntryKey:this.data.entryKey,staticName:this.data.name,painting:false,frameSrc:''});this.triggerEvent('report',{mode:this.data.quiet?'quiet':'ready',name:this.data.name});return;
         }
+        const canonical=freshStart&&!!this._settledName&&this._settledName!==this.data.name;
+        const startFrom=canonical?this._settledName:'';
+        const fromColor=(this.data.viewCommand&&this.data.viewCommand.fromColor)||this.data.color;
         this._settledName=null;if(this.data.renderer!=='svg')this.setData({painting:true});
         const planning=Date.now(),state=engine.plan(this._current,this.data.name),planMs=Date.now()-planning,started=Date.now();
-        if(this.data.renderer==='svg'){this.startSvg(state,planMs);return;}
+        if(this.data.renderer==='svg'){this.startSvg(state,planMs,startFrom,canonical,fromColor);return;}
         let frames=0,cpuMax=0,last=started,springSettled=false;const intervals=[],spring=springFor(this.data.spring);
         const step=()=>{
           this._raf=null;this._timer=null;if(!this._alive||this._hidden||(!this._ctx&&!this._svgReady)||generation!==this._generation)return;

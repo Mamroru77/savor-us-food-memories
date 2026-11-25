@@ -1,6 +1,6 @@
 // Pure SVG frame encoder for regular image-layer morphs (no native Canvas).
 function frameSvg(subs,color) {
-  const number=value=>{if(!Number.isFinite(value))throw new Error('Invalid morph point');return String(Number(value.toFixed(3)));};
+  const number=value=>{if(!Number.isFinite(value))throw new Error('Invalid morph point');return String(Number(value.toFixed(1)));};
   const escape=value=>String(value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const paths=subs.map(s=>{
     const pts=s.pts;if(!pts||pts.length<2)return '';

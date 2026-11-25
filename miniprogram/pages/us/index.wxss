@@ -19,10 +19,10 @@
 }
 
 .together-card {
-  height: 352rpx;
+  height: 320rpx;
   border-radius: var(--radius-card);
-  margin-top: var(--space-lg);
-  padding: 42rpx 38rpx 25rpx;
+  margin-top: 22rpx;
+  padding: 30rpx 38rpx 20rpx;
   box-sizing: border-box;
 }
 .couple-avatars { display: flex; justify-content: center; gap: 35rpx; align-items: center; }
@@ -45,18 +45,20 @@
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 2rpx 8rpx rgba(255, 255, 255, 0.53);
+  transition: transform 240ms cubic-bezier(.34, 1.56, .64, 1), background-color 220ms ease;
 }
-.couple-heart.love-sent { background: rgba(242, 200, 186, 0.4); }
+.couple-heart.love-sent { background: rgba(242, 200, 186, 0.42); transform: scale(1.06); }
+.quiet .couple-heart { transition: none; }
 .together-count {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 15rpx;
+  margin-top: 8rpx;
 }
-.together-label { font-size: 24rpx; line-height: 35rpx; color: var(--muted, #565752); }
+.together-label { font-size: 24rpx; line-height: 34rpx; color: var(--muted, #565752); }
 .together-days { display: flex; align-items: baseline; gap: 12rpx; }
-.together-days-strong { font-family: var(--serif); font-size: 70rpx; line-height: 84rpx; letter-spacing: -1rpx; }
+.together-days-strong { font-family: var(--serif); font-size: 64rpx; line-height: 74rpx; letter-spacing: -1rpx; font-variant-numeric: tabular-nums; }
 .together-days-unit { font-size: 25rpx; }
 
 .journey-card {
@@ -64,10 +66,10 @@
   display: block;
   width: 100%;
   height: auto;
-  min-height: 300rpx;
-  margin-top: var(--space-md);
+  min-height: 280rpx;
+  margin-top: 20rpx;
   border-radius: var(--radius-card);
-  padding: 35rpx 35rpx 0;
+  padding: 28rpx 34rpx 0;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -75,20 +77,20 @@
   position: static;
   display: block;
   font-size: 29rpx;
-  line-height: 40rpx;
+  line-height: 38rpx;
 }
 .journey-stats {
   position: static;
   display: flex;
-  margin-top: 15rpx;
+  margin-top: 12rpx;
 }
 .journey-stats .stat { flex: 1; font-size: 25rpx; }
 .journey-stats .stat:nth-child(2), .journey-stats .stat:nth-child(3) { border-left: 1rpx solid rgba(66, 68, 62, 0.065); padding-left: 28rpx; }
-.journey-strong { font-size: var(--type-stat-secondary); line-height: 70rpx; }
+.journey-strong { font-size: var(--type-stat-secondary); line-height: 68rpx; font-variant-numeric: tabular-nums; }
 .journey-latest {
   position: static;
   margin-top: 16rpx;
-  height: 96rpx;
+  height: 86rpx;
   display: flex;
   justify-content: space-between;
   gap: 20rpx;
@@ -106,28 +108,28 @@
    circles one card above and was the only circular photo in the product. It now uses the shared
    image radius so Us belongs to the same photographic system as Add / Home / Map. */
 .journey-latest-photo {
-  height: 92rpx;
-  width: 92rpx;
+  height: 76rpx;
+  width: 76rpx;
   flex-shrink: 0;
   border-radius: var(--radius-image, 28rpx);
   background: rgba(255, 255, 255, 0.4);
 }
 
-.shared-section { margin-top: var(--space-lg); }
+.shared-section { margin-top: 24rpx; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 5rpx; }
 .section-title { font-family: var(--serif); font-size: 32rpx; line-height: 40rpx; }
 .section-link { font-size: 26rpx; color: var(--muted, #565752); }
-.shared-gallery { width: 100%; margin-top: 22rpx; }
+.shared-gallery { width: 100%; margin-top: 16rpx; }
 .shared-gallery-inner { display: flex; gap: 17rpx; padding: 0 8rpx 22rpx 0; }
 .shared-photo-card {
-  width: 250rpx;
-  height: 342rpx;
+  width: 236rpx;
+  height: 304rpx;
   position: relative;
-  border-radius: 35rpx;
+  border-radius: 32rpx;
   overflow: hidden;
   flex-shrink: 0;
   border: 1rpx solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 10rpx 20rpx rgba(79, 82, 67, 0.2);
+  box-shadow: 0 10rpx 20rpx rgba(79, 82, 67, 0.16);
 }
 .shared-photo-open { height: 100%; width: 100%; position: relative; }
 .shared-photo-open > image { height: 100%; width: 100%; background: rgba(255,255,255,.4); }
@@ -174,7 +176,9 @@
 .shared-like { width:88rpx; height:88rpx; right:0; bottom:0; }
 .shared-like.is-liked { background:transparent; }
 .shared-like.is-liked::before { content:""; position:absolute; width:50rpx; height:50rpx; border-radius:50%; background:rgba(255,255,255,.22); }
-.shared-like s-icon { position:relative; }
+.shared-like s-icon { position:relative; transition: transform 240ms cubic-bezier(.34, 1.56, .64, 1); }
+.shared-like.is-liked s-icon { transform: scale(1.1); }
+.quiet .shared-like s-icon { transition: none; }
 .shared-photo-copy { right:100rpx; }
 .shared-photo-name { font-weight:500; }
 .avatar-blank {

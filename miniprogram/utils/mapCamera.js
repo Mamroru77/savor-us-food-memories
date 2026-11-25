@@ -25,6 +25,9 @@ const SCALE_MAX = 18;
 // view: with the measured usable band on a 428x926 window that is roughly 0.7-0.8 km
 // across, which reads as "here is the area", not "here is the doorway".
 const OVERVIEW_MAX_SCALE = 16;
+const HOTSPOT_RADIUS_KM = 15;
+const HOTSPOT_CORE_KM = 0.5;
+const HOTSPOT_MAX_SCALE = 15;
 
 // Padding before the first live measurement. Over-reserving is the SAFE direction: a
 // marker fitted a little small is fine, a marker hidden under chrome is the bug this
@@ -222,6 +225,74 @@ function overview(coordinates, viewport, padding, observedScale) {
   return { centre, level, padding, points: cornersFor(centre, level, viewport, padding) };
 }
 
+function distanceKm(a, b) {
+  const lat1 = finite(Number(a && a[0]), 0) * Math.PI / 180;
+  const lat2 = finite(Number(b && b[0]), 0) * Math.PI / 180;
+  let dLngDeg = finite(Number(b && b[1]), 0) - finite(Number(a && a[1]), 0);
+  if (dLngDeg > 180) dLngDeg -= 360;
+  if (dLngDeg < -180) dLngDeg += 360;
+  const dLat = lat2 - lat1;
+  const dLng = dLngDeg * Math.PI / 180;
+  const sLat = Math.sin(dLat / 2);
+  const sLng = Math.sin(dLng / 2);
+  const h = sLat * sLat + Math.cos(lat1) * Math.cos(lat2) * sLng * sLng;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// First-open high-frequency hotspot: finds the densest 15 km neighborhood (ignoring distant
+// single outliers), selects the most recent memory inside its densest 0.5 km core, and
+// frames the entire neighborhood inside the unobstructed map band.
+function hotspot(items, viewport, padding) {
+  const valid = (items || []).filter(item => {
+    const c = item && item.coordinates;
+    return c && Number.isFinite(Number(c[0])) && Number.isFinite(Number(c[1]));
+  });
+  if (!valid.length) return null;
+  let bestNeighbors = null;
+  let bestCore = -1;
+  for (let i = 0; i < valid.length; i++) {
+    const origin = valid[i].coordinates;
+    const neighbors = [];
+    let coreCount = 0;
+    for (let j = 0; j < valid.length; j++) {
+      const d = distanceKm(origin, valid[j].coordinates);
+      if (d <= HOTSPOT_RADIUS_KM) {
+        neighbors.push(valid[j]);
+        if (d <= HOTSPOT_CORE_KM) coreCount++;
+      }
+    }
+    if (
+      !bestNeighbors
+      || neighbors.length > bestNeighbors.length
+      || (neighbors.length === bestNeighbors.length && coreCount > bestCore)
+    ) {
+      bestNeighbors = neighbors;
+      bestCore = coreCount;
+    }
+  }
+  let selected = bestNeighbors[0];
+  let selectedCore = -1;
+  for (let i = 0; i < bestNeighbors.length; i++) {
+    const candidate = bestNeighbors[i];
+    let coreCount = 0;
+    for (let j = 0; j < bestNeighbors.length; j++) {
+      if (distanceKm(candidate.coordinates, bestNeighbors[j].coordinates) <= HOTSPOT_CORE_KM) coreCount++;
+    }
+    if (coreCount > selectedCore) {
+      selected = candidate;
+      selectedCore = coreCount;
+    }
+  }
+  const box = bounds(bestNeighbors.map(m => m.coordinates));
+  const rawCentre = boundsCentre(box);
+  const hasViewport = viewport && finite(Number(viewport.width), 0) > 0 && finite(Number(viewport.height), 0) > 0;
+  const level = hasViewport
+    ? clamp(Math.floor(fitScale(box, viewport, padding)), SCALE_MIN, HOTSPOT_MAX_SCALE)
+    : 13;
+  const centre = hasViewport ? centreForPoint(rawCentre, level, viewport, padding) : rawCentre;
+  return { selected, items: bestNeighbors, count: bestNeighbors.length, rawCentre, centre, level, padding };
+}
+
 // Whole levels only: the bound `scale` prop floors fractional values, so a level the
 // camera cannot express must never be asked for.
 function levelWithin(scale) { return clamp(Math.round(finite(Number(scale), SCALE_MIN)), SCALE_MIN, SCALE_MAX); }
@@ -300,10 +371,10 @@ function panPoint(from, to, progress) {
 }
 
 module.exports = {
-  TILE, SCALE_MIN, SCALE_MAX, OVERVIEW_MAX_SCALE,
+  TILE, SCALE_MIN, SCALE_MAX, OVERVIEW_MAX_SCALE, HOTSPOT_RADIUS_KM, HOTSPOT_CORE_KM, HOTSPOT_MAX_SCALE,
   mercator, inverseMercator, pixelsPerLongitude, pixelsPerMercator, wrapLongitude,
   usable, usableCentre, bounds, boundsCentre, fitScale, cornersFor,
   centreForScreenPoint, centreForPoint, clusterAnchorY, centreForCluster,
-  paddingFrom, bootstrapPadding, overview, levelWithin,
+  paddingFrom, bootstrapPadding, overview, distanceKm, hotspot, levelWithin,
   panPixels, panDurationMs, panProgress, panPoint, projectPoint, scaleForSpan, PAN_NEAR_MS, PAN_FAR_MS,
 };

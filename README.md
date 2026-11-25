@@ -9,16 +9,16 @@
 
 ## 当前版本
 
-**v1.2.3**（2026-09-29）
+**v1.2.3**（已发布基准，2026-09-29）· **`integrated-with-cloud` 开发增量**（2026-11-25）
 
 | 项目 | 状态 |
 | --- | --- |
-| 版本 | `v1.2.3`（本页描述的版本） |
-| 静态验证 | `npm run verify` **359/359**；`npm run verify:all` **EXIT 0** |
-| 包体积 | **1,658,679 B = 1.581840 MiB**（项目软警告 1.70 MiB；项目硬上限 1.90 MiB；微信平台限制 2 MB） |
-| 本轮改动 | **仅文档、`.gitignore` 与版本元数据**；`miniprogram/`、`cloudfunctions/`、`tools/` 生产代码零改动 |
-| 云函数 | 本轮**未部署**；未修改云数据库、未上传微信小程序版本 |
-| 已知问题 | TabBar 切换在部分真机上有轻微视觉抽动，状态 **DEFERRED**（见 [Known Issues](#known-issues)） |
+| 基线版本 | `v1.2.3`（当前增量合并至 `integrated-with-cloud`） |
+| 静态验证 | `npm run verify` **373/373 EXIT 0**；`tools/verify-*.cjs` 全量 **76/82 PASS**（6 项既有的缺本地云函数 SDK / 未推进冻结哈希 / 基线诊断 / 包体软告警校验除外） |
+| 包体积 | **1,832,831 B = 1.747924 MiB**（超出软警告 1.70 MiB 约 `0.048 MiB`；低于项目硬上限 1.90 MiB 约 `0.152 MiB`、微信平台 2 MB 限制约 `0.252 MiB`） |
+| 本轮增量 | UI / Dusk Warm Obsidian 主题细节打磨、TabBar `280ms` 轻量 GPU 弹性过渡与零倒退重渲染、Map 首次进入自动聚焦高频邻域、自定义相伴起始日期与双人空间云同步 |
+| 云函数 | **`spaces`（`handler.js`）已增量部署**（绑定初始日期与 `setTogetherSince` 同步）；其余 5 个云函数未变动；未修改云数据库结构、未上传新小程序审核版本 |
+| 冻结页与已知边界 | 部分迭代改动涉及的冻结页检查点哈希**暂未推进**（待真机/视觉最终确认）；TabBar 轻量弹性过渡与 Map / 相伴日期新增能力均已通过静态与模拟器验证，真机最终验收待完成（见 [Known Issues](#known-issues)） |
 
 收尾记录（提交清单、清理与验证矩阵）见 [Release Closeout v1.2.3](docs/reviews/release-closeout-v1.2.3-20260929.md)，逐版本变更见 [CHANGELOG](CHANGELOG.md)。
 
@@ -36,8 +36,9 @@
 **地图**
 
 - 地图浏览与地图餐厅 marker
+- **首次进入高频热点自动定位**：按 15 km 邻域聚集与 0.5 km 高密核自动聚焦高频用餐区（剔除单点远距离离群值），首帧直达而不再从默认巴黎视角跨洲飞越
 - marker 缩略图（照片优先，无真实照片时回退）
-- 相邻餐厅 drawer 浏览
+- 相邻餐厅 drawer 浏览与混合 callout 拖拽态交接优化
 - 精细地图缩放控制（步进按钮 + recenter）
 - 地图 POI 选点，并把选点名称同步到餐厅名称
 - 编辑餐厅名称时**保留**地图选点（餐厅名与坐标相互独立）
@@ -52,14 +53,15 @@
 
 - 用户资料 / 头像（微信头像与自定义高清头像两个入口）
 - 双人空间、共同回忆与共享
+- **自定义相伴起始日期**：采用含首日计天（`今天 - 起始日 + 1`）；双人绑定默认取绑定当天、双方均可随时改为真实纪念日并同步至 `spaces` 云函数，未绑定或离线时平滑回退到本机设置且绝不串写私人日记
 - 云端同步、云端工具与年度报告
 - 媒体本地缓存与回收
 
 **界面**
 
 - 五个主 Tab（Home / Map / Add / Us / Me）与共用底部面板
-- TabBar 动效（选中态图标 morph）
-- 浅色 / 深色主题、中英文、Quiet 动效设置
+- 轻量 TabBar 动效（直绘 `<s-icon>` 端点 + `280ms` GPU 弹性过渡与零倒退切换）
+- 浅色（Pearl）/ 深色（Dusk Warm Obsidian）主题、中英文、Quiet 动效设置
 
 ## 数据与存储
 
@@ -85,6 +87,7 @@
 - **地图餐厅 marker**：按记录的地点投影生成，支持堆叠与单点两种形态。
 - **marker 缩略图**：`placePhoto || (!noPhoto ? photo : '')` —— 灰色 marker 通常表示**该记录确实没有真实照片**，而不是加载失败。
 - **相邻餐厅 drawer**：以覆盖层（`view-overlay`）方式渲染，避免拖拽时重建 markers。
+- **首次打开高频定位**：通过 `miniprogram/utils/mapCamera.js` 的 `hotspot()` 在 15 km 邻域与 0.5 km 高密核心内选出主群落，在 `onLoad()` 预读缓存热点并在首次 `applyFilters(..., 'initial')` 直接落位与缩放，彻底消除初始巴黎经纬度触发的跨洲飞行动画。
 - **缩放步进控制**：`scale` 属性向下取整小数，因此步进按**相邻整数级、方向感知**推进；`data.commandScale` 是唯一的命令通道，`regionchange` 绝不写它。
 - **recenter**：右侧 recenter 按钮是本项目自己的控件（真机 `<map>` 不渲染原生缩放控件）。
 - **POI 选点**：通过 `chooseLocation` 选点，选中的 POI 名称会同步进餐厅名称；之后**编辑餐厅文本不会删除已保存的地点**。
@@ -102,20 +105,20 @@
 本地回归工具只使用 Node.js 内置模块，根 `package.json` 不声明第三方依赖；请准备带 npm 的受支持 Node.js 版本。云函数依赖另行管理。
 
 ```bash
-npm run verify       # 静态主检查，当前 359/359
-npm run verify:all   # 全量门禁：36 条顶层命令，其中 verify:r2 再展开 16 条
+npm run verify       # 静态主检查，当前 373/373 PASS
+npm run verify:all   # 全量门禁：36 条顶层命令，其中 verify:r2 再展开 16 条（另 tools/verify-*.cjs 共 82 项）
 ```
 
 按关注点速查：
 
 | 关注点 | 命令 |
 | --- | --- |
-| 身份与运行边界 | `verify:identity`、`verify:store-boundaries`、`verify:workspace` |
-| 头像与未保存编辑 | `verify:avatar`、`verify:sheet-edits`、`verify:profile-sync` |
+| 身份与运行边界 | `verify:identity`、`verify:store-boundaries`、`verify:workspace`、`verify-spaces.cjs` |
+| 头像、资料与相伴日期 | `verify:avatar`、`verify:sheet-edits`、`verify:profile-sync`、`verify-together-date.cjs` |
 | 原生返回与页面生命周期 | `verify:add-native-return`、`verify:add-identity-fence`、`verify:native-flow`、`verify:page-lifecycle`、`verify:memory-return` |
 | 照片上传批次与失败分层 | `verify:photo-batch-upload`、`verify:image-pipelines`、`verify:cloud` |
 | 媒体回收 | `verify:media`、`verify:media-gc` |
-| 地图与视觉语言 | `verify:map-motion`、`verify:map-save`、`verify:map-zoom-stepper`、`verify:map-overlay-drawer`、`verify:secondary-ui`、`verify:visual-language` |
+| 地图、Tab 动效与视觉语言 | `verify-map-camera-motion.cjs`、`verify:map-save`、`verify:map-zoom-stepper`、`verify:map-overlay-drawer`、`verify-tab-fast-morph.cjs`、`verify:secondary-ui`、`verify:visual-language` |
 | 餐饮类型 | `verify:dining-types`、`verify:dining-type-schema` |
 | 资产、结构与包体 | `verify:assets`、`verify:icons`、`verify:structure`、`verify:package-budget` |
 
@@ -147,12 +150,12 @@ NODE_OPTIONS="--require <path-to>/node-sync-stdin-shim.cjs" npm run verify:all
 ├── package.json              # 验证与资产生成命令
 ├── miniprogram/              # 当前小程序：页面、组件、样式、工具与资产
 │   ├── pages/                # home / map / add / us / me + account / space / workspace / reports / morph-lab
-│   ├── components/           # icon、morph-icon、memory-row、sheet、toast、profile-editor 等
+│   ├── components/           # icon、morph-icon、memory-row、sheet、space-together、toast、profile-editor 等
 │   ├── custom-tab-bar/       # 自定义 TabBar
 │   ├── utils/                # 业务与运行时模块
 │   ├── vendor/               # 第三方运行时（含 Morphicons core 与其许可证）
 │   └── images/               # 打包内图片、图标与 marker
-├── cloudfunctions/           # 当前云函数；本轮未部署
+├── cloudfunctions/           # 当前云函数；spaces 已于 2026-11-25 增量部署 handler.js
 ├── tools/                    # 验证、生成与诊断工具
 │   ├── assets/               # 构建输入（图标溯源、marker SVG），不进主包
 │   ├── lib/                  # 共享校验库、词表与冻结闸门
@@ -188,32 +191,26 @@ NODE_OPTIONS="--require <path-to>/node-sync-stdin-shim.cjs" npm run verify:all
 
 | 指标 | 值 |
 | --- | --- |
-| 精确字节 | **1,658,679 B** |
-| MiB | **1.581840 MiB** |
-| 距软警告 1.70 MiB | 123,900 B ≈ 0.118 MiB |
-| 距硬上限 1.90 MiB | 333,615 B ≈ 0.318 MiB |
-| 距微信 2 MB 限制 | 438,473 B ≈ 0.418 MiB |
+| 精确字节 | **1,832,831 B** |
+| MiB | **1.747924 MiB** |
+| 与软警告 1.70 MiB 差值 | 超出 50,252 B ≈ 0.048 MiB（触发非阻塞 warning） |
+| 距硬上限 1.90 MiB | 159,463 B ≈ 0.152 MiB |
+| 距微信 2 MB 限制 | 264,321 B ≈ 0.252 MiB |
 
 构建输入（图标溯源、marker SVG）位于 `tools/assets/`，不进主包，由 `verify:package-budget` 强制。
 
 ## Known Issues
 
-**TabBar transition has minor visible twitch on real device.**
-
-```
-STATUS: DEFERRED
-```
-
-部分真机在 Tab 切换时，图标 morph 仍有轻微视觉抽动。该问题**不影响导航与任何功能使用**，当前**暂停进一步处理**，不要把它当作已修复。
-
-已经排除的方向（详见 [TabBar Phase 2E](docs/reviews/tabbar-phase2e-20260928.md)）：Morphicons core 移植（逐字节一致）、renderer 成本、motion curve（`UPSTREAM_MOTION_PARITY = PASS`）、cadence、velocity preservation、icon pair 起始几何，以及完整 Morphicons runtime。若将来重启，应转向 TabBar 外层 compositor / layout 层，**不要再改 icon morph**。
+- **TabBar 轻量弹性过渡待真机复验**：已将 TabBar 切换动画重构为直绘 `<s-icon>` + `280ms` 纯 GPU 弹性过渡与零倒退交接（历史逐帧 morph 基线排查记录仍保留在 [TabBar Phase 2E](docs/reviews/tabbar-phase2e-20260928.md)），模拟器冷/热切换已验证消除首次卡顿与抽动，真机视觉表现尚待硬件最终确认。
+- **冻结页检查点哈希待确认**：近期视觉打磨与地图优化涉及的 `tools/*-review.json` 校验哈希未在未经确认前自动推进（`verify-cloud.cjs` / `verify-map-veil-review.cjs` 当前按设计保持预期未推进状态），需真机/视觉批准后统一推进登记。
 
 ## Release History
 
 | 版本 | 日期 | 说明 |
 | --- | --- | --- |
-| **v1.2.3** | 2026-09-29 | 本轮发布：图片、地图、餐饮类型与整体稳定性；文档与仓库整理。 |
-| v1.0.0 | 2026-09-24 | 上一版已发布版本：真机 7 项问题收尾（身份分区迁移、Add 原生返回竞态、头像与高清自定义头像链路）。 |
+| `integrated-with-cloud` HEAD | 2026-11-25 | 开发增量：UI / Dusk 主题打磨、TabBar `280ms` GPU 弹性过渡、地图首次进入高频热点自动聚焦、自定义相伴起始日期与双人空间云同步（含 `spaces/handler.js` 增量部署）及 README 更新。 |
+| **v1.2.3** | 2026-09-29 | 上一已发布基准：图片、地图、餐饮类型与整体稳定性；文档与仓库整理。 |
+| v1.0.0 | 2026-09-24 | 真机 7 项问题收尾（身份分区迁移、Add 原生返回竞态、头像与高清自定义头像链路）。 |
 
 > **说明**：本仓库**不存在** `v1.2.0` / `v1.2.1` / `v1.2.2` 的 tag 或版本记录；`v1.0.0-r4`、`v1.0.0-r5` 是 `v1.0.0` 的预发布迭代标签。版本号从 `v1.0.0` 直接跳到 `v1.2.3`。请勿在文档中补写不存在的中间版本。
 
@@ -252,7 +249,9 @@ cd savor-us-food-memories
 | Identity | `blocked → verified` 历史分区迁移 PASS（真机只读探针：`locked true → false`、存储键 2 → 5、partition 未被改写、修复只发生一次） |
 | Add | 原生选择器 PASS（相册 / 相机 / 取消 / 连续选择 / 前后台切换；`STALE_IDENTITY` 出现 0 次） |
 | Avatar | 微信头像 PASS；自定义高清头像 PASS（目视清晰、Save 后生效、stale-owner 保护保持、Add 不回归） |
-| TabBar twitch | 真机仍可见轻微抽动，**DEFERRED**（见上） |
+| TabBar transition | **SIMULATOR-VERIFIED PASS**（`280ms` GPU 弹性过渡与零倒退）；真机复验 `REAL-DEVICE-VERIFIED: UNVERIFIED` |
+| Map 首次聚焦热点 | **SIMULATOR-VERIFIED PASS**（直达高频核心邻域、零跨洲飞越）；真机复验 `REAL-DEVICE-VERIFIED: UNVERIFIED` |
+| 自定义相伴起始日期与双人云同步 | **SIMULATOR-VERIFIED + `spaces` 线上只读冒烟 PASS**；双账号真机绑定写入 `REAL-DEVICE-VERIFIED: UNVERIFIED` |
 
 证据来源被显式区分：设备日志证据与项目所有者验收结论不互相冒充。自动化通过不能替代设备证据；[Stage 0–7 独立验收报告](Stage0-7-Independent-Verification-Report-2026-09-22.docx) 保留修复前的原始 FAIL 判定，作为问题发现与整改依据，不代表当前 HEAD 的自动化状态。
 

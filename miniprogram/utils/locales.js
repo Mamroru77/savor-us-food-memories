@@ -1808,7 +1808,7 @@ module.exports = [
   {
     "key": "s13174af2ce",
     "en": "Pending changes and conflicts",
-    "zh": "待同步修改与冲突"
+    "zh": "查看待上传的记录与同步情况"
   },
   {
     "key": "s137a5842f0",
@@ -2473,22 +2473,22 @@ module.exports = [
   {
     "key": "se9f48b243a",
     "en": "Account & legacy data",
-    "zh": "账号与旧数据"
+    "zh": "账号与记录备份"
   },
   {
     "key": "s32a88e6746",
     "en": "Identity partitions, backups and recovery",
-    "zh": "身份分区、隔离备份与恢复"
+    "zh": "账号切换、导出备份与恢复"
   },
   {
     "key": "s66c95184e9",
     "en": "Shared space & wishlist",
-    "zh": "双人空间与 Wishlist"
+    "zh": "双人空间与心愿单"
   },
   {
     "key": "s9346597557",
     "en": "Invite, consent and share explicitly",
-    "zh": "邀请、同意与主动共享"
+    "zh": "邀请伴侣、共建美食清单"
   },
   {
     "key": "sebdca4ea1b",
@@ -2794,5 +2794,45 @@ module.exports = [
     "key": "s997ee5da2f",
     "en": "Tap to personalize your profile",
     "zh": "点击右侧完善个人资料"
+  },
+  {
+    "key": "sa83f9aa1d5",
+    "en": "Connected to your shared space. This start date syncs for both of you; your partner label stays on this device.",
+    "zh": "已绑定双人共享空间：相伴起始日期将在双方同步，伴侣称呼仅保存在本机。"
+  },
+  {
+    "key": "s349dd92c21",
+    "en": "Saved on this device while unbound. Once connected in Shared space, your start date syncs for both of you.",
+    "zh": "未绑定共享空间时保存在本机；绑定双人空间后，相伴起始日期将自动在双方同步。"
+  },
+  {
+    "key": "s488b0c37ca",
+    "en": "Choose a start date to save your story.",
+    "zh": "请先选择一个相伴起始日期。"
+  },
+  {
+    "key": "sa10d08b452",
+    "en": "Together start date synced to your shared space.",
+    "zh": "相伴起始日期已同步到双人空间。"
+  },
+  {
+    "key": "sa30cad833d",
+    "en": "Choose today or an earlier date.",
+    "zh": "请选择今天或更早的日期。"
+  },
+  {
+    "key": "s1f7d29144c",
+    "en": "Cloud sync needs the latest spaces cloud function deployed.",
+    "zh": "请先在开发者工具上传并部署最新 spaces 云函数。"
+  },
+  {
+    "key": "s9122175580",
+    "en": "Finish the pending shared-space action before updating the date.",
+    "zh": "请先在「双人空间」完成待确认操作后再修改日期。"
+  },
+  {
+    "key": "s7a1bf26b07",
+    "en": "Could not sync the date. Please try again.",
+    "zh": "同步相伴日期失败，请稍后重试。"
   }
 ];

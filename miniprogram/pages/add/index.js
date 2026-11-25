@@ -104,34 +104,37 @@ Page({
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
-    try {
-      const rect = wx.getMenuButtonBoundingClientRect();
-      if (rect && rect.top) {
-        this.setData({
-          menuButtonTop: rect.top,
-          menuButtonHeight: rect.height,
-          menuButtonBorderRadius: rect.height/2,
-          menuButtonLeft: rect.left,
-          menuButtonWidth: rect.width,
-        });
-      }
-    } catch(e) {}
-    this.setData({imageErrors:{},focusedField:''});
-    this.setData({ headerTop: metrics.getMetrics(true).headerTop });
-    this.setData({today:localDate.today(),cloudPlaceSearchEnabled:importPolicy.enabled()});
     this.active = true;
     const state = store.get();
-    // Never re-read the draft from a locked storage boundary: that read cannot see this
-    // owner's partition, so it would fabricate a fresh draft and overwrite the projection
-    // the user is looking at. Keep it; syncContext rehydrates from the verified partition
-    // the moment verification lands.
-    if (!this.saveLock && !(state.identity && state.identity.locked)) this.setData({ draft: store.loadDraft() });
     this._tabAppearance = {
       dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion,
       labels: ['Home', 'Map', 'Add', 'Us', 'Me'].map(label => i18n.t(label)), addLabel: i18n.t('Add a memory'),
     };
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.showSelection(2, this._tabAppearance);
+    const patch = {
+      imageErrors: {},
+      focusedField: '',
+      headerTop: metrics.getMetrics(true).headerTop,
+      today: localDate.today(),
+      cloudPlaceSearchEnabled: importPolicy.enabled(),
+    };
+    try {
+      const rect = wx.getMenuButtonBoundingClientRect();
+      if (rect && rect.top) {
+        patch.menuButtonTop = rect.top;
+        patch.menuButtonHeight = rect.height;
+        patch.menuButtonBorderRadius = rect.height / 2;
+        patch.menuButtonLeft = rect.left;
+        patch.menuButtonWidth = rect.width;
+      }
+    } catch(e) {}
+    // Never re-read the draft from a locked storage boundary: that read cannot see this
+    // owner's partition, so it would fabricate a fresh draft and overwrite the projection
+    // the user is looking at. Keep it; syncContext rehydrates from the verified partition
+    // the moment verification lands.
+    if (!this.saveLock && !(state.identity && state.identity.locked)) patch.draft = store.loadDraft();
+    this.setData(patch);
     this.syncContext(state);
     this.releaseNativeImportShow();
     this.releaseNativePhotoShow();
@@ -513,6 +516,7 @@ Page({
     return store.createCloudMemory(memory, draft).then(() => {
       clearInterval(saveProgressInterval);
       if(identity.isCurrent(token)&&!thatSave.disposed) thatSave.setData({ draft: store.freshDraft(), error: '', showTagInput: false, tag: '', saveProgress: 100, saveProgressText: i18n.t('Memory saved') });
+      uiFeedback.tapHaptic && uiFeedback.tapHaptic(thatSave.data.quiet);
       store.notify(i18n.t('A little moment, kept forever. Memory saved.'));
       setTimeout(()=>{ if (thatSave.active && !thatSave.disposed && identity.isCurrent(token)) wx.switchTab({ url: '/pages/home/index' }); }, 400);
     }).catch(error => {

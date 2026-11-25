@@ -172,10 +172,27 @@ Page({
     // positioned from one source, so they always sit at the same height.
     // overlayTop = heading block + search bar + gap, all derived from the
     // same headerTop the Us screen uses — one source, no per-device guessing.
-    this.setData({
+    const initPatch = {
       headerTop: m.headerTop,
       overlayTop: m.headerTop + 120,
-    });
+    };
+    try {
+      if (store && typeof store.get === 'function') {
+        const { confirmed } = this.confirmedRealMemories(store.get());
+        const hotspot = this.planInitialHotspot(confirmed, m.headerTop + 120);
+        if (hotspot) {
+          initPatch.latitude = hotspot.centre[0];
+          initPatch.longitude = hotspot.centre[1];
+          initPatch.commandScale = hotspot.level;
+          initPatch.mapScale = hotspot.level;
+          initPatch.selectedId = hotspot.selected.id;
+          this.cameraLiveCentre = hotspot.centre;
+          this.cameraCentreStale = false;
+        }
+      }
+    } catch (e) { /* keep default coordinates when store unavailable */ }
+    this.cameraTransition = null;
+    this.setData(initPatch);
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
   },
 
@@ -265,6 +282,21 @@ Page({
     const points=(visible||[]).map(m=>m.coordinates).filter(Boolean);
     if(!points.length)return null;
     return mapCamera.overview(points,this.cameraViewport(),this.cameraPadding(),this.data.mapScale);
+  },
+  confirmedRealMemories(state) {
+    const list=(state&&Array.isArray(state.memories))?state.memories:[];
+    const isSample=m=>!m.cloudId&&data.initialMemories.some(seed=>seed.id===m.id);
+    const real=list.filter(m=>!isSample(m));
+    const check=locations&&typeof locations.confirmed==='function'?locations.confirmed:()=>true;
+    return {real,confirmed:real.length?real.filter(check):[],samples:list.filter(isSample)};
+  },
+  planInitialHotspot(memories, overlayTopOverride) {
+    if(!mapCamera||typeof mapCamera.hotspot!=='function'||!memories||!memories.length)return null;
+    const viewport=this.cameraViewport();
+    const padding=overlayTopOverride>0
+      ?mapCamera.bootstrapPadding(viewport,overlayTopOverride)
+      :this.cameraPadding();
+    return mapCamera.hotspot(memories,viewport,padding);
   },
   initMarkerRenderer() {
     if(this.active && this.markerCanvas && !this.pinRenderer) {
@@ -364,7 +396,12 @@ Page({
     // The image cache is per owner. A different owner must not inherit resolved URLs or
     // prepared derivatives, so the whole pipeline is dropped the moment the owner changes.
     const owner = state && state.identity ? state.identity.userId : '';
-    if (this.imageCacheOwner !== owner) { this.imageCacheOwner = owner; imageCache.reset(); }
+    if (this.imageCacheOwner !== owner) {
+      this.imageCacheOwner = owner;
+      imageCache.reset();
+      this.initialViewportPositioned = false;
+      this.pendingInitialCamera = null;
+    }
     i18n.syncPage(this, state, 1);
     // Identity appearance updates remain immediate; defer only map rendering during a pan.
     // Remember work, never retain a private account snapshot across a gesture.
@@ -379,13 +416,15 @@ Page({
     const revision = store.revision();
     if (revision === this.renderedRevision) { this.resumeMapView(); return; }
     this.renderedRevision = revision;
-    const isSample = m => !m.cloudId && data.initialMemories.some(seed => seed.id === m.id);
-    const real = state.memories.filter(m => !isSample(m));
-    this.pendingLocations = real.filter(m => !locations.confirmed(m) || !m.geoConfirmed);
-    this.allMemories = real.length ? real.filter(locations.confirmed) : state.memories.filter(isSample);
+    const { real, confirmed, samples } = this.confirmedRealMemories(state);
+    const check = locations && typeof locations.confirmed === 'function' ? locations.confirmed : () => true;
+    this.pendingLocations = real.filter(m => !check(m) || !m.geoConfirmed);
+    this.allMemories = real.length ? confirmed : samples;
+    const settings = state && state.settings ? state.settings : {};
     this.setData({ pendingCount: this.pendingLocations.length, demoMode: !real.length });
-    this.setData({ dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion, showNativePoi: state.settings.showNativePoi !== false });
-    this.applyFilters(this.data.query, this.data.filter, this.data.selectedId, 'preserve');
+    this.setData({ dusk: settings.theme === 'dusk', quiet: Boolean(settings.reduceMotion), showNativePoi: settings.showNativePoi !== false });
+    const isInitialReal = !this.initialViewportPositioned && real.length > 0 && this.allMemories.length > 0;
+    this.applyFilters(this.data.query, this.data.filter, isInitialReal ? '' : this.data.selectedId, isInitialReal ? 'initial' : 'preserve');
   },
 
   // Everything a page that became visible again genuinely has to redo, and nothing more.
@@ -395,6 +434,19 @@ Page({
   // than downloaded again, so a return with no data change performs no network work at all.
   resumeMapView() {
     if (!this.active || this.disposed) return;
+    if (this.pendingInitialCamera) {
+      const pending = this.pendingInitialCamera;
+      this.pendingInitialCamera = null;
+      this.cameraLiveCentre = pending.centre;
+      this.cameraCentreStale = false;
+      this.cameraAnchorPending = false;
+      this.setData({
+        latitude: pending.centre[0],
+        longitude: pending.centre[1],
+        commandScale: pending.level,
+        mapScale: pending.level,
+      });
+    }
     this.syncOverlayClearance();
     this.syncCameraPadding();
     this.syncStackPositions();
@@ -404,12 +456,16 @@ Page({
 
   applyFilters(query, filter, preferredId, viewportMode) {
     const visible = visibleMemories(this.allMemories || [], query, filter);
-    const selected = visible.find(function (m) { return m.id === preferredId; })
-      || visible.find(function (m) { return m.id === 'comptoir'; })
-      || visible[0]
-      || null;
+    const initialHotspot = viewportMode === 'initial' ? this.planInitialHotspot(visible) : null;
+    const selected = viewportMode === 'initial'
+      ? ((initialHotspot && initialHotspot.selected) || visible[0] || null)
+      : (visible.find(function (m) { return m.id === preferredId; })
+        || visible.find(function (m) { return m.id === 'comptoir'; })
+        || visible[0]
+        || null);
     this.stopMarkerAnimation();
-    const groups=mapLayout.group(visible,this.data.mapScale,(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:selected && selected.id);
+    const layoutScale = initialHotspot ? initialHotspot.level : this.data.mapScale;
+    const groups=mapLayout.group(visible,layoutScale,(this.data.clusterOpen||this.drawerProgress>0)?this.drawerRootId:selected && selected.id);
     const overlayMode=this.drawerOverlayMode();
     this.markerGroups=groups;
     if(this.data.clusterOpen&&!groups.some(g=>g.memory.id===this.drawerRootId&&g.members.length>1))this.setData(this.dismissOverlayDrawer({}));
@@ -470,7 +526,7 @@ Page({
       mapDrawers:this.buildDrawers(groups,markers,selected && selected.id),
       resultsCount: query ? visible.length : 0,
       emptyState: visible.length ? null : emptyMapState(query, filter, this.data.pendingCount),
-      selected: selected ? Object.assign({}, selected, { dateLabel: data.formatDate(selected.date),categoryLabel:restaurantCategory.summary(selected)||i18n.t('Category not recorded') }) : null,
+      selected: selected ? Object.assign({}, selected, { dateLabel: data.formatDate(selected.date),categoryLabel:restaurantCategory.summary(selected)||'' }) : null,
       selectedPhoto: selected ? (selected.placePhoto || selected.photo || data.photos.meal) : '',
       selectedSaved: Boolean(selected && selected.saved),
       distanceLabel: distanceLabel,
@@ -511,6 +567,19 @@ Page({
     const cardSource = selected ? (selected.placePhoto || selected.photo || data.photos.meal) : '';
     const cardPreview = selected && data.isCloudImage(cardSource) ? imageCache.cachedLocal(cardSource, 'preview', selected.revision) : null;
     if (cardPreview) patch.selectedPhoto = cardPreview;
+    if (initialHotspot) {
+      patch.latitude = initialHotspot.centre[0];
+      patch.longitude = initialHotspot.centre[1];
+      patch.commandScale = initialHotspot.level;
+      patch.mapScale = initialHotspot.level;
+      this.cancelCameraTransition();
+      this.cameraTransition = null;
+      this.initialViewportPositioned = true;
+      this.cameraLiveCentre = initialHotspot.centre;
+      this.cameraCentreStale = false;
+      this.cameraAnchorPending = false;
+      this.pendingInitialCamera = this.active ? null : initialHotspot;
+    }
     // Wait for the marker/card update before issuing one camera command.
     // A native pan need not update data.latitude: explicit focus also handles
     // tapping the same marker again after panning away.
@@ -526,6 +595,10 @@ Page({
       // card's preview must be on its way the moment the selection happens, not when the travel
       // finishes. (The marker side is the renderer's own queue.)
       this.resolveCardPreview(selected, generation);
+      if (initialHotspot) {
+        this.onCameraViewportReady(generation, 'initial');
+        return;
+      }
       if (overviewPlan) {
         // One travel, carrying the plan's own centre and level. `includePoints` is deliberately
         // no longer used here: it sets the centre AND the scale in one imperative jump, which is
@@ -1204,6 +1277,7 @@ Page({
   onDrawerToggle(e) {
     const index=Number(e.currentTarget.dataset.index),g=this.markerGroups&&this.markerGroups[index];
     if(!g||g.members.length<2)return;
+    uiFeedback.tapHaptic && uiFeedback.tapHaptic(this.data.quiet);
     const same=this.drawerRootId===g.memory.id;
     const from=same?this.drawerProgress||0:0;
     const open=!(same&&this.data.clusterOpen);
@@ -1935,6 +2009,7 @@ Page({
   onBookmark() {
     const selected = this.data.selected;
     if (!selected) return;
+    uiFeedback.tapHaptic && uiFeedback.tapHaptic(this.data.quiet);
     store.updateMemory(selected.id, { saved: !selected.saved });
     store.notify(selected.saved ? i18n.t('Place removed from your favorites.') : i18n.t('A good place to come back to. Saved.'));
   },

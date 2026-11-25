@@ -12,13 +12,15 @@
       aria-label="{{addLabel}}"
     >
       <view class="tab-add-button" hover-class="add-press" hover-start-time="0" hover-stay-time="120">
-        <s-morph renderer="svg" class="tab-morph" data-index="{{index}}" bindreport="onMorphReport" presentation="{{viewState.icons[index]}}" warm="{{warmEndpoints[index]}}" size="66" />
+        <view class="tab-add-icon {{viewState.selected === index && enterPulse === 1 ? 'tab-add-spring-a' : ''}} {{viewState.selected === index && enterPulse === 2 ? 'tab-add-spring-b' : ''}}">
+          <s-icon class="tab-s-icon" data-index="{{index}}" name="{{viewState.icons[index].icon}}" size="66" color="{{viewState.icons[index].color}}" stroke="1.75" />
+        </view>
       </view>
     </view>
     <!-- regular tab -->
     <view
       wx:else
-      class="tab-item {{viewState.visualSelected === index ? 'is-active' : ''}}"
+      class="tab-item {{viewState.selected === index ? 'is-active' : ''}}"
       data-path="{{item.pagePath}}"
       data-index="{{index}}"
       bindtap="onTabTap"
@@ -29,10 +31,14 @@
       aria-selected="{{viewState.selected === index}}"
       aria-label="{{labels[index] || item.text}}"
     >
-      <view class="tab-icon-wrap">
-        <s-morph renderer="svg" class="tab-morph" data-index="{{index}}" bindreport="onMorphReport" presentation="{{viewState.icons[index]}}" warm="{{warmEndpoints[index]}}" size="{{item.size}}" />
+      <view class="tab-icon-wrap {{viewState.selected === index && enterPulse === 1 ? 'tab-spring-a' : ''}} {{viewState.selected === index && enterPulse === 2 ? 'tab-spring-b' : ''}}">
+        <s-icon class="tab-s-icon" data-index="{{index}}" name="{{viewState.icons[index].icon}}" size="{{item.size}}" color="{{viewState.icons[index].color}}" stroke="1.75" />
       </view>
-      <text class="tab-label">{{labels[index] || item.text}}</text>
+      <view class="tab-label-stack">
+        <text class="tab-label tab-label-sizer" aria-hidden="true">{{labels[index] || item.text}}</text>
+        <text class="tab-label tab-label-layer tab-label-inactive">{{labels[index] || item.text}}</text>
+        <text class="tab-label tab-label-layer tab-label-active" aria-hidden="true">{{labels[index] || item.text}}</text>
+      </view>
     </view>
   </block>
 </view>

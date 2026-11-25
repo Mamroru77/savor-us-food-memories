@@ -19,6 +19,10 @@ const stats = require('../../utils/memoryStats');
 const metrics = require('../../utils/metrics');
 const nativeFlow = require('../../utils/nativeFlow');
 
+function loadSpaces() {
+  try { return require('../../utils/spaces'); } catch (e) { return null; }
+}
+
 const WEEK_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 const FAQS = [
@@ -181,6 +185,7 @@ Component({
           if(session.locked||session.userId!==native.userId){
             nativeFlow.cancel(native.id);
             this.resetFormEdits();
+            this._togetherSpace = null;
             this._personalizing=false;
             this.setData({detail:null,libraryRows:[],libraryQuery:'',feedbackMessage:'',state:{},syncRows:[]});
             this.triggerEvent('close', {reason:'identity'});return;
@@ -189,6 +194,7 @@ Component({
         } else if(session && this._identityGeneration!==session.generation){
           this._identityGeneration=session.generation;
           this.resetFormEdits();
+          this._togetherSpace = null;
           this._personalizing=false;
           this.setData({detail:null,libraryRows:[],libraryQuery:'',feedbackMessage:'',state:{},syncRows:[]});
           this.triggerEvent('close', {reason:'identity'});return;
@@ -220,6 +226,8 @@ Component({
     // ---------- shell ----------
     resetFormEdits() {
       this._formEdits={};
+      this._togetherSpaceFetched=false;
+      this._togetherSaving=false;
     },
     markFormEdit(field) { (this._formEdits||(this._formEdits={}))[field]=true; },
     close() {
@@ -515,8 +523,34 @@ Component({
 
     // ---------- together ----------
     refreshTogether(patch, state) {
-      if(!(this._formEdits||{}).partner)patch.partner = state.profile.partner;
-      if(!(this._formEdits||{}).since)patch.since = state.profile.togetherSince;
+      const spacesMod = loadSpaces();
+      const cached = spacesMod && typeof spacesMod.peekStatus === 'function' ? spacesMod.peekStatus() : null;
+      if (cached) this._togetherSpace = cached.space || null;
+      const activeSpace = cached ? cached.space : (this._togetherSpace || null);
+      if (!cached && spacesMod && typeof spacesMod.status === 'function' && !this._togetherSpaceFetched && state.identity && !state.identity.locked) {
+        this._togetherSpaceFetched = true;
+        const reqGen = state.identity.generation;
+        Promise.resolve(spacesMod.status()).then(res => {
+          const snap = typeof identity.snapshot === 'function' ? identity.snapshot() : state.identity;
+          if (this._detached || !this.data.show || this.data.type !== 'together') return;
+          if (snap && snap.generation !== reqGen) return;
+          this._togetherSpace = res && res.space ? res.space : null;
+          this.refresh();
+        }).catch(() => {});
+      }
+      if (!(this._formEdits || {}).partner) patch.partner = state.profile.partner || '';
+      if (!(this._formEdits || {}).since) {
+        patch.since = (activeSpace && activeSpace.togetherSince)
+          ? activeSpace.togetherSince
+          : (state.profile.togetherSince || '');
+      }
+      patch.copy = Object.assign({}, patch.copy, {
+        s0b17f5b5cf: i18n.t(
+          activeSpace
+            ? 'Connected to your shared space. This start date syncs for both of you; your partner label stays on this device.'
+            : 'Saved on this device while unbound. Once connected in Shared space, your start date syncs for both of you.'
+        ),
+      });
     },
     onPartnerInput(event) { this.markFormEdit('partner');this.setData({ partner: event.detail.value }); },
     onSinceChange(event) { this.markFormEdit('since');this.setData({ since: event.detail.value }); },
@@ -525,13 +559,85 @@ Component({
       store.updateSettings({ loveSent: !settings.loveSent });
       if (!settings.loveSent) store.notify(i18n.t('A little love, added to your shared space.'));
     },
-    onTogetherSave() {
-      const partner = this.data.partner.trim();
-      const since = this.data.since;
-      if (!partner || !since) return;
-      store.updateProfile({ partner: partner, togetherSince: since });
-      store.notify(i18n.t('Your shared story is updated.'));
-      this.close();
+    async onTogetherSave() {
+      if (this._togetherSaving) return;
+      const state = store.get();
+      const partner = (this.data.partner || '').trim();
+      const since = (this.data.since || '').trim();
+      const spacesMod = loadSpaces();
+      const cached = spacesMod && typeof spacesMod.peekStatus === 'function' ? spacesMod.peekStatus() : null;
+      const activeSpace = cached ? cached.space : (this._togetherSpace || null);
+
+      if (!activeSpace) {
+        if (!since && !partner) {
+          store.notify(i18n.t('Choose a start date to save your story.'));
+          return;
+        }
+        try {
+          store.updateProfile({ partner: partner, togetherSince: since });
+        } catch (error) {
+          store.notify(i18n.t('Could not save. Free some storage and try again.'));
+          return;
+        }
+        store.notify(i18n.t('Your shared story is updated.'));
+        this.close();
+        return;
+      }
+
+      const existingPartner = (state.profile && state.profile.partner || '').trim();
+      const partnerChanged = partner !== existingPartner;
+      const existingSince = activeSpace.togetherSince || '';
+      const sinceChanged = !!since && since !== existingSince;
+
+      if (!since && !partnerChanged) {
+        store.notify(i18n.t('Choose a start date to save your story.'));
+        return;
+      }
+
+      if (partnerChanged) {
+        try {
+          // Only save the local partner label; never write cloud togetherSince into private store.
+          store.updateProfile({ partner: partner });
+        } catch (error) {
+          store.notify(i18n.t('Could not save. Free some storage and try again.'));
+          return;
+        }
+      }
+
+      if (!sinceChanged) {
+        store.notify(i18n.t('Your shared story is updated.'));
+        this.close();
+        return;
+      }
+
+      if (!spacesMod || typeof spacesMod.submit !== 'function') {
+        store.notify(i18n.t('Could not sync the date. Please try again.'));
+        return;
+      }
+
+      this._togetherSaving = true;
+      try {
+        const res = await spacesMod.submit('setTogetherSince', {
+          spaceId: activeSpace.id,
+          membershipVersion: activeSpace.version,
+          togetherSince: since,
+        });
+        if (res && res.space) this._togetherSpace = res.space;
+        store.notify(i18n.t('Together start date synced to your shared space.'));
+        if (!this._detached) this.close();
+      } catch (error) {
+        const code = error && error.code;
+        const message = code === 'INVALID_DATE'
+          ? 'Choose today or an earlier date.'
+          : code === 'UNKNOWN_ACTION'
+            ? 'Cloud sync needs the latest spaces cloud function deployed.'
+            : code === 'PENDING_OPERATION'
+              ? 'Finish the pending shared-space action before updating the date.'
+              : 'Could not sync the date. Please try again.';
+        store.notify(i18n.t(message));
+      } finally {
+        this._togetherSaving = false;
+      }
     },
 
     // ---------- weekly ----------

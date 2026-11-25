@@ -1,0 +1,2 @@
+.space-together-picker { justify-content: space-between; gap: 16rpx; }
+.space-together-date { flex: 1; min-width: 0; }

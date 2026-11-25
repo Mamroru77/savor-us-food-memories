@@ -111,7 +111,7 @@ page {
 }
 
 .stat { display: flex; flex-direction: column; font-size: 25rpx; line-height: 35rpx; }
-.stat-strong { font-family: var(--serif); font-weight: 400; letter-spacing: -1rpx; }
+.stat-strong { font-family: var(--serif); font-weight: 400; letter-spacing: -1rpx; font-variant-numeric: tabular-nums; }
 
 .primary-button {
   min-height: 98rpx;
@@ -281,8 +281,8 @@ page {
    Search fields, transient popovers and photos intentionally remain separate. */
 .screen {
   --content-card-bg: var(--surface-card);
-  --content-card-border: rgba(255, 255, 255, 0.48);
-  --content-card-shadow: var(--shadow-card);
+  --content-card-border: rgba(255, 255, 255, 0.72);
+  --content-card-shadow: var(--shadow-card), inset 0 1rpx 0 rgba(255, 255, 255, 0.85);
   --content-card-blur: 20px;
 }
 .screen.dusk {

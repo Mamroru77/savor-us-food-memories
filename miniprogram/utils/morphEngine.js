@@ -4,7 +4,7 @@ const nodes=require('./lucideMorphNodes');
 const cache={};
 function sample(name) {
   if(!nodes[name])throw new Error('Unknown morph icon');
-  if(!cache[name])cache[name]=core.resampleIcon(nodes[name],64);
+  if(!cache[name])cache[name]=core.resampleIcon(nodes[name],48);
   return cache[name];
 }
 function plan(current,name) {

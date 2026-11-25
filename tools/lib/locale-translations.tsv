@@ -359,7 +359,7 @@ Dishes (comma separated)	菜品（用逗号分隔）
 Unrated	未评分
 Edit memory	编辑餐食
 Sync status	同步状态
-Pending changes and conflicts	待同步修改与冲突
+Pending changes and conflicts	查看待上传的记录与同步情况
 Your changes, safely kept.	本机修改已保留。
 Retry sync	重试同步
 Use cloud version	以云端为准
@@ -492,10 +492,10 @@ Collapse expanded pins	收起标记
 Previous pin page	上一页地标
 Next pin page	下一页地标
 Expand grouped pins	展开叠放地标
-Account & legacy data	账号与旧数据
-Identity partitions, backups and recovery	身份分区、隔离备份与恢复
-Shared space & wishlist	双人空间与 Wishlist
-Invite, consent and share explicitly	邀请、同意与主动共享
+Account & legacy data	账号与记录备份
+Identity partitions, backups and recovery	账号切换、导出备份与恢复
+Shared space & wishlist	双人空间与心愿单
+Invite, consent and share explicitly	邀请伴侣、共建美食清单
 Cloud tools	云端工具
 Backups, preferences and feedback	备份、偏好与反馈
 Annual reports	年度报告
@@ -557,3 +557,11 @@ Enter your name	输入你的昵称
 Enter partner's name	输入伴侣的名字
 Set your name	设置你的昵称
 Tap to personalize your profile	点击右侧完善个人资料
+Connected to your shared space. This start date syncs for both of you; your partner label stays on this device.	已绑定双人共享空间：相伴起始日期将在双方同步，伴侣称呼仅保存在本机。
+Saved on this device while unbound. Once connected in Shared space, your start date syncs for both of you.	未绑定共享空间时保存在本机；绑定双人空间后，相伴起始日期将自动在双方同步。
+Choose a start date to save your story.	请先选择一个相伴起始日期。
+Together start date synced to your shared space.	相伴起始日期已同步到双人空间。
+Choose today or an earlier date.	请选择今天或更早的日期。
+Cloud sync needs the latest spaces cloud function deployed.	请先在开发者工具上传并部署最新 spaces 云函数。
+Finish the pending shared-space action before updating the date.	请先在「双人空间」完成待确认操作后再修改日期。
+Could not sync the date. Please try again.	同步相伴日期失败，请稍后重试。

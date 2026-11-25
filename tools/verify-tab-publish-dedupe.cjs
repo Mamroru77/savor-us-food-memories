@@ -44,10 +44,10 @@ const state = (o) => Object.assign({ dusk: false, quiet: false, labels: ['回忆
 // ---- the pure key ------------------------------------------------------------
 test('the visual key ignores revision and is stable for identical visuals', () => {
   const c = controller(0), b = c.bar();
-  const icons = [{ revision: 1, key: 5, active: true, name: 'map', fromName: 'house', quiet: false, duration: 480, color: '#171a16' }];
-  const other = [{ revision: 99, key: 5, active: true, name: 'map', fromName: 'house', quiet: false, duration: 480, color: '#171a16' }];
+  const icons = [{ revision: 1, key: 5, active: true, name: 'map-pinned', icon: 'lucide-map-pinned', quiet: false, color: '#171a16' }];
+  const other = [{ revision: 99, key: 5, active: true, name: 'map-pinned', icon: 'lucide-map-pinned', quiet: false, color: '#171a16' }];
   assert.equal(b.visualPublishKey(state({ selected: 1 }), icons), b.visualPublishKey(state({ selected: 1 }), other));
-  const changed = [{ revision: 1, key: 5, active: true, name: 'map-pinned', fromName: 'house', quiet: false, duration: 480, color: '#171a16' }];
+  const changed = [{ revision: 1, key: 5, active: true, name: 'map', icon: 'lucide-map', quiet: false, color: '#171a16' }];
   assert.notEqual(b.visualPublishKey(state({ selected: 1 }), icons), b.visualPublishKey(state({ selected: 1 }), changed));
 });
 

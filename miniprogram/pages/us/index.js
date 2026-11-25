@@ -5,6 +5,8 @@ const store = require('../../utils/store');
 const data = require('../../utils/data');
 const metrics = require('../../utils/metrics');
 const memoryStats = require('../../utils/memoryStats');
+const localDate = require('../../utils/localDate');
+const spaces = require('../../utils/spaces');
 
 Page({
   onImageError: uiFeedback.onImageError,
@@ -36,22 +38,33 @@ Page({
   onLoad() {
     let capsule = { top: 0, height: 32, borderRadius: 16 };
     try { const rect = wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) capsule={top:rect.top,height:rect.height,borderRadius:rect.height/2}; } catch(e){}
-    this.setData({ menuButtonTop: capsule.top, menuButtonHeight: capsule.height, menuButtonBorderRadius: capsule.borderRadius });
-    this.setData({ headerTop: metrics.getMetrics().headerTop });
+    this.setData({
+      menuButtonTop: capsule.top,
+      menuButtonHeight: capsule.height,
+      menuButtonBorderRadius: capsule.borderRadius,
+      headerTop: metrics.getMetrics().headerTop,
+    });
     this.unsubscribe = store.subscribe(this.syncState.bind(this));
+    this.unsubscribeSpace = typeof spaces.subscribeStatus === 'function'
+      ? spaces.subscribeStatus(() => this.syncState(store.get()))
+      : null;
+  },
+
+  onHide() {
+    this._visible = false;
   },
 
   onUnload() {
+    this._visible = false;
     if (this._memoryPreview) this._memoryPreview.cancel();
     if (this.unsubscribe) this.unsubscribe();
+    if (this.unsubscribeSpace) this.unsubscribeSpace();
   },
 
   onResize() { this.setData({ headerTop: metrics.getMetrics(true).headerTop }); },
 
   onShow() {
-    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) this.setData({menuButtonTop:rect.top,menuButtonHeight:rect.height,menuButtonBorderRadius:rect.height/2}); } catch(e){}
-    this.setData({imageErrors:{},focusedField:''});
-    this.setData({ headerTop: metrics.getMetrics(true).headerTop });
+    this._visible = true;
     const state = store.get();
     this._tabAppearance = {
       dusk: state.settings.theme === 'dusk', quiet: state.settings.reduceMotion,
@@ -59,13 +72,63 @@ Page({
     };
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.showSelection(3, this._tabAppearance);
+    const patch = { imageErrors: {}, focusedField: '', headerTop: metrics.getMetrics(true).headerTop };
+    try { const rect=wx.getMenuButtonBoundingClientRect(); if(rect&&rect.top) { patch.menuButtonTop=rect.top; patch.menuButtonHeight=rect.height; patch.menuButtonBorderRadius=rect.height/2; } } catch(e){}
+    this.setData(patch);
+    this._insideOnShow = true;
     this.syncState(state);
+    this._insideOnShow = false;
+    this.refreshSharedSpace(state);
+  },
+
+  refreshSharedSpace(state) {
+    if (!this._visible) return;
+    const session = state && state.identity;
+    if (!session || session.locked || typeof spaces.status !== 'function') return;
+    const cached = typeof spaces.peekStatus === 'function' ? spaces.peekStatus() : null;
+    if (cached) {
+      this._spaceState = cached.space || null;
+      return;
+    }
+    const req = (this._spaceRequest = (this._spaceRequest || 0) + 1);
+    const expectedGen = `${session.userId}:${session.generation}`;
+    Promise.resolve(spaces.status()).then(res => {
+      if (!this._visible || req !== this._spaceRequest) return;
+      const latest = store.get();
+      const s = latest && latest.identity;
+      const latestGen = s && !s.locked ? `${s.userId}:${s.generation}` : '';
+      if (latestGen !== expectedGen) return;
+      this._spaceState = res && res.space ? res.space : null;
+      const effectiveSince = (this._spaceState && this._spaceState.togetherSince)
+        ? this._spaceState.togetherSince
+        : (latest.profile && latest.profile.togetherSince) || '';
+      this.setData({ days: localDate.daysInclusive(effectiveSince) });
+    }).catch(() => { /* offline fallback keeps local togetherSince */ });
   },
 
   syncState(state) {
+    const session = state && state.identity;
+    const gen = session && !session.locked ? `${session.userId}:${session.generation}` : '';
+    const genChanged = gen !== (this._spaceGeneration || '');
+    if (!gen) {
+      this._spaceState = null;
+      this._spaceGeneration = '';
+    } else if (genChanged) {
+      this._spaceState = null;
+      this._spaceGeneration = gen;
+    }
     i18n.syncPage(this, state, 3);
     const summary = memoryStats.summary(state.memories, true);
-    const days = require('../../utils/localDate').daysSince(state.profile.togetherSince);
+    const cached = typeof spaces.peekStatus === 'function' ? spaces.peekStatus() : null;
+    if (cached) this._spaceState = cached.space || null;
+    const activeSpace = cached ? cached.space : this._spaceState;
+    const effectiveSince = (activeSpace && activeSpace.togetherSince)
+      ? activeSpace.togetherSince
+      : (state.profile && state.profile.togetherSince) || '';
+    const days = localDate.daysInclusive(effectiveSince);
+    if (gen && genChanged && !this._insideOnShow && this._visible) {
+      this.refreshSharedSpace(state);
+    }
     const shared = summary.all;
     const recentShared = shared[0];
     this.setData({
@@ -93,6 +156,7 @@ Page({
   },
 
   onLoveTap() {
+    uiFeedback.tapHaptic && uiFeedback.tapHaptic(this.data.quiet);
     const settings = store.get().settings;
     store.updateSettings({ loveSent: !settings.loveSent });
     if (!settings.loveSent) store.notify(i18n.t('A little love, added to your shared space.'));
@@ -103,6 +167,7 @@ Page({
   onSharedOpen(event) { this.openSheet('memory', event.currentTarget.dataset.id); },
   onSeeAll() { this.openSheet('library', '', 'shared'); },
   onSharedLike(event) {
+    uiFeedback.tapHaptic && uiFeedback.tapHaptic(this.data.quiet);
     const id = event.currentTarget.dataset.id;
     const memory = store.get().memories.find(function (m) { return m.id === id; });
     if (memory) store.updateMemory(id, { liked: !memory.liked });

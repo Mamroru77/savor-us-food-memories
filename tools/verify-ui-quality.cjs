@@ -130,8 +130,12 @@ test('Map paging hit slop remains horizontally nonoverlapping after approved but
  const css=read('pages/map/index.wxss');assert(css.includes('.map-stack-overlay .pin-stack-page-arrow { width:44px; flex-shrink:0; margin-left:-10px; margin-right:-10px; }'));
  const left=[-10,34],right=[54,98];assert(left[1]<right[0]);assert(read('pages/map/index.wxml').includes('drawer.buttonBox.size')); // Actual native geometry is now explicit, sized to the bottom-card control.
 });
-test('Approved production Tab timing/endpoints remain intact',()=>{
- const js=read('custom-tab-bar/index.js');assert(js.includes('480'));assert(js.includes('utensils-crossed'));assert(js.includes('utensils'));assert(read('components/morph-icon/index.js').includes('svgLoaded'));
+test('Approved production Tab endpoints and lightweight 280ms GPU spring remain intact',()=>{
+ const js=read('custom-tab-bar/index.js'),w=read('custom-tab-bar/index.wxml'),css=read('custom-tab-bar/index.wxss');
+ for(const name of ['house-heart','map-pinned','utensils-crossed','utensils','users-round','user-round'])assert(js.includes(name));
+ assert(w.includes('<s-icon'));assert(!w.includes('<s-morph'));
+ assert(css.includes('280ms')&&css.includes('tab-spring-a')&&css.includes('tab-add-spring-a'));
+ assert(read('components/morph-icon/index.js').includes('svgLoaded'));
 });
 test('Add thumbnail preview and delete have separate non-overlapping vertical targets',()=>{
  const css=read('pages/add/index.wxss');assert(css.includes('.photo-strip { height:220rpx; }'));assert(css.includes('.photo-strip-item { height:196rpx; }'));assert(css.includes('.photo-strip-remove { top:108rpx; right:10rpx;'));assert.equal(108+88,196);assert(12+196+12<=220);
@@ -149,11 +153,13 @@ test('Memory Row retains its divider strategy while image and text sizing is ref
  assert(css.includes('min-height: 168rpx'));assert(css.includes('height: 128rpx'));
  assert(css.includes('var(--radius-image,28rpx)'));
 });
-test('Tab press feedback cannot scale, lift, pop or resize the SVG icon before morphing',()=>{
- const css=read('custom-tab-bar/index.wxss');assert(!/scale\(|translateY\(|@keyframes\s+tab-pop/.test(css));
+test('Tab press feedback stays opacity-only while arrival GPU spring preserves orb halo',()=>{
+ const css=read('custom-tab-bar/index.wxss'),w=read('custom-tab-bar/index.wxml');
  assert(css.includes('.tab-press { opacity: 0.7; }'));assert(css.includes('.add-press { opacity: 0.85; }'));
  const press=css.match(/\.add-press\s*\{([^}]+)\}/)[1];assert(!/transform|box-shadow|width|height|margin|padding/.test(press));
- assert(css.includes('.tab-item.is-active .tab-icon-wrap { transform:none;animation:none; }'));
+ assert(w.includes('class="tab-add-icon')&&!w.includes('tab-add-button {{viewState'));
+ const springA=css.match(/@keyframes\s+tab-spring-a\s*\{([\s\S]*?)\n\}/);assert(springA&&/0%\s*\{[^}]*scale\(1\)/.test(springA[1]));
+ assert(/\.theme-quiet[\s\S]*transform:\s*none\s*!important/.test(css));
 });
 test('Tab press still responds and Quiet suppresses transitions without changing touch geometry',()=>{
  const css=read('custom-tab-bar/index.wxss'),w=read('custom-tab-bar/index.wxml');assert(w.includes('hover-class="tab-press"'));assert(w.includes('hover-class="add-press"'));

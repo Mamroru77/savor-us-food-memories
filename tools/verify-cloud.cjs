@@ -888,8 +888,8 @@ function nativeTabs(initial=0){
     assert(tokens.includes('--surface-card: rgba(251, 250, 247, .82)'));
     assert(tokens.includes('--ambient-opacity: .12'));
     assert(fs.readFileSync(path.join(mp, 'pages/map/index.wxml'), 'utf8').includes('place-card glass content-card'));
-    assert.match(css, /\.place-card\s*\{[^}]*height: 340rpx/);
-    assert.match(css, /\.place-open\s*\{[^}]*height: 270rpx/);
+    assert.match(css, /\.place-card\s*\{[^}]*height: 304rpx/);
+    assert.match(css, /\.place-open\s*\{[^}]*height: 234rpx/);
     assert.match(css, /\.place-location-actions\s*\{[^}]*height:65rpx/);
   });
   // Collapsing the place card is a drawer push/pull. The bookmark button must travel with
@@ -1094,7 +1094,7 @@ function nativeTabs(initial=0){
   });
   await test('Map geometry is retained and Me exposes the scrollable personalization Sheet', () => {
     const mapCss=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8');
-    assert.match(mapCss,/\.place-card\s*\{[^}]*height: 340rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*top:30rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*bottom:30rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*height: 280rpx/);
+    assert.match(mapCss,/\.place-card\s*\{[^}]*height: 304rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*top:30rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*bottom:30rpx/); assert.match(mapCss,/\.place-photo\s*\{[^}]*height: 244rpx/);
     const meCss=fs.readFileSync(path.join(mp,'pages/me/index.wxss'),'utf8');
     assert.match(meCss,/\.profile-stats-card\s*\{[^}]*height: 280rpx/); assert.match(meCss,/\.profile-menu-row\s*\{[^}]*min-height: 136rpx/);
     assert(fs.readFileSync(path.join(mp,'pages/me/index.js'),'utf8').includes("sheet: 'personalize'"));
@@ -1869,14 +1869,14 @@ function nativeTabs(initial=0){
   await test('map card uses one fixed toggle beside both expanded actions and collapsed name', () => {
     const css=fs.readFileSync(path.join(mp,'pages/map/index.wxss'),'utf8');
     const wxml=fs.readFileSync(path.join(mp,'pages/map/index.wxml'),'utf8');
-    assert.match(css,/\.place-photo\s*\{[^}]*width: 280rpx;[^}]*height: 280rpx/);
+    assert.match(css,/\.place-photo\s*\{[^}]*width: 244rpx;[^}]*height: 244rpx/);
     assert.equal((wxml.match(/class="place-collapse /g)||[]).length,1);
     assert(wxml.indexOf('class="place-collapse ')<wxml.indexOf('class="place-expand-name"'));
     assert.match(css,/\.place-collapse\s*\{[^}]*left:36rpx; bottom:calc\(var\(--tab-clearance\) \+ 24rpx\)/);
     assert.match(css,/\.place-expand\s*\{[^}]*left:32rpx; bottom:calc\(var\(--tab-clearance\) \+ 20rpx\);[^}]*padding:0 28rpx 0 100rpx/);
-    assert.match(css,/\.place-name\s*\{[^}]*font-size: 42rpx;[^}]*line-height: 54rpx/);
+    assert.match(css,/\.place-name\s*\{[^}]*font-size: 36rpx;[^}]*line-height: 46rpx/);
     assert.match(css,/\.place-date\s*\{[^}]*font-size:24rpx; line-height:34rpx/);
-    assert.match(css,/\.place-location-actions\s*\{[^}]*padding:0 0 0 100rpx; width:calc\(100% - 310rpx\)/);
+    assert.match(css,/\.place-location-actions\s*\{[^}]*padding:0 0 0 100rpx; width:calc\(100% - 274rpx\)/);
   });
   const cat=require(path.join(mp,'utils/restaurantCategory'));
   const lookup=require(path.join(root,'cloudfunctions/placeLookup/lookup'));
@@ -2280,7 +2280,7 @@ function nativeTabs(initial=0){
   await test('TabBar uses five consistent Lucide outlines without business dependencies',()=>{
     const js=fs.readFileSync(path.join(mp,'custom-tab-bar/index.js'),'utf8'),w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');
     for(const name of ['house','map-pinned','users-round','user-round'])assert(js.includes('lucide-'+name));
-    assert(js.includes("chosen: 'utensils-crossed'"));assert(w.includes('<s-morph'));assert(!w.includes('fill="{{'));const fallback=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(fallback.includes('stroke="1.75"'));
+    assert(js.includes("chosen: 'utensils-crossed'"));assert(w.includes('<s-icon'));assert(!w.includes('<s-morph'));assert(w.includes('stroke="1.75"'));
     assert(!/require\s*\(/.test(js.replace(/\/\/[^\n]*/g,'')));
   });
   await test('Morphicons adapter creates distinct finite intermediate path geometry for all lab pairs',()=>{
@@ -2309,7 +2309,7 @@ function nativeTabs(initial=0){
   await test('unsupported Canvas reports static fallback and never removes production navigation',()=>{
     const file=path.join(mp,'components/morph-icon/index.js');let spec;const old=global.Component;global.Component=x=>spec=x;delete require.cache[require.resolve(file)];require(file);global.Component=old;
     let report;const c={...spec.methods,data:{ready:true},_alive:true,setData(p){Object.assign(this.data,p);},triggerEvent(n,r){report=r;}};c.canvasError();assert.equal(c.data.ready,false);assert.equal(report.mode,'static-fallback');
-    const tab=JSON.parse(fs.readFileSync(path.join(mp,'custom-tab-bar/index.json'),'utf8'));assert.equal(tab.usingComponents['s-morph'],'/components/morph-icon/index');const w=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(w.includes('!ready || !painting'));assert(w.includes('<s-icon'));
+    const tab=JSON.parse(fs.readFileSync(path.join(mp,'custom-tab-bar/index.json'),'utf8'));assert.equal(tab.usingComponents['s-icon'],'/components/icon/index');assert(!tab.usingComponents['s-morph']);const w=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(w.includes('!ready || !painting'));assert(w.includes('<s-icon'));
     const app=JSON.parse(fs.readFileSync(path.join(mp,'app.json'),'utf8'));assert.equal(app.tabBar.list.length,5);assert(!app.pages.includes('pages/morph-lab/index'),'the dev-only morph lab must not ship as a registered production page');
   });
   await test('approved tab endpoints exactly use official Lucide shape nodes',()=>{
@@ -2353,7 +2353,7 @@ function nativeTabs(initial=0){
     spec.lifetimes.attached.call(c);c.setup();return {c,spec};
   }
   await test('all five Tabs exclude native Canvas and use the approved Utensils/UtensilsCrossed Add endpoints',()=>{
-    const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert.equal([...w.matchAll(/<s-morph renderer="svg"/g)].length,2);
+    const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert.equal([...w.matchAll(/<s-icon /g)].length,2);assert(!w.includes('<s-morph'));
     const component=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert.match(component,/<canvas wx:if="\{\{renderer !== 'svg'\}\}"/);assert.match(component,/class="morph-svg" binderror="svgError"/);
     const tab=fs.readFileSync(path.join(mp,'custom-tab-bar/index.js'),'utf8');assert.match(tab,/rest: 'utensils', chosen: 'utensils-crossed'/);assert(!/\brequire\s*\(/.test(tab.replace(/\/\/[^\n]*/g,'')));
     const {c,spec}=svgMorph();assert.equal(c._canvas,undefined);assert.equal(c._ctx,undefined);assert.equal(c.data.painting,false);spec.lifetimes.detached.call(c);
@@ -2399,9 +2399,9 @@ function nativeTabs(initial=0){
     c.data.quiet=true;c.data.name='utensils';c.move();assert.equal(c._settledName,'utensils');assert.equal(c.data.frameSrc,'');assert.equal(c._timer,null);
     assert(c.updates.filter(p=>p.frameSrc).length>4);spec.lifetimes.detached.call(c);
   });
-  await test('all five production Tabs use 480ms while the isolated Canvas lab remains 380ms',()=>{
-    const tab=fs.readFileSync(path.join(mp,'custom-tab-bar/index.js'),'utf8'),w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');
-    assert.match(tab,/morphDuration: 480/);assert.equal([...w.matchAll(/presentation="\{\{viewState.icons\[index\]\}\}"/g)].length,2);assert(tab.includes('quiet:!!next.quiet,duration:480'));
+  await test('all five production Tabs use 280ms GPU spring with direct <s-icon> while isolated Canvas lab remains 380ms',()=>{
+    const tabCss=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxss'),'utf8'),w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');
+    assert(tabCss.includes('280ms')&&tabCss.includes('tab-spring-a')&&tabCss.includes('tab-add-spring-a'));assert.equal([...w.matchAll(/viewState\.icons\[index\]\.icon/g)].length,2);
     const component=fs.readFileSync(path.join(mp,'components/morph-icon/index.js'),'utf8');assert.match(component,/duration:\{type:Number,value:380\}/);
     const template=fs.readFileSync(path.join(mp,'components/morph-icon/index.wxml'),'utf8');assert(template.includes('bindload="svgLoaded"'));assert(template.includes('wx:key="id"'));assert(template.includes('data-generation="{{item.id}}"'));
   });
@@ -2457,7 +2457,7 @@ function nativeTabs(initial=0){
     const h=nativeTabs(0),home=h.bar();h.tap(home,2);h.setRoute(0);home.seedTransition();assert.equal(home.data.selected,0);assert.equal(home.data.entryKey,0);assert.equal(home.data.transitionFrom,-1);
   });
   await test('expired Tab handoff resumes static icons without replaying an old transition',()=>{
-    const h=nativeTabs(0),home=h.bar();h.tap(home,1);const map=h.bar();const now=Date.now;try{const later=now()+6000;Date.now=()=>later;map.replayTransition();assert.equal(map.data.entryKey,0);assert(map.data.viewState.icons.every(cmd=>cmd.key===0&&cmd.active));}finally{Date.now=now;}
+    const h=nativeTabs(0),home=h.bar();h.tap(home,1);h.setRoute(1);const map=h.bar();const now=Date.now;try{const later=now()+6000;Date.now=()=>later;map.replayTransition();assert.equal(map.data.entryKey,0);assert.equal(map.data.enterPulse,0);assert(map.data.viewState.icons.every(cmd=>cmd.key===0&&cmd.active));}finally{Date.now=now;}
   });
   await test('static SVG endpoint is held through prop change and becomes exact target only on completion',async()=>{
     const {c,spec}=svgMorph({duration:480,name:'house-heart'});assert.equal(c.data.staticName,'house-heart');
@@ -2494,7 +2494,7 @@ function nativeTabs(initial=0){
     const h=nativeTabs(2),a=h.bar(),b=h.bar();const before=JSON.stringify([a.data,b.data]);h.tap(a,3);assert.equal(h.calls.length,1);assert.equal(JSON.stringify([a.data,b.data]),before);h.setRoute(2);h.calls[0].fail();for(const bar of [a,b]){assert.equal(bar.data.selected,2);assert.equal(bar.data.entryKey,0);assert.equal(bar.data.entryActive,true);h.spec.lifetimes.detached.call(bar);}
   });
   await test('fresh TabBar does not mount default icons before route/transition metadata is ready',()=>{
-    const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert(w.includes('wx:if="{{presentationReady}}"'));assert.equal((w.match(/presentation="\{\{viewState.icons\[index\]\}\}"/g)||[]).length,2);assert(!w.includes('from-name='));
+    const w=fs.readFileSync(path.join(mp,'custom-tab-bar/index.wxml'),'utf8');assert(w.includes('wx:if="{{presentationReady}}"'));assert.equal((w.match(/<s-icon /g)||[]).length,2);assert(!w.includes('<s-morph'));assert(!w.includes('from-name='));
     const js=fs.readFileSync(path.join(mp,'custom-tab-bar/index.js'),'utf8');assert(js.includes('presentationReady:false'));assert(js.includes('tabInstances.delete(this)'));
   });
   await test('unresolved cold route stays unmounted until explicit page selection, not default Home',()=>{
